@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
-import { SafeAreaTopScrim } from "./platform/target";
+import { JOYSTICK_ALLOWED, loadControlPref, SafeAreaTopScrim, storeControlPref } from "./platform/target";
 import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN, VILLAGER_IDS } from "./data/characters";
 import { hutSolids } from "./data/huts";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
@@ -9,6 +9,7 @@ import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from 
 import { FENCES, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
+import { Joystick } from "./input/Joystick";
 import { PadButton } from "./input/PadButton";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
@@ -41,6 +42,8 @@ export function App() {
   // gets claimed by the host's pull-to-refresh no matter what the page sets,
   // so walking must not require a dragging gesture at all.
   const padRef = useRef<Set<string>>(new Set());
+  // Floating-joystick vector (Pages build only — see input/Joystick.tsx).
+  const stickRef = useRef({ x: 0, y: 0 });
   const patchesRef = useRef(HERB_SPOTS.map((s) => ({ ...s, available: true, respawnAt: 0 })));
   // Nichnyky patches on Lysa Hora — gathered for the offering, and they
   // stay gathered (the mountain counts promises, and flowers).
@@ -84,6 +87,8 @@ export function App() {
   const [hudFlags, setHudFlags] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [padPressed, setPadPressed] = useState<ReadonlySet<string>>(new Set());
+  // "pad" everywhere; "stick" only where the platform allows a joystick.
+  const [controls, setControls] = useState<"pad" | "stick">(() => (JOYSTICK_ALLOWED ? loadControlPref() : "pad"));
   const [confirmReset, setConfirmReset] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
@@ -897,6 +902,8 @@ export function App() {
       if (pad.has("down")) my += 1;
       if (pad.has("left")) mx -= 1;
       if (pad.has("right")) mx += 1;
+      mx += stickRef.current.x;
+      my += stickRef.current.y;
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
@@ -1285,11 +1292,20 @@ export function App() {
   useEffect(() => {
     const clear = () => {
       padRef.current.clear();
+      stickRef.current = { x: 0, y: 0 };
       setPadPressed(new Set());
     };
     window.addEventListener("blur", clear);
     return () => window.removeEventListener("blur", clear);
   }, []);
+
+  const switchControls = (next: "pad" | "stick") => {
+    padRef.current.clear();
+    setPadPressed(new Set());
+    stickRef.current = { x: 0, y: 0 };
+    setControls(next);
+    storeControlPref(next);
+  };
 
   const onReset = () => {
     resetMut.mutate(undefined, {
@@ -1706,7 +1722,30 @@ export function App() {
               thumb landing between arrows walks diagonally instead of
               hitting dead space. No dragging anywhere: a downward drag
               is what the phone's pull-to-refresh steals. */}
-          {!dialogue && !panelOpen && (
+          {/* Pad / Stick toggle — only where a joystick is allowed (the
+              GitHub Pages build). Muse never shows it. */}
+          {JOYSTICK_ALLOWED && !dialogue && !panelOpen && (
+            <div className="absolute bottom-[212px] left-4 z-10 flex overflow-hidden rounded-lg border border-[#f3e9d2]/40 shadow" role="group" aria-label="Movement control style">
+              {(["pad", "stick"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-pressed={controls === c}
+                  aria-label={c === "pad" ? "Use the direction pad" : "Use the floating joystick"}
+                  onClick={() => switchControls(c)}
+                  className={`px-3 py-2 text-xs font-bold backdrop-blur-[2px] ${controls === c ? "bg-[#d99a2b] text-[#33241a]" : "bg-[#1c1409]/55 text-[#f3e9d2]"}`}
+                >
+                  {c === "pad" ? "Pad" : "Stick"}
+                </button>
+              ))}
+            </div>
+          )}
+          {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && (
+            <div className="absolute bottom-5 left-4 z-10">
+              <Joystick stickRef={stickRef} />
+            </div>
+          )}
+          {controls === "pad" && !dialogue && !panelOpen && (
             <div
               className="absolute bottom-5 left-4 z-10"
               style={{ touchAction: "none" }}
@@ -1764,7 +1803,7 @@ export function App() {
               {promptLabel}
             </button>
           )}
-          {!dialogue && !panelOpen && !prompt && (
+          {!dialogue && !panelOpen && !prompt && controls === "pad" && (
             <p className="pointer-events-none absolute bottom-6 right-5 z-10 max-w-[38%] text-right text-[11px] leading-snug text-[#f3e9d2]/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
               Hold a direction to walk · WASD works too
             </p>
