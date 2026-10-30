@@ -18,7 +18,8 @@ import { type Rect } from "../world/geometry";
 //   otaman — Myroslav's khata by the maidan: a different, richer house
 //     altogether (see OTAMAN_ROOM below)
 //   korchma — the inn on the chumak road past the khutir (KORCHMA_ROOM)
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma";
+//   pustka — the abandoned khata of Taras Dovhyi by Viy's hollow (PUSTKA_ROOM)
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -28,6 +29,7 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   hut1: { x: 1120, y: 380, w: 320, h: 210 },
   otaman: { x: 650, y: 120, w: 380, h: 200 },
   korchma: { x: 1830, y: 1000, w: 350, h: 210 },
+  pustka: { x: 1084, y: 140, w: 210, h: 176 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -83,8 +85,24 @@ export const KORCHMA_ROOM = {
   pich: { x: 14, y: 128, w: 70, h: 68 },
 } as const satisfies Record<string, Rect>;
 
+// The pustka: Taras Dovhyi planted the tobacco field, rode to the Sich and
+// never came back. His khata stands empty on the north-east edge of the
+// ring, closest of all to Viy's hollow: a cold, cracked pich, a sagging pil,
+// a bench on its side, and his skrynia, which still holds his letter.
+// Footprint 210×176, the door at x 82…128.
+export const PUSTKA_ROOM = {
+  pich: { x: 14, y: BACK_WALL, w: 58, h: 54 },
+  skrynia: { x: 104, y: 36, w: 38, h: 20 },
+  pil: { x: 150, y: BACK_WALL, w: 46, h: 44 },
+  lava: { x: 20, y: 124, w: 40, h: 12 },
+  table: { x: 136, y: 108, w: 44, h: 28 },
+} as const satisfies Record<string, Rect>;
+// Where to stand to open the skrynia (in the world).
+export const PUSTKA_CHEST = { x: 1084 + 123, y: 140 + 76 };
+
 function furniture(id: HouseId): Rect[] {
   if (id === "korchma") return Object.values(KORCHMA_ROOM);
+  if (id === "pustka") return Object.values(PUSTKA_ROOM);
   if (id !== "otaman") return Object.values(ROOM);
   const parts: Rect[] = [];
   for (const px of [OTAMAN_WALLS.west, OTAMAN_WALLS.east]) {

@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -18,6 +18,7 @@ export function drawKhataInterior(
 ): void {
   if (id === "otaman") { drawOtamanInterior(c, x, y, t); return; }
   if (id === "korchma") { drawKorchmaInterior(c, x, y, t); return; }
+  if (id === "pustka") { drawPustkaInterior(c, x, y, t, flags); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -915,5 +916,164 @@ function drawKorchmaInterior(c: CanvasRenderingContext2D, x: number, y: number, 
     lg.addColorStop(1, "rgba(255,180,90,0)");
     c.fillStyle = lg;
     c.fillRect(lx - 120, ly - 120, 240, 240);
+  }
+}
+
+// --- The pustka ---------------------------------------------------------------
+// Taras Dovhyi's empty khata: grey walls, the clay floor gone to dust and
+// leaf-litter, a cold pich with a crack down its face, a sagging pil, a
+// bench on its side, cobwebs in every corner, a shaft of light through the
+// hole in the thatch, and the icon turned to the wall by somebody who did
+// not want it to watch. His skrynia still holds his letter.
+function drawPustkaInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number, flags: ReadonlySet<string>): void {
+  const { w, h } = HOUSE_RECTS.pustka;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: Box) => {
+    c.fillStyle = "rgba(30,24,16,0.28)";
+    rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill();
+  };
+  const room = PUSTKA_ROOM;
+  // a dusty floor, leaves blown in under the door
+  c.fillStyle = "#9c8a6c";
+  c.fillRect(x, y, w, h);
+  for (let i = 0; i < 40; i++) {
+    c.fillStyle = i % 3 ? "rgba(120,104,80,0.25)" : "rgba(170,150,110,0.25)";
+    c.beginPath(); c.ellipse(x + hash2(i, 41) * w, y + hash2(i, 43) * h, 5 + hash2(i, 45) * 9, 3 + hash2(i, 47) * 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  for (let i = 0; i < 14; i++) {
+    c.fillStyle = i % 2 ? "#a8743c" : "#8a6a30";
+    const lx = x + w / 2 - 30 + hash2(i, 51) * 60;
+    const ly = y + h - WALL - 4 - hash2(i, 53) * 50;
+    c.beginPath(); c.ellipse(lx, ly, 3, 1.6, hash2(i, 55) * 3, 0, Math.PI * 2); c.fill();
+  }
+  // the shaft of light through the roof, with dust turning in it
+  {
+    const lx = x + w * 0.62;
+    const g = c.createLinearGradient(lx, y + 40, lx, y + h);
+    g.addColorStop(0, "rgba(255,244,210,0.0)");
+    g.addColorStop(1, "rgba(255,244,210,0.22)");
+    c.fillStyle = g;
+    c.beginPath(); c.moveTo(lx - 14, y + 40); c.lineTo(lx + 14, y + 40); c.lineTo(lx + 30, y + 150); c.lineTo(lx - 2, y + 150); c.closePath(); c.fill();
+    c.fillStyle = "rgba(255,244,210,0.55)";
+    for (let i = 0; i < 6; i++) {
+      const ph = (t * 0.00008 + i / 6) % 1;
+      c.beginPath(); c.arc(lx + Math.sin(ph * 6 + i) * 8 + ph * 12, y + 50 + ph * 90, 0.9, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // walls: the inner face gone grey, the whitewash flaking
+  c.fillStyle = "#cfc6b2";
+  c.fillRect(x, y + WALL, w, BACK_WALL - WALL);
+  c.fillStyle = "#a88a62";
+  for (let i = 0; i < 7; i++) {
+    c.beginPath(); c.ellipse(x + 16 + hash2(i, 61) * (w - 32), y + WALL + 4 + hash2(i, 63) * 14, 4 + hash2(i, 65) * 6, 2.4, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "#3f63a8";
+  c.globalAlpha = 0.35;
+  c.fillRect(x, y + BACK_WALL - 4, w, 4);
+  c.globalAlpha = 1;
+  c.fillStyle = "#bdb39c";
+  c.fillRect(x, y, w, WALL);
+  c.fillRect(x, y, WALL, h);
+  c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL);
+  c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "#3a342c";
+  for (const wx of [34, w - 70]) c.fillRect(x + wx, y + h - WALL + 4, 36, 6);
+  c.fillStyle = "#7e6a52";
+  c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+  // the icon turned to the wall: its bare back board, a rushnyk gone grey
+  {
+    const ix = x + w - WALL - 30;
+    const iy = y + WALL + 2;
+    c.fillStyle = "#6e5a40";
+    rr(c, ix, iy, 18, 15, 1.5); c.fill();
+    c.strokeStyle = "#4e3e2a"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(ix + 2, iy + 5); c.lineTo(ix + 16, iy + 5); c.moveTo(ix + 2, iy + 10); c.lineTo(ix + 16, iy + 10); c.stroke();
+    c.fillStyle = "#b8b0a0";
+    c.fillRect(ix - 5, iy - 1, 4, 16);
+  }
+  // cobwebs in the corners
+  c.strokeStyle = "rgba(235,235,230,0.55)"; c.lineWidth = 0.8;
+  for (const [cx, cy, sx, sy] of [[x + WALL, y + BACK_WALL, 1, 1], [x + w - WALL, y + BACK_WALL, -1, 1], [x + WALL, y + h - WALL, 1, -1]] as const) {
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 3) * (Math.PI / 2);
+      c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * 22 * sx, cy + Math.sin(a) * 22 * sy); c.stroke();
+    }
+    for (const r of [8, 15]) {
+      c.beginPath();
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 3) * (Math.PI / 2);
+        const px = cx + Math.cos(a) * r * sx;
+        const py = cy + Math.sin(a) * r * sy;
+        if (k === 0) c.moveTo(px, py); else c.lineTo(px, py);
+      }
+      c.stroke();
+    }
+  }
+  // the cold pich, cracked, no fire in its mouth
+  {
+    const p = R(room.pich);
+    shadow(p);
+    c.fillStyle = "#c8c0ae";
+    rr(c, p.x, p.y, p.w, p.h, 6); c.fill();
+    c.fillStyle = "#d8d0be";
+    rr(c, p.x + 2, p.y + 2, p.w - 4, p.h - 20, 5); c.fill();
+    c.fillStyle = "#2a2420";
+    c.beginPath();
+    c.moveTo(p.x + p.w - 4, p.y + 22); c.lineTo(p.x + p.w - 16, p.y + 22);
+    c.quadraticCurveTo(p.x + p.w - 22, p.y + 34, p.x + p.w - 16, p.y + 46); c.lineTo(p.x + p.w - 4, p.y + 46); c.closePath(); c.fill();
+    c.strokeStyle = "#7a6e5c"; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(p.x + 20, p.y + 4); c.lineTo(p.x + 26, p.y + 18); c.lineTo(p.x + 22, p.y + 30); c.lineTo(p.x + 30, p.y + 50); c.stroke();
+    c.fillStyle = "#8a8070";
+    for (const [bx, by] of [[p.x + p.w + 4, p.y + p.h - 2], [p.x + p.w + 10, p.y + p.h + 3]] as const) {
+      c.beginPath(); c.ellipse(bx, by, 3.4, 2.2, 0, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // his skrynia, its paint gone, the lid a little open
+  {
+    const s = R(room.skrynia);
+    shadow(s);
+    c.fillStyle = "#5e4a3a";
+    rr(c, s.x, s.y, s.w, s.h, 2); c.fill();
+    c.fillStyle = "#6e5a46";
+    c.fillRect(s.x + 1, s.y + 1, s.w - 2, 5);
+    c.fillStyle = "#3a3230";
+    c.fillRect(s.x + 6, s.y, 2.4, s.h); c.fillRect(s.x + s.w - 8, s.y, 2.4, s.h);
+    if (!flagHas(flags, "dovhyiLetter")) {
+      const tw = 0.4 + Math.sin(t * 0.004) * 0.3;
+      c.fillStyle = `rgba(250,240,200,${tw})`;
+      c.fillRect(s.x + s.w / 2 - 5, s.y + 7, 10, 3);
+    }
+  }
+  // the pil, one leg gone, the planks slid to the floor
+  {
+    const p = R(room.pil);
+    shadow(p);
+    c.fillStyle = "#6a523a";
+    c.save(); c.translate(p.x + p.w / 2, p.y + p.h / 2); c.rotate(0.06);
+    rr(c, -p.w / 2, -p.h / 2, p.w, p.h, 2); c.fill();
+    c.strokeStyle = "#4e3a28"; c.lineWidth = 1;
+    for (let k = -p.w / 2 + 8; k < p.w / 2; k += 8) { c.beginPath(); c.moveTo(k, -p.h / 2); c.lineTo(k, p.h / 2); c.stroke(); }
+    c.restore();
+    c.fillStyle = "#8a7a62";
+    rr(c, p.x + 4, p.y + 6, 18, 14, 3); c.fill(); // a pillow, mouse-eaten
+  }
+  // the bench on its side, and the table askew
+  {
+    const b = R(room.lava);
+    shadow(b);
+    c.fillStyle = "#6a523a";
+    rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    c.fillStyle = "#4e3a28";
+    c.fillRect(b.x + 4, b.y - 6, 4, 8); c.fillRect(b.x + b.w - 8, b.y - 6, 4, 8);
+    const tb = R(room.table);
+    shadow(tb);
+    c.save(); c.translate(tb.x + tb.w / 2, tb.y + tb.h / 2); c.rotate(-0.1);
+    c.fillStyle = "#6a523a";
+    rr(c, -tb.w / 2, -tb.h / 2, tb.w, tb.h, 2); c.fill();
+    c.fillStyle = "#8a8070";
+    c.beginPath(); c.ellipse(-8, -2, 6, 4, 0, 0, Math.PI * 2); c.fill(); // a dry bowl
+    c.restore();
   }
 }

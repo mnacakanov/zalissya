@@ -1157,5 +1157,13 @@
   "korchma.okhrim.t.song.label": "Ask for a song",
   "korchma.okhrim.t.song.question": "Will you teach me a Cossack song, grandad?",
   "korchma.okhrim.song.0": "“A Cossack one? Listen, then. We rode out to this one. Not a duma, not a prayer: this.” He straightens, and for a moment you can see the Bull in him.",
-  "korchma.okhrim.song.1": "He sings “A Cossack rode beyond the Danube”, hoarse, off the note and exactly right. On the last line he falls silent, and you sing it to the end for him."
+  "korchma.okhrim.song.1": "He sings “A Cossack rode beyond the Danube”, hoarse, off the note and exactly right. On the last line he falls silent, and you sing it to the end for him.",
+  "ui.enterHut.pustka": "The abandoned hut. The door creaks and doesn't close behind you. Dust, cobwebs, a cold pich. Somebody turned the icon to face the wall, and you decide to leave it that way.",
+  "ui.hut.pustka": "🏚 The abandoned hut",
+  "ui.promptLabel.pustkaChest": "Look in the chest",
+  "pustka.name": "Taras Dovhyi's chest",
+  "pustka.role": "The empty hut by the hollow",
+  "pustka.chest.0": "Under a rotten cloth: an empty sabre scabbard, a tobacco pouch with no tobacco, and a letter in crooked letters.",
+  "pustka.chest.1": "“If I'm not back by Pokrova, let the otaman smoke my tobacco, and leave the hut be: let it wait. Taras Dovhyi.” Seven Pokrovas have passed since. The hut is waiting still.",
+  "pustka.chest.again": "The empty scabbard, the pouch and Taras Dovhyi's letter. You put everything back as it lay."
 }

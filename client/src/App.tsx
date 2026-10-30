@@ -3,11 +3,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/characters";
-import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT } from "./data/houses";
+import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, FIRE, HOUSES, KAPLYTSIA, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
-import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
+import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -74,9 +74,14 @@ const KORCHMA_NPC: Npc = {
   id: "korchma", name: t("korchma.name"), pron: "", role: t("korchma.role"),
   x: KORCHMA_PLAY.x, y: KORCHMA_PLAY.y, tunic: "#7a2a3a", hair: "#3a2a1c", style: "elder",
 };
+// Taras Dovhyi's skrynia, as a "speaker" for the letter it holds.
+const PUSTKA_NPC: Npc = {
+  id: "pustka", name: t("pustka.name"), pron: "", role: t("pustka.role"),
+  x: PUSTKA_CHEST.x, y: PUSTKA_CHEST.y, tunic: "#5e4a3a", hair: "#3a3230", style: "elder",
+};
 // What each walk-in house says when you step in, and its HUD label.
-const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma" };
-const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma" };
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -171,7 +176,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -1214,6 +1219,17 @@ export function App() {
         );
         return;
       }
+      case "pustkaChest": {
+        // Taras Dovhyi's letter (data/houses.ts PUSTKA_ROOM): read once,
+        // remembered after; it is lore, and it names the tobacco field.
+        if (flagHas(flagsRef.current, "dovhyiLetter")) {
+          showToast(t("pustka.chest.again"));
+          return;
+        }
+        setFlag("dovhyiLetter");
+        openDialogue(PUSTKA_NPC, [t("pustka.chest.0"), t("pustka.chest.1")]);
+        return;
+      }
       case "playKorchma": {
         const c = clockRef.current;
         const check = fireCheck(flagsRef.current, c.day, c.minute);
@@ -1651,6 +1667,7 @@ export function App() {
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
         spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
         spot(houseAt(p.x, p.y) === "korchma", KORCHMA_PLAY.x, KORCHMA_PLAY.y, 40, () => ({ kind: "playKorchma" }));
+        spot(houseAt(p.x, p.y) === "pustka", PUSTKA_CHEST.x, PUSTKA_CHEST.y, 34, () => ({ kind: "pustkaChest" }));
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         const tStage = tobaccoStage(flagsNow);
         TOBACCO_SPOTS.forEach((ts, idx) => {
@@ -1766,13 +1783,15 @@ export function App() {
           ? drawOtamanKhata(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
           : id === "korchma"
             ? drawKorchma(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+            : id === "pustka"
+              ? drawPustka(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
             : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
       drawables.push({ y: KAPLYTSIA.y + KAPLYTSIA.h, draw: () => drawKaplytsia(ctx2d, KAPLYTSIA.x - camX, KAPLYTSIA.y - camY, KAPLYTSIA.w, KAPLYTSIA.h, now) });
-      drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now) });
+      drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now, -1) });
       drawables.push({ y: WINDMILL.y, draw: () => drawWindmill(ctx2d, WINDMILL.x - camX, WINDMILL.y - camY, now) });
       for (const k of [KURHAN, KURHAN_STEPPE]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {
@@ -2089,6 +2108,8 @@ export function App() {
                                     ? t("ui.promptLabel.play")
                                   : prompt.kind === "playKorchma"
                                     ? t("ui.promptLabel.playKorchma")
+                                  : prompt.kind === "pustkaChest"
+                                    ? t("ui.promptLabel.pustkaChest")
                                   : prompt.kind === "grave"
                                     ? t("ui.promptLabel.grave")
                                   : prompt.kind === "tobacco"

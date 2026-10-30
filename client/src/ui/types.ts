@@ -25,6 +25,7 @@ export type Prompt =
   | { kind: "sleep" }
   | { kind: "play" }
   | { kind: "playKorchma" }
+  | { kind: "pustkaChest" }
   | { kind: "grave" }
   | { kind: "tobacco"; idx: number }
   | { kind: "hemp" }

@@ -346,7 +346,7 @@ export function drawKurhan(c: CanvasRenderingContext2D, x: number, y: number): v
 // A khata you can walk into, seen from outside: a deep hipped thatch roof
 // over the whole footprint and the whitewashed front wall with its door.
 // `alpha` fades it out while the kobzar is inside (the room shows through).
-export function drawKhataBig(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, seed: number, alpha: number): void {
+export function drawKhataBig(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, seed: number, alpha: number, smoke = true): void {
   if (alpha <= 0.01) return;
   c.save();
   c.globalAlpha = alpha;
@@ -423,7 +423,7 @@ export function drawKhataBig(c: CanvasRenderingContext2D, x: number, y: number, 
   c.fillRect(chx, chy, 16, 26);
   c.fillStyle = "#c9c0ae";
   c.fillRect(chx - 2, chy - 3, 20, 5);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < (smoke ? 3 : 0); i++) {
     const ph = (t * 0.00016 + i / 3 + hash2(seed, i)) % 1;
     c.fillStyle = `rgba(240,238,232,${0.45 * (1 - ph)})`;
     c.beginPath();
@@ -556,7 +556,7 @@ export function drawOtamanKhata(c: CanvasRenderingContext2D, x: number, y: numbe
 
 // The otaman's korohva: a crimson banner on a tall pole by his porch,
 // lifting and falling with the steppe wind.
-export function drawKorohva(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+export function drawKorohva(c: CanvasRenderingContext2D, x: number, y: number, t: number, dir: 1 | -1 = 1): void {
   c.fillStyle = "rgba(30,50,20,0.25)";
   c.beginPath(); c.ellipse(x, y + 2, 10, 4, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#6e4525";
@@ -565,18 +565,18 @@ export function drawKorohva(c: CanvasRenderingContext2D, x: number, y: number, t
   c.beginPath(); c.moveTo(x, y - 162); c.lineTo(x + 4, y - 150); c.lineTo(x - 4, y - 150); c.closePath(); c.fill();
   c.fillStyle = "#a8222a";
   c.beginPath();
-  c.moveTo(x + 2, y - 148);
+  c.moveTo(x + dir * 2, y - 148);
   for (let i = 0; i <= 10; i++) {
-    const fx = x + 2 + i * 5.4;
+    const fx = x + dir * (2 + i * 5.4);
     c.lineTo(fx, y - 148 + Math.sin(t * 0.004 + i * 0.7) * 3 * (i / 10));
   }
   for (let i = 10; i >= 0; i--) {
-    const fx = x + 2 + i * 5.4;
+    const fx = x + dir * (2 + i * 5.4);
     c.lineTo(fx, y - 112 + Math.sin(t * 0.004 + i * 0.7) * 3 * (i / 10));
   }
   c.closePath(); c.fill();
   // a gold cross on it, as on the Zaporozhian banners
-  const cx = x + 26;
+  const cx = x + dir * 26;
   const cy = y - 130 + Math.sin(t * 0.004 + 4.5 * 0.7) * 1.4;
   c.fillStyle = "#e8c66a";
   c.fillRect(cx - 1.5, cy - 8, 3, 16);
@@ -766,4 +766,60 @@ export function drawKaplytsia(c: CanvasRenderingContext2D, x: number, y: number,
   c.fillRect(cx - 1.2, ridge - 64, 2.4, 17);
   c.fillRect(cx - 6, ridge - 59, 12, 2.4);
   c.fillRect(cx - 4, ridge - 53, 8, 2);
+}
+
+// Taras Dovhyi's pustka: a khata nobody has whitewashed in seven years.
+// The same khata as the others underneath (drawKhataBig), gone grey, the
+// clay showing through, the windows boarded, the door hanging ajar, a hole
+// rotted through the thatch, and weeds up to the sill.
+export function drawPustka(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  drawKhataBig(c, x, y, w, h, t, 77, alpha, false); // nobody lights the pich
+  c.save();
+  c.globalAlpha = alpha;
+  const wallTop = y + h - 64;
+  // grime and the clay showing through where the whitewash fell away
+  c.fillStyle = "rgba(90,84,70,0.32)";
+  c.fillRect(x, wallTop + 6, w, 52);
+  c.fillStyle = "#a88a62";
+  for (let i = 0; i < 9; i++) {
+    const px = x + 8 + hash2(i, 5) * (w - 30);
+    const py = wallTop + 10 + hash2(i, 9) * 40;
+    c.beginPath(); c.ellipse(px, py, 5 + hash2(i, 13) * 9, 3 + hash2(i, 17) * 4, 0, 0, Math.PI * 2); c.fill();
+  }
+  // boarded windows
+  for (const wx of [x + 34, x + w - 70]) {
+    const wy = wallTop + 14;
+    c.fillStyle = "#3a342c";
+    c.fillRect(wx, wy, 36, 24);
+    c.fillStyle = "#7a6248";
+    c.save(); c.translate(wx + 18, wy + 12); c.rotate(-0.25); c.fillRect(-22, -4, 44, 6); c.restore();
+    c.save(); c.translate(wx + 18, wy + 12); c.rotate(0.3); c.fillRect(-22, -3, 44, 5); c.restore();
+  }
+  // the door, hanging ajar on one hinge: dark inside
+  const dx = x + w / 2 - 17;
+  c.fillStyle = "#1e1a16";
+  c.fillRect(dx, y + h - 51, 34, 41);
+  c.fillStyle = "#5e4a36";
+  c.save(); c.translate(dx, y + h - 51); c.rotate(-0.08); c.fillRect(0, 0, 12, 41); c.restore();
+  // a hole rotted through the thatch, ribs of the roof showing
+  const eave = wallTop + 6;
+  const ridge = y + (eave - y) * 0.42;
+  const hx = x + w * 0.62;
+  const hy = (ridge + eave) / 2;
+  c.fillStyle = "#2a241c";
+  c.beginPath(); c.ellipse(hx, hy, 22, 11, 0.1, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#6e5a3a"; c.lineWidth = 2;
+  for (const o of [-12, 0, 12]) { c.beginPath(); c.moveTo(hx + o - 4, hy - 10); c.lineTo(hx + o + 4, hy + 10); c.stroke(); }
+  // the thatch grey and sagging; weeds along the pryzba
+  c.fillStyle = "rgba(70,70,64,0.3)";
+  c.fillRect(x - 18, ridge, w + 36, eave - ridge + 6);
+  c.strokeStyle = "#5d7a3a"; c.lineWidth = 1.6;
+  for (let i = 0; i < 22; i++) {
+    const px = x - 6 + (i / 21) * (w + 12);
+    if (Math.abs(px - (x + w / 2)) < 24) continue;
+    const ht = 8 + hash2(i, 23) * 12;
+    c.beginPath(); c.moveTo(px, y + h); c.quadraticCurveTo(px + 3, y + h - ht / 2, px + (hash2(i, 29) - 0.5) * 6, y + h - ht); c.stroke();
+  }
+  c.restore();
 }

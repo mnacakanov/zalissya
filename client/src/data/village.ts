@@ -1,11 +1,12 @@
 import { hash2, type Rect } from "../world/geometry";
 import { FOREST_TREES } from "./land";
-import { HOUSE_RECTS, houseSolids } from "./houses";
+import { HOUSE_IDS, HOUSE_RECTS, houseSolids } from "./houses";
 
 // --- World layout -----------------------------------------------------------
 
 export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
-  { x: 1140, y: 190, w: 168, h: 104, kind: "hut" },
+  // (the little north-east hut is now Taras Dovhyi's pustka, walk-in:
+  // data/houses.ts)
   // the forge on the west side of the ring, open to the road
   { x: 250, y: 470, w: 156, h: 92, kind: "forge" },
   // (the otaman's khata, facing the maidan, is walk-in: data/houses.ts)
@@ -79,8 +80,8 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
     Object.values(HOUSE_RECTS).some((r) => x > r.x - 6 && x < r.x + r.w + 6 && y > r.y && y < r.y + r.h + 4);
   const add = (kind: DecorKind, pts: Array<[number, number]>) =>
     pts.forEach(([x, y]) => { if (!indoors(x, y)) DECOR.push({ x, y, kind, seed: hash2(x, y) }); });
-  add("sunflower", [[488, 500], [190, 380], [208, 392], [1132, 318], [1148, 330], [432, 712], [446, 726], [1515, 760]]);
-  add("mallow", [[512, 486], [640, 488], [300, 378], [450, 378], [1296, 316], [1312, 318], [1170, 880], [1515, 880], [1180, 316]]);
+  add("sunflower", [[488, 500], [190, 380], [208, 392], [432, 712], [446, 726], [1515, 760]]);
+  add("mallow", [[512, 486], [640, 488], [300, 378], [450, 378], [1170, 880], [1515, 880]]);
   // feather grass all over the open steppe
   for (let i = 0; i < 90; i++) {
     const x = 1720 + hash2(i, 31) * 900;
@@ -91,7 +92,7 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
 }
 
 // the otaman's korohva (banner) on its pole by his porch
-export const OTAMAN_FLAGPOLE: Rect = { x: 1050, y: 306, w: 8, h: 8 };
+export const OTAMAN_FLAGPOLE: Rect = { x: 628, y: 300, w: 8, h: 8 };
 
 export const FENCES: Rect[] = [
   { x: GARDEN.x - 8, y: GARDEN.y - 10, w: GARDEN.w + 16, h: 10 },
@@ -102,9 +103,7 @@ export const FENCES: Rect[] = [
 export const SOLID: Rect[] = [
   ...HOUSES.map((h) => ({ x: h.x, y: h.y + 26, w: h.w, h: h.h - 26 })),
   // the khaty you walk into: walls with a door, and their furniture
-  ...houseSolids("hut0"),
-  ...houseSolids("hut1"),
-  ...houseSolids("otaman"),
+  ...HOUSE_IDS.flatMap((id) => houseSolids(id)),
   OTAMAN_FLAGPOLE,
   WELL,
   FIRE,

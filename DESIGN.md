@@ -242,3 +242,13 @@ The owner sent a photo of the reconstructed Zaporozhian Sich: houses ringed roun
   - The Lysa Hora trail leaves the east road past Vesna's door.
   - Radek, Vesna and the Lisovyk moved with their places.
 - **Old saves:** a save standing where a wall or the chapel now is starts again on the road south of the fire.
+
+## The pustka
+
+The last closed façade, the little hut on the north-east of the ring, is now a place you can walk into. It is the pustka, the empty khata of Taras Dovhyi, the Cossack who planted the old tobacco field, rode to the Sich and never came back.
+
+- **Outside:** it is the khutir's khata gone to seed. The whitewash is grey and flaking, the windows are boarded, the door hangs ajar, there is a hole in the thatch, weeds grow along the pryzba and no smoke comes from the chimney. It stands closest of all the houses to Viy's hollow.
+- **Inside:** dust and blown-in leaves, cobwebs in the corners, a cold, cracked pich, a sagging pil, a bench on its side and a shaft of light through the roof. The icon has been turned to face the wall.
+- **His skrynia:** an empty scabbard, a pouch with no tobacco, and his letter, which leaves the tobacco to the otaman and asks that the hut be left to wait.
+
+While doing this I found that the korchma had no walls to bump into. Every walk-in house now gets its walls and furniture from one list.
