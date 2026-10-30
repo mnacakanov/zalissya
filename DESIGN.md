@@ -317,3 +317,13 @@ The spirits and the animals now match the people: painted side light, a thin ink
   - Ostap lies on a curly sheepskin.
   - The steppe oxen wear the yoke.
   - The hens are speckled.
+
+## Tree shadows, and animations anchored in the world
+
+- **Shadows:** after Drova, trees cast big, soft, lumpy shadows on the ground, in a pass of their own under everything that stands (`drawTreeShadows`).
+  - They follow the sun: long to the west in the morning, short at noon, long to the east in the evening, faint at night.
+  - Every trunk sits in a small dark pool where it meets the ground.
+  - Leafy crowns got a darker underside and a soft ink edge.
+- **Animation fix:** the owner noticed the trees swayed slowly while the kobzar was far and far too fast as he came near.
+  - The cause: several animations (willow fronds, cherry sway and even the cherries' positions, spirits' bobbing, people's idle sway, the Lysa dancers, crops) took their phase from the screen position, so the camera scrolling changed their speed.
+  - The fix: the frame sets `CAM` (`render/shapes.ts`), and those drawings now take their phase from the world position, `x + CAM.x`.

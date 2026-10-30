@@ -1,5 +1,5 @@
 import { hash2 } from "../world/geometry";
-import { rr } from "./shapes";
+import { CAM, rr } from "./shapes";
 
 // --- The khutir look --------------------------------------------------------
 // A Cossack khutir, not a northern forest village: whitewashed clay khaty
@@ -231,7 +231,9 @@ export function drawKovyla(c: CanvasRenderingContext2D, x: number, y: number, t:
 }
 
 export function drawCherry(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number): void {
-  const sway = Math.sin(t * 0.0012 + x * 0.11) * 1.2;
+  const wx = Math.round(x + CAM.x);
+  const wy = Math.round(y + CAM.y);
+  const sway = Math.sin(t * 0.0012 + wx * 0.11) * 1.2;
   c.fillStyle = "rgba(30,50,20,0.25)";
   c.beginPath(); c.ellipse(x, y + 3, 22 * s, 7 * s, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#5a3a26";
@@ -246,8 +248,8 @@ export function drawCherry(c: CanvasRenderingContext2D, x: number, y: number, s:
   // cherries
   c.fillStyle = "#b3122a";
   for (let i = 0; i < 9; i++) {
-    const a = hash2(x + i, y) * Math.PI * 2;
-    const r = 6 + hash2(i, x) * 10;
+    const a = hash2(wx + i, wy) * Math.PI * 2;
+    const r = 6 + hash2(i, wx) * 10;
     c.beginPath(); c.arc(x + (Math.cos(a) * r + sway) * s, y + (-42 + Math.sin(a) * r * 0.8) * s, 2 * s, 0, Math.PI * 2); c.fill();
   }
 }
@@ -264,7 +266,7 @@ export function drawWillow(c: CanvasRenderingContext2D, x: number, y: number, s:
   // weeping fronds
   for (let i = 0; i < 16; i++) {
     const fx = x + (i - 7.5) * 4 * s;
-    const sway = Math.sin(t * 0.0014 + i * 0.7 + x) * 3;
+    const sway = Math.sin(t * 0.0014 + i * 0.7 + (x + CAM.x) * 0.05) * 3;
     c.strokeStyle = i % 2 ? "#8fae58" : "#6f8f40";
     c.lineWidth = 2.2;
     c.beginPath();

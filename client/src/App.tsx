@@ -34,11 +34,11 @@ import { MapOverlay } from "./ui/MapOverlay";
 import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
-import { rr } from "./render/shapes";
+import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
 import { drawDark, drawFog, gradeDay } from "./render/light";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
-import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawWell } from "./render/village";
+import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
@@ -1693,7 +1693,9 @@ export function App() {
       // chalk ring and his lids are in view)
       const focusY = fight ? p.y - 110 : p.y;
       const camX = clamp(p.x - vw / 2, 0, Math.max(0, ws.w - vw));
+      CAM.x = camX;
       const camY = clamp(focusY - vh / 2, 0, Math.max(0, ws.h - vh));
+      CAM.y = camY;
 
       // --- render
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1703,6 +1705,8 @@ export function App() {
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
       drawLand(ctx2d, camX, camY, vw, vh, now);
+      // the trees' shadows lie on the ground, under everything that stands
+      drawTreeShadows(ctx2d, TREES, camX, camY, vw, vh, clockRef.current.minute, darkness(clockRef.current.minute));
       // the rooms of the khaty you can walk into; their roofs (below, as
       // drawables) cover them unless the kobzar is inside
       for (const id of HOUSE_IDS) {

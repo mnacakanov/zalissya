@@ -1,6 +1,6 @@
 import { darken, drawFolk } from "./people";
 import { LYSA_OFFER_SPOT, LYSA_STONES, LYSA_SUMMIT, LYSA_THRONE } from "../data/lysa";
-import { rr } from "./shapes";
+import { CAM, rr } from "./shapes";
 import { LYSA_H, LYSA_W } from "../world/areas";
 import { hash2 } from "../world/geometry";
 
@@ -227,7 +227,7 @@ export function drawLysaFire(c: CanvasRenderingContext2D, camX: number, camY: nu
 // The witches and the dancers are people, in the people's storybook hand
 // (render/people.ts, style "witch"); the dancers dance with arms up.
 export function drawWitch(c: CanvasRenderingContext2D, x: number, y: number, tunic: string, hair: string, t: number, dancing: boolean) {
-  const phase = t * 0.012 + x * 0.3;
+  const phase = t * 0.012 + (x + CAM.x) * 0.3;
   drawFolk(c, x, y, { tunic, hair, style: "witch", moving: dancing, phase, face: 0, t, ...(dancing ? { pose: "dance" as const } : {}) });
 }
 

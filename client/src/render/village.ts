@@ -582,13 +582,67 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   }
 }
 
+// --- Tree shadows ---------------------------------------------------------------
+// After Drova: trees throw big, soft, lumpy shadows that give the ground
+// depth. They are a pass of their own on the ground (under everything that
+// stands), and they follow the sun: long to the west in the morning, short
+// at noon, long to the east in the evening, faint under the moon.
+const CANOPY: Record<TreeKind, { r: number; h: number }> = {
+  oak: { r: 60, h: 72 }, birch: { r: 42, h: 56 }, pine: { r: 44, h: 62 }, cherry: { r: 32, h: 42 }, willow: { r: 40, h: 54 },
+};
+export function drawTreeShadows(
+  c: CanvasRenderingContext2D, trees: ReadonlyArray<{ x: number; y: number; kind: TreeKind; s: number }>,
+  camX: number, camY: number, vw: number, vh: number, minute: number, dark: number,
+): void {
+  // the sun: -1 at 06:00 (in the east), 0 at 13:00, +1 at 20:00 (west)
+  const sunK = Math.max(-1, Math.min(1, (minute - 13 * 60) / (7 * 60)));
+  const day = Math.max(0, 1 - dark / 0.62);
+  const strength = 0.12 + 0.26 * day;
+  for (const tr of trees) {
+    const cp = CANOPY[tr.kind];
+    const R = cp.r * tr.s;
+    const Hc = cp.h * tr.s;
+    // a little south-east always (the light of the scene comes from the
+    // upper left), then swung by the sun
+    const len = 0.35 + Math.abs(sunK) * 0.75;
+    const dx = Hc * (0.25 + sunK * 0.8) * day;
+    const dy = Hc * 0.16;
+    const cx = tr.x + dx - camX;
+    const cy = tr.y + dy - camY;
+    if (cx + R * 2 < 0 || cx - R * 2 > vw || cy + R < 0 || cy - R > vh) continue;
+    // three overlapping blobs make the shadow lumpy, like a real crown
+    for (let k = 0; k < 3; k++) {
+      const ox = (hash2(tr.x, k) - 0.5) * R * 0.6;
+      const oy = (hash2(k, tr.y) - 0.5) * R * 0.25;
+      const rx = R * (0.75 + 0.2 * hash2(tr.x + k, tr.y)) * (1 + len * 0.3);
+      const ry = R * 0.42;
+      const g = c.createRadialGradient(cx + ox, cy + oy, 0, cx + ox, cy + oy, rx);
+      g.addColorStop(0, `rgba(16,28,10,${strength})`);
+      g.addColorStop(0.6, `rgba(16,28,10,${strength * 0.7})`);
+      g.addColorStop(1, "rgba(16,28,10,0)");
+      c.fillStyle = g;
+      c.save();
+      c.translate(cx + ox, cy + oy);
+      c.scale(1, ry / rx);
+      c.translate(-(cx + ox), -(cy + oy));
+      c.beginPath(); c.arc(cx + ox, cy + oy, rx, 0, Math.PI * 2); c.fill();
+      c.restore();
+    }
+    // the dark where the trunk meets the ground
+    const ao = c.createRadialGradient(tr.x - camX, tr.y + 2 - camY, 0, tr.x - camX, tr.y + 2 - camY, 16 * tr.s);
+    ao.addColorStop(0, `rgba(12,20,8,${0.35 * (0.5 + 0.5 * day)})`);
+    ao.addColorStop(1, "rgba(12,20,8,0)");
+    c.fillStyle = ao;
+    c.beginPath(); c.ellipse(tr.x - camX, tr.y + 2 - camY, 18 * tr.s, 7 * tr.s, 0, 0, Math.PI * 2); c.fill();
+  }
+}
+
 export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number; kind: TreeKind; s: number }, camX: number, camY: number, t: number) {
   const x = tr.x - camX;
   const y = tr.y - camY;
   const s = tr.s;
   const sway = Math.sin(t * 0.0012 + tr.x * 0.11) * 1.4;
-  c.fillStyle = "rgba(30,50,20,0.25)";
-  c.beginPath(); c.ellipse(x, y + 4, 26 * s, 8 * s, 0, 0, Math.PI * 2); c.fill();
+  // (its shadow is cast on the ground beforehand: drawTreeShadows)
   if (tr.kind === "cherry") {
     drawCherry(c, x, y, s, t);
     return;
@@ -626,6 +680,16 @@ export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number
     const blobs: Array<[number, number, number, string]> = [
       [0, -62, 27, "#79ac49"], [-20, -48, 19, "#6da344"], [20, -50, 20, "#86ba57"], [0, -44, 22, "#71a846"],
     ];
+    // the crown: a darker underside first, then the leaves, then a soft
+    // ink edge so it sits with the storybook people
+    c.fillStyle = "rgba(28,52,22,0.85)";
+    for (const [bx, by, br] of blobs) {
+      c.beginPath(); c.arc(x + bx * s + sway + 2 * s, y + by * s + 5 * s, br * s, 0, Math.PI * 2); c.fill();
+    }
+    c.strokeStyle = "rgba(24,36,14,0.55)"; c.lineWidth = 1;
+    for (const [bx, by, br] of blobs) {
+      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.stroke();
+    }
     for (const [bx, by, br, col] of blobs) {
       c.fillStyle = col;
       c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.fill();
@@ -641,6 +705,16 @@ export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number
       [0, -78, 34, "#4f7d33"], [-30, -58, 25, "#598a39"], [30, -60, 26, "#679c3e"],
       [-12, -44, 24, "#5f943a"], [16, -42, 22, "#74ab4b"], [0, -96, 22, "#5f943a"],
     ];
+    // the crown: a darker underside first, then the leaves, then a soft
+    // ink edge so it sits with the storybook people
+    c.fillStyle = "rgba(28,52,22,0.85)";
+    for (const [bx, by, br] of blobs) {
+      c.beginPath(); c.arc(x + bx * s + sway + 2 * s, y + by * s + 5 * s, br * s, 0, Math.PI * 2); c.fill();
+    }
+    c.strokeStyle = "rgba(24,36,14,0.55)"; c.lineWidth = 1;
+    for (const [bx, by, br] of blobs) {
+      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.stroke();
+    }
     for (const [bx, by, br, col] of blobs) {
       c.fillStyle = col;
       c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.fill();

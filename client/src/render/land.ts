@@ -1,3 +1,4 @@
+import { CAM } from "./shapes";
 import { BRIDGES, type CropKind, FIELDS, GARDENS, RIVER_HALF, riverY } from "../data/land";
 import { hash2, type Rect } from "../world/geometry";
 
@@ -10,7 +11,7 @@ const visible = (r: Rect, camX: number, camY: number, vw: number, vh: number) =>
   r.x + r.w > camX && r.x < camX + vw && r.y + r.h > camY - 40 && r.y < camY + vh;
 
 function plant(c: CanvasRenderingContext2D, crop: CropKind, x: number, y: number, t: number, seed: number): void {
-  const sway = Math.sin(t * 0.0016 + x * 0.05 + y * 0.03) * 1.4;
+  const sway = Math.sin(t * 0.0016 + (x + CAM.x) * 0.05 + (y + CAM.y) * 0.03) * 1.4;
   switch (crop) {
     case "buckwheat": // reddish stems, clouds of tiny white-pink flowers
       c.strokeStyle = "#a6503e"; c.lineWidth = 1.4;

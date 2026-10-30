@@ -1,3 +1,4 @@
+import { CAM } from "./shapes";
 import { darken } from "./people";
 import { hash2 } from "../world/geometry";
 
@@ -29,7 +30,7 @@ function shadow(c: CanvasRenderingContext2D, x: number, y: number, rx: number, r
 }
 
 export function drawDomovyk(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const bob = Math.sin(t * 0.0024 + x * 0.2) * 0.8;
+  const bob = Math.sin(t * 0.0024 + (x + CAM.x) * 0.2) * 0.8;
   const top = y - 34 + bob;
   shadow(c, x, y + 1, 12, 3.6);
   // bast shoes (postoly) peeping out under the fur
@@ -83,7 +84,7 @@ export function drawDomovyk(c: CanvasRenderingContext2D, x: number, y: number, t
 }
 
 export function drawLisovyk(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const sway = Math.sin(t * 0.0016 + x * 0.07) * 1.6;
+  const sway = Math.sin(t * 0.0016 + (x + CAM.x) * 0.07) * 1.6;
   shadow(c, x, y + 2, 20, 5, 0.35);
   // the staff, a crooked branch still in leaf
   c.strokeStyle = "#5d4630"; c.lineWidth = 3.4; c.lineCap = "round";
@@ -130,17 +131,17 @@ export function drawLisovyk(c: CanvasRenderingContext2D, x: number, y: number, t
   }
   c.lineCap = "butt";
   // amber eyes that do not blink
-  const glow = 0.72 + Math.sin(t * 0.003 + x) * 0.22;
+  const glow = 0.72 + Math.sin(t * 0.003 + (x + CAM.x)) * 0.22;
   c.fillStyle = `rgba(255,178,44,${glow})`;
   c.beginPath(); c.arc(hx - 3.2, hy - 1, 1.6, 0, Math.PI * 2); c.arc(hx + 3.2, hy - 1, 1.6, 0, Math.PI * 2); c.fill();
 }
 
 export function drawChort(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const hop = Math.abs(Math.sin(t * 0.004 + x * 0.1)) * 1.2;
+  const hop = Math.abs(Math.sin(t * 0.004 + (x + CAM.x) * 0.1)) * 1.2;
   const top = y - 48 - hop;
   shadow(c, x, y + 1, 12, 3.6, 0.3);
   // the tail, with its tuft, wagging like a dog's at a market stall
-  const wag = Math.sin(t * 0.006 + x) * 4;
+  const wag = Math.sin(t * 0.006 + (x + CAM.x)) * 4;
   c.strokeStyle = "#2c1a1e"; c.lineWidth = 2.2; c.lineCap = "round";
   c.beginPath(); c.moveTo(x + 5, top + 32); c.quadraticCurveTo(x + 18, top + 36, x + 16 + wag, top + 20); c.stroke();
   c.fillStyle = "#2c1a1e";

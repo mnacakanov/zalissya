@@ -1,4 +1,4 @@
-import { rr } from "./shapes";
+import { CAM, rr } from "./shapes";
 
 // --- People, storybook style --------------------------------------------------
 // The owner chose the "storybook" look for people (variant C of the style
@@ -90,7 +90,7 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
   const hh = H / HEADS;
   // walking: a bob, legs stepping, arms swinging against them
   const step = o.moving ? Math.sin(o.phase) : 0;
-  const bob = o.moving ? Math.abs(step) * 1.4 : Math.sin(o.t * 0.002 + x * 0.13) * 0.4;
+  const bob = o.moving ? Math.abs(step) * 1.4 : Math.sin(o.t * 0.002 + (x + CAM.x) * 0.13) * 0.4;
   const top = y - H - bob;
   const headCy = top + hh * 0.52;
   const neckY = top + hh;
@@ -214,7 +214,7 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     const ax = x + s * shW * 0.5;
     const ay = shY + hh * 0.15;
     const up = o.pose === "dance";
-    const wave = Math.sin(o.t * 0.006 + x + s) * hh * 0.25;
+    const wave = Math.sin(o.t * 0.006 + (x + CAM.x) + s) * hh * 0.25;
     const hx = up ? x + s * shW * 0.95 + wave * 0.5 : x + s * shW * 0.62 + swing * 0.4;
     const hy = up ? top + hh * 0.2 + wave : hip - hh * 0.1 - Math.abs(swing) * 0.3;
     limb(ax, ay, hx, hy, hh * 0.36, s > 0 ? darken(armCol, 0.82) : armCol);
