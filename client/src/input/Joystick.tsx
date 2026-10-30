@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "../i18n";
 
 // Floating joystick — GITHUB PAGES ONLY (gated by JOYSTICK_ALLOWED from
 // platform/target). Never render it in the Muse build: the Muse app shell's
@@ -44,7 +45,7 @@ export function Joystick(props: { stickRef: { current: { x: number; y: number } 
     <div className="flex flex-col items-center gap-1.5" style={{ touchAction: "none" }}>
       <div
         role="application"
-        aria-label="Floating joystick — drag to walk"
+        aria-label={t("input.Joystick.0")}
         onPointerDown={(e) => {
           e.preventDefault();
           pointerRef.current = e.pointerId;
@@ -69,7 +70,8 @@ export function Joystick(props: { stickRef: { current: { x: number; y: number } 
         />
       </div>
       <p className="pointer-events-none text-[10px] font-semibold tracking-wide text-[#f3e9d2] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
-        Drag the stick to walk · WASD works too
+        
+        {t("input.Joystick.1")}
       </p>
     </div>
   );

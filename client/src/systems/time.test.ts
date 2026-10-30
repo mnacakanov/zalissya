@@ -28,6 +28,6 @@ describe("clock", () => {
     expect(darkness(12 * 60)).toBe(0);
     expect(darkness(23 * 60)).toBeCloseTo(0.62);
     expect(darkness(5 * 60)).toBeGreaterThan(0);
-    expect(timeLabel({ day: 2, minute: 21 * 60 + 5 })).toBe("Day 2 · 21:05 🌙");
+    expect(timeLabel({ day: 2, minute: 21 * 60 + 5 })).toMatch(/ 2 · 21:05 🌙$/);
   });
 });

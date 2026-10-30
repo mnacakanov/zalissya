@@ -20,20 +20,23 @@ client/src/
   App.tsx            the game component: state, the frame loop, interaction, HUD and sheets
   main.tsx           React root (QueryClient from platform/target)
   api.ts             THE storage boundary: `save` (the platform's SaveAdapter)
-  platform/          target.ts (Muse) / target.pages.ts (Pages): save adapter, QueryClient, scrim, JOYSTICK_ALLOWED
+  i18n/              t(key, params), the language (Ukrainian by default), LANGS
+  content/locales/   uk.json / en.json — EVERY player-facing string (see content/README.md)
+  platform/          target.ts (Muse) / target.pages.ts (Pages): save adapter, QueryClient, scrim, JOYSTICK_ALLOWED; prefs.ts (per-device settings)
   save/              types.ts (SaveData, SaveAdapter, areas, limits), muse.ts, local.ts
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
   data/              village / lysa / huts layouts, items (herbs, spots, catch), characters (+ charPos)
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), viyNight.ts (Viy's night storyline)
   systems/           flags, skills, stats, carry, time (day/night), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
-  input/             PadButton (D-pad cell), Joystick (Pages only)
-  ui/types.ts        Prompt, Dialogue and friends
+  input/             PadButton (D-pad cell), Joystick (Pages only), gamepad.ts (controllers, Steam Deck)
+  ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
 server/src/          Muse server actions and drizzle schema (one save slot)
 drizzle/             migrations (numbered; never edit an old one)
 pages/               Pages tooling: package.json, build.ts, tsconfig + type shims for the Muse SDK
 docs/index.html      the OLD hand-made Pages build. Retire it once the Actions deploy is live.
 DESIGN.md            the design record: how each build changed the game
+PORTING.md           the plan for native mobile / Steam Deck builds
 ```
 
 ## Commands
@@ -77,6 +80,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 ## Recipes
 
 - **New quest:** add a `QuestDef` in `systems/quests.ts`, put its id in `PRIORITY`, and add a test in `quests.test.ts`.
+- **New text:** add the key to `content/locales/en.json` **and** `uk.json`, then use `t("your.key")`.
 - **New conversation topic:** add it in `dialogue/topics.ts`, or in a story module like `dialogue/viyNight.ts` that is appended in `App.tsx`. A topic with `grant` hands over an item through `applyGrant`.
 - **New interactable:** add a `Prompt` kind (`ui/types.ts`), detect it in the frame loop's "nearest interactable" block, handle it in `doInteract`, and give it a label in `promptLabel`.
 - **New area:** add it to `AreaId` (`world/areas.ts`) **and** `SAVE_AREAS` (`save/types.ts`) **and** `areaEnum` in `server/src/actions.ts`. The column is plain text, so no migration is needed.
@@ -84,11 +88,13 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
 ## Rules (do not break these)
 
-1. **Naming.** Use Ukrainian transliteration, S.T.A.L.K.E.R. 2 style (Zalissya, not Zalesye), for **villages, people, spirits/monsters, and herbs**. Examples: Myroslav, Vesna, Domovyk, Lisovyk, Chort, Bolotianyk, Viy, Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy, nechyst.
+0. **No player-facing text in code.** Every string a player can see or hear (labels, toasts, dialogue, aria-labels, canvas name tags) goes in `client/src/content/locales/` and is read with `t("key", params)`. Add each key to **both** `en.json` and `uk.json`; the i18n test fails otherwise. Ukrainian is the default language. Don't build sentences from fragments or put English grammar in code (plural "s", capitalising): write whole sentences with `{placeholders}`. Keep the game portable: `PORTING.md`.
+
+1. **Naming.** In the **English** locale, use Ukrainian transliteration, S.T.A.L.K.E.R. 2 style (Zalissya, not Zalesye), for **villages, people, spirits/monsters, and herbs**. The Ukrainian locale uses the real words (Залісся, Мирослав, Вій), and Radek is Радек. Examples: Myroslav, Vesna, Domovyk, Lisovyk, Chort, Bolotianyk, Viy, Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy, nechyst.
    - Use English for **skill names** (Herbalism, Fishing, Cooking, Smithing, Alchemy), **common buildings** ("huts", never "khaty"), and everyday items (chalk, wreath).
    - **Radek stays Polish.** He is a Polish smith visiting from afar.
    - The mapping: г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y, й→y. The healer is a **znakharka** (one word).
-2. **Controls.** The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
+2. **Controls.** Every action must work by keyboard, by touch buttons, and by gamepad (`input/gamepad.ts`: A interact, B back, LB/RB look away, Start/Back for the sheets). The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
 3. **Never commit `app.db` or any save data.** That includes exported saves, localStorage dumps, `.db` and `.sqlite` files. `.gitignore` covers them, so don't weaken it.
 4. **Keep the save backward compatible.** Old saves must keep loading. Prefer new flags over schema changes. A server schema change needs a new numbered migration in `drizzle/` plus a `_journal.json` entry. Never edit an existing migration.
 5. **Fighting is folkloric and rare.** Viy's vigil (`systems/viyFight.ts`) is the game's one fight: warding, not weapons. Losing costs the night, never items or progress. Add further combat only as a deliberate, owner-approved feature.

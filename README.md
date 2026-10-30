@@ -2,6 +2,8 @@
 
 A 2D top-down pixel-art RPG set in a Ukrainian folklore village. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
 
+The game is in **Ukrainian** (the default) and **English**; switch on the title screen. It plays with touch, keyboard, or a gamepad (Steam Deck included).
+
 It runs in two places from one codebase:
 - **Muse**, the original fullstack web app, which saves on the server.
 - **GitHub Pages**, a static site that saves in the browser. It deploys automatically from `main`.
@@ -41,6 +43,8 @@ It runs in two places from one codebase:
 - **`CLAUDE.md`**: architecture, commands, recipes and rules. Read it first, whether you are a person or an AI session.
 - **`CONTINUING.md`**: working from the Claude mobile app, bringing changes back into Muse, collaborator setup, and the one-time GitHub settings.
 - **`DESIGN.md`**: the design record, one paragraph per build.
+- **`PORTING.md`**: the route to native mobile and Steam Deck builds.
+- **`client/src/content/README.md`**: editing the Ukrainian and English text.
 
 To play locally:
 

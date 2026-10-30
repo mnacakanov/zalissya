@@ -73,3 +73,15 @@ The big boss is faced Gogol's way, not with weapons.
 ## Quests as data
 
 The quest log and the HUD objective used to be two hand-kept if-chains that could drift apart. `systems/quests.ts` now lists every quest once: its section, title, done-test, detail and objective, all derived from the save. A priority list picks the active one. On Lysa Hora the sabbath comes first; at night, with the chalk in hand, the vigil does.
+
+## Two languages, ready to port
+
+All player-facing text moved out of code into `content/locales/uk.json` and `en.json`: about 820 strings, read with `t()`. **Ukrainian is the default.** In Ukrainian the names are simply the real words (Залісся, Мирослав, Вій, знахарка, нечисть); in English they keep the transliteration rules. The language is picked on the title screen or in the Character sheet; switching saves and reloads, because text is resolved at startup. Logic that leaned on English text, such as fish names deciding the catch, now uses ids. Templates were rewritten so that no grammar lives in code.
+
+With native mobile and Steam Deck ports in mind (`PORTING.md`), controllers now work through the browser Gamepad API:
+- the stick or d-pad walks;
+- A interacts, B goes back;
+- the shoulder buttons are LOOK AWAY in the vigil;
+- in dialogues and sheets the d-pad moves a visible focus.
+
+The touch controls hide while a pad is in use.

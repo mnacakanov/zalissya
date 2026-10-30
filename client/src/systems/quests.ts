@@ -1,4 +1,5 @@
 import { flagCount, flagHas } from "./flags";
+import { t } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
 // Every thread the game tracks, as data. Each quest derives its progress
@@ -27,10 +28,10 @@ export type QuestView = {
 
 export type SectionId = "story" | "viy" | "life" | "lysa";
 export const SECTION_TITLES: Record<SectionId, string> = {
-  story: "Story",
-  viy: "Viy's night",
-  life: "Village life",
-  lysa: "Lysa Hora",
+  story: t("quest.section.story"),
+  viy: t("quest.SECTION_TITLES.viy.0"),
+  life: t("quest.SECTION_TITLES.life.0"),
+  lysa: t("quest.SECTION_TITLES.lysa.0"),
 };
 
 type Derived = ReturnType<typeof derive>;
@@ -85,154 +86,154 @@ function derive(v: QuestView) {
 const QUESTS: QuestDef[] = [
   // --- Story
   {
-    id: "meet", section: "story", title: "Meet the villagers",
+    id: "meet", section: "story", title: t("quest.meet.title.0"),
     done: (d) => d.metVillagers >= 3,
-    detail: (d) => `Talk to Myroslav, Vesna and Radek · ${d.metVillagers}/3`,
-    objective: (d) => `Meet the villagers · ${d.metVillagers}/3`,
+    detail: (d) => t("quest.meet.0", { metVillagers: d.metVillagers }),
+    objective: (d) => t("quest.meet.1", { metVillagers: d.metVillagers }),
   },
   {
-    id: "herbs", section: "story", title: "Herbs for Vesna",
+    id: "herbs", section: "story", title: t("quest.herbs.title.0"),
     done: (d) => d.v.herbs >= 5,
-    detail: (d) => `Gather herbs in the clearing · ${Math.min(d.v.herbs, 5)}/5`,
-    objective: (d) => `Gather herbs for Vesna · ${Math.min(d.v.herbs, 5)}/5`,
+    detail: (d) => t("quest.herbs.0", { min: Math.min(d.v.herbs, 5) }),
+    objective: (d) => t("quest.herbs.1", { min: Math.min(d.v.herbs, 5) }),
   },
   {
-    id: "spirits", section: "story", title: "Seek the spirits",
+    id: "spirits", section: "story", title: t("quest.spirits.title.0"),
     done: (d) => d.metSpirits >= 2,
-    detail: (d) => `Find the Domovyk and the Lisovyk · ${d.metSpirits}/2`,
-    objective: (d) => `Seek the spirits · Domovyk & Lisovyk ${d.metSpirits}/2`,
+    detail: (d) => t("quest.spirits.0", { metSpirits: d.metSpirits }),
+    objective: (d) => t("quest.spirits.1", { metSpirits: d.metSpirits }),
   },
   {
-    id: "dark", section: "story", title: "Stranger things stir",
+    id: "dark", section: "story", title: t("quest.dark.title.0"),
     done: (d) => d.metDark >= 2,
-    detail: (d) => `Meet the Chort and the Bolotianyk · ${d.metDark}/2`,
-    objective: (d) => `Stranger things stir · Chort & Bolotianyk ${d.metDark}/2`,
+    detail: (d) => t("quest.dark.0", { metDark: d.metDark }),
+    objective: (d) => t("quest.dark.1", { metDark: d.metDark }),
   },
   {
-    id: "viy", section: "story", title: "Look upon Viy",
+    id: "viy", section: "story", title: t("quest.viy.title.0"),
     done: (d) => d.metViy,
-    detail: () => "Approach Viy in the north-east hollow — look, but do not wake him",
-    objective: () => "Viy sleeps in the north-east hollow — go and see him",
+    detail: () => t("quest.viy.0"),
+    objective: () => t("quest.viy.1"),
   },
 
   // --- Viy's night
   {
-    id: "oldway", section: "viy", title: "The old way",
+    id: "oldway", section: "viy", title: t("quest.oldway.title.0"),
     visible: (d) => d.metViy,
     done: (d) => d.chalk,
-    detail: (d) => (d.chalk ? "Myroslav gave you the blessed chalk, and the old way with it" : "Ask Myroslav how Zalissya once kept Viy asleep"),
-    objective: () => "Viy stirs in his sleep — ask Myroslav about the old way",
+    detail: (d) => (d.chalk ? t("quest.oldway.0") : t("quest.oldway.1")),
+    objective: () => t("quest.oldway.2"),
   },
   {
-    id: "wreath", section: "viy", title: "Vesna's wreath",
+    id: "wreath", section: "viy", title: t("quest.wreath.title.0"),
     visible: (d) => d.chalk,
     done: (d) => flagHas(d.f, "wreath"),
-    detail: (d) => (flagHas(d.f, "wreath") ? "A wreath of polyn and zvirobiy — Viy's gaze takes half" : "Optional · Vesna can weave a wreath against his eyes: 3 herbs, and WIS 2"),
-    objective: () => "Ask Vesna for a wreath against Viy's eyes · 3 herbs",
+    detail: (d) => (flagHas(d.f, "wreath") ? t("quest.wreath.0") : t("quest.wreath.1")),
+    objective: () => t("quest.wreath.2"),
   },
   {
-    id: "ironward", section: "viy", title: "Radek's iron ward",
+    id: "ironward", section: "viy", title: t("quest.ironward.title.0"),
     visible: (d) => d.chalk,
     done: (d) => flagHas(d.f, "ironward"),
-    detail: (d) => (flagHas(d.f, "ironward") ? "Iron nails for the chalk — the first three spirits burn" : "Optional · bring Radek one forged piece from his anvil"),
-    objective: () => "Bring Radek a forged piece for an iron ward",
+    detail: (d) => (flagHas(d.f, "ironward") ? t("quest.ironward.0") : t("quest.ironward.1")),
+    objective: () => t("quest.ironward.2"),
   },
   {
-    id: "vigil", section: "viy", title: "The vigil",
+    id: "vigil", section: "viy", title: t("quest.vigil.title.0"),
     visible: (d) => d.chalk,
     done: (d) => d.sealed,
     detail: (d) =>
       d.sealed
-        ? "You held the circle until cockcrow. Viy sleeps under the hollow, for good"
-        : `At night (21:00–04:00) draw the chalk circle at Viy's hollow and hold until the rooster crows${d.vigilsBroken ? ` · tried ${d.vigilsBroken}×` : ""}`,
+        ? t("quest.vigil.0")
+        : t("quest.vigil.1") + (d.vigilsBroken ? t("quest.vigil.2", { vigilsBroken: d.vigilsBroken }) : ""),
     objective: (d) =>
       d.v.night
-        ? "Night has fallen — draw the chalk circle at Viy's hollow"
-        : "When night falls (21:00), keep Viy's vigil — or sleep till dusk in the Domovyk's bed",
+        ? t("quest.vigil.3")
+        : t("quest.vigil.4"),
   },
 
   // --- Village life
   {
-    id: "domovyk", section: "life", title: "Bread for the Domovyk",
+    id: "domovyk", section: "life", title: t("quest.domovyk.title.0"),
     done: (d) => flagHas(d.f, "stone"),
     detail: (d) =>
       flagHas(d.f, "stone")
-        ? "Bread left, thanks received — his warm stone is yours"
+        ? t("quest.domovyk.0")
         : flagHas(d.f, "offering")
-          ? "The crust is eaten. See what waits by his door"
+          ? t("quest.domovyk.1")
           : flagHas(d.f, "bread")
-            ? "Leave the crust by the pich, inside his hut"
-            : "Take the crust by the campfire and leave it by the Domovyk's pich",
-    objective: (d) => (flagHas(d.f, "offering") ? "Something glints by the Domovyk's pich — go and see" : "Leave the campfire crust for the Domovyk — step inside his hut, by the pich"),
+            ? t("quest.domovyk.2")
+            : t("quest.domovyk.3"),
+    objective: (d) => (flagHas(d.f, "offering") ? t("quest.domovyk.4") : t("quest.domovyk.5")),
   },
   {
-    id: "forge", section: "life", title: "Light Radek's forge",
+    id: "forge", section: "life", title: t("quest.forge.title.0"),
     done: (d) => flagHas(d.f, "horseshoe"),
-    detail: (d) => (flagHas(d.f, "horseshoe") ? "The forge is lit, and the horseshoe is yours" : d.iron >= 3 ? "Bring the bog iron to Radek at the forge" : `Dig bog iron in the pond mud · ${d.iron}/3`),
-    objective: (d) => (d.iron >= 3 ? "Bring the bog iron to Radek at the forge" : `Dig bog iron in the pond mud for Radek · ${d.iron}/3`),
+    detail: (d) => (flagHas(d.f, "horseshoe") ? t("quest.forge.0") : d.iron >= 3 ? t("quest.forge.1") : t("quest.forge.2", { iron: d.iron })),
+    objective: (d) => (d.iron >= 3 ? t("quest.forge.3") : t("quest.forge.4", { iron: d.iron })),
   },
   {
-    id: "soul", section: "life", title: "The Chort's bargain",
+    id: "soul", section: "life", title: t("quest.soul.title.0"),
     visible: (d) => d.soulSold,
     done: (d) => flagHas(d.f, "soulback"),
-    detail: (d) => (flagHas(d.f, "soulback") ? "Bought back — soul, shadow and all" : `Catch fish for the Chort to buy your soul back · ${Math.min(d.fish, d.v.soulPrice)}/${d.v.soulPrice}`),
-    objective: (d) => `Buy your soul back: catch fish for the Chort · ${Math.min(d.fish, d.v.soulPrice)}/${d.v.soulPrice}`,
+    detail: (d) => (flagHas(d.f, "soulback") ? t("quest.soul.0") : t("quest.soul.1", { min: Math.min(d.fish, d.v.soulPrice), soulPrice: d.v.soulPrice })),
+    objective: (d) => t("quest.soul.2", { min: Math.min(d.fish, d.v.soulPrice), soulPrice: d.v.soulPrice }),
   },
   {
-    id: "fishing", section: "life", title: "First catch",
+    id: "fishing", section: "life", title: t("quest.fishing.title.0"),
     done: (d) => d.fishTotal >= 1,
-    detail: (d) => (d.fishTotal > 0 ? `Lifetime catch · ${d.fishTotal} fish` : "Cast from the pond's west shore and wait for the bite"),
-    objective: () => "Try fishing from the pond's west shore",
+    detail: (d) => (d.fishTotal > 0 ? t("quest.fishing.0", { fishTotal: d.fishTotal }) : t("quest.fishing.1")),
+    objective: () => t("quest.fishing.2"),
   },
   {
-    id: "cooking", section: "life", title: "Cook karas soup",
+    id: "cooking", section: "life", title: t("quest.cooking.title.0"),
     done: (d) => d.cooked >= 1,
-    detail: () => "At the campfire pot · 1 fish + 1 herb",
-    objective: () => "Cook karas soup at the campfire pot · 1 fish + 1 herb",
+    detail: () => t("quest.cooking.0"),
+    objective: () => t("quest.cooking.1"),
   },
   {
-    id: "smithing", section: "life", title: "Work the forge",
+    id: "smithing", section: "life", title: t("quest.smithing.title.0"),
     done: (d) => d.smithed >= 1,
-    detail: (d) => (flagHas(d.f, "horseshoe") ? "Work the anvil at Radek's lit forge" : "Needs Radek's forge lit first"),
-    objective: () => "Work Radek's forge — stand at the anvil and hammer",
+    detail: (d) => (flagHas(d.f, "horseshoe") ? t("quest.smithing.0") : t("quest.smithing.1")),
+    objective: () => t("quest.smithing.2"),
   },
   {
-    id: "alchemy", section: "life", title: "Brew a tonic",
+    id: "alchemy", section: "life", title: t("quest.alchemy.title.0"),
     done: (d) => d.brewed >= 1,
-    detail: () => "At Vesna's drying rack, by the north-east hut · 2 herbs",
-    objective: () => "Brew a tonic at Vesna's drying rack, by the north-east hut · 2 herbs",
+    detail: () => t("quest.alchemy.0"),
+    objective: () => t("quest.alchemy.1"),
   },
 
   // --- Lysa Hora
   {
-    id: "lysa-visit", section: "lysa", title: "Climb to Lysa Hora",
+    id: "lysa-visit", section: "lysa", title: t("quest.lysa-visit.title.0"),
     done: (d) => d.visitedLysa,
-    detail: () => "Follow the east trail out of the clearing",
-    objective: () => "Lysa Hora stirs — follow the east trail out of the clearing to the Chort's sabbath",
+    detail: () => t("quest.lysa-visit.0"),
+    objective: () => t("quest.lysa-visit.1"),
   },
   {
-    id: "lysa-sabbath", section: "lysa", title: "The sabbath",
+    id: "lysa-sabbath", section: "lysa", title: t("quest.lysa-sabbath.title.0"),
     done: (d) => flagHas(d.f, "moonstone"),
     detail: (d) =>
       flagHas(d.f, "moonstone")
-        ? "Beelzebub's blessing received — the Moonstone is yours"
+        ? t("quest.lysa-sabbath.0")
         : flagHas(d.f, "lysaDanced")
-          ? "Ask Beelzebub for his blessing"
+          ? t("quest.lysa-sabbath.1")
           : flagHas(d.f, "lysaOffering")
-            ? "Join the dance, south of the bonfire"
+            ? t("quest.lysa-sabbath.2")
             : d.lysaFlowers >= 3
-              ? "Lay your nichnyky on the offering stone"
-              : `Gather nichnyky on the slopes · ${d.lysaFlowers}/3`,
+              ? t("quest.lysa-sabbath.3")
+              : t("quest.lysa-sabbath.4", { lysaFlowers: d.lysaFlowers }),
     objective: (d) =>
       flagHas(d.f, "moonstone")
-        ? "Blessed by Beelzebub 🌙 — the west trail leads back down to Zalissya"
+        ? t("quest.lysa-sabbath.5")
         : flagHas(d.f, "lysaDanced")
-          ? "Ask Beelzebub for his blessing — the great seat, north of the fire"
+          ? t("quest.lysa-sabbath.6")
           : flagHas(d.f, "lysaOffering")
-            ? "Join the dance — step into the ring south of the bonfire"
+            ? t("quest.lysa-sabbath.7")
             : d.lysaFlowers >= 3
-              ? "Lay your nichnyky on the offering stone, north of the bonfire"
-              : `Gather nichnyky on the slopes for the offering · ${d.lysaFlowers}/3`,
+              ? t("quest.lysa-sabbath.8")
+              : t("quest.lysa-sabbath.9", { lysaFlowers: d.lysaFlowers }),
   },
 ];
 
@@ -260,14 +261,14 @@ export function questLog(v: QuestView): QuestLog {
   const active = activeId ? byId.get(activeId) : undefined;
   const objective =
     v.area === "hut0"
-      ? "Inside the Domovyk's hut — the pich is its warm heart. The door is south."
+      ? t("quest.objective.0")
       : v.area === "hut1"
-        ? "Inside Vesna's hut — mind the cauldron. The door is south."
+        ? t("quest.objective.1")
         : active
           ? active.objective(d)
           : d.sealed
-            ? "Zalissya is home now. The fire is warm, and Viy sleeps under the earth"
-            : "Zalissya is home now. The fire is warm, and Viy still sleeps";
+            ? t("quest.objective.2")
+            : t("quest.objective.3");
 
   const visible = QUESTS.filter(shown);
   const sections = (Object.keys(SECTION_TITLES) as SectionId[])

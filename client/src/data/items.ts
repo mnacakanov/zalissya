@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Gatherable herbs — all keep their Ukrainian names; gathering any of them
 // counts toward the Herbalism skill. Each kind has its own colours so the
 // patches read differently in the grass.
@@ -14,11 +15,11 @@ export type HerbDef = {
 };
 
 export const HERBS: Record<HerbKind, HerbDef> = {
-  kropyva: { name: "Kropyva", pron: "kro-py-VAH", gloss: "nettle", glow: "120,220,110", flower: "#b9e39a", flowerCore: "#eaf7d0", leaf: "#3f7a2e" },
-  polyn: { name: "Polyn", pron: "po-LYN", gloss: "wormwood", glow: "200,205,190", flower: "#d8dcc8", flowerCore: "#f2f2e2", leaf: "#7d8a72" },
-  kalendula: { name: "Kalendula", pron: "ka-len-DOO-lah", gloss: "calendula", glow: "255,150,50", flower: "#f28c1e", flowerCore: "#ffd76a", leaf: "#4c7a2e" },
-  zvirobiy: { name: "Zvirobiy", pron: "zvee-ro-BEEY", gloss: "St. John's wort", glow: "255,205,70", flower: "#f2c416", flowerCore: "#ffe89a", leaf: "#4c7a2e" },
-  dereviy: { name: "Dereviy", pron: "deh-reh-VEEY", gloss: "yarrow", glow: "245,242,230", flower: "#f5f2e6", flowerCore: "#e8c96a", leaf: "#557d3a" },
+  kropyva: { name: t("item.HERBS.name.0"), pron: t("item.HERBS.pron.0"), gloss: t("item.HERBS.gloss.0"), glow: "120,220,110", flower: "#b9e39a", flowerCore: "#eaf7d0", leaf: "#3f7a2e" },
+  polyn: { name: t("item.HERBS.name.1"), pron: t("item.HERBS.pron.1"), gloss: t("item.HERBS.gloss.1"), glow: "200,205,190", flower: "#d8dcc8", flowerCore: "#f2f2e2", leaf: "#7d8a72" },
+  kalendula: { name: t("item.HERBS.name.2"), pron: t("item.HERBS.pron.2"), gloss: t("item.HERBS.gloss.2"), glow: "255,150,50", flower: "#f28c1e", flowerCore: "#ffd76a", leaf: "#4c7a2e" },
+  zvirobiy: { name: t("item.HERBS.name.3"), pron: t("item.HERBS.pron.3"), gloss: t("item.HERBS.gloss.3"), glow: "255,205,70", flower: "#f2c416", flowerCore: "#ffe89a", leaf: "#4c7a2e" },
+  dereviy: { name: t("item.HERBS.name.4"), pron: t("item.HERBS.pron.4"), gloss: t("item.HERBS.gloss.4"), glow: "245,242,230", flower: "#f5f2e6", flowerCore: "#e8c96a", leaf: "#557d3a" },
 };
 
 // --- Village life spots (non-combat interactivity) --------------------------
@@ -49,21 +50,22 @@ export const IRON_SPOTS: Array<{ x: number; y: number }> = [
 
 // What the pond gives up. Karas (карась, crucian carp) keeps its Ukrainian
 // name like the herbs do; the rest of the catch is plain village fare.
-export const FISH_CATCH: Array<{ name: string; w: number }> = [
-  { name: "a karas", w: 34 },
-  { name: "a plump perch", w: 24 },
-  { name: "a roach", w: 20 },
-  { name: "a little tench", w: 12 },
-  { name: "an old boot (the pond gives back)", w: 6 },
-  { name: "a grand old pike!", w: 4 },
+export type FishId = "karas" | "perch" | "roach" | "tench" | "boot" | "pike";
+export const FISH_CATCH: Array<{ id: FishId; name: string; w: number }> = [
+  { id: "karas", name: t("item.karas.name.0"), w: 34 },
+  { id: "perch", name: t("item.perch.name.0"), w: 24 },
+  { id: "roach", name: t("item.roach.name.0"), w: 20 },
+  { id: "tench", name: t("item.tench.name.0"), w: 12 },
+  { id: "boot", name: t("item.boot.name.0"), w: 6 },
+  { id: "pike", name: t("item.pike.name.0"), w: 4 },
 ];
 
 export const WISH_LINES: string[] = [
-  "You drop a pebble in. It falls a long, long time. Somewhere far below, something turns over in its sleep — and settles. The water gives back nothing but your own face, a little paler.",
-  "The pebble sinks. For a moment the well smells of rain that has not fallen yet. They say the well keeps every wish it is ever given, stacked like coins.",
-  "Plip. A ring spreads on the black water below. In the ring, just for a heartbeat, the stars are wrong — too many, and too close. Then it is only a well again.",
-  "You wish quietly, the way the old ones teach: not for gold, not for glory — those wishes curdle. The rope creaks, approving.",
-  "Down in the dark, something small and silver turns once — a fish where no fish should live. The znakharky say a well-fish means the wish was heard.",
+  t("item.WISH_LINES.0"),
+  t("item.WISH_LINES.1"),
+  t("item.WISH_LINES.2"),
+  t("item.WISH_LINES.3"),
+  t("item.WISH_LINES.4"),
 ];
 
 export const HERB_SPOTS: Array<{ x: number; y: number; kind: HerbKind }> = [

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { t } from "../i18n";
 import { questLog, type QuestView } from "./quests";
 
 const view = (over: Partial<QuestView> = {}): QuestView => ({
@@ -10,7 +11,7 @@ describe("quest log", () => {
   test("a new game starts by meeting the villagers", () => {
     const q = questLog(view());
     expect(q.activeId).toBe("meet");
-    expect(q.objective).toBe("Meet the villagers · 0/3");
+    expect(q.objective).toBe(t("quest.meet.1", { metVillagers: 0 }));
     expect(q.sections.map((s) => s.id)).toEqual(["story", "life", "lysa"]);
   });
 
@@ -36,6 +37,6 @@ describe("quest log", () => {
   });
 
   test("hut interiors name the door", () => {
-    expect(questLog(view({ area: "hut1" })).objective).toContain("Vesna's hut");
+    expect(questLog(view({ area: "hut1" })).objective).toBe(t("quest.objective.1"));
   });
 });

@@ -97,3 +97,15 @@ body {
     --accent: #2dd4bf;
   }
 }
+
+/* Gamepad focus: when the last input was a controller, show which button
+   in a dialogue or sheet A will press. (Touch and mouse never see it.) */
+body[data-input="pad"] [data-pad-scope] button:focus {
+  outline: 3px solid #d99a2b;
+  outline-offset: 2px;
+}
+
+/* …and the on-screen pad / joystick step aside while a controller is in use. */
+body[data-input="pad"] [data-touch-controls] {
+  display: none;
+}

@@ -10,8 +10,11 @@ import { FENCES, FIRE, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { canForgeWard, canWeaveWreath, VIGIL_BROKEN_LINES, VIGIL_INTRO_LINES, VIGIL_WON_LINES, type VigilContext, vigilTopics, viyNarration, WREATH_HERBS } from "./dialogue/viyNight";
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
+import { createGamepadReader, lookAwayHeld, moveFocus, type PadState } from "./input/gamepad";
 import { Joystick } from "./input/Joystick";
 import { PadButton } from "./input/PadButton";
+import { type Lang, setLanguage } from "./i18n";
+import { LanguagePicker } from "./ui/LanguagePicker";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
@@ -28,6 +31,7 @@ import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
 import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_SPAWN, PLAYER_R, PLAYER_SPEED, SPAWN, TRAIL_Y_MAX, TRAIL_Y_MIN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, VILLAGE_RETURN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
+import { t } from "./i18n";
 
 // Zalissya — the game component: state, the frame loop, interaction, and
 // the HUD/sheets. Data, dialogue, systems and drawing live in their own
@@ -36,13 +40,13 @@ import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 // The Domovyk's bed (hut0, north-east corner) — sleep here to pass time.
 const BED_SPOT = { x: 635, y: 196 };
 const BED_NPC: Npc = {
-  id: "bed", name: "The Domovyk's bed", pron: "", role: "Straw, sheepskin, and the pich's warmth",
+  id: "bed", name: t("ui.bed.name.0"), pron: "", role: t("ui.bed.role.0"),
   x: BED_SPOT.x, y: BED_SPOT.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
 };
 // Where the chalk ring is drawn for Viy's vigil: just south of his hollow.
 const VIGIL_CENTER = { x: 1420, y: 440 };
 const VIGIL_NPC: Npc = {
-  id: "vigil", name: "The vigil", pron: "", role: "Viy's hollow · one night",
+  id: "vigil", name: t("ui.vigil.name.0"), pron: "", role: t("ui.vigil.role.0"),
   x: VIGIL_CENTER.x, y: VIGIL_CENTER.y, tunic: "#3a3444", hair: "#55506a", style: "elder",
 };
 
@@ -62,6 +66,8 @@ export function App() {
   const padRef = useRef<Set<string>>(new Set());
   // Floating-joystick vector (Pages build only — see input/Joystick.tsx).
   const stickRef = useRef({ x: 0, y: 0 });
+  // Latest gamepad poll (input/gamepad.ts); null while none is connected.
+  const gamepadRef = useRef<PadState | null>(null);
   const patchesRef = useRef(HERB_SPOTS.map((s) => ({ ...s, available: true, respawnAt: 0 })));
   // Nichnyky patches on Lysa Hora — gathered for the offering, and they
   // stay gathered (the mountain counts promises, and flowers).
@@ -107,6 +113,8 @@ export function App() {
   const vigilPendingRef = useRef(false);
 
   const [started, setStarted] = useState(false);
+  const startedRef = useRef(false);
+  startedRef.current = started;
   const [hudArea, setHudArea] = useState<AreaId>("village");
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
@@ -254,8 +262,8 @@ export function App() {
     dirtyRef.current = true;
     showToast(
       hut === 0
-        ? "You duck into the Domovyk's hut — pich-warm, smelling of bread and woodsmoke."
-        : "You duck into Vesna's hut — herbs overhead, and something green breathing in the cauldron.",
+        ? t("ui.enterHut.0")
+        : t("ui.enterHut.1"),
     );
   };
   const exitHut = () => {
@@ -267,7 +275,7 @@ export function App() {
     promptRef.current = null;
     setPrompt(null);
     dirtyRef.current = true;
-    showToast("Back out into the clearing's daylight.");
+    showToast(t("ui.exitHut.0"));
   };
   // Picking a question from the menu. The blessing topic never pages —
   // it hands straight over to Beelzebub's blessing script, and the
@@ -367,7 +375,7 @@ export function App() {
       setFlag("soulsold");
       setFlag("gold");
       openDialogue(dlg.npc, CHORT_SIGNED_LINES);
-      showToast("You signed. The gold is heavy — and where did your shadow go?");
+      showToast(t("ui.chortChoice.0"));
     } else {
       setFlag("soulkept");
       openDialogue(dlg.npc, CHORT_REFUSED_LINES);
@@ -393,19 +401,19 @@ export function App() {
     if (flagCount(flagsRef.current, "meals") < 1) return;
     bumpCount("meals", -1);
     setFlag("wellfed");
-    showToast("Hot karas soup, herbs and all. You feel sturdier — CON +1 while well fed.");
+    showToast(t("ui.eatMeal.0"));
   };
   const drinkTonic = () => {
     if (flagCount(flagsRef.current, "potions") < 1) return;
     bumpCount("potions", -1);
     setFlag("tonic");
-    showToast("Bitter, bright, clarifying. INT +1 and WIS +1 while the tonic lasts.");
+    showToast(t("ui.drinkTonic.0"));
   };
   const drinkStrongTonic = () => {
     if (flagCount(flagsRef.current, "strongPotions") < 1) return;
     bumpCount("strongPotions", -1);
     setFlag("strongtonic");
-    showToast("Dark, deep, twice as clarifying — Vesna's strong tonic. INT +2 and WIS +2 while it lasts.");
+    showToast(t("ui.drinkStrongTonic.0"));
   };
 
   // --- time --------------------------------------------------------------------
@@ -425,7 +433,7 @@ export function App() {
   };
   const sleepUntil = (target: number, msg: string) => {
     const expired = passTime(minutesUntil(clockRef.current, target));
-    showToast(expired ? `${msg} Yesterday's meal and tonics have worn off.` : msg);
+    showToast(expired ? t("ui.sleepUntil.0", { msg }) : msg);
   };
   // A dialogue whose last page is a row of option buttons.
   const openOptions = (npc: Npc, lines: string[], tag: "sleep", options: DialogueOption[]) => {
@@ -436,8 +444,8 @@ export function App() {
   const pickOption = (tag: "sleep", id: string) => {
     endDialogue();
     if (tag === "sleep") {
-      if (id === "morning") sleepUntil(WAKE_MINUTE, "You sleep like a stone on the Domovyk's warm bed and wake to birdsong.");
-      else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, "You doze the day away. Something small tugs your sleeve: dusk. The Domovyk kept his word.");
+      if (id === "morning") sleepUntil(WAKE_MINUTE, t("ui.pickOption.0"));
+      else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, t("ui.pickOption.1"));
     }
   };
 
@@ -454,15 +462,15 @@ export function App() {
     const f = flagsRef.current;
     if (g === "chalk" && !flagHas(f, "chalk")) {
       setFlag("chalk");
-      showToast("Myroslav's blessed chalk — and the old way with it. Viy can be faced after dark.");
+      showToast(t("ui.applyGrant.0"));
     } else if (g === "wreath" && !flagHas(f, "wreath") && canWeaveWreath(vigilContext())) {
       bumpCount("herbStock", -WREATH_HERBS);
       setFlag("wreath");
-      showToast("Vesna's wreath of polyn and zvirobiy. Viy's gaze will take half.");
+      showToast(t("ui.applyGrant.1"));
     } else if (g === "ironward" && !flagHas(f, "ironward") && canForgeWard(vigilContext())) {
       bumpCount("forged", -1);
       setFlag("ironward");
-      showToast("Three iron nails for the chalk. The first three of the host will burn.");
+      showToast(t("ui.applyGrant.2"));
     }
   };
   const startVigil = () => {
@@ -492,7 +500,7 @@ export function App() {
       setFlag("viySealed");
       passTime(minutesUntil(clockRef.current, 5 * 60 + 40));
       openDialogue(VIGIL_NPC, VIGIL_WON_LINES);
-      showToast("Viy is sealed under the hollow. Keeper of the vigil: WIS +1, CHA +1 ✦");
+      showToast(t("ui.endVigil.0"));
     } else {
       // Nothing is lost but the night: you wake in the Domovyk's bed.
       bumpCount("vigilBroken", 1);
@@ -511,7 +519,7 @@ export function App() {
   const carryBlockedToast = (addWeight: number) => {
     const st = liveStats();
     showToast(
-      `Too heavy — you are carrying ${carriedWeight(flagsRef.current)}/${carryCap(st)}, and that needs ${addWeight} more room. Your STR ${st.str.total} sets the limit; smithing raises it. Put something down first — cook, brew, eat, or hand the iron to Radek.`,
+      t("ui.carryBlockedToast.0", { carriedWeight: carriedWeight(flagsRef.current), carryCap: carryCap(st), addWeight, str: st.str.total }),
     );
   };
 
@@ -526,8 +534,8 @@ export function App() {
     if (herbsIn < cost) {
       showToast(
         recipe === "strong"
-          ? `Vesna's strong tonic wants 3 herbs — you have ${herbsIn}. The glowing patches provide.`
-          : `The cauldron wants 2 herbs from your satchel — you have ${herbsIn}. The glowing patches provide.`,
+          ? t("ui.performBrew.0", { herbsIn })
+          : t("ui.performBrew.1", { herbsIn }),
       );
       return;
     }
@@ -547,15 +555,15 @@ export function App() {
     showToast(
       craftLevel(brewed) > craftLevel(before)
         ? recipe === "strong"
-          ? `The strong tonic settles, dark as well-water at dusk! Alchemy Lv ${craftLevel(brewed)} — INT is now ${liveStats().int.total}. Drink it from your Character sheet.`
-          : `The tonic clears, bright as bottled morning! Alchemy Lv ${craftLevel(brewed)} — INT is now ${liveStats().int.total}. Drink it from your Character sheet.`
+          ? t("ui.performBrew.2", { craftLevel: craftLevel(brewed), int: liveStats().int.total })
+          : t("ui.performBrew.3", { craftLevel: craftLevel(brewed), int: liveStats().int.total })
         : double
           ? recipe === "strong"
-            ? `Two bottles of the strong brew from one batch — a bright mind wastes nothing (INT ${intNow}). · Alchemy Lv ${craftLevel(brewed)}`
-            : `Two bottles from one batch — a bright mind wastes nothing (INT ${intNow}). · Alchemy Lv ${craftLevel(brewed)}`
+            ? t("ui.performBrew.4", { intNow, craftLevel: craftLevel(brewed) })
+            : t("ui.performBrew.5", { intNow, craftLevel: craftLevel(brewed) })
           : recipe === "strong"
-            ? `Vesna's strong tonic, dark and deep. · Alchemy Lv ${craftLevel(brewed)} · ${stock} in satchel`
-            : `A tonic, bitter and bright. · Alchemy Lv ${craftLevel(brewed)} · ${stock} in satchel`,
+            ? t("ui.performBrew.6", { craftLevel: craftLevel(brewed), stock })
+            : t("ui.performBrew.7", { craftLevel: craftLevel(brewed), stock }),
     );
   };
 
@@ -620,7 +628,7 @@ export function App() {
         if (blessingPendingRef.current) {
           blessingPendingRef.current = false;
           setFlag("moonstone");
-          showToast("The Moonstone of Lysa Hora is yours — WIS +1, CHA +1 while you carry it. 🌙");
+          showToast(t("ui.doInteract.0"));
         }
         if (vigilPendingRef.current) {
           vigilPendingRef.current = false;
@@ -640,34 +648,35 @@ export function App() {
       const dexNow = liveStats().dex;
       const table = FISH_CATCH.map((f) => {
         let w = f.w;
-        if (f.name.includes("pike")) w += (dexNow.total - 1) * 3;
-        else if (f.name.includes("perch")) w += (dexNow.total - 1);
-        else if (f.name.includes("boot")) w = Math.max(1, w - (dexNow.total - 1) * 1.5);
-        return { name: f.name, w };
+        if (f.id === "pike") w += (dexNow.total - 1) * 3;
+        else if (f.id === "perch") w += (dexNow.total - 1);
+        else if (f.id === "boot") w = Math.max(1, w - (dexNow.total - 1) * 1.5);
+        return { id: f.id, name: f.name, w };
       });
       const totalW = table.reduce((s, f) => s + f.w, 0);
       const roll = hash2(Math.floor(now), Math.floor(playerRef.current.x)) * totalW;
       let acc = 0;
-      let caught = table[0]?.name ?? "a karas";
+      let caughtFish = table[0];
       for (const f of table) {
         acc += f.w;
-        if (roll < acc) { caught = f.name; break; }
+        if (roll < acc) { caughtFish = f; break; }
       }
-      if (caught.includes("boot")) {
-        showToast("You caught an old boot. The pond gives back what the village throws in.");
+      const caught = caughtFish?.name ?? "";
+      if (caughtFish?.id === "boot") {
+        showToast(t("ui.doInteract.1"));
       } else if (carriedWeight(flagsRef.current) + 1 > carryCap(liveStats())) {
         // A fish is 1 of weight, and a full satchel holds no fish: it
         // slips back into the pond, uncounted and uneaten.
         showToast(
-          `${caught[0]?.toUpperCase() ?? "A"}${caught.slice(1)} — in your hands, and gone again! No room: carrying ${carriedWeight(flagsRef.current)}/${carryCap(liveStats())}, and a fish weighs 1. Your STR ${liveStats().str.total} sets the limit.`,
+          t("ui.doInteract.2", { fish: caught, carriedWeight: carriedWeight(flagsRef.current), carryCap: carryCap(liveStats()), str: liveStats().str.total }),
         );
       } else {
         bumpCount("fish", 1);
         const total = bumpCount("fishTotal", 1);
         showToast(
           fishLevel(total) > fishLevel(total - 1)
-            ? `Caught ${caught}! Fishing Lv ${fishLevel(total)} — DEX is now ${dexNow.total}. The bite window widens.`
-            : `Caught ${caught}! · Fishing Lv ${fishLevel(total)} (${total} caught)`,
+            ? t("ui.doInteract.3", { caught, fishLevel: fishLevel(total), total: dexNow.total })
+            : t("ui.doInteract.4", { caught, fishLevel: fishLevel(total), total }),
         );
       }
       return;
@@ -698,13 +707,13 @@ export function App() {
           bumpCount("fish", -price);
           setFlag("soulback");
           openDialogue(p.npc, CHORT_TRADE_LINES);
-          showToast("Your soul — and your shadow — are yours again.");
+          showToast(t("ui.talk.0"));
           return;
         }
         // Handing Radek his third lump of bog iron lights the forge.
         if (p.npc.id === "radek" && flagCount(flags, "iron") >= 3 && !flagHas(flags, "horseshoe")) {
           setFlag("horseshoe");
-          showToast("Radek presses a warm horseshoe into your hand — STR +1 while you carry it.");
+          showToast(t("ui.talk.1"));
         }
         // On Lysa Hora everyone speaks the sabbath script — including the
         // Chort, who does no soul-business on the mountain (sabbath rules).
@@ -748,7 +757,7 @@ export function App() {
           // and the failure says exactly what was checked.
           const wisNow = liveStats().wis.total;
           if (patch.kind === "zvirobiy" && wisNow < 2) {
-            showToast(`You reach for the Zvirobiy — and hesitate. You do not truly know this herb yet: WIS check failed (your WIS ${wisNow}, it takes 2). Gather the other herbs first; Vesna's eye will teach yours. The patch stays, unpicked.`);
+            showToast(t("ui.gather.0", { wisNow }));
             return;
           }
           // An herb is 1 of weight; a full satchel picks nothing.
@@ -772,10 +781,10 @@ export function App() {
           if (keen) bumpCount("herbStock", 1);
           showToast(
             herbLevel(herbsRef.current) > herbLevel(before)
-              ? `${def.name} gathered. Herbalism Lv ${herbLevel(herbsRef.current)} — WIS is now ${wis}.`
+              ? t("ui.gather.1", { name: def.name, herbLevel: herbLevel(herbsRef.current), wis })
               : keen
-                ? `${def.name} — and a second stem hiding beneath it! Keen eye (WIS ${wis}).`
-                : `${def.name} gathered · Herbalism Lv ${herbLevel(herbsRef.current)} · ${flagCount(flagsRef.current, "herbStock")} in satchel`,
+                ? t("ui.gather.2", { name: def.name, wis })
+                : t("ui.gather.3", { name: def.name, herbLevel: herbLevel(herbsRef.current), flagCount: flagCount(flagsRef.current, "herbStock") }),
           );
         }
         return;
@@ -783,7 +792,7 @@ export function App() {
       case "cast": {
         const now = performance.now();
         fishingRef.current = { phase: "wait", biteAt: now + 2200 + hash2(Math.floor(now), 17) * 3800, biteEnd: 0 };
-        showToast("Cast… now wait for the bobber to dip.");
+        showToast(t("ui.cast.0"));
         return;
       }
       case "reel":
@@ -791,17 +800,17 @@ export function App() {
         return;
       case "crust":
         setFlag("bread");
-        showToast("You take the crust — and the pinch of salt. For the Domovyk.");
+        showToast(t("ui.crust.0"));
         return;
       case "offer":
         flagsRef.current.delete("bread");
         setFlag("offering");
         syncFlags();
-        showToast("You leave the crust behind the pich, quiet as you can. Something in the hut sighs — happily.");
+        showToast(t("ui.offer.0"));
         return;
       case "gift":
         setFlag("stone");
-        showToast("A smooth river stone, warm as fresh bread. The Domovyk's thanks — CON +1 while you keep it.");
+        showToast(t("ui.gift.0"));
         return;
       case "iron": {
         // A lump is 3 of weight, hauled in the arms: the dig is checked
@@ -810,7 +819,7 @@ export function App() {
         // own lumps can always be carried to Radek, one load at a time.
         const stIron = liveStats();
         if (satchelWeight(flagsRef.current) + 3 > carryCap(stIron)) {
-          showToast(`No way to haul a lump — your satchel load is ${satchelWeight(flagsRef.current)}/${carryCap(stIron)} before iron, and a lump of bog iron weighs 3. Your STR ${stIron.str.total} sets the limit. Cook, brew or eat something down first.`);
+          showToast(t("ui.iron.0", { satchelWeight: satchelWeight(flagsRef.current), carryCap: carryCap(stIron), str: stIron.str.total }));
           return;
         }
         // The third lump (the southern, deepest one) is bedded deep in
@@ -822,7 +831,7 @@ export function App() {
           const str = stIron.str.total;
           const chance = str >= 3 ? 1 : 0.35 + (str - 1) * 0.25;
           if (hash2(Math.floor(performance.now()), 97) >= chance) {
-            showToast(`You heave — the deepest lump does not budge, bedded in black mud. STR check failed (your STR ${str}: it takes STR 3 to force it free, or luck on another heave). Nothing lost — try again.`);
+            showToast(t("ui.iron.1", { str }));
             return;
           }
         }
@@ -830,10 +839,10 @@ export function App() {
         const n = bumpCount("iron", 1);
         showToast(
           n >= 3
-            ? "Bog iron — that's three lumps! Your arms are full: haul them to Radek at the forge."
+            ? t("ui.iron.2")
             : p.idx === 2
-              ? `With a sucking pop, the deepest lump comes FREE! Bog iron (${n}/3 for Radek).`
-              : `Bog iron! A heavy, rust-dark lump (${n}/3 for Radek).`,
+              ? t("ui.iron.3", { n })
+              : t("ui.iron.4", { n }),
         );
         return;
       }
@@ -848,9 +857,9 @@ export function App() {
           const chance = 0.18 + (cha - 1) * 0.07;
           if (hash2(Math.floor(performance.now() / 997), 43) < chance) {
             setFlag("pebble");
-            showToast("Something glints on the well's rim — a lucky pebble. The well liked your wishing (CHA check passed). It puts spring in your hands (DEX +1).");
+            showToast(t("ui.wish.0"));
           } else {
-            showToast(`The well gives back only your face — no pebble this time. CHA check missed (your CHA ${cha}); the well favours a warmer tongue. Meet more of Zalissya and wish again.`);
+            showToast(t("ui.wish.1", { cha }));
           }
         }
         return;
@@ -863,10 +872,10 @@ export function App() {
         if (fishIn < 1 || herbsIn < 1) {
           showToast(
             fishIn < 1 && herbsIn < 1
-              ? "The pot wants 1 fish and 1 herb from your satchel. The pond is west, the herbs glow in the grass."
+              ? t("ui.cook.0")
               : fishIn < 1
-                ? "The pot wants a fish — cast a line from the pond's west shore first."
-                : "The pot wants an herb — gather any glowing patch first (Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy).",
+                ? t("ui.cook.1")
+                : t("ui.cook.2"),
           );
           return;
         }
@@ -877,19 +886,19 @@ export function App() {
         bumpCount("meals", 1);
         showToast(
           craftLevel(cooked) > craftLevel(before)
-            ? `Karas soup! Cooking Lv ${craftLevel(cooked)} — CON is now ${liveStats().con.total}. Eat it from your Character sheet.`
-            : `Karas soup, rich and steaming. · Cooking Lv ${craftLevel(cooked)} · ${flagCount(flagsRef.current, "meals")} meal(s) in satchel`,
+            ? t("ui.cook.3", { craftLevel: craftLevel(cooked), con: liveStats().con.total })
+            : t("ui.cook.4", { craftLevel: craftLevel(cooked), flagCount: flagCount(flagsRef.current, "meals") }),
         );
         return;
       }
       case "smith": {
         if (!flagHas(flagsRef.current, "horseshoe")) {
-          showToast("The forge is cold. It needs bog iron from the pond mud — three lumps for Radek — before anyone can work it.");
+          showToast(t("ui.smith.0"));
           return;
         }
         const nowS = performance.now();
         if (nowS < smithReadyRef.current) {
-          showToast("The iron needs a moment in the heat — and so does your arm. A breath, then hammer again.");
+          showToast(t("ui.smith.1"));
           return;
         }
         // A forged piece is 2 of weight, and the anvil only works for
@@ -912,10 +921,10 @@ export function App() {
         if (master) bumpCount("forged", 1);
         showToast(
           craftLevel(smithed) > craftLevel(before)
-            ? `The hammer rings true! Smithing Lv ${craftLevel(smithed)} — STR is now ${liveStats().str.total}.`
+            ? t("ui.smith.2", { craftLevel: craftLevel(smithed), str: liveStats().str.total })
             : master
-              ? `A masterwork! Two fine pieces off one heat (STR ${str}). · Smithing Lv ${craftLevel(smithed)}`
-              : `Clang… clang… a sound piece of ironwork. · Smithing Lv ${craftLevel(smithed)} · ${flagCount(flagsRef.current, "forged")} forged in satchel`,
+              ? t("ui.smith.3", { str, craftLevel: craftLevel(smithed) })
+              : t("ui.smith.4", { craftLevel: craftLevel(smithed), flagCount: flagCount(flagsRef.current, "forged") }),
         );
         return;
       }
@@ -926,7 +935,7 @@ export function App() {
         // recipe choice, and Vesna's strong tonic (3 herbs) unlocks.
         const herbsIn = flagCount(flagsRef.current, "herbStock");
         if (herbsIn < 2) {
-          showToast(`The cauldron wants 2 herbs from your satchel — you have ${herbsIn}. The glowing patches provide.`);
+          showToast(t("ui.brew.0", { herbsIn }));
           return;
         }
         if (liveStats().int.total >= 3) {
@@ -947,8 +956,8 @@ export function App() {
           const n = bumpCount("lysaFlower", 1);
           showToast(
             n >= 3
-              ? "Nichnyk gathered — that's three. Lay them on the offering stone, north of the bonfire."
-              : `Nichnyk gathered · night-blooms ${n}/3 for the offering`,
+              ? t("ui.bloom.0")
+              : t("ui.bloom.1", { n }),
           );
         }
         return;
@@ -956,22 +965,22 @@ export function App() {
       case "offering": {
         const have = flagCount(flagsRef.current, "lysaFlower");
         if (have < 3) {
-          showToast(`The offering stone wants 3 nichnyky — night-blooms from the slopes. You carry ${have}. Motrya knows where they hide.`);
+          showToast(t("ui.offering.0", { have }));
           return;
         }
         bumpCount("lysaFlower", -3);
         setFlag("lysaOffering");
-        showToast("You lay the nichnyky on the cold stone. One by one, they open — and the whole ring of standing stones seems to lean closer.");
+        showToast(t("ui.offering.1"));
         return;
       }
       case "dance": {
         if (!flagHas(flagsRef.current, "lysaOffering")) {
-          showToast("The witches shake their heads — no dance before the offering. Three nichnyky on the stone, north of the fire, first.");
+          showToast(t("ui.dance.0"));
           return;
         }
         danceUntilRef.current = performance.now() + 5000;
         setFlag("lysaDanced");
-        showToast("You step into the ring and keep the turn — the witches whoop, the devils stamp, and the fire dances with you. Now: Beelzebub is waiting.");
+        showToast(t("ui.dance.1"));
         return;
       }
       case "blessing":
@@ -982,12 +991,12 @@ export function App() {
         const c = clockRef.current;
         openOptions(
           BED_NPC,
-          [`Straw, a sheepskin, and the pich's warmth through the wall. ${timeLabel(c)}. How long will you lie down?`],
+          [t("ui.sleep.0", { timeLabel: timeLabel(c) })],
           "sleep",
           [
-            { id: "morning", label: "Sleep until morning 🌅", aria: "Sleep until seven in the morning" },
-            { id: "night", label: "Rest until nightfall 🌙", aria: "Rest until nine in the evening" },
-            { id: "cancel", label: "Not now", aria: "Get up again" },
+            { id: "morning", label: t("ui.sleep.morning.label.0"), aria: t("ui.sleep.morning.aria.0") },
+            { id: "night", label: t("ui.sleep.night.label.0"), aria: t("ui.sleep.night.aria.0") },
+            { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.aria.0") },
           ],
         );
         return;
@@ -1000,6 +1009,66 @@ export function App() {
   };
   const interactRef = useRef(doInteract);
   interactRef.current = doInteract;
+
+  // Gamepad buttons — polled always (the title screen too). Movement and
+  // look-away are read from gamepadRef by the frame loop; here are the
+  // presses. In a dialogue or sheet (data-pad-scope) the d-pad moves focus
+  // between its buttons and A presses the focused one.
+  const padPress = (s: PadState) => {
+    const pressed = s.pressed;
+    if (pressed.size) document.body.dataset.input = "pad";
+    if (!startedRef.current) {
+      if (pressed.has("a") || pressed.has("start")) setStarted(true);
+      return;
+    }
+    if (fightRef.current) {
+      if (pressed.has("a")) wardQueuedRef.current = true;
+      return;
+    }
+    const scope = document.querySelector("[data-pad-scope]");
+    if (scope) {
+      if (pressed.has("down") || pressed.has("right")) moveFocus(scope, 1);
+      if (pressed.has("up") || pressed.has("left")) moveFocus(scope, -1);
+    }
+    if (pressed.has("a")) {
+      const el = document.activeElement;
+      if (scope && el instanceof HTMLButtonElement && scope.contains(el)) el.click();
+      else interactRef.current();
+    }
+    if (pressed.has("b")) {
+      if (panelRef.current) closePanel();
+      else if (dialogueRef.current?.view === "menu") endDialogue();
+    }
+    if (pressed.has("start")) {
+      if (panelRef.current) closePanel();
+      else if (!dialogueRef.current) openPanel("stats");
+    }
+    if (pressed.has("back")) {
+      if (panelRef.current) closePanel();
+      else if (!dialogueRef.current) openPanel("quests");
+    }
+  };
+  const padPressRef = useRef(padPress);
+  padPressRef.current = padPress;
+  useEffect(() => {
+    const read = createGamepadReader();
+    let raf = 0;
+    const poll = () => {
+      const s = read();
+      gamepadRef.current = s;
+      if (s) padPressRef.current(s);
+      raf = requestAnimationFrame(poll);
+    };
+    raf = requestAnimationFrame(poll);
+    const touched = () => {
+      document.body.dataset.input = "touch";
+    };
+    window.addEventListener("pointerdown", touched);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointerdown", touched);
+    };
+  }, []);
 
   // Keyboard
   useEffect(() => {
@@ -1070,6 +1139,11 @@ export function App() {
       if (pad.has("down")) my += 1;
       if (pad.has("left")) mx -= 1;
       if (pad.has("right")) mx += 1;
+      const gp = gamepadRef.current;
+      if (gp) {
+        mx += gp.x;
+        my += gp.y;
+      }
       mx += stickRef.current.x;
       my += stickRef.current.y;
       const len = Math.hypot(mx, my);
@@ -1107,20 +1181,20 @@ export function App() {
         const mins = Math.floor(clockAccRef.current / MS_PER_GAME_MINUTE);
         if (mins >= 5) {
           clockAccRef.current -= mins * MS_PER_GAME_MINUTE;
-          if (passTime(mins)) showToast("Dawn over Zalissya. Last night's meal and tonics have worn off.");
+          if (passTime(mins)) showToast(t("ui.frame.0"));
         }
       }
 
       // --- Viy's vigil
       const fight = fightRef.current;
-      const lookingAway = lookHeldRef.current || keysRef.current.has("shift") || keysRef.current.has("l");
+      const lookingAway = lookHeldRef.current || keysRef.current.has("shift") || keysRef.current.has("l") || lookAwayHeld(gamepadRef.current);
       if (fight) {
         const events = stepFight(fight, dt, { lookAway: lookingAway, ward: wardQueuedRef.current });
         wardQueuedRef.current = false;
         for (const e of events) {
-          if (e.kind === "gazeWarning") showToast("“LIFT MY EYELIDS!” The servants strain at their forks. Look away before they open!");
-          else if (e.kind === "gazeHit") showToast(`You met his eyes! Nerve −${e.damage}.`);
-          else if (e.kind === "gazeAvoided") showToast("The lids fall again. You never looked.");
+          if (e.kind === "gazeWarning") showToast(t("ui.frame.1"));
+          else if (e.kind === "gazeHit") showToast(t("ui.frame.2", { damage: e.damage }));
+          else if (e.kind === "gazeAvoided") showToast(t("ui.frame.3"));
         }
         if (fight.outcome) {
           endVigil(fight.outcome === "won");
@@ -1150,9 +1224,9 @@ export function App() {
           promptKey = "";
           if (!flagHas(flagsRef.current, "visitedLysa")) {
             setFlag("visitedLysa");
-            showToast("The trail climbs… and climbs… and the trees give up. Lysa Hora. The Bald Mountain. Something is dancing around a fire up there.");
+            showToast(t("ui.frame.4"));
           } else {
-            showToast("Lysa Hora — the sabbath is still going.");
+            showToast(t("ui.frame.5"));
           }
           dirtyRef.current = true;
         } else if (area === "lysa" && p.x <= PLAYER_R + 6 && p.y >= 400 && p.y <= 560) {
@@ -1163,7 +1237,7 @@ export function App() {
           promptRef.current = null;
           setPrompt(null);
           promptKey = "";
-          showToast("Down the trail, back under the trees — Zalissya, and honest daylight.");
+          showToast(t("ui.frame.6"));
           dirtyRef.current = true;
         } else if (area === "village" && my < 0 && Math.abs(p.x - 384) < 34 && p.y >= 316 && p.y <= 342) {
           // Walking up into the Domovyk's hut door (north-west hut).
@@ -1194,7 +1268,7 @@ export function App() {
           fishing.biteEnd = now + 1100 + (liveStats().dex.total - 1) * 120;
         } else if (fishing.phase === "bite" && now > fishing.biteEnd) {
           fishingRef.current = null;
-          setToast("It slipped away… the bobber settles. Cast again when ready.");
+          setToast(t("ui.frame.7"));
         }
       }
 
@@ -1406,7 +1480,7 @@ export function App() {
         });
         // name tag — each kind floats at its own height (Viy's is a warning)
         const tagLift = npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "bolotianyk" ? 58 : 66;
-        const tagText = npc.id === "viy" ? "Вій · Viy" : npc.name;
+        const tagText = npc.id === "viy" ? t("ui.tagText.0") : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
           draw: () => {
@@ -1532,6 +1606,23 @@ export function App() {
     storeControlPref(next);
   };
 
+  // Switching language saves the game first, then reloads: every module
+  // resolves its text once, at startup (see i18n/index.ts).
+  const switchLanguage = async (l: Lang) => {
+    if (started && loadedRef.current) {
+      await save.save({
+        x: Math.round(playerRef.current.x),
+        y: Math.round(playerRef.current.y),
+        area: areaRef.current,
+        talked: [...talkedRef.current],
+        herbs: herbsRef.current,
+        flags: [...flagsRef.current],
+      });
+    }
+    setLanguage(l);
+    window.location.reload();
+  };
+
   const onReset = () => {
     resetMut.mutate(undefined, {
       onSuccess: () => {
@@ -1593,76 +1684,76 @@ export function App() {
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
   const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute) });
-  const objective = hudFight ? "Hold the chalk circle until the rooster crows" : quests.objective;
+  const objective = hudFight ? t("ui.objective.0") : quests.objective;
   const promptHerb =
     prompt?.kind === "gather" ? HERBS[HERB_SPOTS[prompt.idx]?.kind ?? "kropyva"] : null;
   const promptLabel = !prompt
     ? ""
     : prompt.kind === "talk"
-      ? prompt.npc.id === "viy" ? "Approach · Viy" : `Talk · ${prompt.npc.name}`
+      ? prompt.npc.id === "viy" ? t("ui.promptLabel.0") : t("ui.promptLabel.1", { name: prompt.npc.name })
       : prompt.kind === "enter"
-        ? "Step inside 🚪"
+        ? t("ui.promptLabel.2")
         : prompt.kind === "exit"
-          ? "Step outside"
+          ? t("ui.promptLabel.3")
           : prompt.kind === "gather"
-        ? `Gather ${promptHerb?.name ?? "herb"} 🌿`
+        ? t("ui.promptLabel.4", { herb: promptHerb?.name ?? "" })
         : prompt.kind === "cast"
-          ? "Cast a line 🎣"
+          ? t("ui.promptLabel.5")
           : prompt.kind === "reel"
-            ? "REEL IN! 🎣"
+            ? t("ui.promptLabel.6")
             : prompt.kind === "crust"
-              ? "Take the crust 🍞"
+              ? t("ui.promptLabel.7")
               : prompt.kind === "offer"
-                ? "Leave the crust by the pich"
+                ? t("ui.promptLabel.8")
                 : prompt.kind === "gift"
-                  ? "Something glints by the door…"
+                  ? t("ui.promptLabel.9")
                   : prompt.kind === "iron"
-                    ? "Dig bog iron"
+                    ? t("ui.promptLabel.10")
                     : prompt.kind === "cook"
-                      ? "Cook karas soup 🍲"
+                      ? t("ui.promptLabel.11")
                       : prompt.kind === "smith"
-                        ? "Work the forge 🔨"
+                        ? t("ui.promptLabel.12")
                         : prompt.kind === "brew"
-                          ? stats.int.total >= 3 ? "Brew — choose a recipe ⚗" : "Brew a tonic ⚗"
+                          ? stats.int.total >= 3 ? t("ui.promptLabel.13") : t("ui.promptLabel.14")
                           : prompt.kind === "bloom"
-                            ? "Gather nichnyk 🌙"
+                            ? t("ui.promptLabel.15")
                             : prompt.kind === "offering"
-                              ? "Lay the offering 🌙"
+                              ? t("ui.promptLabel.16")
                               : prompt.kind === "dance"
-                                ? "Join the dance 💃"
+                                ? t("ui.promptLabel.17")
                                 : prompt.kind === "sleep"
-                                  ? "Lie down 🛏"
+                                  ? t("ui.promptLabel.18")
                                   : prompt.kind === "vigil"
-                                    ? "Draw the chalk circle ◯"
-                                    : "Make a wish ✨";
+                                    ? t("ui.promptLabel.19")
+                                    : t("ui.promptLabel.20");
   const promptAria = !prompt
     ? ""
     : prompt.kind === "talk"
-      ? prompt.npc.id === "viy" ? "Approach Viy — carefully" : `Talk to ${prompt.npc.name}`
+      ? prompt.npc.id === "viy" ? t("ui.promptAria.0") : t("ui.promptAria.1", { name: prompt.npc.name })
       : prompt.kind === "vigil"
-        ? "Draw the chalk circle and begin Viy's vigil"
+        ? t("ui.promptAria.2")
         : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯]\s*/g, " ").trim();
   const sealed = flagHas(hudFlags, "viySealed");
   const keepsakes: string[] = [
-    ...(sealed ? ["✦ Keeper of the vigil (WIS +1, CHA +1)"] : []),
-    ...(flagHas(hudFlags, "chalk") && !sealed ? ["◯ Blessed chalk"] : []),
-    ...(flagHas(hudFlags, "wreath") && !sealed ? ["🌿 Vesna's wreath"] : []),
-    ...(flagHas(hudFlags, "ironward") && !sealed ? ["⚒ Iron nails for the chalk"] : []),
-    ...(flagHas(hudFlags, "moonstone") ? ["🌙 Moonstone (WIS +1, CHA +1)"] : []),
-    ...(flagHas(hudFlags, "gold") ? ["🪙 Devil's gold (CHA +2)"] : []),
-    ...(flagHas(hudFlags, "stone") ? ["🪨 Warm stone (CON +1)"] : []),
-    ...(flagHas(hudFlags, "horseshoe") ? ["✦ Horseshoe (STR +1)"] : []),
-    ...(flagHas(hudFlags, "pebble") ? ["✨ Lucky pebble (DEX +1)"] : []),
-    ...(flagHas(hudFlags, "bread") ? ["🍞 Domovyk's crust"] : []),
+    ...(sealed ? [t("ui.keepsakes.0")] : []),
+    ...(flagHas(hudFlags, "chalk") && !sealed ? [t("ui.keepsakes.1")] : []),
+    ...(flagHas(hudFlags, "wreath") && !sealed ? [t("ui.keepsakes.2")] : []),
+    ...(flagHas(hudFlags, "ironward") && !sealed ? [t("ui.keepsakes.3")] : []),
+    ...(flagHas(hudFlags, "moonstone") ? [t("ui.keepsakes.4")] : []),
+    ...(flagHas(hudFlags, "gold") ? [t("ui.keepsakes.5")] : []),
+    ...(flagHas(hudFlags, "stone") ? [t("ui.keepsakes.6")] : []),
+    ...(flagHas(hudFlags, "horseshoe") ? [t("ui.keepsakes.7")] : []),
+    ...(flagHas(hudFlags, "pebble") ? [t("ui.keepsakes.8")] : []),
+    ...(flagHas(hudFlags, "bread") ? [t("ui.keepsakes.9")] : []),
   ];
   // Skill rows for the Character sheet: name, level, lifetime count, and
   // what the next level wants.
   const skillRows: Array<{ name: string; level: number; done: number; next: number | null; stat: string }> = [
-    { name: "Herbalism", level: lvl, done: hudHerbs, next: THRESH[lvl] ?? null, stat: "WIS" },
-    { name: "Fishing", level: fishLvl, done: fishTotal, next: FISH_THRESH[fishLvl] ?? null, stat: "DEX" },
-    { name: "Cooking", level: cookLvl, done: cooked, next: CRAFT_THRESH[cookLvl] ?? null, stat: "CON" },
-    { name: "Smithing", level: smithLvl, done: smithed, next: CRAFT_THRESH[smithLvl] ?? null, stat: "STR" },
-    { name: "Alchemy", level: alchemyLvl, done: brewed, next: CRAFT_THRESH[alchemyLvl] ?? null, stat: "INT" },
+    { name: t("ui.skillRows.name.0"), level: lvl, done: hudHerbs, next: THRESH[lvl] ?? null, stat: t("ui.skillRows.stat.0") },
+    { name: t("ui.skillRows.name.1"), level: fishLvl, done: fishTotal, next: FISH_THRESH[fishLvl] ?? null, stat: t("ui.skillRows.stat.1") },
+    { name: t("ui.skillRows.name.2"), level: cookLvl, done: cooked, next: CRAFT_THRESH[cookLvl] ?? null, stat: t("ui.skillRows.stat.2") },
+    { name: t("ui.skillRows.name.3"), level: smithLvl, done: smithed, next: CRAFT_THRESH[smithLvl] ?? null, stat: t("ui.skillRows.stat.3") },
+    { name: t("ui.skillRows.name.4"), level: alchemyLvl, done: brewed, next: CRAFT_THRESH[alchemyLvl] ?? null, stat: t("ui.skillRows.stat.4") },
   ];
   // --- Quest log: every thread, from systems/quests.ts (the same source
   // as the objective line above, so the two always agree).
@@ -1687,7 +1778,7 @@ export function App() {
         className="absolute inset-0"
         style={{ touchAction: "none", overscrollBehavior: "none" }}
       >
-        <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} aria-label="Zalissya village clearing — game view" />
+        <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} aria-label={t("ui.misc.0")} />
         {/* warm sunlight wash in the village; cold moonwash on Lysa Hora */}
         <div className="pointer-events-none absolute inset-0" style={{ background: hudArea === "lysa" || (hudArea === "village" && isNight(hudClock.minute)) ? "linear-gradient(160deg, rgba(140,160,255,0.13) 0%, rgba(140,160,255,0) 50%)" : isHutArea(hudArea) ? "linear-gradient(165deg, rgba(255,170,80,0.15) 0%, rgba(255,170,80,0) 55%)" : "linear-gradient(135deg, rgba(255,196,86,0.14) 0%, rgba(255,196,86,0) 45%)" }} />
       </div>
@@ -1698,16 +1789,17 @@ export function App() {
           style={{ touchAction: "none", overscrollBehavior: "none" }}
         >
           <div className="w-full max-w-xs rounded-2xl border border-[#d9c491]/50 bg-[#f3e9d2] p-6 text-center shadow-2xl">
-            <h1 className="font-serif text-3xl font-bold text-[#33241a]">Zalissya</h1>
-            <p className="mt-2 text-sm text-[#5d4630]">A Ukrainian folk tale</p>
+            <h1 className="font-serif text-3xl font-bold text-[#33241a]">{t("ui.misc.1")}</h1>
+            <p className="mt-2 text-sm text-[#5d4630]">{t("ui.misc.2")}</p>
             <button
               type="button"
-              aria-label={saveQuery.data?.exists ? "Continue" : "Enter the village"}
+              aria-label={saveQuery.data?.exists ? t("ui.continue") : t("ui.misc.3")}
               onClick={() => setStarted(true)}
               className="mt-5 w-full rounded-xl bg-[#7a4a2b] px-4 py-3 font-serif text-base font-bold text-[#f3e9d2] shadow active:bg-[#5d3a1f]"
             >
-              {saveQuery.data?.exists ? "Continue" : "Enter the village"}
+              {saveQuery.data?.exists ? t("ui.continue") : t("ui.misc.4")}
             </button>
+            <LanguagePicker className="mt-4" onPick={(l) => void switchLanguage(l)} />
           </div>
         </div>
       )}
@@ -1721,7 +1813,7 @@ export function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
-                {hudArea === "lysa" ? "🌙 Lysa Hora · the Bald Mountain" : hudArea === "hut0" ? "🏠 Inside · the Domovyk's hut" : hudArea === "hut1" ? "🏠 Inside · Vesna's hut" : "Zalissya"}
+                {hudArea === "lysa" ? t("ui.misc.5") : hudArea === "hut0" ? t("ui.misc.6") : hudArea === "hut1" ? t("ui.misc.7") : t("ui.zalissya")}
                 <span className="ml-1.5 normal-case tracking-normal text-[#e8d7ad]">{timeLabel(hudClock)}</span>
               </p>
               <p className="font-serif text-[13px] font-bold leading-tight">
@@ -1729,12 +1821,12 @@ export function App() {
               </p>
               {soulLost && (
                 <p className="mt-0.5 text-[11px] font-semibold text-[#f0a696]">
-                  ☠ No shadow — the Chort has your soul ({price} fish buys it back)
+                  {t("ui.hud.soulLost", { price })}
                 </p>
               )}
               {carried > cap && (
                 <p className="mt-0.5 text-[11px] font-semibold text-[#f0a696]">
-                  🎒 Over-full ({carried}/{cap}) — no new pickups until the load lightens
+                  {t("ui.hud.overfull", { carried, cap })}
                 </p>
               )}
             </div>
@@ -1742,48 +1834,48 @@ export function App() {
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  aria-label="Open character sheet — stats, skills and satchel"
+                  aria-label={t("ui.misc.12")}
                   onClick={() => openPanel("stats")}
                   className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
                 >
-                  Character
+                  {t("ui.misc.13")}
                 </button>
                 <button
                   type="button"
-                  aria-label={`Open quest log — ${quests.done} of ${quests.total} quests done`}
+                  aria-label={t("ui.misc.14", { done: quests.done, total: quests.total })}
                   onClick={() => openPanel("quests")}
                   className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
                 >
-                  Quests
+                  {t("ui.misc.15")}
                 </button>
               </div>
               {confirmReset ? (
                 <div className="flex gap-1.5">
                   <button
                     type="button"
-                    aria-label="Confirm new game"
+                    aria-label={t("ui.misc.16")}
                     onClick={onReset}
                     className="rounded-lg bg-[#a83c32] px-3 py-2 text-xs font-bold text-white shadow"
                   >
-                    Start over
+                    {t("ui.misc.17")}
                   </button>
                   <button
                     type="button"
-                    aria-label="Cancel new game"
+                    aria-label={t("ui.misc.18")}
                     onClick={() => setConfirmReset(false)}
                     className="rounded-lg bg-[#1c1409]/70 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow"
                   >
-                    Keep playing
+                    {t("ui.misc.19")}
                   </button>
                 </div>
               ) : (
                 <button
                   type="button"
-                  aria-label="Start a new game"
+                  aria-label={t("ui.misc.20")}
                   onClick={() => setConfirmReset(true)}
                   className="rounded-lg bg-[#1c1409]/55 px-3 py-2 text-xs font-semibold text-[#f3e9d2] backdrop-blur-[2px]"
                 >
-                  New game
+                  {t("ui.misc.21")}
                 </button>
               )}
             </div>
@@ -1801,32 +1893,32 @@ export function App() {
           {/* Pad / Stick toggle — only where a joystick is allowed (the
               GitHub Pages build). Muse never shows it. */}
           {JOYSTICK_ALLOWED && !dialogue && !panelOpen && !hudFight && (
-            <div className="absolute bottom-[212px] left-4 z-10 flex overflow-hidden rounded-lg border border-[#f3e9d2]/40 shadow" role="group" aria-label="Movement control style">
+            <div data-touch-controls className="absolute bottom-[212px] left-4 z-10 flex overflow-hidden rounded-lg border border-[#f3e9d2]/40 shadow" role="group" aria-label={t("ui.misc.22")}>
               {(["pad", "stick"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
                   aria-pressed={controls === c}
-                  aria-label={c === "pad" ? "Use the direction pad" : "Use the floating joystick"}
+                  aria-label={c === "pad" ? t("ui.misc.23") : t("ui.misc.24")}
                   onClick={() => switchControls(c)}
                   className={`px-3 py-2 text-xs font-bold backdrop-blur-[2px] ${controls === c ? "bg-[#d99a2b] text-[#33241a]" : "bg-[#1c1409]/55 text-[#f3e9d2]"}`}
                 >
-                  {c === "pad" ? "Pad" : "Stick"}
+                  {c === "pad" ? t("ui.pad") : t("ui.stick")}
                 </button>
               ))}
             </div>
           )}
           {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && !hudFight && (
-            <div className="absolute bottom-5 left-4 z-10">
+            <div data-touch-controls className="absolute bottom-5 left-4 z-10">
               <Joystick stickRef={stickRef} />
             </div>
           )}
           {controls === "pad" && !dialogue && !panelOpen && !hudFight && (
-            <div
+            <div data-touch-controls
               className="absolute bottom-5 left-4 z-10"
               style={{ touchAction: "none" }}
               role="group"
-              aria-label="Movement controls"
+              aria-label={t("ui.misc.25")}
             >
               {/* Plus-shaped backdrop so the cross reads as one control */}
               <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -1848,7 +1940,7 @@ export function App() {
               </div>
               {padPressed.size === 2 && (
                 <p className="pointer-events-none absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold tracking-wide text-[#f3e9d2] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
-                  Diagonal
+                  {t("ui.misc.26")}
                 </p>
               )}
             </div>
@@ -1863,15 +1955,15 @@ export function App() {
               <div className="pointer-events-none absolute inset-x-0 bottom-[140px] z-10 flex justify-center px-4 pb-safe">
                 <div className="w-full max-w-xs rounded-xl bg-[#1c1409]/75 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
                   <div className="flex justify-between text-[11px] font-semibold">
-                    <span>Nerve</span>
+                    <span>{t("ui.misc.27")}</span>
                     <span>{hudFight.nerve}/{hudFight.max}</span>
                   </div>
                   <div className="mt-1 h-2 rounded-full bg-[#f3e9d2]/20">
                     <div className="h-2 rounded-full bg-[#c23b2a]" style={{ width: `${(100 * hudFight.nerve) / hudFight.max}%` }} />
                   </div>
                   <div className="mt-2 flex justify-between text-[11px] font-semibold">
-                    <span>Until cockcrow 🐓</span>
-                    <span>{Math.max(0, Math.ceil(VIGIL_SECONDS - hudFight.t))}s</span>
+                    <span>{t("ui.misc.28")}</span>
+                    <span>{t("ui.vigil.secondsLeft", { s: Math.max(0, Math.ceil(VIGIL_SECONDS - hudFight.t)) })}</span>
                   </div>
                   <div className="mt-1 h-2 rounded-full bg-[#f3e9d2]/20">
                     <div className="h-2 rounded-full bg-[#d99a2b]" style={{ width: `${Math.min(100, (100 * hudFight.t) / VIGIL_SECONDS)}%` }} />
@@ -1880,13 +1972,13 @@ export function App() {
               </div>
               {hudFight.gaze !== "closed" && (
                 <p className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center font-serif text-2xl font-bold text-[#f0a696] [text-shadow:0_2px_6px_rgba(0,0,0,0.9)]">
-                  {hudFight.gaze === "rising" ? "“Lift my eyelids!”" : lookHeld ? "…eyes covered…" : "DON'T LOOK!"}
+                  {hudFight.gaze === "rising" ? t("ui.misc.30") : lookHeld ? t("ui.misc.31") : t("ui.misc.32")}
                 </p>
               )}
               <div className="absolute inset-x-0 bottom-6 z-10 flex justify-between gap-3 px-4 pb-safe" style={{ touchAction: "none" }}>
                 <button
                   type="button"
-                  aria-label="Look away — hold while Viy's eyes are open"
+                  aria-label={t("ui.misc.33")}
                   aria-pressed={lookHeld}
                   onPointerDown={(e) => {
                     e.preventDefault();
@@ -1903,12 +1995,12 @@ export function App() {
                   }`}
                   style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }}
                 >
-                  Look away 🙈
-                  <span className="text-[10px] font-semibold opacity-75">hold</span>
+                  {t("ui.misc.34")}
+                  <span className="text-[10px] font-semibold opacity-75">{t("ui.misc.35")}</span>
                 </button>
                 <button
                   type="button"
-                  aria-label="Ward — drive back the host from the chalk"
+                  aria-label={t("ui.misc.36")}
                   onPointerDown={(e) => {
                     e.preventDefault();
                     wardQueuedRef.current = true;
@@ -1919,8 +2011,8 @@ export function App() {
                   }`}
                   style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }}
                 >
-                  Ward ✋
-                  <span className="text-[10px] font-semibold opacity-75">{hudFight.ready ? "tap" : "catching breath…"}</span>
+                  {t("ui.misc.37")}
+                  <span className="text-[10px] font-semibold opacity-75">{hudFight.ready ? "tap" : t("ui.misc.38")}</span>
                 </button>
               </div>
             </>
@@ -1953,14 +2045,14 @@ export function App() {
           )}
           {!dialogue && !panelOpen && !hudFight && !prompt && controls === "pad" && (
             <p className="pointer-events-none absolute bottom-6 right-5 z-10 max-w-[38%] text-right text-[11px] leading-snug text-[#f3e9d2]/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
-              Hold a direction to walk · WASD works too
+              {t("ui.misc.39")}
             </p>
           )}
 
           {/* Dialogue */}
           {dialogue && (
             <div className="absolute inset-x-0 bottom-0 z-20 p-3 pb-safe">
-              <div className="mx-auto max-w-xl rounded-2xl border border-[#d9c491]/60 bg-[#f3e9d2] p-4 shadow-2xl">
+              <div data-pad-scope className="mx-auto max-w-xl rounded-2xl border border-[#d9c491]/60 bg-[#f3e9d2] p-4 shadow-2xl">
                 <p className="font-serif text-sm font-bold text-[#7a4a2b]">
                   {dialogue.npc.name}{" "}
                   {dialogue.npc.pron && <span className="font-normal italic text-[#a3805a]">({dialogue.npc.pron}) </span>}
@@ -1968,65 +2060,65 @@ export function App() {
                 </p>
                 {dialogue.view === "topic" && dialogue.topic && (
                   <p className="mt-1 text-[13px] italic text-[#a3805a]">
-                    You ask — “{dialogue.topic.question}”
+                    {t("ui.dialogue.youAsk", { question: dialogue.topic.question })}
                   </p>
                 )}
                 <p className="mt-1.5 min-h-12 text-[15px] leading-relaxed text-[#33241a]">
                   {dialogue.view === "topic" && dialogue.topic
                     ? dialogue.topic.lines[dialogue.topicLine ?? 0]
                     : dialogue.view === "menu"
-                      ? "Ask what you will."
+                      ? t("ui.misc.41")
                       : dialogue.lines[dialogue.line]}
                 </p>
                 {dialogue.view === "menu" && dialogue.topics ? (
                   <div className="mt-2 flex flex-col gap-1.5">
-                    {dialogue.topics.map((t) => {
-                      const asked = dialogue.asked?.includes(t.id) ?? false;
+                    {dialogue.topics.map((topic) => {
+                      const asked = dialogue.asked?.includes(topic.id) ?? false;
                       return (
                         <button
-                          key={t.id}
+                          key={topic.id}
                           type="button"
-                          aria-label={`Ask ${dialogue.npc.name} about ${t.label}`}
-                          onClick={() => selectTopic(t)}
+                          aria-label={t("ui.misc.42", { name: dialogue.npc.name, label: topic.label })}
+                          onClick={() => selectTopic(topic)}
                           className={`rounded-lg px-3.5 py-2 text-left font-serif text-sm font-bold ${
                             asked
                               ? "bg-[#e9dcbc] text-[#8a7350]"
                               : "bg-[#e2d3ae] text-[#5d4630] active:bg-[#d3c096]"
                           }`}
                         >
-                          {asked ? "✓ " : ""}{t.label}
+                          {asked ? "✓ " : ""}{topic.label}
                         </button>
                       );
                     })}
                     <button
                       type="button"
-                      aria-label="End conversation"
+                      aria-label={t("ui.misc.43")}
                       onClick={endDialogue}
                       className="mt-1 rounded-lg bg-[#7a4a2b] px-3.5 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                     >
-                      Farewell
+                      {t("ui.misc.44")}
                     </button>
                   </div>
                 ) : dialogue.view === "topic" && dialogue.topic ? (
                   dialogue.topic.action === "bargain" && (dialogue.topicLine ?? 0) >= dialogue.topic.lines.length - 1 ? (
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="text-[11px] italic text-[#a3805a]">He is holding out a pen…</span>
+                      <span className="text-[11px] italic text-[#a3805a]">{t("ui.misc.45")}</span>
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          aria-label="Sign the Chort's bargain"
+                          aria-label={t("ui.misc.46")}
                           onClick={() => chortChoice(true)}
                           className="rounded-lg bg-[#7e2430] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d1a23]"
                         >
-                          Sign it ✒
+                          {t("ui.misc.47")}
                         </button>
                         <button
                           type="button"
-                          aria-label="Refuse the Chort's bargain"
+                          aria-label={t("ui.misc.48")}
                           onClick={() => chortChoice(false)}
                           className="rounded-lg bg-[#7a4a2b] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                         >
-                          Keep my soul
+                          {t("ui.misc.49")}
                         </button>
                       </div>
                     </div>
@@ -2037,11 +2129,11 @@ export function App() {
                       </span>
                       <button
                         type="button"
-                        aria-label={(dialogue.topicLine ?? 0) + 1 < dialogue.topic.lines.length ? "Next line" : "Back to questions"}
+                        aria-label={(dialogue.topicLine ?? 0) + 1 < dialogue.topic.lines.length ? t("ui.misc.50") : t("ui.misc.51")}
                         onClick={() => interactRef.current()}
                         className="rounded-lg bg-[#7a4a2b] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                       >
-                        {(dialogue.topicLine ?? 0) + 1 < dialogue.topic.lines.length ? "Next" : "Back to questions"}
+                        {(dialogue.topicLine ?? 0) + 1 < dialogue.topic.lines.length ? t("ui.next") : t("ui.misc.52")}
                       </button>
                     </div>
                   )
@@ -2064,53 +2156,53 @@ export function App() {
                     </div>
                   ) : dialogue.choiceKind === "brew" ? (
                     <div className="mt-2">
-                      <span className="text-[11px] italic text-[#a3805a]">The cauldron bubbles, waiting…</span>
+                      <span className="text-[11px] italic text-[#a3805a]">{t("ui.misc.53")}</span>
                       <div className="mt-1.5 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          aria-label="Brew a tonic — two herbs"
+                          aria-label={t("ui.misc.54")}
                           onClick={() => brewChoice("base")}
                           className="rounded-lg bg-[#4c6b35] px-3.5 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#3a5427]"
                         >
-                          Tonic · 2 herbs ⚗
+                          {t("ui.misc.55")}
                         </button>
                         <button
                           type="button"
-                          aria-label="Brew Vesna's strong tonic — three herbs"
+                          aria-label={t("ui.misc.56")}
                           onClick={() => brewChoice("strong")}
                           className="rounded-lg bg-[#5a3a6e] px-3.5 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#462d56]"
                         >
-                          Strong tonic · 3 herbs ✦
+                          {t("ui.misc.57")}
                         </button>
                         <button
                           type="button"
-                          aria-label="Step away from the bench"
+                          aria-label={t("ui.misc.58")}
                           onClick={() => brewChoice(null)}
                           className="rounded-lg bg-[#e2d3ae] px-3.5 py-2 font-serif text-sm font-bold text-[#5d4630] active:bg-[#d3c096]"
                         >
-                          Not now
+                          {t("ui.misc.59")}
                         </button>
                       </div>
                     </div>
                   ) : (
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-[11px] italic text-[#a3805a]">He is holding out a pen…</span>
+                    <span className="text-[11px] italic text-[#a3805a]">{t("ui.misc.60")}</span>
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        aria-label="Sign the Chort's bargain"
+                        aria-label={t("ui.misc.61")}
                         onClick={() => chortChoice(true)}
                         className="rounded-lg bg-[#7e2430] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d1a23]"
                       >
-                        Sign it ✒
+                        {t("ui.misc.62")}
                       </button>
                       <button
                         type="button"
-                        aria-label="Refuse the Chort's bargain"
+                        aria-label={t("ui.misc.63")}
                         onClick={() => chortChoice(false)}
                         className="rounded-lg bg-[#7a4a2b] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                       >
-                        Keep my soul
+                        {t("ui.misc.64")}
                       </button>
                     </div>
                   </div>
@@ -2124,19 +2216,19 @@ export function App() {
                       type="button"
                       aria-label={
                         dialogue.line + 1 < dialogue.lines.length
-                          ? "Next line"
+                          ? t("ui.misc.65")
                           : dialogue.topics
-                            ? "See questions"
-                            : "End conversation"
+                            ? t("ui.misc.66")
+                            : t("ui.misc.67")
                       }
                       onClick={() => interactRef.current()}
                       className="rounded-lg bg-[#7a4a2b] px-4 py-2 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                     >
                       {dialogue.line + 1 < dialogue.lines.length
-                        ? "Next"
+                        ? t("ui.next")
                         : dialogue.topics
-                          ? "Ask a question…"
-                          : "Farewell"}
+                          ? t("ui.misc.68")
+                          : t("ui.farewell")}
                     </button>
                   </div>
                 )}
@@ -2157,58 +2249,58 @@ export function App() {
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#16281a]/60 p-4">
               <div
                 data-scroll-ok
+                data-pad-scope
                 className="max-h-[88dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-[#d9c491]/60 bg-[#f3e9d2] p-4 shadow-2xl"
                 style={{ touchAction: "pan-y" }}
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-lg font-bold text-[#33241a]">{panelTab === "quests" ? "Quests" : "Character"}</h2>
+                  <h2 className="font-serif text-lg font-bold text-[#33241a]">{panelTab === "quests" ? t("ui.quests") : t("ui.character")}</h2>
                   <button
                     type="button"
-                    aria-label={panelTab === "quests" ? "Close quest log" : "Close character sheet"}
+                    aria-label={panelTab === "quests" ? t("ui.misc.69") : t("ui.misc.70")}
                     onClick={closePanel}
                     className="rounded-lg bg-[#7a4a2b] px-3 py-1.5 font-serif text-sm font-bold text-[#f3e9d2] active:bg-[#5d3a1f]"
                   >
-                    Close
+                    {t("ui.misc.71")}
                   </button>
                 </div>
-                <div className="mt-2.5 flex gap-1.5" role="tablist" aria-label="Character sheet sections">
+                <div className="mt-2.5 flex gap-1.5" role="tablist" aria-label={t("ui.misc.72")}>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={panelTab === "stats"}
-                    aria-label="Show stats"
+                    aria-label={t("ui.misc.73")}
                     onClick={() => setPanelTab("stats")}
                     className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "stats" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
-                    Stats
+                    {t("ui.misc.74")}
                   </button>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={panelTab === "skills"}
-                    aria-label="Show skills"
+                    aria-label={t("ui.misc.75")}
                     onClick={() => setPanelTab("skills")}
                     className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "skills" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
-                    Skills
+                    {t("ui.misc.76")}
                   </button>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={panelTab === "quests"}
-                    aria-label="Show quests"
+                    aria-label={t("ui.misc.77")}
                     onClick={() => setPanelTab("quests")}
                     className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "quests" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
-                    Quests
+                    {t("ui.misc.78")}
                   </button>
                 </div>
 
                 {panelTab === "quests" ? (
                   <div className="mt-3">
                     <p className="text-[12px] italic leading-snug text-[#7a6248]">
-                      {quests.done} of {quests.total} done. The step marked <span className="font-bold not-italic text-[#7a4a2b]">Now</span> is
-                      where the story stands — the rest wait their turn, and nothing is lost by wandering.
+                      {t("ui.quests.intro", { done: quests.done, total: quests.total, now: t("ui.misc.83") })}
                     </p>
                     {quests.sections.map((section) => (
                       <div key={section.title} className="mt-3">
@@ -2233,10 +2325,10 @@ export function App() {
                                 <p className={`text-sm font-bold ${st === "todo" ? "text-[#8a7350]" : "text-[#33241a]"}`}>
                                   {q.title}
                                   {st === "active" && (
-                                    <span className="ml-2 rounded-full bg-[#d99a2b] px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-[#33241a]">Now</span>
+                                    <span className="ml-2 rounded-full bg-[#d99a2b] px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-[#33241a]">{t("ui.misc.83")}</span>
                                   )}
                                   {st === "done" && (
-                                    <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-[#7a9a3c]">Done</span>
+                                    <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-[#7a9a3c]">{t("ui.misc.84")}</span>
                                   )}
                                 </p>
                                 <p className="mt-0.5 text-[12px] leading-snug text-[#7a6248]">{q.detail}</p>
@@ -2256,7 +2348,7 @@ export function App() {
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[#33241a]">
                               {d.abbr} · {d.name}{" "}
-                              <span className="font-normal text-[#a3805a]">from {d.feeds}</span>
+                              <span className="font-normal text-[#a3805a]">{t("ui.stats.from", { feeds: d.feeds })}</span>
                             </p>
                             <p className="text-[11px] leading-snug text-[#7a6248]">
                               {d.effect}
@@ -2275,8 +2367,7 @@ export function App() {
                       );
                     })}
                     <p className="mt-2 text-[11px] italic leading-snug text-[#7a6248]">
-                      No points to spend and no dump stats — in Zalissya you become what you do.
-                      The Chort currently prices your soul at {price} fish.
+                      {t("ui.stats.footer", { price })}
                     </p>
                   </div>
                 ) : (
@@ -2285,9 +2376,9 @@ export function App() {
                       <div key={r.name} className="border-b border-[#d9c491]/50 py-1.5 last:border-0">
                         <div className="flex items-baseline justify-between">
                           <p className="text-sm font-bold text-[#33241a]">
-                            {r.name} <span className="font-normal text-[#a3805a]">feeds {r.stat}</span>
+                            {r.name} <span className="font-normal text-[#a3805a]">{t("ui.skills.feeds", { stat: r.stat })}</span>
                           </p>
-                          <p className="font-serif text-base font-bold text-[#7a4a2b]">Lv {r.level}</p>
+                          <p className="font-serif text-base font-bold text-[#7a4a2b]">{t("ui.skills.level", { level: r.level })}</p>
                         </div>
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#e2d3ae]" aria-hidden="true">
                           <div
@@ -2296,7 +2387,7 @@ export function App() {
                           />
                         </div>
                         <p className="mt-0.5 text-[11px] text-[#7a6248]">
-                          {r.next != null ? `${r.done} done · ${r.next} for Lv ${r.level + 1}` : `${r.done} done · master`}
+                          {r.next != null ? t("ui.misc.90", { done: r.done, next: r.next, n: r.level + 1 }) : t("ui.misc.91", { done: r.done })}
                         </p>
                       </div>
                     ))}
@@ -2305,64 +2396,64 @@ export function App() {
 
                 {panelTab !== "quests" && (
                 <div className="mt-3 rounded-xl bg-[#e9dcbc] p-3">
-                  <p className="font-serif text-sm font-bold text-[#33241a]">Satchel</p>
+                  <p className="font-serif text-sm font-bold text-[#33241a]">{t("ui.misc.92")}</p>
                   <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">
-                    🌿 {herbStock} herbs · 🎣 {fish} fish
-                    {lysaFlowers > 0 ? ` · 🌙 ${lysaFlowers} nichnyky` : ""}
-                    {meals > 0 ? ` · 🍲 ${meals} soup` : ""}
-                    {potions > 0 ? ` · ⚗ ${potions} tonic${potions > 1 ? "s" : ""}` : ""}
-                    {strongPotions > 0 ? ` · ⚗✦ ${strongPotions} strong tonic${strongPotions > 1 ? "s" : ""}` : ""}
-                    {forged > 0 ? ` · 🔨 ${forged} forged` : ""}
+                    {t("ui.satchel.basics", { herbStock, fish })}
+                    {lysaFlowers > 0 ? t("ui.misc.95", { lysaFlowers }) : ""}
+                    {meals > 0 ? t("ui.misc.96", { meals }) : ""}
+                    {potions > 0 ? t("ui.misc.97", { potions }) : ""}
+                    {strongPotions > 0 ? t("ui.misc.98", { strongPotions }) : ""}
+                    {forged > 0 ? t("ui.misc.99", { forged }) : ""}
                   </p>
                   <p className={`mt-0.5 text-[12px] leading-snug ${carried > cap ? "font-semibold text-[#a83226]" : "text-[#5d4630]"}`}>
-                    🎒 Carrying {carried} / {cap} — your STR {stats.str.total} sets the limit.
-                    Weights: fish 1 · herb 1 · forged piece 2 · bog iron 3 · nichnyky 0.
-                    {haulingIron ? ` You are hauling ${iron} lump${iron > 1 ? "s" : ""} of bog iron for Radek.` : ""}
-                    {carried > cap ? " Over the limit: nothing new can be picked up until the load lightens — nothing you hold is lost." : ""}
+                    {t("ui.satchel.carrying", { carried, cap, str: stats.str.total })}
+                    {haulingIron ? t("ui.misc.103", { iron }) : ""}
+                    {carried > cap ? t("ui.misc.104") : ""}
                   </p>
                   {keepsakes.length > 0 && (
                     <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">{keepsakes.join(" · ")}</p>
                   )}
                   {(flagHas(hudFlags, "wellfed") || flagHas(hudFlags, "tonic") || flagHas(hudFlags, "strongtonic")) && (
                     <p className="mt-0.5 text-[12px] font-semibold text-[#7a4a2b]">
-                      Active: {[
-                        flagHas(hudFlags, "wellfed") ? "Well fed (CON +1)" : null,
-                        flagHas(hudFlags, "tonic") ? "Tonic clarity (INT +1, WIS +1)" : null,
-                        flagHas(hudFlags, "strongtonic") ? "Strong tonic (INT +2, WIS +2)" : null,
+                      {t("ui.misc.105")} {[
+                        flagHas(hudFlags, "wellfed") ? t("ui.misc.106") : null,
+                        flagHas(hudFlags, "tonic") ? t("ui.misc.107") : null,
+                        flagHas(hudFlags, "strongtonic") ? t("ui.misc.108") : null,
                       ].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      aria-label="Eat a meal of karas soup"
+                      aria-label={t("ui.misc.109")}
                       disabled={meals < 1}
                       onClick={eatMeal}
                       className="rounded-lg bg-[#7a4a2b] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
                     >
-                      Eat soup 🍲
+                      {t("ui.misc.110")}
                     </button>
                     <button
                       type="button"
-                      aria-label="Drink an alchemy tonic"
+                      aria-label={t("ui.misc.111")}
                       disabled={potions < 1}
                       onClick={drinkTonic}
                       className="rounded-lg bg-[#4c6b35] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
                     >
-                      Drink tonic ⚗
+                      {t("ui.misc.112")}
                     </button>
                     <button
                       type="button"
-                      aria-label="Drink Vesna's strong tonic"
+                      aria-label={t("ui.misc.113")}
                       disabled={strongPotions < 1}
                       onClick={drinkStrongTonic}
                       className="rounded-lg bg-[#5a3a6e] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
                     >
-                      Drink strong tonic ✦
+                      {t("ui.misc.114")}
                     </button>
                   </div>
                 </div>
                 )}
+                {panelTab === "stats" && <LanguagePicker className="mt-3" onPick={(l) => void switchLanguage(l)} />}
               </div>
             </div>
           )}

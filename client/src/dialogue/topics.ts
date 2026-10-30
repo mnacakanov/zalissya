@@ -2,6 +2,7 @@ import { type Npc } from "../data/characters";
 import { BREW_SPOT } from "../data/items";
 import { linesFor, linesForLysa } from "./lines";
 import { flagCount, flagHas } from "../systems/flags";
+import { t } from "../i18n";
 
 // --- Branching dialogue: topics ---------------------------------------------
 // Conversations are topic-driven now, not linear scripts. Talking to
@@ -52,58 +53,58 @@ export function topicsForVillage(
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["Back again, traveller? Zalissya keeps, mostly. Ask what you will."],
+          : [t("topic.myroslav.0")],
         topics: [
-          { id: "forest", label: "The forest & the Lisovyk", question: "What walks in the forest?", lines: pickLines(L, 1) },
-          { id: "domovyk", label: "The Domovyk & the bread", question: "Tell me of the house spirit.", lines: pickLines(L, 2, 3) },
-          { id: "viy", label: "Viy", question: "Who is Viy?", lines: pickLines(L, 4) },
-          { id: "radek", label: "Radek the smith", question: "Who is the smith?", lines: pickLines(L, 5) },
-          { id: "dark", label: "The Chort & the pond", question: "What should I fear here?", lines: pickLines(L, 6) },
-          { id: "lysa", label: "Lysa Hora", question: "What is Lysa Hora?", lines: pickLines(L, 7) },
-          { id: "growth", label: "How a person grows here", question: "How does one become someone in Zalissya?", lines: pickLines(L, 8) },
+          { id: "forest", label: t("topic.myroslav.forest.label.0"), question: t("topic.myroslav.forest.question.0"), lines: pickLines(L, 1) },
+          { id: "domovyk", label: t("topic.myroslav.domovyk.label.0"), question: t("topic.myroslav.domovyk.question.0"), lines: pickLines(L, 2, 3) },
+          { id: "viy", label: t("topic.myroslav.viy.label.0"), question: t("topic.myroslav.viy.question.0"), lines: pickLines(L, 4) },
+          { id: "radek", label: t("topic.myroslav.radek.label.0"), question: t("topic.myroslav.radek.question.0"), lines: pickLines(L, 5) },
+          { id: "dark", label: t("topic.myroslav.dark.label.0"), question: t("topic.myroslav.dark.question.0"), lines: pickLines(L, 6) },
+          { id: "lysa", label: t("topic.myroslav.lysa.label.0"), question: t("topic.myroslav.lysa.question.0"), lines: pickLines(L, 7) },
+          { id: "growth", label: t("topic.myroslav.growth.label.0"), question: t("topic.myroslav.growth.question.0"), lines: pickLines(L, 8) },
         ],
       };
     case "vesna": {
       const strongLine =
         intTotal >= 3
-          ? "And the deep work is open to you: my strong tonic — three herbs, and drunk it sharpens mind AND eye twice as deep as the common brew (INT +2, WIS +2). Your INT has reached 3, znakharka. The rack will offer it."
-          : `One secret I keep for a readier mind: my strong tonic — three herbs, worth INT +2 and WIS +2 to whoever drinks it. It unlocks at INT 3; yours stands at ${intTotal}. Keep brewing the common tonic — the rack remembers every batch.`;
+          ? t("topic.vesna.0")
+          : t("topic.vesna.1", { intTotal });
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
           : [herbs >= 5
-              ? "Your basket smells of the whole meadow. Ask, znakharka — I keep few secrets from keen hands."
-              : "Gentle hands. What would you know?"],
+              ? t("topic.vesna.2")
+              : t("topic.vesna.3")],
         topics: [
-          { id: "herbs", label: "The five herbs", question: "Teach me the herbs.", lines: pickLines(L, 1) },
+          { id: "herbs", label: t("topic.vesna.herbs.label.0"), question: t("topic.vesna.herbs.question.0"), lines: pickLines(L, 1) },
           {
-            id: "zvirobiy", label: "Zvirobiy, the shy herb", question: "Why does zvirobiy hide from me?",
+            id: "zvirobiy", label: t("topic.vesna.zvirobiy.label.0"), question: t("topic.vesna.zvirobiy.question.0"),
             lines: herbs >= 5
-              ? ["Zvirobiy hides from no one in this village now — your eye knows it, stem and yellow star. Wisdom opened that door, and doors opened by doing stay open."]
+              ? [t("topic.vesna.zvirobiy.0")]
               : pickLines(L, 2),
           },
           {
-            id: "cooking", label: "Cooking at the campfire", question: "What can I cook?",
+            id: "cooking", label: t("topic.vesna.cooking.label.0"), question: t("topic.vesna.cooking.question.0"),
             lines: herbs >= 5
               ? pickLines(L, 2)
-              : ["At the campfire hangs a pot, and it is not decoration: one pond fish and one herb from your satchel makes a proper karas soup. That is Cooking — and a fed traveller walks brisker. Eat it from your Character sheet."],
+              : [t("topic.vesna.cooking.0")],
           },
           {
-            id: "alchemy", label: "Alchemy & the strong tonic", question: "Teach me alchemy.",
+            id: "alchemy", label: t("topic.vesna.alchemy.label.0"), question: t("topic.vesna.alchemy.question.0"),
             lines: herbs >= 5
               ? pickLines(L, 2, 3)
-              : ["By the north-east hut stands my drying rack: two herbs, worked patiently, become a tonic — that is Alchemy. Drink one and the world goes clear for a while.", strongLine],
+              : [t("topic.vesna.alchemy.0"), strongLine],
           },
           {
-            id: "pond", label: "The pond & fishing", question: "What of the pond?",
+            id: "pond", label: t("topic.vesna.pond.label.0"), question: t("topic.vesna.pond.question.0"),
             lines: herbs >= 5
               ? pickLines(L, 4)
-              : ["When the herbs rest, try the pond shore, west bank. A patient line catches more than karas — it catches quiet. And quiet is a remedy too. Mind the Bolotianyk, though: it is his water first."],
+              : [t("topic.vesna.pond.0")],
           },
           {
-            id: "errand", label: "What you ask of me", question: "What do you need?",
+            id: "errand", label: t("topic.vesna.errand.label.0"), question: t("topic.vesna.errand.question.0"),
             lines: herbs >= 5
-              ? ["Nothing today, keen one. The forest has accepted you — now Zalissya asks only that you keep being what you do."]
+              ? [t("topic.vesna.errand.0")]
               : pickLines(L, 3),
           },
         ],
@@ -111,24 +112,24 @@ export function topicsForVillage(
     }
     case "radek": {
       const home =
-        "My home is a village many days' road from here, far to the west. I came with the spring to lend them my hammer — and the road home can wait until the work is done.";
+        t("topic.radek.0");
       const lit = flagHas(flags, "horseshoe");
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : [lit ? "Mind the sparks, traveller. Ask away." : "Aye? Mind the anvil — she bites. Ask."],
+          : [lit ? t("topic.radek.1") : t("topic.radek.2")],
         topics: lit
           ? [
-              { id: "forge", label: "The lit forge", question: "How does the forge fare?", lines: pickLines(L, 0) },
-              { id: "horseshoe", label: "The horseshoe you gave me", question: "Why a horseshoe?", lines: pickLines(L, 1) },
-              { id: "smithing", label: "Learning smithing", question: "Teach me the anvil.", lines: pickLines(L, 2) },
-              { id: "home", label: "Your home in the west", question: "Where are you from, Radek?", lines: [home] },
+              { id: "forge", label: t("topic.radek.forge.label.0"), question: t("topic.radek.forge.question.0"), lines: pickLines(L, 0) },
+              { id: "horseshoe", label: t("topic.radek.horseshoe.label.0"), question: t("topic.radek.horseshoe.question.0"), lines: pickLines(L, 1) },
+              { id: "smithing", label: t("topic.radek.smithing.label.0"), question: t("topic.radek.smithing.question.0"), lines: pickLines(L, 2) },
+              { id: "home", label: t("topic.radek.home.label.0"), question: t("topic.radek.home.question.0"), lines: [home] },
             ]
           : [
-              { id: "home", label: "Your home in the west", question: "Where are you from, Radek?", lines: pickLines(L, 1) },
-              { id: "iron", label: "Bog iron for the forge", question: "What does your forge need?", lines: pickLines(L, 2) },
-              { id: "lisovyk", label: "Iron & the Lisovyk", question: "Can iron settle the Lisovyk?", lines: pickLines(L, 3) },
-              { id: "viy", label: "Viy & iron", question: "Would iron serve against Viy?", lines: pickLines(L, 4) },
+              { id: "home", label: t("topic.radek.home.label.1"), question: t("topic.radek.home.question.1"), lines: pickLines(L, 1) },
+              { id: "iron", label: t("topic.radek.iron.label.0"), question: t("topic.radek.iron.question.0"), lines: pickLines(L, 2) },
+              { id: "lisovyk", label: t("topic.radek.lisovyk.label.0"), question: t("topic.radek.lisovyk.question.0"), lines: pickLines(L, 3) },
+              { id: "viy", label: t("topic.radek.viy.label.0"), question: t("topic.radek.viy.question.0"), lines: pickLines(L, 4) },
             ],
       };
     }
@@ -138,30 +139,30 @@ export function topicsForVillage(
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : [thanked ? "Hmph. You again. …Sit a moment, then. Ask — quietly." : "Soft feet, new one. Ask, then — quietly."],
+          : [thanked ? t("topic.domovyk.0") : t("topic.domovyk.1")],
         topics: [
           {
-            id: "bread", label: "The bread", question: "What do you want of me?",
+            id: "bread", label: t("topic.domovyk.bread.label.0"), question: t("topic.domovyk.bread.question.0"),
             lines: thanked ? pickLines(L, 0) : fed ? pickLines(L, 0, 1) : pickLines(L, 1, 2),
           },
           {
-            id: "hearth", label: thanked ? "The warm stone" : "Your hut & the pich", question: thanked ? "Tell me of the stone." : "Tell me of this hut.",
+            id: "hearth", label: thanked ? t("topic.domovyk.hearth.0") : t("topic.domovyk.hearth.1"), question: thanked ? t("topic.domovyk.hearth.2") : t("topic.domovyk.hearth.3"),
             lines: thanked
               ? pickLines(L, 1, 2)
               : fed
-                ? ["A hundred winters I have kept this hut: the pich warm, the bread risen, the mice polite. It is not grand work. It is the work that lets all other work happen."]
+                ? [t("topic.domovyk.hearth.4")]
                 : pickLines(L, 0),
           },
           {
-            id: "lisovyk", label: "The Lisovyk", question: "What of the forest spirit?",
+            id: "lisovyk", label: t("topic.domovyk.lisovyk.label.0"), question: t("topic.domovyk.lisovyk.question.0"),
             lines: thanked || fed
-              ? ["The Lisovyk thinks himself grand out there with his pines. Let him. Empires fall; a warm hearth does not."]
+              ? [t("topic.domovyk.lisovyk.0")]
               : pickLines(L, 3),
           },
           {
-            id: "viy", label: "Viy", question: "What of Viy?",
+            id: "viy", label: t("topic.domovyk.viy.label.0"), question: t("topic.domovyk.viy.question.0"),
             lines: thanked || fed
-              ? ["…You smell of the north-east path. You have been near Viy. Do not go clattering about up there, little landlord. If those eyelids ever lift, no pich in Zalissya will keep out the cold that follows."]
+              ? [t("topic.domovyk.viy.0")]
               : pickLines(L, 4),
           },
         ],
@@ -171,13 +172,13 @@ export function topicsForVillage(
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["You again, two-legs. You walk softer than most. Ask."],
+          : [t("topic.lisovyk.0")],
         topics: [
-          { id: "rules", label: "The forest's rules", question: "What are your rules?", lines: pickLines(L, 1) },
-          { id: "vesna", label: "Vesna's eye", question: "What of Vesna?", lines: pickLines(L, 2) },
-          { id: "viy", label: "Viy", question: "What of Viy?", lines: pickLines(L, 3) },
-          { id: "domovyk", label: "The Domovyk", question: "What of the house spirit?", lines: ["The Domovyk? A crumb-god in a warm box, fed on crusts and courtesy. Let him keep his pich — I keep the world that grows the wood for it. We do not quarrel. Much."] },
-          { id: "lost", label: "Getting lost", question: "What happens to the lost?", lines: ["The lost are mine also — I said it when we met, and it is no threat. Walk out greedy or loud, and the paths turn, and turn, and you greet your own footprints until dark. Walk soft, take only what is given, and the pines lean apart like polite neighbours."] },
+          { id: "rules", label: t("topic.lisovyk.rules.label.0"), question: t("topic.lisovyk.rules.question.0"), lines: pickLines(L, 1) },
+          { id: "vesna", label: t("topic.lisovyk.vesna.label.0"), question: t("topic.lisovyk.vesna.question.0"), lines: pickLines(L, 2) },
+          { id: "viy", label: t("topic.lisovyk.viy.label.0"), question: t("topic.lisovyk.viy.question.0"), lines: pickLines(L, 3) },
+          { id: "domovyk", label: t("topic.lisovyk.domovyk.label.0"), question: t("topic.lisovyk.domovyk.question.0"), lines: [t("topic.lisovyk.domovyk.0")] },
+          { id: "lost", label: t("topic.lisovyk.lost.label.0"), question: t("topic.lisovyk.lost.question.0"), lines: [t("topic.lisovyk.lost.0")] },
         ],
       };
     case "chort": {
@@ -185,11 +186,11 @@ export function topicsForVillage(
         return {
           intro: firstMeeting
             ? pickLines(L, 0)
-            : ["My favourite customer returns! Ask away — no pens in sight. Promise."],
+            : [t("topic.chort.0")],
           topics: [
-            { id: "settled", label: "Our bargain, settled", question: "No hard feelings?", lines: pickLines(L, 0, 1) },
-            { id: "lysa", label: "Lysa Hora & the sabbath", question: "Tell me of the sabbath.", lines: pickLines(L, 2) },
-            { id: "mill", label: "The old mill sabbaths", question: "What happened at the old mill?", lines: ["In the old days we kept a fine sabbath up at the old mill — fiddles, dancing, the whole host, and Beelzebub himself presiding! Weddings we crashed by the dozen. A Cossack's soul is a vintage thing, my friend. These nights we keep it grander on Lysa Hora — but I keep a soft spot for a millstone."] },
+            { id: "settled", label: t("topic.chort.settled.label.0"), question: t("topic.chort.settled.question.0"), lines: pickLines(L, 0, 1) },
+            { id: "lysa", label: t("topic.chort.lysa.label.0"), question: t("topic.chort.lysa.question.0"), lines: pickLines(L, 2) },
+            { id: "mill", label: t("topic.chort.mill.label.0"), question: t("topic.chort.mill.question.0"), lines: [t("topic.chort.mill.0")] },
           ],
         };
       }
@@ -197,31 +198,31 @@ export function topicsForVillage(
         return {
           intro: firstMeeting
             ? pickLines(L, 0)
-            : ["My shadowless friend returns! Ask — everything is negotiable. Almost everything."],
+            : [t("topic.chort.1")],
           topics: [
-            { id: "soul", label: "My soul — the price", question: "What will my soul cost me?", lines: pickLines(L, 2) },
-            { id: "gold", label: "The gold & my shadow", question: "Was the bargain fair?", lines: pickLines(L, 0) },
-            { id: "lysa", label: "Lysa Hora", question: "Tell me of the mountain.", lines: pickLines(L, 1) },
+            { id: "soul", label: t("topic.chort.soul.label.0"), question: t("topic.chort.soul.question.0"), lines: pickLines(L, 2) },
+            { id: "gold", label: t("topic.chort.gold.label.0"), question: t("topic.chort.gold.question.0"), lines: pickLines(L, 0) },
+            { id: "lysa", label: t("topic.chort.lysa.label.1"), question: t("topic.chort.lysa.question.1"), lines: pickLines(L, 1) },
           ],
         };
       }
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["Psst. Back again, traveller? Ask — I know things. Some of them are even true."],
+          : [t("topic.chort.2")],
         topics: [
-          { id: "who", label: "Who are you?", question: "What are you, exactly?", lines: pickLines(L, 0) },
-          { id: "mill", label: "The mill & the sabbath", question: "What is this sabbath you speak of?", lines: pickLines(L, 1) },
-          { id: "viy", label: "Viy", question: "What do devils fear?", lines: ["Viy? …Even I lower my voice, traveller. A devil deals in souls; Viy deals in endings. If those lids ever lift, my whole sabbath dances attendance — from very, very far away."] },
+          { id: "who", label: t("topic.chort.who.label.0"), question: t("topic.chort.who.question.0"), lines: pickLines(L, 0) },
+          { id: "mill", label: t("topic.chort.mill.label.1"), question: t("topic.chort.mill.question.1"), lines: pickLines(L, 1) },
+          { id: "viy", label: t("topic.chort.viy.label.0"), question: t("topic.chort.viy.question.0"), lines: [t("topic.chort.viy.0")] },
           // The bargain is offered ONCE: a soul kept is a soul kept, and
           // the pen stays away afterwards (the old script suppressed the
           // Sign choice in this state too). In its place, his reaction.
           ...(flagHas(flags, "soulkept")
             ? [{
-                id: "refused", label: "Your bargain — refused", question: "Any regrets, devil?",
-                lines: ["Regrets? ME? Hah! You refused like a starosta, traveller — I told you, the last one who refused me became one. The offer stands closed, and a devil keeps his word: no pen, no pitch. But when Viy stirs and you need a friend with a pitchfork — you know where the millstone is. My prices only go UP."],
+                id: "refused", label: t("topic.chort.refused.label.0"), question: t("topic.chort.refused.question.0"),
+                lines: [t("topic.chort.refused.0")],
               }]
-            : [{ id: "bargain", label: "Your bargain ✒", question: "What are you offering?", lines: pickLines(L, 2), action: "bargain" as const }]),
+            : [{ id: "bargain", label: t("topic.chort.bargain.label.0"), question: t("topic.chort.bargain.question.0"), lines: pickLines(L, 2), action: "bargain" as const }]),
         ],
       };
     }
@@ -229,17 +230,17 @@ export function topicsForVillage(
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["The eyes rise again from the pond scum. “Dry one. Ask, then. The pond has time.”"],
+          : [t("topic.bolotianyk.0")],
         topics: [
-          { id: "bells", label: "The drowned bells", question: "What bells ring under the pond?", lines: pickLines(L, 1) },
-          { id: "water", label: "What grows in your water", question: "May I take what grows here?", lines: pickLines(L, 2) },
+          { id: "bells", label: t("topic.bolotianyk.bells.label.0"), question: t("topic.bolotianyk.bells.question.0"), lines: pickLines(L, 1) },
+          { id: "water", label: t("topic.bolotianyk.water.label.0"), question: t("topic.bolotianyk.water.question.0"), lines: pickLines(L, 2) },
           {
-            id: "fishing", label: "Fishing your pond", question: "Do you mind my line?",
+            id: "fishing", label: t("topic.bolotianyk.fishing.label.0"), question: t("topic.bolotianyk.fishing.question.0"),
             lines: fish > 0
               ? pickLines(L, 3)
-              : ["“You have not troubled my water with a line yet, dry one. Fish if you must — from the west shore, politely, and take only what the pond gives up. What it keeps, it keeps.”"],
+              : [t("topic.bolotianyk.fishing.0")],
           },
-          { id: "old", label: "Viy & the old things", question: "What is oldest here?", lines: pickLines(L, fish > 0 ? 4 : 3) },
+          { id: "old", label: t("topic.bolotianyk.old.label.0"), question: t("topic.bolotianyk.old.question.0"), lines: pickLines(L, fish > 0 ? 4 : 3) },
         ],
       };
     default:
@@ -257,19 +258,19 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
   switch (npc.id) {
     case "beelzebub": {
       const viyTopic: DialogueTopic = {
-        id: "viy", label: "Viy", question: "What does the mountain fear?",
-        lines: ["“VIY. YES. EVEN THE MOUNTAIN HAS A NEIGHBOUR IT DOES NOT VISIT. HIS LIDS HANG TO THE GROUND, AND UNDER THEM — AN ENDING. LET HIM SLEEP, LITTLE MORTAL. SOME GUESTS EVEN I WILL NOT RECEIVE.”"],
+        id: "viy", label: t("topic.beelzebub.viy.label.0"), question: t("topic.beelzebub.viy.question.0"),
+        lines: [t("topic.beelzebub.viy.0")],
       };
       const courtTopic: DialogueTopic = {
-        id: "court", label: "Your court", question: "Who gathers here?",
-        lines: ["“MY COURT: WITCHES WHO OUTLIVED THEIR VILLAGES, DEVILS WHO OUTGREW THEIR MILLS, AND ONE MORTAL WHO CAME POLITE. THE FIRE IS OLDER THAN ZALISSYA. THE DANCING IS OLDER THAN THE FIRE.”"],
+        id: "court", label: t("topic.beelzebub.court.label.0"), question: t("topic.beelzebub.court.question.0"),
+        lines: [t("topic.beelzebub.court.0")],
       };
       if (blessed) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["“THE MOUNTAIN'S GUEST RETURNS. ASK, LITTLE MORTAL.”"],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.beelzebub.0")],
           topics: [
-            { id: "moonstone", label: "The Moonstone", question: "What did you give me?", lines: pickLines(L, 0) },
-            { id: "leaving", label: "Going down the mountain", question: "May I go in peace?", lines: pickLines(L, 1) },
+            { id: "moonstone", label: t("topic.beelzebub.moonstone.label.0"), question: t("topic.beelzebub.moonstone.question.0"), lines: pickLines(L, 0) },
+            { id: "leaving", label: t("topic.beelzebub.leaving.label.0"), question: t("topic.beelzebub.leaving.question.0"), lines: pickLines(L, 1) },
             viyTopic,
             courtTopic,
           ],
@@ -277,10 +278,10 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       }
       if (danced) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["“YOU DANCED, LITTLE MORTAL. THERE IS A BLESSING WITH YOUR NAME SCRATCHED ON IT. ASK, AND IT IS YOURS.”"],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.beelzebub.1")],
           topics: [
-            { id: "blessing", label: "Receive the blessing ✦", question: "I offered, and I danced. I have come for the blessing.", lines: [], action: "blessing" },
-            { id: "rules", label: "The mountain's rules", question: "What are the rules here?", lines: ["“THE OFFERING IS LAID. THE DANCE IS DANCED. WHAT REMAINS IS MINE TO GIVE. THOSE WERE ALWAYS THE RULES, AND EVEN I OBEY THEM.”"] },
+            { id: "blessing", label: t("topic.beelzebub.blessing.label.0"), question: t("topic.beelzebub.blessing.question.0"), lines: [], action: "blessing" },
+            { id: "rules", label: t("topic.beelzebub.rules.label.0"), question: t("topic.beelzebub.rules.question.0"), lines: [t("topic.beelzebub.rules.0")] },
             viyTopic,
             courtTopic,
           ],
@@ -288,20 +289,20 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       }
       if (offered) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["“THE STONE REMEMBERS YOUR FLOWERS. ASK, LITTLE MORTAL.”"],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.beelzebub.2")],
           topics: [
-            { id: "dance", label: "The dance", question: "What must I do now?", lines: pickLines(L, 0, 1) },
-            { id: "offering", label: "The offering", question: "Was my offering worthy?", lines: ["“IT WAS LAID TRUE, AND THE STONE REMEMBERS. NOW SHOW THE MOUNTAIN YOUR FEET, LITTLE MORTAL.”"] },
+            { id: "dance", label: t("topic.beelzebub.dance.label.0"), question: t("topic.beelzebub.dance.question.0"), lines: pickLines(L, 0, 1) },
+            { id: "offering", label: t("topic.beelzebub.offering.label.0"), question: t("topic.beelzebub.offering.question.0"), lines: [t("topic.beelzebub.offering.0")] },
             viyTopic,
             courtTopic,
           ],
         };
       }
       return {
-        intro: firstMeeting ? pickLines(L, 0) : ["“ASK, LITTLE MORTAL. THE MOUNTAIN ANSWERS WHAT IT CHOOSES.”"],
+        intro: firstMeeting ? pickLines(L, 0) : [t("topic.beelzebub.3")],
         topics: [
-          { id: "rules", label: "The rules & the nichnyky", question: "What does the mountain ask of a guest?", lines: pickLines(L, 1, 2) },
-          { id: "who", label: "Who are you?", question: "Who presides here?", lines: pickLines(L, 0) },
+          { id: "rules", label: t("topic.beelzebub.rules.label.1"), question: t("topic.beelzebub.rules.question.1"), lines: pickLines(L, 1, 2) },
+          { id: "who", label: t("topic.beelzebub.who.label.0"), question: t("topic.beelzebub.who.question.0"), lines: pickLines(L, 0) },
           viyTopic,
           courtTopic,
         ],
@@ -309,26 +310,26 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
     }
     case "chort": {
       const base = linesForLysa(npc, new Set<string>());
-      const rules: DialogueTopic = { id: "rules", label: "House rules", question: "What are the house rules?", lines: pickLines(base, 1) };
+      const rules: DialogueTopic = { id: "rules", label: t("topic.chort.rules.label.0"), question: t("topic.chort.rules.question.0"), lines: pickLines(base, 1) };
       const bigChair: DialogueTopic = {
-        id: "beelzebub", label: "Beelzebub", question: "What is he like?",
-        lines: ["The big chair? Beelzebub is the sabbath the way the starosta is the village — except his beard is older, his memory is longer, and his blessings are REAL. When you have danced, go and collect yours."],
+        id: "beelzebub", label: t("topic.chort.beelzebub.label.0"), question: t("topic.chort.beelzebub.question.0"),
+        lines: [t("topic.chort.beelzebub.0")],
       };
       if (blessed) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["My guest returns! Ask — house rules still apply: no signatures, all gossip."],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.chort.3")],
           topics: [
-            { id: "blessing", label: "Beelzebub's blessing", question: "Did he really bless me?", lines: pickLines(L, 0) },
-            { id: "telling", label: "Telling Zalissya", question: "What do I tell the village?", lines: pickLines(L, 1) },
+            { id: "blessing", label: t("topic.chort.blessing.label.0"), question: t("topic.chort.blessing.question.0"), lines: pickLines(L, 0) },
+            { id: "telling", label: t("topic.chort.telling.label.0"), question: t("topic.chort.telling.question.0"), lines: pickLines(L, 1) },
             rules,
           ],
         };
       }
       if (danced) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["My guest returns! Ask — house rules still apply: no signatures, all gossip."],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.chort.4")],
           topics: [
-            { id: "dance", label: "The dance", question: "How did I dance?", lines: pickLines(L, 0) },
+            { id: "dance", label: t("topic.chort.dance.label.0"), question: t("topic.chort.dance.question.0"), lines: pickLines(L, 0) },
             bigChair,
             rules,
           ],
@@ -336,9 +337,9 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       }
       if (offered) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["My guest returns! Ask — house rules still apply: no signatures, all gossip."],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.chort.5")],
           topics: [
-            { id: "dance", label: "The dance", question: "What now?", lines: pickLines(L, 0) },
+            { id: "dance", label: t("topic.chort.dance.label.1"), question: t("topic.chort.dance.question.1"), lines: pickLines(L, 0) },
             bigChair,
             rules,
           ],
@@ -346,20 +347,20 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       }
       if (flowers >= 3) {
         return {
-          intro: firstMeeting ? pickLines(L, 0) : ["My guest returns! Ask — house rules still apply: no signatures, all gossip."],
+          intro: firstMeeting ? pickLines(L, 0) : [t("topic.chort.6")],
           topics: [
-            { id: "offering", label: "The offering stone", question: "What do I do with the nichnyky?", lines: pickLines(L, 0) },
-            { id: "dance", label: "The dance", question: "Tell me of the dance.", lines: ["The dance comes after the offering, traveller — ring south of the fire, keep the turn, do not count the steps. Even I cannot waltz a guest's place for them. I checked. Twice. There were incidents."] },
+            { id: "offering", label: t("topic.chort.offering.label.0"), question: t("topic.chort.offering.question.0"), lines: pickLines(L, 0) },
+            { id: "dance", label: t("topic.chort.dance.label.2"), question: t("topic.chort.dance.question.2"), lines: [t("topic.chort.dance.0")] },
             rules,
           ],
         };
       }
       return {
-        intro: firstMeeting ? pickLines(L, 0) : ["My guest returns! Ask — house rules still apply: no signatures, all gossip."],
+        intro: firstMeeting ? pickLines(L, 0) : [t("topic.chort.7")],
         topics: [
-          { id: "welcome", label: "This place", question: "What is this place?", lines: pickLines(L, 0) },
+          { id: "welcome", label: t("topic.chort.welcome.label.0"), question: t("topic.chort.welcome.question.0"), lines: pickLines(L, 0) },
           rules,
-          { id: "nosign", label: "No signatures?", question: "No bargains tonight?", lines: pickLines(L, 2) },
+          { id: "nosign", label: t("topic.chort.nosign.label.0"), question: t("topic.chort.nosign.question.0"), lines: pickLines(L, 2) },
         ],
       };
     }
@@ -367,18 +368,18 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["Back again, ditko? Ask — a witch's ears are her fortune."],
+          : [t("topic.solokha.0")],
         topics: [
           {
-            id: "vesna", label: "Vesna — your sister?", question: "You know Vesna?",
+            id: "vesna", label: t("topic.solokha.vesna.label.0"), question: t("topic.solokha.vesna.question.0"),
             lines: blessed
               ? pickLines(L, 0)
-              : ["“Vesna? My little sister keeps the village's bodies — broth, bandages, babies. I keep its secrets. Between us, Zalissya is entirely kept. Do not tell her I said 'little'.”"],
+              : [t("topic.solokha.vesna.0")],
           },
           {
-            id: "offering", label: "The offering", question: "How does the offering go?",
+            id: "offering", label: t("topic.solokha.offering.label.0"), question: t("topic.solokha.offering.question.0"),
             lines: blessed || danced
-              ? ["Laid true and danced after, ditko — the mountain could not ask more of a guest. It will remember you kindly, which for a mountain is a great deal of remembering."]
+              ? [t("topic.solokha.offering.0")]
               : offered
                 ? pickLines(L, 0)
                 : flowers >= 3
@@ -386,16 +387,16 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
                   : pickLines(L, 1),
           },
           {
-            id: "dance", label: "The dance", question: "Tell me of the dance.",
+            id: "dance", label: t("topic.solokha.dance.label.0"), question: t("topic.solokha.dance.question.0"),
             lines: blessed
-              ? ["You kept the turn like you were born in the ring, ditko. The witches still talk about your feet — witches' praise, which is rarer than their curses and twice as binding."]
+              ? [t("topic.solokha.dance.0")]
               : danced
                 ? pickLines(L, 0)
                 : offered
                   ? pickLines(L, 0)
                   : pickLines(L, 2),
           },
-          { id: "cooking", label: "Cooking on the mountain", question: "Are you really the mountain's best cook?", lines: ["“The best cook on this mountain, whatever the devils say with their mouths full. My secret? Never cook for anyone you would not also curse. It concentrates the seasoning.”"] },
+          { id: "cooking", label: t("topic.solokha.cooking.label.0"), question: t("topic.solokha.cooking.question.0"), lines: [t("topic.solokha.cooking.0")] },
         ],
       };
     }
@@ -403,31 +404,31 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
       const base = linesForLysa(npc, new Set<string>());
       const nichLines = pickLines(base, 1);
       if (flowers > 0 && flowers < 3) {
-        nichLines.push(`“${flowers} already in your hand, I see — the mountain counts those too. ${3 - flowers} more, ditko.”`);
+        nichLines.push(t("topic.motrya.0", { flowers, n: 3 - flowers }));
       }
       return {
         intro: firstMeeting
           ? pickLines(L, 0)
-          : ["Motrya looks up from her braiding. “Ask, ditko. The blooms keep.”"],
+          : [t("topic.motrya.1")],
         topics: [
-          { id: "nichnyky", label: "Where nichnyky hide", question: "Where do the night-blooms grow?", lines: nichLines },
+          { id: "nichnyky", label: t("topic.motrya.nichnyky.label.0"), question: t("topic.motrya.nichnyky.question.0"), lines: nichLines },
           {
-            id: "offering", label: "The offering stone", question: "Tell me of the offering stone.",
+            id: "offering", label: t("topic.motrya.offering.label.0"), question: t("topic.motrya.offering.question.0"),
             lines: offered
               ? pickLines(L, 0)
-              : ["“The offering stone stands north of the fire. Three nichnyky, laid gentle, and the mountain leans closer — I have felt it through my shoes, every sabbath of my life.”"],
+              : [t("topic.motrya.offering.0")],
           },
           {
-            id: "dance", label: "The dance", question: "How does one dance here?",
+            id: "dance", label: t("topic.motrya.dance.label.0"), question: t("topic.motrya.dance.question.0"),
             lines: danced || offered
               ? pickLines(L, 0)
-              : ["“South of the fire, ditko, and do not think about your feet. Feet hate being thought about. First the offering, though — the ring keeps no step for the empty-handed.”"],
+              : [t("topic.motrya.dance.0")],
           },
           {
-            id: "moonstone", label: "The Moonstone", question: "What is the Moonstone?",
+            id: "moonstone", label: t("topic.motrya.moonstone.label.0"), question: t("topic.motrya.moonstone.question.0"),
             lines: blessed
               ? pickLines(L, 0)
-              : ["“When the big chair blesses a guest, it is with a moonstone — cold as well-water, kind as moonlight. Offer, dance, and ask him, ditko. In that order; mountains are particular about order.”"],
+              : [t("topic.motrya.moonstone.0")],
           },
         ],
       };
@@ -438,38 +439,38 @@ export function topicsForLysa(npc: Npc, flags: ReadonlySet<string>, firstMeeting
 }
 
 export const LYSA_BLESSING_LINES: string[] = [
-  "The moonstone settles into your palm, cold as well-water and twice as clear. Somewhere inside it, a crescent turns — slowly, patiently — to face you.",
-  "Around the bonfire the witches raise their arms, the devils stamp their hooves, and Beelzebub himself inclines his horned head. The sabbath has a new story to tell about a mortal who came polite, offered fairly, and danced.",
-  "You wear Lysa Hora's blessing now. The night road down to Zalissya will be shorter than the road up. It always is, for the blessed — that is rather the point of blessings.",
+  t("topic.LYSA_BLESSING_LINES.0"),
+  t("topic.LYSA_BLESSING_LINES.1"),
+  t("topic.LYSA_BLESSING_LINES.2"),
 ];
 
 // The Chort's bargain is a real choice, made mid-dialogue at the signature
 // line. These are the scripts that play out after each answer.
 export const CHORT_SIGNED_LINES: string[] = [
-  "Signed! SIGNED! Oh, traveller — you have made a devil's whole century. Here: your gold. Feel how it never gets lighter? That is the good stuff. That is the SABBATH stuff.",
-  "And no take-backs… well. One take-back, because I LIKE you: pond fish buys your soul back any time — the price is in your Character sheet, under Charisma. Devils and fish, traveller. Do not ask. Now — notice anything missing when you walk in the sun? Look down. Heh. HEH.",
+  t("topic.CHORT_SIGNED_LINES.0"),
+  t("topic.CHORT_SIGNED_LINES.1"),
 ];
 export const CHORT_REFUSED_LINES: string[] = [
-  "…No? NO? Hah! Hahaha! Oh, I LIKE you. The last one who refused me became a starosta; the one before — a very surprised frog. Keep your soul then, traveller. But when Viy stirs and you need a friend with a pitchfork — you know where the millstone is. My prices only go UP.",
+  t("topic.CHORT_REFUSED_LINES.0"),
 ];
 export const CHORT_TRADE_LINES: string[] = [
-  "Pond fish, still shining. …A deal is a deal, traveller. Here — one soul, slightly haunted, returns to its owner. And keep the gold. A devil's gold spends the same, and I am not a CHEAT.",
-  "There. Feel that? Warmth. Weight. A shadow pooling at your feet like it never left. Pleasure doing business. Tell NO ONE I went soft.",
+  t("topic.CHORT_TRADE_LINES.0"),
+  t("topic.CHORT_TRADE_LINES.1"),
 ];
 
 // The well is not a person, but it answers wishes with dialogue anyway.
 export const WELL_NPC: Npc = {
-  id: "well", name: "The Old Well", pron: "", role: "Drop a pebble, make a wish",
+  id: "well", name: t("topic.well.name.0"), pron: "", role: t("topic.well.role.0"),
   x: 840, y: 496, tunic: "#5d6b72", hair: "#8d8b85", style: "elder",
 };
 
 // Vesna's drying rack is not a person either, but at INT 3+ it has a
 // menu: the recipe choice is made through the dialogue choice buttons.
 export const BREW_BENCH_NPC: Npc = {
-  id: "brewbench", name: "Vesna's drying rack", pron: "", role: "Alchemy bench · choose a brew",
+  id: "brewbench", name: t("topic.brewbench.name.0"), pron: "", role: t("topic.brewbench.role.0"),
   x: BREW_SPOT.x, y: BREW_SPOT.y, tunic: "#4c6b35", hair: "#5d3a1a", style: "herbalist",
 };
 
 export const BREW_CHOICE_LINES: string[] = [
-  "The rack smells of polyn and sun, and the little cauldron is already warm. Two brews are within your craft: the common tonic (2 herbs — bright and clarifying), and Vesna's strong tonic (3 herbs — the deep draught she teaches only at INT 3; drunk, it is worth INT +2 and WIS +2). The cauldron waits. Which do you work?",
+  t("topic.BREW_CHOICE_LINES.0"),
 ];

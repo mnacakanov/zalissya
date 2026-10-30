@@ -2,8 +2,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { lang } from "./i18n";
 import { queryClient } from "./platform/target";
 import "./theme.css";
+
+document.documentElement.lang = lang();
 
 const rootEl = document.querySelector<HTMLElement>("[data-generated-space-root]");
 if (!rootEl) {

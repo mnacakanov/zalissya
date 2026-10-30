@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // --- Day and night -----------------------------------------------------------
 // Zalissya keeps time now. A full day passes in about ten real minutes of
 // play (the clock stops while you talk or read your Character sheet), and
@@ -102,5 +103,5 @@ export function timeLabel(c: Clock): string {
   const h = Math.floor(c.minute / 60);
   const m = c.minute % 60;
   const icon = { dawn: "🌅", day: "☀", dusk: "🌇", night: "🌙" }[phaseOf(c.minute)];
-  return `Day ${c.day} · ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} ${icon}`;
+  return t("time.timeLabel.0", { day: c.day, hh: String(h).padStart(2, "0"), mm: String(m).padStart(2, "0"), icon });
 }

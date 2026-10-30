@@ -1,4 +1,5 @@
 import { LYSA_SUMMIT } from "./lysa";
+import { t } from "../i18n";
 
 // --- People -----------------------------------------------------------------
 
@@ -15,19 +16,19 @@ export type Npc = {
 };
 
 export const NPCS: Npc[] = [
-  { id: "myroslav", name: "Myroslav", pron: "my-ro-SLAHV", role: "Starosta · village elder", x: 760, y: 520, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder" },
-  { id: "vesna", name: "Vesna", pron: "VEHS-nah", role: "Znakharka · healer", x: 1196, y: 824, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist" },
-  { id: "radek", name: "Radek", pron: "RAH-dek", role: "Blacksmith · a guest from afar", x: 340, y: 806, tunic: "#4c4a48", hair: "#2e2018", style: "smith" },
+  { id: "myroslav", name: t("char.myroslav.name.0"), pron: t("char.myroslav.pron.0"), role: t("char.myroslav.role.0"), x: 760, y: 520, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder" },
+  { id: "vesna", name: t("char.vesna.name.0"), pron: t("char.vesna.pron.0"), role: t("char.vesna.role.0"), x: 1196, y: 824, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist" },
+  { id: "radek", name: t("char.radek.name.0"), pron: t("char.radek.pron.0"), role: t("char.radek.role.0"), x: 340, y: 806, tunic: "#4c4a48", hair: "#2e2018", style: "smith" },
 ];
 
 // The spirits — present in the world, approachable, talkable. Positions here
 // are home anchors; charPos() adds each spirit's slow wander on top.
 export const SPIRITS: Npc[] = [
-  { id: "domovyk", name: "Domovyk", pron: "do-mo-VYK", role: "House spirit · keeper of the pich", x: 430, y: 352, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk" },
-  { id: "lisovyk", name: "Lisovyk", pron: "lee-so-VYK", role: "Forest spirit · lord of the pines", x: 1010, y: 196, tunic: "#33502e", hair: "#4c6b35", style: "lisovyk" },
-  { id: "chort", name: "Chort", pron: "chort", role: "Чорт · devil and trickster — mind your soul", x: 545, y: 1052, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
-  { id: "bolotianyk", name: "Bolotianyk", pron: "bo-lo-TYAH-nyk", role: "Swamp demon · the pond's dark keeper", x: 1182, y: 992, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
-  { id: "viy", name: "Viy", pron: "veey", role: "Вій · the Big Boss — asleep, for now", x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "viy" },
+  { id: "domovyk", name: t("char.domovyk.name.0"), pron: t("char.domovyk.pron.0"), role: t("char.domovyk.role.0"), x: 430, y: 352, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk" },
+  { id: "lisovyk", name: t("char.lisovyk.name.0"), pron: t("char.lisovyk.pron.0"), role: t("char.lisovyk.role.0"), x: 1010, y: 196, tunic: "#33502e", hair: "#4c6b35", style: "lisovyk" },
+  { id: "chort", name: t("char.chort.name.0"), pron: t("char.chort.pron.0"), role: t("char.chort.role.0"), x: 545, y: 1052, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
+  { id: "bolotianyk", name: t("char.bolotianyk.name.0"), pron: t("char.bolotianyk.pron.0"), role: t("char.bolotianyk.role.0"), x: 1182, y: 992, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
+  { id: "viy", name: t("char.viy.name.0"), pron: t("char.viy.pron.0"), role: t("char.viy.role.0"), x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "viy" },
 ];
 
 export const ALL_CHARS: Npc[] = [...NPCS, ...SPIRITS];
@@ -39,11 +40,11 @@ export const VILLAGER_IDS = new Set(NPCS.map((n) => n.id));
 // are home when you step in — a house spirit never leaves his house,
 // and the znakharka is in for the evening.
 export const DOMOVYK_IN: Npc = {
-  id: "domovyk", name: "Domovyk", pron: "do-mo-VYK", role: "House spirit · keeper of the pich",
+  id: "domovyk", name: t("char.domovyk.name.1"), pron: t("char.domovyk.pron.1"), role: t("char.domovyk.role.1"),
   x: 330, y: 165, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
 };
 export const VESNA_IN: Npc = {
-  id: "vesna", name: "Vesna", pron: "VEHS-nah", role: "Znakharka · healer",
+  id: "vesna", name: t("char.vesna.name.1"), pron: t("char.vesna.pron.1"), role: t("char.vesna.role.1"),
   x: 250, y: 320, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist",
 };
 
@@ -52,19 +53,19 @@ export const VESNA_IN: Npc = {
 // (same id, so meeting him in either place counts once) — but on the
 // mountain he is working, and his script is the sabbath script.
 export const LYSA_CHARS: Npc[] = [
-  { id: "beelzebub", name: "Beelzebub", pron: "be-EL-ze-bub", role: "Host of the sabbath · lord of Lysa Hora", x: 660, y: 220, tunic: "#3a2438", hair: "#1c1420", style: "beelzebub" },
-  { id: "chort", name: "Chort", pron: "chort", role: "Чорт · master of ceremonies tonight", x: 770, y: 330, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
-  { id: "solokha", name: "Solokha", pron: "so-lo-KHA", role: "Vidma · witch of Dikanka way", x: 545, y: 330, tunic: "#4a2c5a", hair: "#c8c2b8", style: "witch" },
-  { id: "motrya", name: "Motrya", pron: "MO-trya", role: "Vidma · keeper of the night-blooms", x: 520, y: 480, tunic: "#2c4a5a", hair: "#3a2a1a", style: "witch" },
+  { id: "beelzebub", name: t("char.beelzebub.name.0"), pron: t("char.beelzebub.pron.0"), role: t("char.beelzebub.role.0"), x: 660, y: 220, tunic: "#3a2438", hair: "#1c1420", style: "beelzebub" },
+  { id: "chort", name: t("char.chort.name.1"), pron: t("char.chort.pron.1"), role: t("char.chort.role.1"), x: 770, y: 330, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
+  { id: "solokha", name: t("char.solokha.name.0"), pron: t("char.solokha.pron.0"), role: t("char.solokha.role.0"), x: 545, y: 330, tunic: "#4a2c5a", hair: "#c8c2b8", style: "witch" },
+  { id: "motrya", name: t("char.motrya.name.0"), pron: t("char.motrya.pron.0"), role: t("char.motrya.role.0"), x: 520, y: 480, tunic: "#2c4a5a", hair: "#3a2a1a", style: "witch" },
 ];
 
 // The dancing witches — presences, not conversations. They circle the
 // bonfire all night; charPos() walks them round it.
 export const LYSA_DANCERS: Npc[] = [0, 1, 2, 3].map((i) => ({
   id: `dancer${i}`,
-  name: "Dancing witch",
+  name: t("char.LYSA_DANCERS.name.0"),
   pron: "",
-  role: "Of the sabbath",
+  role: t("char.LYSA_DANCERS.role.0"),
   x: LYSA_SUMMIT.x,
   y: LYSA_SUMMIT.y,
   tunic: ["#5a2c44", "#2c3a5a", "#5a442c", "#3a5a2c"][i] ?? "#444",
