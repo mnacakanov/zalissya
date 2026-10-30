@@ -7,6 +7,8 @@ export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
   { x: 1140, y: 190, w: 168, h: 104, kind: "hut" },
   { x: 1210, y: 700, w: 150, h: 96, kind: "hut" },
   { x: 250, y: 690, w: 156, h: 92, kind: "forge" },
+  // the otaman's khata, facing the maidan
+  { x: 500, y: 396, w: 150, h: 96, kind: "hut" },
 ];
 
 export const WELL: Rect = { x: 806, y: 470, w: 68, h: 52 };
@@ -14,7 +16,7 @@ export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
 export const POND = { x: 1330, y: 1010, rx: 165, ry: 92 };
 export const GARDEN: Rect = { x: 1150, y: 850, w: 150, h: 96 };
 
-export type TreeKind = "pine" | "birch" | "oak";
+export type TreeKind = "pine" | "birch" | "oak" | "cherry" | "willow";
 export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> = [];
 {
   // Forest ring around the clearing plus a few shade trees inside.
@@ -28,8 +30,35 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   ];
   const kinds: TreeKind[] = ["pine", "birch", "oak"];
   ring.forEach(([x, y], i) => {
-    TREES.push({ x, y, kind: kinds[i % 3] ?? "pine", s: 0.9 + hash2(x, y) * 0.45 });
+    // the old millstone rise is kept clear for the windmill, and the
+    // otaman's yard for his khata
+    if ((x === 480 && y === 980) || (x === 560 && y === 420)) return;
+    // willows lean over the pond
+    const nearPond = Math.hypot(x - POND.x, (y - POND.y) * 1.4) < 300;
+    TREES.push({ x, y, kind: nearPond ? "willow" : kinds[i % 3] ?? "pine", s: 0.9 + hash2(x, y) * 0.45 });
   });
+  // cherry trees by the khaty — «садок вишневий коло хати»
+  for (const [x, y] of [[262, 352], [1330, 334], [1398, 806], [500, 342]] as const) {
+    TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
+  }
+  TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
+}
+
+// Landmarks: the windmill by the Chort's old millstone, and a burial mound
+// with its stone idol where the khutir gives way to the steppe.
+export const WINDMILL = { x: 404, y: 1012 };
+export const KURHAN = { x: 1496, y: 770 };
+
+// Yard plants (no collision): sunflowers, mallows, and feather grass on the
+// steppe side.
+export type DecorKind = "sunflower" | "mallow" | "kovyla";
+export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number }> = [];
+{
+  const add = (kind: DecorKind, pts: Array<[number, number]>) =>
+    pts.forEach(([x, y]) => DECOR.push({ x, y, kind, seed: hash2(x, y) }));
+  add("sunflower", [[488, 500], [292, 334], [306, 346], [474, 330], [1132, 318], [1148, 330], [432, 712], [446, 726], [1372, 812]]);
+  add("mallow", [[512, 486], [640, 488], [316, 322], [452, 324], [1296, 316], [1312, 318], [1226, 812], [1342, 814], [1180, 316]]);
+  add("kovyla", [[1556, 520], [1596, 560], [1540, 700], [1590, 724], [1500, 530], [1446, 742], [1552, 800], [1430, 800], [1600, 610]]);
 }
 
 export const FENCES: Rect[] = [
@@ -49,4 +78,6 @@ export const SOLID: Rect[] = [
   { x: 1352, y: 196, w: 136, h: 84 },
   ...TREES.map((t) => ({ x: t.x - 10, y: t.y - 8, w: 20, h: 14 })),
   ...FENCES,
+  { x: WINDMILL.x - 26, y: WINDMILL.y - 16, w: 52, h: 22 },
+  { x: KURHAN.x - 56, y: KURHAN.y - 22, w: 112, h: 26 },
 ];

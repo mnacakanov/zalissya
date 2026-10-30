@@ -6,7 +6,8 @@ import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VES
 import { hutSolids } from "./data/huts";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
 import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from "./data/lysa";
-import { FENCES, FIRE, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
+import { DECOR, FENCES, FIRE, HOUSES, KURHAN, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
@@ -1576,7 +1577,7 @@ export function App() {
         drawHutInterior(ctx2d, camX, camY, now, area === "hut1" ? 1 : 0, flagsNow);
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
-      drawWell(ctx2d, camX, camY);
+      drawWell(ctx2d, camX, camY, now);
       drawFire(ctx2d, camX, camY, now);
       drawBrewBench(ctx2d, camX, camY, now);
       if (!flagHas(flagsNow, "bread") && !flagHas(flagsNow, "offering")) {
@@ -1604,6 +1605,17 @@ export function App() {
       if (area === "village") {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
+      }
+      drawables.push({ y: WINDMILL.y, draw: () => drawWindmill(ctx2d, WINDMILL.x - camX, WINDMILL.y - camY, now) });
+      drawables.push({ y: KURHAN.y, draw: () => drawKurhan(ctx2d, KURHAN.x - camX, KURHAN.y - camY) });
+      for (const d of DECOR) {
+        if (d.x < camX - 40 || d.x > camX + vw + 40 || d.y < camY - 10 || d.y > camY + vh + 80) continue;
+        const dx = d.x - camX;
+        const dy = d.y - camY;
+        drawables.push({
+          y: d.y,
+          draw: () => (d.kind === "sunflower" ? drawSunflower(ctx2d, dx, dy, now, d.seed) : d.kind === "mallow" ? drawMallow(ctx2d, dx, dy, now, d.seed) : drawKovyla(ctx2d, dx, dy, now, d.seed)),
+        });
       }
       if (camp) {
         drawables.push({ y: CART.y + 10, draw: () => drawCart(ctx2d, CART.x, CART.y, camX, camY) });

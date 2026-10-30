@@ -1,3 +1,4 @@
+import { drawCherry, drawCraneWell, drawKhata, drawTyn, drawWillow } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
 import { rr } from "./shapes";
@@ -55,6 +56,15 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   c.fillStyle = "#c8a568";
   rr(c, 0 - camX, 600 - camY, WORLD_W, 92, 40); c.fill();
   rr(c, 768 - camX, 120 - camY, 144, 900, 60); c.fill();
+  // the maidan: a trodden square round the fire and the well, where the
+  // khutir meets, argues, and listens to the kobzar in the evening
+  c.beginPath(); c.ellipse(840 - camX, 568 - camY, 190, 128, 0, 0, Math.PI * 2); c.fill();
+  // the chumak road east: two cart ruts worn into the dirt
+  c.strokeStyle = "rgba(140,104,58,0.45)";
+  c.lineWidth = 3;
+  for (const ry of [630, 662]) {
+    c.beginPath(); c.moveTo(1030 - camX, ry - camY); c.lineTo(WORLD_W - camX, ry - camY); c.stroke();
+  }
   c.fillStyle = "rgba(160,124,72,0.5)";
   for (let i = 0; i < 260; i++) {
     const onH = hash2(i, 77) > 0.35;
@@ -216,6 +226,14 @@ export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number
   const sway = Math.sin(t * 0.0012 + tr.x * 0.11) * 1.4;
   c.fillStyle = "rgba(30,50,20,0.25)";
   c.beginPath(); c.ellipse(x, y + 4, 26 * s, 8 * s, 0, 0, Math.PI * 2); c.fill();
+  if (tr.kind === "cherry") {
+    drawCherry(c, x, y, s, t);
+    return;
+  }
+  if (tr.kind === "willow") {
+    drawWillow(c, x, y, s, t);
+    return;
+  }
   if (tr.kind === "pine") {
     c.fillStyle = "#6e4a26";
     c.fillRect(x - 3.4 * s, y - 20 * s, 6.8 * s, 22 * s);
@@ -316,103 +334,11 @@ export function drawHouse(c: CanvasRenderingContext2D, h: Rect & { kind: string 
     return;
   }
 
-  // Log walls
-  c.fillStyle = "#8a5a33";
-  rr(c, x, y + 22, h.w, h.h - 22, 3); c.fill();
-  c.strokeStyle = "rgba(70,42,18,0.55)";
-  c.lineWidth = 1.6;
-  for (let ly = y + 34; ly < y + h.h - 4; ly += 11) {
-    c.beginPath(); c.moveTo(x + 3, ly); c.lineTo(x + h.w - 3, ly); c.stroke();
-  }
-  c.fillStyle = "#6e4525";
-  c.fillRect(x - 2, y + 22, 7, h.h - 22);
-  c.fillRect(x + h.w - 5, y + 22, 7, h.h - 22);
-  // Thatch roof with layered strokes
-  c.fillStyle = "#a87f42";
-  c.beginPath();
-  c.moveTo(x - 13, y + 30); c.lineTo(x + h.w / 2, y - 34); c.lineTo(x + h.w + 13, y + 30);
-  c.closePath(); c.fill();
-  c.strokeStyle = "rgba(122,88,36,0.65)";
-  c.lineWidth = 2;
-  for (let i = -5; i <= 5; i++) {
-    c.beginPath();
-    c.moveTo(x + h.w / 2 + i * 4, y - 30);
-    c.lineTo(x + h.w / 2 + i * (h.w / 9.4), y + 27);
-    c.stroke();
-  }
-  c.fillStyle = "#8a6530";
-  c.beginPath();
-  c.moveTo(x - 13, y + 30); c.lineTo(x + h.w + 13, y + 30); c.lineTo(x + h.w + 6, y + 38); c.lineTo(x - 6, y + 38);
-  c.closePath(); c.fill();
-  // Carved fascia — white/red triangle trim, a Ukrainian touch
-  for (let i = 0; i < Math.floor(h.w / 13); i++) {
-    c.fillStyle = i % 2 === 0 ? "#f3e9d2" : "#b03a2e";
-    const tx = x + 4 + i * 13;
-    c.beginPath();
-    c.moveTo(tx, y + 39); c.lineTo(tx + 6, y + 47); c.lineTo(tx + 12, y + 39);
-    c.closePath(); c.fill();
-  }
-  // Ridge beam + chimney with smoke
-  c.fillStyle = "#5d3d20";
-  c.fillRect(x + h.w / 2 - 26, y - 38, 52, 6);
-  c.fillStyle = "#7d7a74";
-  c.fillRect(x + h.w * 0.68, y - 30, 15, 24);
-  c.fillStyle = "#5c5a56";
-  c.fillRect(x + h.w * 0.68 - 2, y - 33, 19, 5);
-  for (let i = 0; i < 3; i++) {
-    const ph = (t * 0.00016 + i / 3 + hash2(h.x, i)) % 1;
-    c.fillStyle = `rgba(240,238,232,${0.5 * (1 - ph)})`;
-    c.beginPath();
-    c.arc(x + h.w * 0.68 + 8 + ph * 16 + Math.sin(ph * 6 + h.x) * 3, y - 38 - ph * 44, 4 + ph * 8, 0, Math.PI * 2);
-    c.fill();
-  }
-  // Door + glowing window + flower box
-  c.fillStyle = "#5d3d20";
-  rr(c, x + h.w / 2 - 13, y + h.h - 44, 26, 44, 3); c.fill();
-  c.fillStyle = "#d9a441";
-  c.fillRect(x + h.w / 2 + 6, y + h.h - 24, 3.4, 3.4);
-  c.fillStyle = "#ffd97a";
-  rr(c, x + 20, y + 48, 26, 24, 2); c.fill();
-  c.strokeStyle = "#5d3d20";
-  c.lineWidth = 2.4;
-  c.strokeRect(x + 20, y + 48, 26, 24);
-  c.beginPath(); c.moveTo(x + 33, y + 48); c.lineTo(x + 33, y + 72); c.stroke();
-  c.beginPath(); c.moveTo(x + 20, y + 60); c.lineTo(x + 46, y + 60); c.stroke();
-  c.fillStyle = "#7a4a24";
-  c.fillRect(x + 17, y + 73, 32, 6);
-  c.fillStyle = "#d94f3d";
-  for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(x + 22 + i * 8, y + 72, 2.6, 0, Math.PI * 2); c.fill(); }
-  c.fillStyle = "#4c7a2e";
-  for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(x + 24 + i * 8, y + 75, 2.4, 0, Math.PI * 2); c.fill(); }
+  drawKhata(c, x, y, h.w, h.h, t, h.x);
 }
 
-export function drawWell(c: CanvasRenderingContext2D, camX: number, camY: number) {
-  const x = WELL.x - camX;
-  const y = WELL.y - camY;
-  c.fillStyle = "rgba(30,50,20,0.25)";
-  c.beginPath(); c.ellipse(x + 34, y + 52, 42, 10, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#8d8b85";
-  rr(c, x + 4, y + 26, 60, 26, 5); c.fill();
-  c.fillStyle = "#74726c";
-  c.fillRect(x + 4, y + 34, 60, 3);
-  c.fillRect(x + 4, y + 44, 60, 3);
-  c.fillStyle = "#2c3844";
-  c.beginPath(); c.ellipse(x + 34, y + 28, 25, 6, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#6e4525";
-  c.fillRect(x + 2, y - 8, 6, 40);
-  c.fillRect(x + 60, y - 8, 6, 40);
-  c.fillStyle = "#a87f42";
-  c.beginPath();
-  c.moveTo(x - 6, y - 4); c.lineTo(x + 34, y - 30); c.lineTo(x + 74, y - 4);
-  c.closePath(); c.fill();
-  c.strokeStyle = "#5d3d20";
-  c.lineWidth = 3;
-  c.beginPath(); c.moveTo(x + 6, y - 8); c.lineTo(x + 62, y - 8); c.stroke();
-  c.strokeStyle = "#c9b18a";
-  c.lineWidth = 1.6;
-  c.beginPath(); c.moveTo(x + 34, y - 8); c.lineTo(x + 34, y + 12); c.stroke();
-  c.fillStyle = "#7a4a24";
-  rr(c, x + 27, y + 12, 14, 12, 2); c.fill();
+export function drawWell(c: CanvasRenderingContext2D, camX: number, camY: number, t = 0) {
+  drawCraneWell(c, WELL.x - camX, WELL.y - camY, t);
 }
 
 export function drawFire(c: CanvasRenderingContext2D, camX: number, camY: number, t: number) {
@@ -577,18 +503,7 @@ export function drawFishing(
 }
 
 export function drawFence(c: CanvasRenderingContext2D, f: Rect, camX: number, camY: number) {
-  const x = f.x - camX;
-  const y = f.y - camY;
-  c.fillStyle = "#9a7448";
-  if (f.w >= f.h) {
-    c.fillRect(x, y + 2, f.w, 3.4);
-    c.fillRect(x, y + 7, f.w, 3.4);
-    for (let px = x + 2; px < x + f.w; px += 22) c.fillRect(px, y - 2, 5, 15);
-  } else {
-    c.fillRect(x + 2, y, 3.4, f.h);
-    c.fillRect(x + 7, y, 3.4, f.h);
-    for (let py = y + 2; py < y + f.h; py += 22) c.fillRect(x - 2, py, 15, 5);
-  }
+  drawTyn(c, f.x, f.y, f.w, f.h, camX, camY);
 }
 
 export function drawHerbPatch(c: CanvasRenderingContext2D, sx: number, sy: number, camX: number, camY: number, t: number, available: boolean, herb: HerbDef) {

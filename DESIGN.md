@@ -132,3 +132,14 @@ The kobzar reads the room:
 - **Do nothing, or not in time.** Ostap dies at dawn, the chumaky bury him by the road and sing «Ой полечко, поле», and the khutir mourns. The otaman lives with "forty saved from something that wasn't there, and one lost".
 
 Every outcome teaches songs: Ostap himself, or Hnat at the grave. The grave stays as a place to play. Radek, once kept outside a khutir's fence himself, and the Chort ("people are their own devils") each see it their own way.
+
+## The khutir looks Cossack
+
+The northern log cabins became **Ukrainian khaty**: whitewashed clay walls, hipped thatch with thick rounded eaves, small blue-framed windows with painted flowers, and an ochre призьба (clay bench) along the wall (`render/khutir.ts`).
+- **New details:**
+  - **Around the khaty:** the well is a **журавель** (crane well), fences are woven **тин** with clay pots on the stakes, cherry trees stand by the khaty, and sunflowers and mallows grow along the yards.
+  - **Around the edges:** willows lean over the pond, and silver feather grass (ковила) grows on the steppe side.
+- **New landmarks:** a **windmill** on the rise by the Chort's old millstone, and a **kurhan with a stone idol** where the khutir gives way to the steppe.
+- **Layout:** a trodden **maidan** around the fire and the well, cart ruts on the chumak road east, and **the otaman's own khata** facing the maidan.
+
+Every door, quest spot and NPC kept its position.
