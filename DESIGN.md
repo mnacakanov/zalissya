@@ -143,3 +143,13 @@ The northern log cabins became **Ukrainian khaty**: whitewashed clay walls, hipp
 - **Layout:** a trodden **maidan** around the fire and the well, cart ruts on the chumak road east, and **the otaman's own khata** facing the maidan.
 
 Every door, quest spot and NPC kept its position.
+
+## One world: walking to Lysa Hora
+
+Lysa Hora is no longer a separate map you teleport to. The world is now 3980×1260: the khutir, then a wide **steppe** east of it, then the Bald Mountain at the far end, which you walk to.
+- **The steppe:** the grass dries to gold-green, feather grass waves everywhere, and lone oaks and a second kurhan stand along the way. The trail winds north-east to the mountain, and the chumak road bends south toward Crimea.
+- **The mountain:** it keeps its own bald moonlit rock (drawn in its local coordinates and feathered into the grass at its foot). The air thickens with a cold blue wash over the last stretch.
+- **Regions:** `village` and `lysa` are now regions of one world, and the HUD and the sabbath's rules switch as you cross. Old saves on the mountain are moved onto it.
+- **The Chort** keeps two addresses: the millstone by day, the sabbath by night.
+
+Hut interiors stay separate rooms.

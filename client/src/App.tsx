@@ -5,8 +5,8 @@ import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN } from "./data/characters";
 import { hutSolids } from "./data/huts";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
-import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from "./data/lysa";
-import { DECOR, FENCES, FIRE, HOUSES, KURHAN, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
+import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
 import { drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -37,7 +37,7 @@ import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { advance, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_SPAWN, PLAYER_R, PLAYER_SPEED, SPAWN, TRAIL_Y_MAX, TRAIL_Y_MIN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, VILLAGE_RETURN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
+import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_BORDER_X, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, WORLD_H, WORLD_W, worldSize } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
@@ -91,7 +91,7 @@ export function App() {
   const patchesRef = useRef(HERB_SPOTS.map((s) => ({ ...s, available: true, respawnAt: 0 })));
   // Nichnyky patches on Lysa Hora — gathered for the offering, and they
   // stay gathered (the mountain counts promises, and flowers).
-  const lysaPatchesRef = useRef(LYSA_FLOWER_SPOTS.map((s) => ({ ...s, taken: false })));
+  const lysaPatchesRef = useRef(LYSA_WORLD.flowers.map((s) => ({ ...s, taken: false })));
   // While dancing at the sabbath, walking is replaced by the dance for a
   // few seconds (timestamp until which the player figure dances in place).
   const danceUntilRef = useRef(0);
@@ -325,9 +325,12 @@ export function App() {
       const area: AreaId = s.area === "lysa" ? "lysa" : s.area === "hut0" ? "hut0" : s.area === "hut1" ? "hut1" : "village";
       areaRef.current = area;
       setHudArea(area);
+      // Saves from before the one-world map stored Lysa Hora in its own
+      // local coordinates: move them onto the mountain in the shared world.
+      const onOldMountain = area === "lysa" && s.x < LYSA_ORIGIN.x;
       const ws = worldSize(area);
-      playerRef.current.x = clamp(s.x, 30, ws.w - 30);
-      playerRef.current.y = clamp(s.y, 60, ws.h - 20);
+      playerRef.current.x = clamp(s.x + (onOldMountain ? LYSA_ORIGIN.x : 0), 30, ws.w - 30);
+      playerRef.current.y = clamp(s.y + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, ws.h - 20);
       // Map pre-rename save ids to their current forms.
       const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek", vij: "viy" };
       const mappedTalked = s.talked.map((id) => idMap[id] ?? id);
@@ -1298,7 +1301,7 @@ export function App() {
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
-      const solids = area === "lysa" ? LYSA_SOLID : isHutArea(area) ? hutSolids(area) : chumakyPresent(flagsRef.current) ? [...SOLID, ...CAMP_SOLID] : SOLID;
+      const solids = isHutArea(area) ? hutSolids(area) : [...SOLID, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
@@ -1362,31 +1365,24 @@ export function App() {
       // spur path) climbs to Lysa Hora; the summit's west trailhead
       // walks back down to Zalissya.
       if (!dialogueRef.current && !panelRef.current) {
-        if (area === "village" && p.x >= WORLD_W - PLAYER_R - 6 && p.y >= TRAIL_Y_MIN && p.y <= TRAIL_Y_MAX) {
-          areaRef.current = "lysa";
-          setHudArea("lysa");
-          p.x = LYSA_SPAWN.x;
-          p.y = LYSA_SPAWN.y;
+        // One world: crossing the steppe onto the mountain just changes the
+        // region (the HUD, the sabbath's rules) — no teleport.
+        const region: AreaId | null = isHutArea(area) ? null : p.x >= LYSA_BORDER_X ? "lysa" : "village";
+        if (region && region !== area) {
+          areaRef.current = region;
+          setHudArea(region);
           fishingRef.current = null;
           promptRef.current = null;
           setPrompt(null);
           promptKey = "";
-          if (!flagHas(flagsRef.current, "visitedLysa")) {
-            setFlag("visitedLysa");
-            showToast(t("ui.frame.4"));
-          } else {
-            showToast(t("ui.frame.5"));
+          if (region === "lysa") {
+            if (!flagHas(flagsRef.current, "visitedLysa")) {
+              setFlag("visitedLysa");
+              showToast(t("ui.frame.4"));
+            } else {
+              showToast(t("ui.frame.5"));
+            }
           }
-          dirtyRef.current = true;
-        } else if (area === "lysa" && p.x <= PLAYER_R + 6 && p.y >= 400 && p.y <= 560) {
-          areaRef.current = "village";
-          setHudArea("village");
-          p.x = VILLAGE_RETURN.x;
-          p.y = VILLAGE_RETURN.y;
-          promptRef.current = null;
-          setPrompt(null);
-          promptKey = "";
-          showToast(t("ui.frame.6"));
           dirtyRef.current = true;
         } else if (area === "village" && my < 0 && Math.abs(p.x - 384) < 34 && p.y >= 316 && p.y <= 342) {
           // Walking up into the Domovyk's hut door (north-west hut).
@@ -1423,7 +1419,7 @@ export function App() {
 
       // --- chickens wander (village only — there are no chickens on the
       // Bald Mountain; the witches ate them, probably)
-      for (const ch of area === "village" ? chickensRef.current : []) {
+      for (const ch of !isHutArea(area) ? chickensRef.current : []) {
         ch.phase += dt;
         if (ch.wait > 0) {
           ch.wait -= dt;
@@ -1458,8 +1454,12 @@ export function App() {
       // Once Viy is sealed, his hollow is only a hollow.
       const camp = chumakyPresent(flagsNow);
       const ostapNow = ostapState(flagsNow);
+      // The Chort keeps two addresses: the millstone by day, the sabbath
+      // on Lysa Hora by night.
+      const night = isNight(clockRef.current.minute);
+      const lysaChars = night ? LYSA_CHARS : LYSA_CHARS.filter((c) => c.id !== "chort");
       const villageChars = [
-        ...(flagHas(flagsNow, "viySealed") ? ALL_CHARS.filter((c) => c.id !== "viy") : ALL_CHARS),
+        ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && night)),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
@@ -1468,7 +1468,7 @@ export function App() {
       if (area === "lysa") {
         // Lysa Hora interactables: the sabbath host, the night-blooms,
         // the offering stone, and the dance ring.
-        for (const npc of LYSA_CHARS) {
+        for (const npc of lysaChars) {
           const pos = charPos(npc, now);
           const d = Math.hypot(pos.x - p.x, pos.y - p.y);
           const reach = npc.id === "beelzebub" ? 96 : 64;
@@ -1484,10 +1484,10 @@ export function App() {
           if (d < reach && d <= best + 14) { best = d; nextPrompt = make(); }
         };
         if (!flagHas(flagsNow, "lysaOffering")) {
-          lspot(LYSA_OFFER_SPOT.x, LYSA_OFFER_SPOT.y, 62, () => ({ kind: "offering" }));
+          lspot(LYSA_WORLD.offer.x, LYSA_WORLD.offer.y, 62, () => ({ kind: "offering" }));
         }
         if (flagHas(flagsNow, "lysaOffering") && !flagHas(flagsNow, "lysaDanced")) {
-          lspot(LYSA_DANCE_SPOT.x, LYSA_DANCE_SPOT.y, 66, () => ({ kind: "dance" }));
+          lspot(LYSA_WORLD.dance.x, LYSA_WORLD.dance.y, 66, () => ({ kind: "dance" }));
         }
       } else if (isHutArea(area)) {
         // Inside a hut: the resident, the pich offering spots (the
@@ -1569,14 +1569,33 @@ export function App() {
       // --- render
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx2d.clearRect(0, 0, vw, vh);
-      if (area === "lysa") {
-        drawLysaGround(ctx2d, camX, camY, vw, vh, now, flagHas(flagsNow, "lysaOffering"));
-        drawLysaFire(ctx2d, camX, camY, now);
-        lysaPatchesRef.current.forEach((patch) => drawLysaFlower(ctx2d, patch.x, patch.y, camX, camY, now, !patch.taken));
-      } else if (isHutArea(area)) {
+      if (isHutArea(area)) {
         drawHutInterior(ctx2d, camX, camY, now, area === "hut1" ? 1 : 0, flagsNow);
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
+      // Lysa Hora at the steppe's end: its bald rock, drawn in its own
+      // local coordinates and clipped to the mountain's oval.
+      const lx = LYSA_ORIGIN.x - camX;
+      const ly = LYSA_ORIGIN.y - camY;
+      if (lx < vw && lx + LYSA_W > 0 && ly < vh && ly + LYSA_H > 0) {
+        ctx2d.save();
+        ctx2d.beginPath();
+        ctx2d.ellipse(lx + LYSA_W / 2, ly + LYSA_H / 2, LYSA_W / 2 + 40, LYSA_H / 2 + 30, 0, 0, Math.PI * 2);
+        ctx2d.clip();
+        drawLysaGround(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, vw, vh, now, flagHas(flagsNow, "lysaOffering"));
+        // feather the mountain's foot into the steppe grass
+        ctx2d.translate(lx + LYSA_W / 2, ly + LYSA_H / 2);
+        ctx2d.scale(1, (LYSA_H + 60) / (LYSA_W + 80));
+        const rim = ctx2d.createRadialGradient(0, 0, (LYSA_W / 2 + 40) * 0.72, 0, 0, LYSA_W / 2 + 40);
+        rim.addColorStop(0, "rgba(160,170,92,0)");
+        rim.addColorStop(0.55, "rgba(132,140,88,0.55)");
+        rim.addColorStop(1, "rgba(160,172,94,1)");
+        ctx2d.fillStyle = rim;
+        ctx2d.fillRect(-LYSA_W, -LYSA_W, LYSA_W * 2, LYSA_W * 2);
+        ctx2d.restore();
+        drawLysaFire(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, now);
+        lysaPatchesRef.current.forEach((patch) => drawLysaFlower(ctx2d, patch.x, patch.y, camX, camY, now, !patch.taken));
+      }
       drawWell(ctx2d, camX, camY, now);
       drawFire(ctx2d, camX, camY, now);
       drawBrewBench(ctx2d, camX, camY, now);
@@ -1602,12 +1621,12 @@ export function App() {
 
       type Drawable = { y: number; draw: () => void };
       const drawables: Drawable[] = [];
-      if (area === "village") {
+      if (!isHutArea(area)) {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
       drawables.push({ y: WINDMILL.y, draw: () => drawWindmill(ctx2d, WINDMILL.x - camX, WINDMILL.y - camY, now) });
-      drawables.push({ y: KURHAN.y, draw: () => drawKurhan(ctx2d, KURHAN.x - camX, KURHAN.y - camY) });
+      for (const k of [KURHAN, KURHAN_STEPPE]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {
         if (d.x < camX - 40 || d.x > camX + vw + 40 || d.y < camY - 10 || d.y > camY + vh + 80) continue;
         const dx = d.x - camX;
@@ -1627,7 +1646,7 @@ export function App() {
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
-      for (const npc of area === "lysa" ? [...LYSA_CHARS, ...LYSA_DANCERS] : area === "hut0" ? [DOMOVYK_IN] : area === "hut1" ? [VESNA_IN] : villageChars) {
+      for (const npc of area === "hut0" ? [DOMOVYK_IN] : area === "hut1" ? [VESNA_IN] : [...villageChars, ...lysaChars, ...LYSA_DANCERS]) {
         const pos = charPos(npc, now);
         drawables.push({
           y: pos.y,
@@ -1668,7 +1687,7 @@ export function App() {
           },
         });
       }
-      for (const ch of area === "village" ? chickensRef.current : []) {
+      for (const ch of !isHutArea(area) ? chickensRef.current : []) {
         drawables.push({
           y: ch.y,
           draw: () => drawChicken(ctx2d, ch.x, ch.y, ch.wait > 0.4 && ch.wait < 1 ? Math.sin((1 - ch.wait) * 9) * 0.5 + 0.5 : 0, camX, camY),
@@ -1707,9 +1726,17 @@ export function App() {
       }
 
       // vignette — warm for the village day, cold moonlit blue on Lysa Hora
-      if (area === "lysa") {
-        ctx2d.fillStyle = "rgba(16,18,48,0.18)";
-        ctx2d.fillRect(0, 0, vw, vh);
+      // the air thickens toward Lysa Hora: a cold moonlit wash that grows
+      // over the last stretch of steppe and covers the mountain
+      if (!isHutArea(area)) {
+        const edge = LYSA_ORIGIN.x - camX;
+        if (edge - 500 < vw) {
+          const g = ctx2d.createLinearGradient(edge - 500, 0, edge + 60, 0);
+          g.addColorStop(0, "rgba(16,18,48,0)");
+          g.addColorStop(1, "rgba(16,18,48,0.42)");
+          ctx2d.fillStyle = g;
+          ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
+        }
       }
       const vg = ctx2d.createRadialGradient(vw / 2, vh * 0.42, Math.min(vw, vh) * 0.36, vw / 2, vh * 0.5, Math.max(vw, vh) * 0.78);
       vg.addColorStop(0, "rgba(60,30,0,0)");
@@ -1719,7 +1746,7 @@ export function App() {
 
       // night over the open village (huts are lamp-lit; Lysa Hora is
       // always moonlit), then the vigil on top so the chalk stays bright
-      if (area === "village") {
+      if (!isHutArea(area)) {
         drawNight(ctx2d, darkness(clockRef.current.minute), vw, vh, FIRE.x + FIRE.w / 2 - camX, FIRE.y + FIRE.h / 2 - camY);
       }
       if (fight) {

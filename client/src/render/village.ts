@@ -1,9 +1,19 @@
+import { LYSA_WORLD } from "../data/lysa";
+const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
+import { VILLAGE_W } from "../world/areas";
 import { drawCherry, drawCraneWell, drawKhata, drawTyn, drawWillow } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
 import { rr } from "./shapes";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { clamp, hash2, type Rect } from "../world/geometry";
+
+// Blend two #rrggbb colours (t = 0 → a, 1 → b).
+function mixHex(a: string, b: string, t: number): string {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `rgb(${pa.map((v, i) => Math.round(v + ((pb[i] ?? v) - v) * t)).join(",")})`;
+}
 
 export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number) {
   const cell = 34;
@@ -12,10 +22,14 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   const x1 = Math.min(Math.ceil(WORLD_W / cell), Math.ceil((camX + vw) / cell) + 1);
   const y1 = Math.min(Math.ceil(WORLD_H / cell), Math.ceil((camY + vh) / cell) + 1);
   const shades = ["#6da344", "#6aa141", "#6ea646", "#68a03f"];
+  // east of the khutir the grass dries into steppe, gold-green and wide
+  const steppe = ["#9fae5c", "#a7b062", "#98a656", "#b2b56c"];
   for (let gy = y0; gy < y1; gy++) {
     for (let gx = x0; gx < x1; gx++) {
       const h = hash2(gx, gy);
-      c.fillStyle = shades[Math.floor(h * shades.length)] ?? shades[0]!;
+      const dry = Math.min(1, Math.max(0, (gx * cell - VILLAGE_W + 160 + (hash2(gx, gy * 3) - 0.5) * 120) / 620));
+      const idx = Math.floor(h * shades.length);
+      c.fillStyle = dry <= 0 ? (shades[idx] ?? shades[0]!) : mixHex(shades[idx] ?? shades[0]!, steppe[idx] ?? steppe[0]!, dry);
       c.fillRect(gx * cell - camX, gy * cell - camY, cell + 1, cell + 1);
       // grass blades
       c.strokeStyle = "rgba(46,84,28,0.35)";
@@ -52,9 +66,27 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     }
   }
 
+  // The steppe roads, under the khutir's own paths: the trail north-east
+  // up to Lysa Hora, and the chumak road bending south toward Crimea.
+  c.lineCap = "round";
+  for (const [w, col] of [[46, "#b89a5e"], [34, "#c8a568"]] as const) {
+    c.strokeStyle = col;
+    c.lineWidth = w;
+    c.beginPath();
+    c.moveTo(VILLAGE_W - 80 - camX, 456 - camY);
+    c.bezierCurveTo(2000 - camX, 330 - camY, 2350 - camX, 760 - camY, LYSA_TRAILHEAD.x - camX, LYSA_TRAILHEAD.y - camY);
+    c.stroke();
+    c.lineWidth = w + 12;
+    c.beginPath();
+    c.moveTo(VILLAGE_W - 60 - camX, 646 - camY);
+    c.bezierCurveTo(1950 - camX, 660 - camY, 2150 - camX, 900 - camY, 2240 - camX, WORLD_H + 40 - camY);
+    c.stroke();
+  }
+  c.lineCap = "butt";
+
   // Dirt paths — a cross through the clearing.
   c.fillStyle = "#c8a568";
-  rr(c, 0 - camX, 600 - camY, WORLD_W, 92, 40); c.fill();
+  rr(c, 0 - camX, 600 - camY, VILLAGE_W, 92, 40); c.fill();
   rr(c, 768 - camX, 120 - camY, 144, 900, 60); c.fill();
   // the maidan: a trodden square round the fire and the well, where the
   // khutir meets, argues, and listens to the kobzar in the evening
@@ -63,12 +95,12 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   c.strokeStyle = "rgba(140,104,58,0.45)";
   c.lineWidth = 3;
   for (const ry of [630, 662]) {
-    c.beginPath(); c.moveTo(1030 - camX, ry - camY); c.lineTo(WORLD_W - camX, ry - camY); c.stroke();
+    c.beginPath(); c.moveTo(1030 - camX, ry - camY); c.lineTo(VILLAGE_W - camX, ry - camY); c.stroke();
   }
   c.fillStyle = "rgba(160,124,72,0.5)";
   for (let i = 0; i < 260; i++) {
     const onH = hash2(i, 77) > 0.35;
-    const px = onH ? hash2(i, 1) * WORLD_W : 768 + hash2(i, 2) * 144;
+    const px = onH ? hash2(i, 1) * VILLAGE_W : 768 + hash2(i, 2) * 144;
     const py = onH ? 600 + hash2(i, 3) * 92 : 120 + hash2(i, 4) * 900;
     if (px < camX - 10 || px > camX + vw + 10 || py < camY - 10 || py > camY + vh + 10) continue;
     c.beginPath();
@@ -76,13 +108,13 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     c.fill();
   }
 
-  // The Lysa Hora trail — a narrower spur leaving the clearing eastward,
-  // climbing (in spirit) to the Bald Mountain. Two cairns mark the edge
-  // where the village lets go of you.
+  // The Lysa Hora trail — a narrower spur leaving the clearing eastward
+  // into the steppe. Two cairns mark the edge where the khutir lets go
+  // of you.
   c.fillStyle = "#b99c62";
-  rr(c, 1120 - camX, 416 - camY, WORLD_W - 1120, 72, 30); c.fill();
+  rr(c, 1120 - camX, 416 - camY, VILLAGE_W - 1120, 72, 30); c.fill();
   for (const cy of [404, 502]) {
-    const cx = WORLD_W - 26 - camX;
+    const cx = VILLAGE_W - 26 - camX;
     const cyy = cy - camY;
     c.fillStyle = "#8d8b85";
     c.beginPath(); c.ellipse(cx, cyy + 8, 11, 5, 0, 0, Math.PI * 2); c.fill();

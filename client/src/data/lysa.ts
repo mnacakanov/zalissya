@@ -1,6 +1,11 @@
 import { hash2, type Rect } from "../world/geometry";
 
 // --- Lysa Hora layout -------------------------------------------------------
+// Lysa Hora is no longer a separate map: it rises at the far east end of
+// the steppe, in the same world as the khutir. The constants below are in
+// the mountain's LOCAL coordinates (its drawing code is written that way);
+// LYSA_WORLD holds the same places in world coordinates for gameplay.
+export const LYSA_ORIGIN = { x: 2700, y: 170 };
 // The Bald Mountain: a bare rocky dome (no forest, no grass to speak of)
 // under a crescent moon. The summit holds a ring of standing stones, a
 // great sabbath bonfire, an offering stone, and Beelzebub's seat.
@@ -39,3 +44,14 @@ export const LYSA_FLOWER_SPOTS: Array<{ x: number; y: number }> = [
   { x: 380, y: 330 }, { x: 520, y: 560 }, { x: 830, y: 580 },
   { x: 950, y: 240 }, { x: 300, y: 700 }, { x: 1080, y: 430 },
 ];
+const toWorld = <T extends { x: number; y: number }>(p: T): T => ({ ...p, x: p.x + LYSA_ORIGIN.x, y: p.y + LYSA_ORIGIN.y });
+
+export const LYSA_WORLD = {
+  summit: toWorld(LYSA_SUMMIT),
+  offer: toWorld(LYSA_OFFER_SPOT),
+  dance: toWorld(LYSA_DANCE_SPOT),
+  solid: LYSA_SOLID.map(toWorld),
+  flowers: LYSA_FLOWER_SPOTS.map(toWorld),
+  // where the steppe trail arrives at the foot of the mountain
+  trailhead: toWorld({ x: 92, y: 470 }),
+};

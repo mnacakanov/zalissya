@@ -33,6 +33,9 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     // the old millstone rise is kept clear for the windmill, and the
     // otaman's yard for his khata
     if ((x === 480 && y === 980) || (x === 560 && y === 420)) return;
+    // ...and the east edge is open now: the trail and the chumak road
+    // run out into the steppe
+    if ((x === 1600 && y === 460) || (x === 1590 && y === 660)) return;
     // willows lean over the pond
     const nearPond = Math.hypot(x - POND.x, (y - POND.y) * 1.4) < 300;
     TREES.push({ x, y, kind: nearPond ? "willow" : kinds[i % 3] ?? "pine", s: 0.9 + hash2(x, y) * 0.45 });
@@ -42,12 +45,17 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
   }
   TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
+  // lone oaks out on the steppe, where the chumaky rest at noon
+  for (const [x, y] of [[1980, 230], [2330, 1040], [2480, 300], [1880, 900]] as const) {
+    TREES.push({ x, y, kind: "oak", s: 1.1 + hash2(x, y) * 0.3 });
+  }
 }
 
 // Landmarks: the windmill by the Chort's old millstone, and a burial mound
 // with its stone idol where the khutir gives way to the steppe.
 export const WINDMILL = { x: 404, y: 1012 };
 export const KURHAN = { x: 1496, y: 770 };
+export const KURHAN_STEPPE = { x: 2150, y: 520 };
 
 // Yard plants (no collision): sunflowers, mallows, and feather grass on the
 // steppe side.
@@ -58,6 +66,10 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
     pts.forEach(([x, y]) => DECOR.push({ x, y, kind, seed: hash2(x, y) }));
   add("sunflower", [[488, 500], [292, 334], [306, 346], [474, 330], [1132, 318], [1148, 330], [432, 712], [446, 726], [1372, 812]]);
   add("mallow", [[512, 486], [640, 488], [316, 322], [452, 324], [1296, 316], [1312, 318], [1226, 812], [1342, 814], [1180, 316]]);
+  // feather grass all over the open steppe
+  for (let i = 0; i < 90; i++) {
+    DECOR.push({ x: 1720 + hash2(i, 31) * 900, y: 60 + hash2(i, 37) * 1140, kind: "kovyla", seed: hash2(i, 41) });
+  }
   add("kovyla", [[1556, 520], [1596, 560], [1540, 700], [1590, 724], [1500, 530], [1446, 742], [1552, 800], [1430, 800], [1600, 610]]);
 }
 
@@ -80,4 +92,5 @@ export const SOLID: Rect[] = [
   ...FENCES,
   { x: WINDMILL.x - 26, y: WINDMILL.y - 16, w: 52, h: 22 },
   { x: KURHAN.x - 56, y: KURHAN.y - 22, w: 112, h: 26 },
+  { x: KURHAN_STEPPE.x - 56, y: KURHAN_STEPPE.y - 22, w: 112, h: 26 },
 ];

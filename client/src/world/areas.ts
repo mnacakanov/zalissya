@@ -1,5 +1,10 @@
-export const WORLD_W = 1680;
+// One world: the khutir (x 0…1680), the steppe east of it, and Lysa Hora at
+// the far end (see data/lysa.ts LYSA_ORIGIN). Hut interiors are separate.
+export const VILLAGE_W = 1680;
+export const WORLD_W = 3980;
 export const WORLD_H = 1260;
+// Past this x the player is "on Lysa Hora" (the HUD, the sabbath rules).
+export const LYSA_BORDER_X = 2620;
 export const PLAYER_SPEED = 175;
 export const PLAYER_R = 13;
 export const SPAWN = { x: 840, y: 760 };
@@ -7,8 +12,6 @@ export const SPAWN = { x: 840, y: 760 };
 export type AreaId = "village" | "lysa" | "hut0" | "hut1";
 export const LYSA_W = 1280;
 export const LYSA_H = 920;
-export const LYSA_SPAWN = { x: 92, y: 470 }; // west trailhead, arriving from Zalissya
-export const VILLAGE_RETURN = { x: 1618, y: 452 }; // east edge of the clearing
 // Hut interiors: one shared room size, entered from the village doors.
 // hut0 is the Domovyk's north-west hut (door front at village 384,314);
 // hut1 is Vesna's south-east hut (door front at village 1285,796) —
@@ -23,11 +26,7 @@ export const VILLAGE_FROM_HUT1 = { x: 1285, y: 824 }; // back out, at the SE hut
 export function isHutArea(area: AreaId): boolean {
   return area === "hut0" || area === "hut1";
 }
-// The village trail out: the east edge, between the two trail-marker pines.
-export const TRAIL_Y_MIN = 380;
-export const TRAIL_Y_MAX = 530;
 export function worldSize(area: AreaId): { w: number; h: number } {
-  if (area === "lysa") return { w: LYSA_W, h: LYSA_H };
   if (isHutArea(area)) return { w: HUT_W, h: HUT_H };
   return { w: WORLD_W, h: WORLD_H };
 }
