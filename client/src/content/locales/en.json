@@ -1046,5 +1046,22 @@
   "quest.tobacco.drying": "The tobacco is drying on Vesna's rack — until morning",
   "quest.tobacco.ready": "The tobacco is dry — take it to the otaman",
   "quest.tobacco.done": "The otaman smokes Taras's tobacco, and you have his old pipe",
-  "quest.tobacco.none": "—"
+  "quest.tobacco.none": "—",
+  "map.button": "Map",
+  "map.open": "Open the map",
+  "map.title": "Map of the land",
+  "map.zoom": "Map zoom",
+  "map.zoom.world": "Whole world",
+  "map.zoom.near": "Around me",
+  "map.aria": "Map: the khutir, fields, river, forests, steppe and Lysa Hora",
+  "map.legend": "● — you are here · ★ — where your current quest leads · ▲ — burial mounds · ✣ — windmill",
+  "map.khutir": "Zalissya",
+  "map.steppe": "The steppe",
+  "map.lysa": "Lysa Hora",
+  "map.river": "The river",
+  "map.forest": "Forest",
+  "map.fields": "Fields",
+  "map.hemp": "Hemp",
+  "map.tobacco": "Tobacco",
+  "map.pond": "Pond"
 }

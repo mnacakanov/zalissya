@@ -1046,5 +1046,22 @@
   "quest.tobacco.drying": "Тютюн сохне на сушарці Весни — до ранку",
   "quest.tobacco.ready": "Тютюн висох — неси отаманові",
   "quest.tobacco.done": "Отаман курить Тарасів тютюн, а в тебе — його стара люлька",
-  "quest.tobacco.none": "—"
+  "quest.tobacco.none": "—",
+  "map.button": "Мапа",
+  "map.open": "Відкрити мапу",
+  "map.title": "Мапа околиць",
+  "map.zoom": "Масштаб мапи",
+  "map.zoom.world": "Увесь світ",
+  "map.zoom.near": "Довкола мене",
+  "map.aria": "Мапа: хутір, поля, річка, ліси, степ і Лиса Гора",
+  "map.legend": "● — ти тут · ★ — куди веде поточне завдання · ▲ — кургани · ✣ — вітряк",
+  "map.khutir": "Залісся",
+  "map.steppe": "Степ",
+  "map.lysa": "Лиса Гора",
+  "map.river": "Річка",
+  "map.forest": "Ліс",
+  "map.fields": "Ниви",
+  "map.hemp": "Коноплі",
+  "map.tobacco": "Тютюн",
+  "map.pond": "Ставок"
 }

@@ -166,3 +166,10 @@ The world grows south to 3980×2300 (`data/land.ts`, `render/land.ts`).
 - The old tobacco field across the river was planted by Taras the Long, who went to the Sich and never came back. Folk say the devil tends it, since tobacco is the devil's herb, and the Chort happily agrees.
 - Pick three leaves, strip hemp fibre to tie them, and hang the bundle on Vesna's rack. It dries at the next dawn.
 - The otaman smokes Taras's tobacco in long silence and gives you his old Sich pipe, worth +2 Nerve at Viy's vigil.
+
+## The map
+
+The world is big now, so there is a **map** (`ui/MapOverlay.tsx`, `render/map.ts`). Open it with the **Мапа** button in the HUD, the **M** key, or **Y** on a gamepad; the world pauses while it is open.
+- **What it shows:** a hand-drawn parchment view of the whole world. It has the khutir's khaty, the gardens and fields, the roads, the pond and river with its bridges, and the forests. It also shows the steppe with its kurhany, Lysa Hora, and the tobacco and hemp fields, plus the chumak cart or the grave when they're there.
+- **Markers:** a red marker shows where you stand, and a gold **★** shows where your current quest leads (`questTarget`).
+- **Zoom:** «Увесь світ» shows everything, and «Довкола мене» shows a closer view around you.

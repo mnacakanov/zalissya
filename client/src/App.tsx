@@ -26,6 +26,8 @@ import { Joystick } from "./input/Joystick";
 import { PadButton } from "./input/PadButton";
 import { type Lang, setLanguage, type TextKey } from "./i18n";
 import { LanguagePicker } from "./ui/LanguagePicker";
+import { MapOverlay } from "./ui/MapOverlay";
+import { questTarget } from "./render/map";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
@@ -152,6 +154,7 @@ export function App() {
   const controls: "pad" | "stick" = JOYSTICK_ALLOWED ? "stick" : "pad";
   const [confirmReset, setConfirmReset] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -1195,6 +1198,10 @@ export function App() {
         return;
     }
   };
+  const mapOpenRef = useRef(false);
+  mapOpenRef.current = mapOpen;
+  const toggleMapRef = useRef(() => {});
+  toggleMapRef.current = () => (mapOpen ? closeMap() : openMap());
   const interactRef = useRef(doInteract);
   interactRef.current = doInteract;
 
@@ -1223,8 +1230,10 @@ export function App() {
       if (scope && el instanceof HTMLButtonElement && scope.contains(el)) el.click();
       else interactRef.current();
     }
+    if (pressed.has("y")) toggleMapRef.current();
     if (pressed.has("b")) {
-      if (panelRef.current) closePanel();
+      if (mapOpenRef.current) closeMap();
+      else if (panelRef.current) closePanel();
       else if (dialogueRef.current?.view === "menu") endDialogue();
     }
     if (pressed.has("start")) {
@@ -1263,6 +1272,10 @@ export function App() {
     const down = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
+      if (k === "m") {
+        if (!e.repeat) toggleMapRef.current();
+        return;
+      }
       if (k === "e" || k === " ") {
         if (!e.repeat) interactRef.current();
         return;
@@ -1935,6 +1948,9 @@ export function App() {
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
   const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute), evening: isEvening(hudClock.minute) });
+  // where the map puts the kobzar: read once when the map opens (the
+  // world is paused while it is open, so this does not go stale)
+  const mapPlayer = mapOpen ? { x: playerRef.current.x, y: playerRef.current.y } : { x: 0, y: 0 };
   const objective = hudFight ? t("ui.objective.0") : quests.objective;
   const promptHerb =
     prompt?.kind === "gather" ? HERBS[HERB_SPOTS[prompt.idx]?.kind ?? "kropyva"] : null;
@@ -2022,6 +2038,15 @@ export function App() {
   // as the objective line above, so the two always agree).
   const questStatus = (q: QuestItem): "done" | "active" | "todo" => (q.done ? "done" : q.active ? "active" : "todo");
 
+  const openMap = () => {
+    if (fightRef.current || dialogueRef.current) return;
+    panelRef.current = true;
+    setMapOpen(true);
+  };
+  const closeMap = () => {
+    panelRef.current = false;
+    setMapOpen(false);
+  };
   const openPanel = (tab: "stats" | "skills" | "quests") => {
     if (fightRef.current) return;
     setPanelTab(tab);
@@ -2095,6 +2120,14 @@ export function App() {
             </div>
             <div className="pointer-events-auto mt-2 flex flex-col items-end gap-1.5">
               <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  aria-label={t("map.open")}
+                  onClick={openMap}
+                  className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
+                >
+                  {t("map.button")}
+                </button>
                 <button
                   type="button"
                   aria-label={t("ui.misc.12")}
@@ -2479,6 +2512,15 @@ export function App() {
                 )}
               </div>
             </div>
+          )}
+
+          {mapOpen && (
+            <MapOverlay
+              player={hudArea === "hut0" ? { x: 384, y: 336 } : hudArea === "hut1" ? { x: 1285, y: 810 } : mapPlayer}
+              flags={hudFlags}
+              target={questTarget(quests.activeId, hudFlags)}
+              onClose={closeMap}
+            />
           )}
 
           {/* Character sheet — stats, skills, satchel, and the quest

@@ -30,7 +30,7 @@ client/src/
   systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
-  ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
+  ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map; drawing in render/map.ts, quest stars in questTarget)
 server/src/          Muse server actions and drizzle schema (one save slot)
 drizzle/             migrations (numbered; never edit an old one)
 pages/               Pages tooling: package.json, build.ts, tsconfig + type shims for the Muse SDK
@@ -103,7 +103,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
    - Use English for **skill names** (Herbalism, Fishing, Cooking, Smithing, Alchemy), **common buildings** ("huts", never "khaty"), and everyday items (chalk, wreath).
    - **Radek stays Polish.** He is a Polish smith visiting from afar.
    - The mapping: г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y, й→y. The healer is a **znakharka** (one word).
-2. **Controls.** Every action must work by keyboard, by touch buttons, and by gamepad (`input/gamepad.ts`: A interact, B back, LB/RB look away, Start/Back for the sheets). The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The floating joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`), and there it replaces the D-pad entirely (owner decision). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
+2. **Controls.** Every action must work by keyboard, by touch buttons, and by gamepad (`input/gamepad.ts`: A interact, B back, Y map, LB/RB look away, Start/Back for the sheets; keyboard M opens the map). The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The floating joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`), and there it replaces the D-pad entirely (owner decision). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
 3. **Never commit `app.db` or any save data.** That includes exported saves, localStorage dumps, `.db` and `.sqlite` files. `.gitignore` covers them, so don't weaken it.
 4. **Keep the save backward compatible.** Old saves must keep loading. Prefer new flags over schema changes. A server schema change needs a new numbered migration in `drizzle/` plus a `_journal.json` entry. Never edit an existing migration.
 5. **Fighting is folkloric and rare.** Viy's vigil (`systems/viyFight.ts`) is the game's one fight: warding, not weapons. Losing costs the night, never items or progress. Add further combat only as a deliberate, owner-approved feature.
