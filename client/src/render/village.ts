@@ -39,50 +39,211 @@ function valueNoise(x: number, y: number, seed: number): number {
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
 }
 
-// Every worn surface in the world, in world coordinates: roads, the maidan,
-// the trail, the korchma's track, and the footpaths from each door.
-function paintPaths(g: CanvasRenderingContext2D, widen: number): void {
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  // the steppe roads: the trail to Lysa Hora and the chumak road south
-  g.lineWidth = 34 + widen;
-  g.beginPath();
-  g.moveTo(VILLAGE_W - 80, 456);
-  g.bezierCurveTo(2000, 330, 2350, 760, LYSA_TRAILHEAD.x, LYSA_TRAILHEAD.y);
-  g.stroke();
-  g.lineWidth = 46 + widen;
-  g.beginPath();
-  g.moveTo(VILLAGE_W - 60, 646);
-  g.bezierCurveTo(1950, 660, 2250, 900, 2250, 1300);
-  g.lineTo(2250, WORLD_H + 40);
-  g.stroke();
-  g.lineWidth = 28 + widen;
-  g.beginPath();
-  g.moveTo(2005, 1214);
-  g.quadraticCurveTo(2120, 1240, 2244, 1170);
-  g.stroke();
-  // the khutir's own: the road west–east, the road south to the bridge,
-  // the maidan, and the trail's spur past Vesna's door
-  const w2 = widen / 2;
-  rr(g, -w2, 600 - w2, VILLAGE_W + widen, 92 + widen, 40); g.fill();
-  rr(g, 768 - w2, 300 - w2, 144 + widen, 1380 + widen, 60); g.fill();
-  g.beginPath(); g.ellipse(840, 568, 190 + w2, 128 + w2, 0, 0, Math.PI * 2); g.fill();
-  rr(g, 1468 - w2, 416 - w2, VILLAGE_W - 1468 + widen, 72 + widen, 30); g.fill();
-  rr(g, 1468 - w2, 416 - w2, 64 + widen, 260 + widen, 30); g.fill();
-  // footpaths worn from each door to the nearest road
-  g.lineWidth = 20 + widen;
-  for (const r of Object.values(HOUSE_RECTS)) {
-    const dx = r.x + r.w / 2;
-    const dy = r.y + r.h;
-    const ty = dy < 600 ? 610 : dy + 30;
-    g.beginPath(); g.moveTo(dx, dy - 4);
-    g.quadraticCurveTo(dx, (dy + ty) / 2, dx + (dx < 840 ? 10 : -10), ty);
-    g.stroke();
+// --- Roads as they are worn, not drawn -----------------------------------------
+// Every road is a centreline sampled every few px. It meanders a little
+// off its line and swells and pinches as feet and wheels made it, so its
+// edges are never straight. The maidan is a ragged blob trodden round the
+// fire and the well. Along the roads lie puddles, potholes, mud and the
+// two ruts the carts cut (ROAD_MARKS, drawn crisp every frame).
+type Road = { pts: Array<{ x: number; y: number }>; w: number; seed: number; ruts: boolean };
+
+function bezierPts(p0: number[], p1: number[], p2: number[], p3: number[], step: number): Array<{ x: number; y: number }> {
+  const out: Array<{ x: number; y: number }> = [];
+  const len = Math.hypot((p3[0] ?? 0) - (p0[0] ?? 0), (p3[1] ?? 0) - (p0[1] ?? 0)) * 1.3;
+  const n = Math.max(2, Math.ceil(len / step));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const u = 1 - t;
+    const at = (k: 0 | 1) => u * u * u * (p0[k] ?? 0) + 3 * u * u * t * (p1[k] ?? 0) + 3 * u * t * t * (p2[k] ?? 0) + t * t * t * (p3[k] ?? 0);
+    out.push({ x: at(0), y: at(1) });
   }
-  // the pustka's path runs down to the maidan, past the well
-  g.beginPath(); g.moveTo(1189, 312); g.quadraticCurveTo(1100, 420, 1000, 470); g.stroke();
-  // the forge's yard opens straight onto the road
-  g.beginPath(); g.moveTo(328, 560); g.lineTo(328, 610); g.stroke();
+  return out;
+}
+function linePts(pts: number[][], step: number): Array<{ x: number; y: number }> {
+  const out: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const [ax = 0, ay = 0] = pts[i] ?? [];
+    const [bx = 0, by = 0] = pts[i + 1] ?? [];
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / step));
+    for (let k = 0; k < n; k++) out.push({ x: ax + ((bx - ax) * k) / n, y: ay + ((by - ay) * k) / n });
+  }
+  const last = pts[pts.length - 1] ?? [0, 0];
+  out.push({ x: last[0] ?? 0, y: last[1] ?? 0 });
+  return out;
+}
+
+let roadsCache: Road[] | null = null;
+function roads(): Road[] {
+  if (roadsCache) return roadsCache;
+  const r: Road[] = [
+    // the khutir's road west–east, and south to the bridge and beyond
+    { pts: linePts([[-40, 646], [VILLAGE_W - 40, 646]], 6), w: 80, seed: 1, ruts: true },
+    { pts: linePts([[840, 300], [840, 1700]], 6), w: 96, seed: 2, ruts: true },
+    // the steppe roads: the trail to Lysa Hora and the chumak road south
+    { pts: bezierPts([VILLAGE_W - 80, 456], [2000, 330], [2350, 760], [LYSA_TRAILHEAD.x, LYSA_TRAILHEAD.y], 6), w: 34, seed: 3, ruts: false },
+    { pts: [...bezierPts([VILLAGE_W - 60, 646], [1950, 660], [2250, 900], [2250, 1300], 6), ...linePts([[2250, 1300], [2250, WORLD_H + 40]], 6)], w: 50, seed: 4, ruts: true },
+    { pts: linePts([[1500, 646], [1500, 452], [VILLAGE_W, 452]], 6), w: 54, seed: 5, ruts: false },
+    { pts: bezierPts([2005, 1214], [2080, 1236], [2160, 1230], [2244, 1170], 6), w: 30, seed: 6, ruts: false },
+  ];
+  // footpaths worn from each door to the nearest road
+  let seed = 10;
+  for (const h of Object.values(HOUSE_RECTS)) {
+    const dx = h.x + h.w / 2;
+    const dy = h.y + h.h;
+    const ty = dy < 600 ? 620 : dy + 34;
+    r.push({ pts: bezierPts([dx, dy - 4], [dx, (dy + ty) / 2], [dx + (dx < 840 ? 6 : -6), (dy + ty) / 2 + 6], [dx + (dx < 840 ? 12 : -12), ty], 5), w: 20, seed: seed++, ruts: false });
+  }
+  // the pustka's path down to the maidan past the well, and the forge's yard
+  r.push({ pts: bezierPts([1189, 312], [1160, 380], [1080, 430], [1000, 470], 5), w: 18, seed: seed++, ruts: false });
+  r.push({ pts: linePts([[328, 556], [328, 616]], 5), w: 40, seed: seed++, ruts: false });
+  roadsCache = r;
+  return r;
+}
+
+// where a road actually runs at sample i: meandered off its line, with its
+// own width there
+function roadAt(rd: Road, i: number): { x: number; y: number; nx: number; ny: number; half: number } {
+  const p = rd.pts[i] ?? { x: 0, y: 0 };
+  const q = rd.pts[Math.min(rd.pts.length - 1, i + 1)] ?? p;
+  const o = rd.pts[Math.max(0, i - 1)] ?? p;
+  const tx = q.x - o.x;
+  const ty = q.y - o.y;
+  const tl = Math.hypot(tx, ty) || 1;
+  const nx = -ty / tl;
+  const ny = tx / tl;
+  const s = i * 6;
+  const wander = (valueNoise(s / 170, rd.seed * 7.3, 101) - 0.5) * rd.w * 0.4;
+  const half = (rd.w / 2) * (0.78 + 0.45 * valueNoise(s / 55, rd.seed * 3.1, 131));
+  return { x: p.x + nx * wander, y: p.y + ny * wander, nx, ny, half };
+}
+
+function paintPaths(g: CanvasRenderingContext2D, widen: number): void {
+  for (const rd of roads()) {
+    for (let i = 0; i < rd.pts.length; i++) {
+      const a = roadAt(rd, i);
+      g.beginPath(); g.arc(a.x, a.y, a.half + widen / 2, 0, Math.PI * 2); g.fill();
+    }
+  }
+  // the maidan: a ragged blob trodden round the fire and the well
+  g.beginPath();
+  for (let k = 0; k <= 64; k++) {
+    const ang = (k / 64) * Math.PI * 2;
+    const wob = 0.82 + 0.3 * valueNoise(Math.cos(ang) * 2.2 + 5, Math.sin(ang) * 2.2 + 5, 151);
+    const x = 840 + Math.cos(ang) * (196 + widen / 2) * wob;
+    const y = 572 + Math.sin(ang) * (132 + widen / 2) * wob;
+    if (k === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.closePath(); g.fill();
+}
+
+// Puddles, potholes, mud and cart ruts, laid out once along the roads.
+type Mark = { kind: "puddle" | "hole" | "mud" | "stones"; x: number; y: number; w: number; h: number; a: number; seed: number };
+let marksCache: { marks: Mark[]; ruts: Array<Array<{ x: number; y: number }>> } | null = null;
+function roadMarks(): { marks: Mark[]; ruts: Array<Array<{ x: number; y: number }>> } {
+  if (marksCache) return marksCache;
+  const marks: Mark[] = [];
+  const ruts: Array<Array<{ x: number; y: number }>> = [];
+  for (const rd of roads()) {
+    if (rd.w < 30) continue;
+    for (let i = 4; i < rd.pts.length - 4; i += 7) {
+      const h = hash2(i * 1.7 + rd.seed, rd.seed * 9.1);
+      const a = roadAt(rd, i);
+      const off = (hash2(i, rd.seed * 13) - 0.5) * a.half * 1.2;
+      const x = a.x + a.nx * off;
+      const y = a.y + a.ny * off;
+      const ang = Math.atan2(a.ny, a.nx) + Math.PI / 2;
+      const size = 0.6 + hash2(i * 3, rd.seed) * 0.8;
+      if (h < 0.1) marks.push({ kind: "puddle", x, y, w: 16 * size + 6, h: 7 * size + 3, a: ang, seed: i + rd.seed });
+      else if (h < 0.22) marks.push({ kind: "hole", x, y, w: 9 * size + 4, h: 5 * size + 2, a: ang, seed: i + rd.seed });
+      else if (h < 0.42) marks.push({ kind: "mud", x, y, w: 22 * size + 8, h: 10 * size + 4, a: ang, seed: i + rd.seed });
+      else if (h < 0.55) marks.push({ kind: "stones", x, y, w: 10, h: 6, a: ang, seed: i + rd.seed });
+    }
+    if (rd.ruts) {
+      for (const side of [-1, 1] as const) {
+        const line: Array<{ x: number; y: number }> = [];
+        for (let i = 0; i < rd.pts.length; i += 2) {
+          const a = roadAt(rd, i);
+          const o = side * Math.min(a.half * 0.45, 18) + (valueNoise(i / 9, side * 5 + rd.seed, 171) - 0.5) * 3;
+          line.push({ x: a.x + a.nx * o, y: a.y + a.ny * o });
+        }
+        ruts.push(line);
+      }
+    }
+  }
+  // the maidan is churned and wet round the well, trampled round the fire
+  for (let k = 0; k < 14; k++) {
+    const ang = hash2(k, 191) * Math.PI * 2;
+    const rr2 = 40 + hash2(k, 193) * 120;
+    marks.push({ kind: hash2(k, 197) < 0.12 ? "puddle" : hash2(k, 197) < 0.45 ? "stones" : "mud", x: 860 + Math.cos(ang) * rr2 * 1.4, y: 575 + Math.sin(ang) * rr2 * 0.8, w: 14 + hash2(k, 199) * 22, h: 7 + hash2(k, 201) * 8, a: hash2(k, 203) * 3, seed: k + 500 });
+  }
+  marks.push({ kind: "mud", x: 950, y: 540, w: 52, h: 20, a: 0.2, seed: 777 });
+  marks.push({ kind: "puddle", x: 960, y: 548, w: 26, h: 9, a: 0.1, seed: 778 });
+  marksCache = { marks, ruts };
+  return marksCache;
+}
+
+function drawRoadMarks(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number): void {
+  const { marks, ruts } = roadMarks();
+  // the cart ruts: two dark grooves with a pale ridge beside each
+  c.lineCap = "round"; c.lineJoin = "round";
+  for (const line of ruts) {
+    let open = false;
+    for (const [col, w, dy] of [["rgba(120,86,46,0.42)", 3.2, 0], ["rgba(236,206,150,0.35)", 1.2, 2]] as const) {
+      c.strokeStyle = col; c.lineWidth = w;
+      c.beginPath(); open = false;
+      for (const pt of line) {
+        const x = pt.x - camX;
+        const y = pt.y - camY + dy;
+        if (x < -40 || x > vw + 40 || y < -40 || y > vh + 40) { if (open) { c.stroke(); c.beginPath(); open = false; } continue; }
+        if (!open) { c.moveTo(x, y); open = true; } else c.lineTo(x, y);
+      }
+      if (open) c.stroke();
+    }
+  }
+  for (const m of marks) {
+    const x = m.x - camX;
+    const y = m.y - camY;
+    if (x < -40 || x > vw + 40 || y < -30 || y > vh + 30) continue;
+    c.save(); c.translate(x, y); c.rotate(m.a);
+    if (m.kind === "mud") {
+      // wet, dark earth with a lumpy edge
+      c.fillStyle = "rgba(110,78,42,0.42)";
+      c.beginPath();
+      for (let k = 0; k <= 12; k++) {
+        const ang = (k / 12) * Math.PI * 2;
+        const wob = 0.75 + 0.4 * hash2(m.seed, k);
+        const px = Math.cos(ang) * m.w * 0.5 * wob;
+        const py = Math.sin(ang) * m.h * 0.5 * wob;
+        if (k === 0) c.moveTo(px, py); else c.lineTo(px, py);
+      }
+      c.closePath(); c.fill();
+      c.fillStyle = "rgba(80,56,30,0.35)";
+      c.beginPath(); c.ellipse(m.w * 0.1, 0, m.w * 0.22, m.h * 0.22, 0, 0, Math.PI * 2); c.fill();
+    } else if (m.kind === "hole") {
+      // a pothole: a dark hollow with the sunlit far lip
+      c.fillStyle = "rgba(70,48,24,0.55)";
+      c.beginPath(); c.ellipse(0, 0, m.w * 0.5, m.h * 0.5, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "rgba(236,210,160,0.55)"; c.lineWidth = 1.2;
+      c.beginPath(); c.ellipse(0, 0.6, m.w * 0.5, m.h * 0.5, 0, 0.1 * Math.PI, 0.9 * Math.PI); c.stroke();
+    } else if (m.kind === "puddle") {
+      // a puddle: a muddy rim, brown water, the sky glinting on it
+      c.fillStyle = "rgba(96,70,40,0.55)";
+      c.beginPath(); c.ellipse(0, 0, m.w * 0.55, m.h * 0.6, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(124,140,140,0.85)";
+      c.beginPath(); c.ellipse(0, 0, m.w * 0.46, m.h * 0.45, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(200,220,228,0.6)";
+      const sh = Math.sin(t * 0.0012 + m.seed) * m.w * 0.08;
+      c.beginPath(); c.ellipse(-m.w * 0.12 + sh, -m.h * 0.12, m.w * 0.18, m.h * 0.1, 0, 0, Math.PI * 2); c.fill();
+    } else {
+      // pebbles
+      for (let k = 0; k < 4; k++) {
+        c.fillStyle = k % 2 ? "#9a9488" : "#b8b0a0";
+        c.beginPath(); c.ellipse((hash2(m.seed, k) - 0.5) * 12, (hash2(k, m.seed) - 0.5) * 6, 1.8 + hash2(k * 3, m.seed) * 1.8, 1.3 + hash2(m.seed * 3, k), 0, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.restore();
+  }
+  c.lineCap = "butt"; c.lineJoin = "miter";
 }
 
 function bakeGround(): HTMLCanvasElement {
@@ -122,14 +283,16 @@ function bakeGround(): HTMLCanvasElement {
   // a worn, half-bare fringe, then the trodden earth itself
   p.fillStyle = p.strokeStyle = "rgba(168,140,84,0.45)";
   paintPaths(p, 18);
-  p.fillStyle = p.strokeStyle = "rgb(200,165,104)";
+  p.fillStyle = p.strokeStyle = "rgb(190,150,92)";
   paintPaths(p, 0);
   // dust lighter in the middle of the maidan, where everyone stands
   const mg = p.createRadialGradient(840, 600, 20, 840, 600, 200);
-  mg.addColorStop(0, "rgba(222,192,132,0.8)");
+  mg.addColorStop(0, "rgba(214,180,120,0.7)");
   mg.addColorStop(1, "rgba(222,192,132,0)");
   p.fillStyle = mg;
-  p.beginPath(); p.ellipse(840, 568, 190, 128, 0, 0, Math.PI * 2); p.fill();
+  p.globalCompositeOperation = "source-atop"; // only where it is already dirt
+  p.fillRect(600, 400, 480, 360);
+  p.globalCompositeOperation = "source-over";
   const pd = p.getImageData(0, 0, w, h).data;
   dirtMask = new Uint8ClampedArray(w * h);
   for (let i = 0; i < w * h; i++) dirtMask[i] = pd[i * 4 + 3] ?? 0;
@@ -204,22 +367,8 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   }
   c.lineCap = "butt";
 
-  // the chumak road east: two cart ruts worn into the dirt
-  c.strokeStyle = "rgba(140,104,58,0.45)";
-  c.lineWidth = 3;
-  for (const ry of [630, 662]) {
-    c.beginPath(); c.moveTo(1030 - camX, ry - camY); c.lineTo(VILLAGE_W - camX, ry - camY); c.stroke();
-  }
-  c.fillStyle = "rgba(160,124,72,0.5)";
-  for (let i = 0; i < 260; i++) {
-    const onH = hash2(i, 77) > 0.35;
-    const px = onH ? hash2(i, 1) * VILLAGE_W : 768 + hash2(i, 2) * 144;
-    const py = onH ? 600 + hash2(i, 3) * 92 : 320 + hash2(i, 4) * 700;
-    if (px < camX - 10 || px > camX + vw + 10 || py < camY - 10 || py > camY + vh + 10) continue;
-    c.beginPath();
-    c.arc(px - camX, py - camY, 1.6 + hash2(i, 5) * 2.6, 0, Math.PI * 2);
-    c.fill();
-  }
+  // puddles, potholes, mud, pebbles and cart ruts on the roads
+  drawRoadMarks(c, camX, camY, vw, vh, t);
 
   // The Lysa Hora trail — a narrower spur leaving the clearing eastward
   // into the steppe. Two cairns mark the edge where the khutir lets go

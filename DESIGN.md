@@ -282,3 +282,15 @@ The owner was shown three styles for people side by side (refined, realistic, st
   - Okhrim: the oseledets and moustaches to his chest.
 - **Walking:** legs step, arms swing against them and the body bobs. Faces turn toward the kobzar.
 - **Spirits:** they keep their own drawings.
+
+## Worn roads
+
+The owner wanted the roads and the maidan less geometric, with mud, holes and uneven shapes. All of it is in `render/village.ts`.
+
+- **Roads:** every road and footpath is a centreline sampled every few pixels. The road meanders off its line and swells and pinches along it, so no edge is ever straight.
+- **The maidan:** a ragged trodden blob instead of an ellipse, dustier in the middle and wet and churned round the well.
+- **On the dirt:** laid out once and drawn crisp every frame:
+  - puddles, with the sky glinting on them;
+  - potholes, with a sunlit lip;
+  - patches of wet mud and pebbles;
+  - two cart ruts with pale ridges, following the meander of every road the carts use.
