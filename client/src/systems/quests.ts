@@ -1,5 +1,6 @@
 import { flagCount, flagHas } from "./flags";
 import { knowsSong } from "./songs";
+import { ostapState } from "./chumaky";
 import { t } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
@@ -29,9 +30,10 @@ export type QuestView = {
   evening: boolean;
 };
 
-export type SectionId = "story" | "viy" | "life" | "lysa";
+export type SectionId = "story" | "chumaky" | "viy" | "life" | "lysa";
 export const SECTION_TITLES: Record<SectionId, string> = {
   story: t("quest.section.story"),
+  chumaky: t("quest.section.chumaky"),
   viy: t("quest.SECTION_TITLES.viy.0"),
   life: t("quest.SECTION_TITLES.life.0"),
   lysa: t("quest.SECTION_TITLES.lysa.0"),
@@ -93,6 +95,18 @@ const QUESTS: QuestDef[] = [
     done: (d) => d.metVillagers >= 3,
     detail: (d) => t("quest.meet.0", { metVillagers: d.metVillagers }),
     objective: (d) => t("quest.meet.1", { metVillagers: d.metVillagers }),
+  },
+  {
+    id: "chumaky", section: "chumaky", title: t("quest.chumaky.title"),
+    visible: (d) => flagCount(d.f, "chumakyArrivedDay") > 0,
+    done: (d) => ostapState(d.f) !== "sick",
+    detail: (d) => {
+      const st = ostapState(d.f);
+      if (st === "sick") return t("quest.chumaky.sick");
+      if (st === "dead") return t("quest.chumaky.died");
+      return flagHas(d.f, "defiedOtaman") ? t("quest.chumaky.defied") : t("quest.chumaky.relented");
+    },
+    objective: () => t("quest.chumaky.objective"),
   },
   {
     id: "evening", section: "story", title: t("quest.evening.title"),
@@ -249,7 +263,7 @@ const QUESTS: QuestDef[] = [
 // The order the HUD walks the threads in. Optional preparations (wreath,
 // iron ward) are listed in the log but never become the objective.
 const PRIORITY = [
-  "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway",
+  "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway",
   "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "vigil", "lysa-sabbath",
 ];
 

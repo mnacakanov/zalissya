@@ -26,8 +26,8 @@ client/src/
   save/              types.ts (SaveData, SaveAdapter, areas, limits), muse.ts, local.ts
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
   data/              village / lysa / huts layouts, items (herbs, spots, catch), characters (+ charPos)
-  dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), viyNight.ts (Viy's night storyline)
-  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza), viyFight (the vigil), quests (quest log) + *.test.ts
+  dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), chumaky.ts (the caravan conversations), viyNight.ts (Viy's night storyline)
+  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
@@ -90,6 +90,8 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
 - **Cossack, not generic Slavic.** A Cossack khutir past the forest, near the steppe, in the Hetmanate era of Gogol's tales (*Вечори на хуторі біля Диканьки*, *Вій*). Use Cossack life and words: otaman, Sich, kulish, horilka, lyulka (pipe), hopak, duma, khutir, sabre, horses.
 - **The player is a kobzar** (masculine): people call him «кобзарю», «співаче», «синку». His tools are songs: **the kobza is the core mechanic** (`systems/songs.ts`). He learns songs from people and spirits and plays them: for the khutir at the campfire in the evening (Music skill → CHA, paid in kulish), a lullaby for the Domovyk, the hopak for the Lysa Hora sabbath, and a duma sung all night in Viy's vigil (Gogol's Khoma read prayers; a kobzar sings).
+- **Grown-up themes are welcome:** ethics, grief, fear of strangers, the cost of rules. Dilemmas have **no free right answer**: every choice costs something, doing nothing is also a choice, and nobody is simply a villain. The model is the chumak caravan (`systems/chumaky.ts`).
+- **Songs** are real Ukrainian folk songs, referenced by **title only**. Never put song lyrics in the game. Each song has a mood (happy / neutral / sad), and so does each evening; reading the room is part of play. The repertoire should keep growing, with plenty of neutral and happy songs.
 - **Ukrainian is written first**; English is translated from it. Keep lines short and punchy, with Gogol's humour and dread. Characters have voices: the otaman is gruff and fatherly, Vesna is dry and warm, **Radek** is a Pole who ran from his lord and swears in Polish («пся крев», «Jezus Maria»), the Chort is a vain, chatty dandy, the Bolotianyk speaks slow and cold in «…».
 
 ## Rules (do not break these)

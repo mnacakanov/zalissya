@@ -108,3 +108,27 @@ The setting moved from a generic Slavic village to a **Cossack khutir** in Gogol
 - **The lullaby:** sung in the Domovyk's hut, it makes you wake rested, with CON +1 until the next dawn.
 - **The hopak:** Lysa Hora's sabbath dances only to it. You play, the witches dance.
 - **The vigil:** WARD became **Duma**. The kobzar sings through Viy's night, and his Charisma decides how far the duma carries.
+
+## Chumaky, a dilemma, and songs for every mood
+
+**The song catalog** grows to eight real folk songs, referenced by title only:
+- happy: the hopak, «Ой на горі та й женці жнуть» (from the otaman), «Розпрягайте, хлопці, коней» (from Radek);
+- neutral: the duma of Holota, the lullaby, «Ой ви, воли мої половії»;
+- sad: «Ой полечко, поле», the storm duma.
+
+**Every evening has a mood too:**
+- **Sad:** mourning after a death, a wake every fifth day.
+- **Happy:** a betrothal every third day, or a feast with the chumaky.
+- **Neutral:** an ordinary night.
+
+The kobzar reads the room:
+- a matching song gives Music +2 and a bowl of kulish;
+- a neutral song or a neutral evening gives Music +1 and kulish;
+- a happy song at a wake, or a sad one at a feast, gets frowns and no kulish.
+
+**The chumak caravan** is the first real moral dilemma (`systems/chumaky.ts`). On day 2 a salt caravan camps on the east road, and young Ostap is dying of marsh fever. The otaman, who buried his mother in a plague that a chumak caravan brought when he was seven, bars the road and forbids Vesna to go. You have until dawn:
+- **Persuade the otaman.** This needs CHA 3, the khutir's trust earned by playing for it. Vesna goes openly, Ostap lives, and the otaman asks forgiveness.
+- **Defy the otaman.** Take Ostap a tonic, brewed yourself or slipped to you by Vesna. Ostap lives; the otaman knows, and says you were right — "don't get used to it".
+- **Do nothing, or not in time.** Ostap dies at dawn, the chumaky bury him by the road and sing «Ой полечко, поле», and the khutir mourns. The otaman lives with "forty saved from something that wasn't there, and one lost".
+
+Every outcome teaches songs: Ostap himself, or Hnat at the grave. The grave stays as a place to play. Radek, once kept outside a khutir's fence himself, and the Chort ("people are their own devils") each see it their own way.

@@ -9,6 +9,11 @@ import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from 
 import { FENCES, FIRE, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
+import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
+import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
+import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
+import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
+import { type GrantId } from "./dialogue/topics";
 import { canForgeWard, canWeaveWreath, VIGIL_BROKEN_LINES, VIGIL_INTRO_LINES, VIGIL_WON_LINES, type VigilContext, vigilTopics, viyNarration, WREATH_HERBS } from "./dialogue/viyNight";
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
 import { createGamepadReader, lookAwayHeld, moveFocus, type PadState } from "./input/gamepad";
@@ -25,10 +30,10 @@ import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
-import { fireCheck, isEvening, knownSongs, knowsSong, songFlag, type SongId } from "./systems/songs";
+import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, rewardFor, songFlag, type SongId, SONGS } from "./systems/songs";
 import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
-import { advance, type Clock, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
+import { advance, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
 import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_SPAWN, PLAYER_R, PLAYER_SPEED, SPAWN, TRAIL_Y_MAX, TRAIL_Y_MIN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, VILLAGE_RETURN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
@@ -51,6 +56,11 @@ const PLAY_SPOT = { x: 918, y: 618 };
 const FIRE_NPC: Npc = {
   id: "fire", name: t("ui.fire.name"), pron: "", role: t("ui.fire.role"),
   x: PLAY_SPOT.x, y: PLAY_SPOT.y, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder",
+};
+const MOOD_ICON = { happy: "☀", neutral: "♪", sad: "🕯" } as const;
+const GRAVE_NPC: Npc = {
+  id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
+  x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
 };
 // Where the chalk ring is drawn for Viy's vigil: just south of his hollow.
 const VIGIL_CENTER = { x: 1420, y: 440 };
@@ -436,6 +446,23 @@ export function App() {
     let expired = false;
     if (dawns > 0) {
       for (const f of UNTIL_DAWN_FLAGS) if (flagsRef.current.delete(f)) expired = true;
+      // The chumak caravan keeps its own calendar (systems/chumaky.ts):
+      // run its dawn rule for every dawn crossed, oldest first.
+      const lastDawnDay = clock.minute >= DAWN ? clock.day : clock.day - 1;
+      let news: string | null = null;
+      for (let d = lastDawnDay - dawns + 1; d <= lastDawnDay; d++) {
+        for (const f of chumakDawn(flagsRef.current, d)) {
+          flagsRef.current.add(f);
+          if (f.startsWith("chumakyArrivedDay=")) news = "chumak.news.arrived";
+          if (f === "ostapDied") news = "chumak.news.died";
+        }
+      }
+      if (news) {
+        setHudClock(clock);
+        syncFlags();
+        showToast(t(news as TextKey));
+        return false;
+      }
     }
     setHudClock(clock);
     syncFlags();
@@ -476,19 +503,22 @@ export function App() {
     const c = clockRef.current;
     const check = fireCheck(flagsRef.current, c.day, c.minute);
     if (!check.ok) return;
+    // Read the room: the evening's mood against the song's (systems/songs.ts).
+    const evening = eveningMood(c.day, flagsRef.current);
+    const rec = reception(evening.mood, SONGS[song].mood);
+    const reward = rewardFor(rec);
     const before = flagCount(flagsRef.current, "played");
-    const after = bumpCount("played", 1);
+    const after = bumpCount("played", reward.music);
     for (const f of [...flagsRef.current]) if (f.startsWith("playedDay=")) flagsRef.current.delete(f);
     flagsRef.current.add(`playedDay=${c.day}`);
-    bumpCount("meals", 1);
+    if (reward.kulish) bumpCount("meals", 1);
     const lvlUp = craftLevel(after) > craftLevel(before);
     const title = songName(song);
     showToast(
-      lvlUp
-        ? t("ui.play.levelUp", { song: title, level: craftLevel(after), cha: liveStats().cha.total })
-        : t("ui.play.done", { song: title, level: craftLevel(after) }),
+      t(`ui.play.${rec}` as TextKey, { song: title, level: craftLevel(after) }) +
+        (lvlUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
     );
-    openDialogue(FIRE_NPC, [t(`ui.play.audience.${song}` as TextKey)]);
+    openDialogue(FIRE_NPC, [rec === "clash" ? t(`ui.play.clash.${evening.mood}` as TextKey) : t(`ui.play.audience.${song}` as TextKey)]);
   };
 
   // --- Viy's night -------------------------------------------------------------
@@ -500,11 +530,40 @@ export function App() {
   });
   // Items handed over by asking a topic (see dialogue/viyNight.ts). The
   // checks repeat the topic's own, so re-asking never gives twice.
-  const applyGrant = (g: "chalk" | "wreath" | "ironward" | "kolyskova" | "hopak") => {
+  const chumakContext = (): ChumakContext => ({
+    flags: flagsRef.current,
+    cha: liveStats().cha.total,
+    potions: flagCount(flagsRef.current, "potions") + flagCount(flagsRef.current, "strongPotions"),
+  });
+  const applyGrant = (g: GrantId) => {
     const f = flagsRef.current;
-    if ((g === "kolyskova" || g === "hopak") && !knowsSong(f, g)) {
-      setFlag(songFlag(g));
-      showToast(t("ui.song.learned", { song: songName(g) }));
+    // The chumak choices (systems/chumaky.ts).
+    if (g === "persuade" || g === "treatOstap" || g === "vesnaTonic") {
+      const day = clockRef.current.day;
+      if (g === "vesnaTonic" && !flagHas(f, "vesnaGaveTonic")) {
+        setFlag("vesnaGaveTonic");
+        bumpCount("potions", 1);
+        showToast(t("chumak.toast.vesnaTonic"));
+      } else if (g === "persuade" && ostapState(f) === "sick" && liveStats().cha.total >= PERSUADE_CHA) {
+        for (const x of healByPersuasion(day)) f.add(x);
+        syncFlags();
+        showToast(t("chumak.toast.persuaded"));
+      } else if (g === "treatOstap" && ostapState(f) === "sick") {
+        if (flagCount(f, "potions") > 0) bumpCount("potions", -1);
+        else if (flagCount(f, "strongPotions") > 0) bumpCount("strongPotions", -1);
+        else return;
+        for (const x of healByDefiance(day)) f.add(x);
+        syncFlags();
+        showToast(t("chumak.toast.treated"));
+      }
+      return;
+    }
+    if (g in SONGS) {
+      const song = g as SongId;
+      if (!knowsSong(f, song)) {
+        setFlag(songFlag(song));
+        showToast(t("ui.song.learned", { song: songName(song) }));
+      }
       return;
     }
     if (g === "chalk" && !flagHas(f, "chalk")) {
@@ -786,10 +845,16 @@ export function App() {
             openDialogue(p.npc, n);
             return;
           }
+        } else if (p.npc.id === "gnat" || p.npc.id === "ostap") {
+          const cset = chumakTopicSet(p.npc.id, chumakContext(), firstMeeting);
+          if (cset) {
+            openTopicDialogue(p.npc, cset.intro, cset.topics);
+            return;
+          }
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -1063,15 +1128,25 @@ export function App() {
         }
         openOptions(
           FIRE_NPC,
-          [t(check.firstEver ? "ui.play.first" : "ui.play.prompt")],
+          [`${t(check.firstEver ? "ui.play.first" : "ui.play.prompt")} ${t(`ui.mood.${eveningMood(c.day, flagsRef.current).reason}` as TextKey)}`],
           "play",
           [
             ...knownSongs(flagsRef.current)
               .filter((id) => id !== "burya" || flagHas(flagsRef.current, "viySealed"))
-              .map((id) => ({ id, label: songName(id), aria: songName(id) })),
+              .map((id) => ({ id, label: `${songName(id)} ${MOOD_ICON[SONGS[id].mood]}`, aria: `${songName(id)} — ${t(`ui.songMood.${SONGS[id].mood}` as TextKey)}` })),
             { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.label.0") },
           ],
         );
+        return;
+      }
+      case "grave": {
+        if (knowsSong(flagsRef.current, "polechko") && !flagHas(flagsRef.current, "sangAtGrave")) {
+          setFlag("sangAtGrave");
+          bumpCount("played", 1);
+          openDialogue(GRAVE_NPC, [t("chumak.grave.sing.0"), t("chumak.grave.sing.1")]);
+        } else {
+          openDialogue(GRAVE_NPC, [t(knowsSong(flagsRef.current, "polechko") ? "chumak.grave.after" : "chumak.grave.quiet")]);
+        }
         return;
       }
       case "vigil":
@@ -1222,7 +1297,7 @@ export function App() {
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
-      const solids = area === "lysa" ? LYSA_SOLID : isHutArea(area) ? hutSolids(area) : SOLID;
+      const solids = area === "lysa" ? LYSA_SOLID : isHutArea(area) ? hutSolids(area) : chumakyPresent(flagsRef.current) ? [...SOLID, ...CAMP_SOLID] : SOLID;
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
@@ -1380,7 +1455,12 @@ export function App() {
       // --- nearest interactable
       const flagsNow = flagsRef.current;
       // Once Viy is sealed, his hollow is only a hollow.
-      const villageChars = flagHas(flagsNow, "viySealed") ? ALL_CHARS.filter((c) => c.id !== "viy") : ALL_CHARS;
+      const camp = chumakyPresent(flagsNow);
+      const ostapNow = ostapState(flagsNow);
+      const villageChars = [
+        ...(flagHas(flagsNow, "viySealed") ? ALL_CHARS.filter((c) => c.id !== "viy") : ALL_CHARS),
+        ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
+      ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
       let nextPrompt: Prompt = null;
       let best = 64;
@@ -1465,6 +1545,7 @@ export function App() {
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
         spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
+        spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         IRON_SPOTS.forEach((s, idx) => {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
@@ -1524,6 +1605,11 @@ export function App() {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
+      if (camp) {
+        drawables.push({ y: CART.y + 10, draw: () => drawCart(ctx2d, CART.x, CART.y, camX, camY) });
+        for (const o of OXEN) drawables.push({ y: o.y + 8, draw: () => drawOx(ctx2d, o.x, o.y, o.face, camX, camY, now) });
+      }
+      if (ostapNow === "dead") drawables.push({ y: GRAVE.y, draw: () => drawGrave(ctx2d, camX, camY) });
       for (const tr of TREES) {
         if (tr.x < camX - 90 || tr.x > camX + vw + 90 || tr.y < camY - 130 || tr.y > camY + vh + 40) continue;
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
@@ -1544,16 +1630,17 @@ export function App() {
             else if (npc.style === "beelzebub") drawBeelzebub(ctx2d, sx, sy, now);
             else if (npc.style === "witch") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false);
             else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true);
+            else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
             else {
               drawPerson(ctx2d, sx, sy, {
-                tunic: npc.tunic, hair: npc.hair, style: npc.style,
+                tunic: npc.tunic, hair: npc.hair, style: npc.style === "chumak" ? "elder" : npc.style,
                 moving: false, phase: 0, face: clamp(p.x - pos.x, -1, 1) * 0.7, t: now,
               });
             }
           },
         });
         // name tag — each kind floats at its own height (Viy's is a warning)
-        const tagLift = npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "bolotianyk" ? 58 : 66;
+        const tagLift = npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
         const tagText = npc.id === "viy" ? t("ui.tagText.0") : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
@@ -1793,6 +1880,8 @@ export function App() {
                                   ? t("ui.promptLabel.18")
                                   : prompt.kind === "play"
                                     ? t("ui.promptLabel.play")
+                                  : prompt.kind === "grave"
+                                    ? t("ui.promptLabel.grave")
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
                                     : t("ui.promptLabel.20");

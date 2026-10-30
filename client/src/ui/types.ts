@@ -24,6 +24,7 @@ export type Prompt =
   | { kind: "blessing" }
   | { kind: "sleep" }
   | { kind: "play" }
+  | { kind: "grave" }
   | { kind: "vigil" }
   | null;
 

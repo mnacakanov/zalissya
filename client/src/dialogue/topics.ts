@@ -1,4 +1,5 @@
 import { type Npc } from "../data/characters";
+import { type SongId } from "../systems/songs";
 import { BREW_SPOT } from "../data/items";
 import { linesFor, linesForLysa } from "./lines";
 import { flagCount, flagHas } from "../systems/flags";
@@ -20,6 +21,10 @@ import { t } from "../i18n";
 // the blessing script. Asking costs nothing and changes nothing by
 // itself — CHA still grows by MEETING people, once each, as before.
 
+// What asking a topic can hand over (App.applyGrant): Viy's night items,
+// the chumak choices, or a song (any SongId).
+export type GrantId = "chalk" | "wreath" | "ironward" | "persuade" | "treatOstap" | "vesnaTonic" | SongId;
+
 export type DialogueTopic = {
   id: string;
   label: string;
@@ -27,7 +32,7 @@ export type DialogueTopic = {
   lines: string[];
   action?: "bargain" | "blessing";
   // Asking hands this item over (Viy's night preparations — see viyNight.ts).
-  grant?: "chalk" | "wreath" | "ironward" | "kolyskova" | "hopak";
+  grant?: GrantId;
 };
 
 export type TopicSet = { intro: string[]; topics: DialogueTopic[] };
