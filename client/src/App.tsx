@@ -7,7 +7,7 @@ import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type Hou
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
-import { drawKhataBig, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
+import { drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -16,6 +16,9 @@ import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
 import { drawLand, drawRiver } from "./render/land";
 import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
 import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
+import { korchmaTopicSet } from "./dialogue/korchma";
+import { KORCHMA_PLAY, ODARKA, OKHRIM } from "./data/korchma";
+import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
 import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
@@ -66,6 +69,14 @@ const FIRE_NPC: Npc = {
   x: PLAY_SPOT.x, y: PLAY_SPOT.y, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder",
 };
 const MOOD_ICON = { happy: "☀", neutral: "♪", sad: "🕯" } as const;
+// The korchma's own "listener" for the play dialogue, like the campfire's.
+const KORCHMA_NPC: Npc = {
+  id: "korchma", name: t("korchma.name"), pron: "", role: t("korchma.role"),
+  x: KORCHMA_PLAY.x, y: KORCHMA_PLAY.y, tunic: "#7a2a3a", hair: "#3a2a1c", style: "elder",
+};
+// What each walk-in house says when you step in, and its HUD label.
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -160,7 +171,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -472,12 +483,12 @@ export function App() {
     showToast(expired ? t("ui.sleepUntil.0", { msg }) : msg);
   };
   // A dialogue whose last page is a row of option buttons.
-  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play", options: DialogueOption[]) => {
+  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play" | "playKorchma", options: DialogueOption[]) => {
     const d: Dialogue = { npc, lines, line: 0, choiceAt: lines.length - 1, choiceKind: "options", options, optionsTag: tag };
     dialogueRef.current = d;
     setDialogue(d);
   };
-  const pickOption = (tag: "sleep" | "play", id: string) => {
+  const pickOption = (tag: "sleep" | "play" | "playKorchma", id: string) => {
     endDialogue();
     if (id === "cancel") return;
     if (tag === "sleep") {
@@ -491,6 +502,8 @@ export function App() {
       } else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, t("ui.pickOption.1"));
     } else if (tag === "play") {
       performAtFire(id as SongId);
+    } else if (tag === "playKorchma") {
+      performAtKorchma(id as SongId);
     }
   };
 
@@ -518,6 +531,26 @@ export function App() {
         (lvlUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
     );
     openDialogue(FIRE_NPC, [rec === "clash" ? t(`ui.play.clash.${evening.mood}` as TextKey) : t(`ui.play.audience.${song}` as TextKey)]);
+  };
+  // Playing in the korchma instead (systems/korchma.ts): the same once an
+  // evening, the drinkers' own mood, and Odarka pays in varenyky.
+  const performAtKorchma = (song: SongId) => {
+    const c = clockRef.current;
+    if (!fireCheck(flagsRef.current, c.day, c.minute).ok) return;
+    const room = korchmaMood(c.day, flagsRef.current);
+    const rec = reception(room.mood, SONGS[song].mood);
+    const reward = rewardFor(rec);
+    const before = flagCount(flagsRef.current, "played");
+    const after = bumpCount("played", reward.music);
+    for (const f of [...flagsRef.current]) if (f.startsWith("playedDay=")) flagsRef.current.delete(f);
+    flagsRef.current.add(`playedDay=${c.day}`);
+    if (reward.kulish) bumpCount("meals", 1);
+    const lvlUp = craftLevel(after) > craftLevel(before);
+    showToast(
+      t(`korchma.play.${rec}` as TextKey, { song: songName(song), level: craftLevel(after) }) +
+        (lvlUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
+    );
+    openDialogue(KORCHMA_NPC, [t(rec === "clash" ? (`korchma.play.room.clash.${room.mood}` as TextKey) : (`korchma.play.room.${rec}` as TextKey))]);
   };
 
   // --- Viy's night -------------------------------------------------------------
@@ -554,6 +587,15 @@ export function App() {
         for (const x of healByDefiance(day)) f.add(x);
         syncFlags();
         showToast(t("chumak.toast.treated"));
+      }
+      return;
+    }
+    // Odarka's supper: a bowl of varenyky for a fish (dialogue/korchma.ts)
+    if (g === "supper") {
+      if (flagCount(f, "fish") >= SUPPER_PRICE) {
+        bumpCount("fish", -SUPPER_PRICE);
+        bumpCount("meals", 1);
+        showToast(t("korchma.toast.supper"));
       }
       return;
     }
@@ -866,6 +908,12 @@ export function App() {
             openDialogue(p.npc, n);
             return;
           }
+        } else if (p.npc.id === "odarka" || p.npc.id === "okhrim") {
+          const kset = korchmaTopicSet(p.npc.id, flags, fish, firstMeeting);
+          if (kset) {
+            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            return;
+          }
         } else if (p.npc.id === "gnat" || p.npc.id === "ostap") {
           const cset = chumakTopicSet(p.npc.id, chumakContext(), firstMeeting);
           if (cset) {
@@ -1160,6 +1208,26 @@ export function App() {
         );
         return;
       }
+      case "playKorchma": {
+        const c = clockRef.current;
+        const check = fireCheck(flagsRef.current, c.day, c.minute);
+        if (!check.ok) {
+          showToast(t(check.reason === "daytime" ? "korchma.play.daytime" : "ui.play.alreadyPlayed"));
+          return;
+        }
+        openOptions(
+          KORCHMA_NPC,
+          [`${t("korchma.play.prompt")} ${t(`korchma.mood.${korchmaMood(c.day, flagsRef.current).reason}` as TextKey)}`],
+          "playKorchma",
+          [
+            ...knownSongs(flagsRef.current)
+              .filter((id) => id !== "burya" || flagHas(flagsRef.current, "viySealed"))
+              .map((id) => ({ id, label: `${songName(id)} ${MOOD_ICON[SONGS[id].mood]}`, aria: `${songName(id)} — ${t(`ui.songMood.${SONGS[id].mood}` as TextKey)}` })),
+            { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.label.0") },
+          ],
+        );
+        return;
+      }
       case "tobacco": {
         if (flagHas(flagsRef.current, `tobaccoLeaf${p.idx}`)) return;
         setFlag(`tobaccoLeaf${p.idx}`);
@@ -1378,7 +1446,7 @@ export function App() {
       if (insideNow !== insideRef.current) {
         insideRef.current = insideNow;
         setHudInside(insideNow);
-        if (insideNow) showToast(t(insideNow === "hut0" ? "ui.enterHut.0" : insideNow === "hut1" ? "ui.enterHut.1" : "ui.enterHut.2"));
+        if (insideNow) showToast(t(HOUSE_ENTER[insideNow]));
       }
 
       // --- the clock: stops while talking, reading, dancing, or keeping
@@ -1506,6 +1574,7 @@ export function App() {
       const villageChars = [
         ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && night)),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
+        ODARKA, OKHRIM,
       ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
       let nextPrompt: Prompt = null;
@@ -1575,6 +1644,7 @@ export function App() {
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
         spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
+        spot(houseAt(p.x, p.y) === "korchma", KORCHMA_PLAY.x, KORCHMA_PLAY.y, 40, () => ({ kind: "playKorchma" }));
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         const tStage = tobaccoStage(flagsNow);
         TOBACCO_SPOTS.forEach((ts, idx) => {
@@ -1688,7 +1758,9 @@ export function App() {
         const alpha = roofAlphaRef.current[id];
         drawables.push({ y: r.y + r.h, draw: () => id === "otaman"
           ? drawOtamanKhata(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
-          : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
+          : id === "korchma"
+            ? drawKorchma(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+            : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
@@ -2008,6 +2080,8 @@ export function App() {
                                   ? t("ui.promptLabel.18")
                                   : prompt.kind === "play"
                                     ? t("ui.promptLabel.play")
+                                  : prompt.kind === "playKorchma"
+                                    ? t("ui.promptLabel.playKorchma")
                                   : prompt.kind === "grave"
                                     ? t("ui.promptLabel.grave")
                                   : prompt.kind === "tobacco"
@@ -2123,7 +2197,7 @@ export function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
-                {hudArea === "lysa" ? t("ui.misc.5") : hudInside === "hut0" ? t("ui.misc.6") : hudInside === "hut1" ? t("ui.misc.7") : hudInside === "otaman" ? t("ui.hut.otaman") : t("ui.zalissya")}
+                {hudArea === "lysa" ? t("ui.misc.5") : hudInside ? t(HOUSE_LABEL[hudInside]) : t("ui.zalissya")}
                 <span className="ml-1.5 normal-case tracking-normal text-[#e8d7ad]">{timeLabel(hudClock)}</span>
               </p>
               <p className="font-serif text-[13px] font-bold leading-tight">

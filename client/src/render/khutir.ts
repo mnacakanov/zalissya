@@ -582,3 +582,119 @@ export function drawKorohva(c: CanvasRenderingContext2D, x: number, y: number, t
   c.fillRect(cx - 1.5, cy - 8, 3, 16);
   c.fillRect(cx - 6, cy - 3, 12, 3);
 }
+
+// The korchma on the chumak road: a long log house (zrub, not clay — it
+// was put up fast, for travellers), a shaggy dark thatch, small warm
+// windows, a door that stands open all evening, a hitching rail and
+// barrels, and over the door the vykha: a sheaf of straw on a pole, which
+// is how a korchma tells the steppe what it is.
+export function drawKorchma(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  c.save();
+  c.globalAlpha = alpha;
+  const front = 72;
+  const wallTop = y + h - front;
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + w / 2, y + h + 10, w * 0.6, 15, 0, 0, Math.PI * 2); c.fill();
+  // log wall: rows of round logs, their cut ends showing at the corners
+  c.fillStyle = "#8a5a32";
+  c.fillRect(x, wallTop, w, front);
+  for (let ly = wallTop; ly < y + h; ly += 9) {
+    c.fillStyle = (ly - wallTop) % 18 ? "#7e5230" : "#94633a";
+    c.fillRect(x, ly, w, 8);
+    c.fillStyle = "rgba(255,220,160,0.12)";
+    c.fillRect(x, ly + 1, w, 1.6);
+    c.fillStyle = "rgba(40,24,10,0.4)";
+    c.fillRect(x, ly + 7.4, w, 1.4);
+    for (const ex of [x - 4, x + w - 4]) {
+      c.fillStyle = "#6e4525";
+      c.beginPath(); c.arc(ex + 4, ly + 4.4, 4.6, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#c9a06a";
+      c.beginPath(); c.arc(ex + 4, ly + 4.4, 2.8, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // small windows, lamplit from inside
+  for (const wx of [x + 34, x + 96, x + w - 126, x + w - 64]) {
+    const wy = wallTop + 18;
+    c.fillStyle = "#4e3018";
+    c.fillRect(wx - 3, wy - 3, 32, 26);
+    c.fillStyle = "#ffcf7a";
+    c.fillRect(wx, wy, 26, 20);
+    c.fillStyle = "#4e3018";
+    c.fillRect(wx + 12, wy, 2, 20);
+  }
+  // the door, standing open: warm light and noise spill onto the yard
+  const dx = x + w / 2 - 22;
+  c.fillStyle = "#4e3018";
+  c.fillRect(dx - 4, y + h - 62, 52, 62);
+  c.fillStyle = "#3a2010";
+  c.fillRect(dx, y + h - 58, 44, 58);
+  const glow = 0.55 + Math.sin(t * 0.004) * 0.08;
+  c.fillStyle = `rgba(255,190,100,${glow})`;
+  c.fillRect(dx + 4, y + h - 54, 36, 54);
+  c.fillStyle = "#6e4525";
+  c.fillRect(dx - 12, y + h - 58, 10, 58); // the door leaf swung out
+  // the vykha: a sheaf of straw hung on a pole over the door
+  c.strokeStyle = "#5a3a22"; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(dx + 22, y + h - 66); c.lineTo(dx + 62, y + h - 92); c.stroke();
+  const sway = Math.sin(t * 0.003) * 2;
+  c.fillStyle = "#e0bd5a";
+  c.beginPath();
+  c.moveTo(dx + 58 + sway, y + h - 90); c.lineTo(dx + 68 + sway, y + h - 66); c.lineTo(dx + 50 + sway, y + h - 66);
+  c.closePath(); c.fill();
+  c.fillStyle = "#b8862a";
+  c.fillRect(dx + 54 + sway, y + h - 82, 10, 3);
+  // a bench under the windows, barrels, and the hitching rail
+  c.fillStyle = "#6e4525";
+  c.fillRect(x + 28, y + h - 6, 70, 6);
+  for (const bx of [x + w - 40, x + w - 20]) {
+    c.fillStyle = "#7a4a24";
+    rr(c, bx - 9, y + h - 22, 18, 24, 4); c.fill();
+    c.fillStyle = "#3a3230";
+    c.fillRect(bx - 9, y + h - 17, 18, 2); c.fillRect(bx - 9, y + h - 6, 18, 2);
+  }
+  c.fillStyle = "#5a3a22";
+  c.fillRect(x + w + 12, y + h - 26, 5, 30);
+  c.fillRect(x + w + 52, y + h - 26, 5, 30);
+  c.fillRect(x + w + 10, y + h - 24, 50, 4);
+  // the roof: deep, shaggy, darker thatch than the khaty
+  const eave = wallTop + 6;
+  const ridge = y + (eave - y) * 0.4;
+  c.fillStyle = "#6e5428";
+  c.beginPath();
+  c.moveTo(x - 18, ridge); c.quadraticCurveTo(x - 20, y - 8, x + w * 0.18, y - 16);
+  c.lineTo(x + w * 0.82, y - 16); c.quadraticCurveTo(x + w + 20, y - 8, x + w + 18, ridge);
+  c.closePath(); c.fill();
+  c.fillStyle = "#9c7a3c";
+  c.beginPath();
+  c.moveTo(x - 22, eave + 6); c.lineTo(x - 18, ridge); c.lineTo(x + w + 18, ridge); c.lineTo(x + w + 22, eave + 6);
+  c.closePath(); c.fill();
+  c.strokeStyle = "rgba(80,58,24,0.5)"; c.lineWidth = 1.3;
+  for (let i = 0; i < 40; i++) {
+    const px = x - 18 + (i / 39) * (w + 36);
+    c.beginPath(); c.moveTo(px, ridge + 2); c.lineTo(px + (hash2(i, 7) - 0.5) * 7, eave + 5 + hash2(i, 3) * 4); c.stroke();
+  }
+  c.fillStyle = "#5e4620";
+  rr(c, x - 20, ridge - 5, w + 40, 9, 4); c.fill();
+  // the ragged eave
+  c.fillStyle = "#7d6030";
+  for (let i = 0; i < 36; i++) {
+    const px = x - 22 + (i / 35) * (w + 44);
+    c.beginPath(); c.moveTo(px - 6, eave + 4); c.lineTo(px + 6, eave + 4); c.lineTo(px + (hash2(i, 9) - 0.5) * 4, eave + 10 + hash2(i, 11) * 4); c.closePath(); c.fill();
+  }
+  // clay chimney, smoking hard: the pich is always going here
+  const chx = x + w * 0.16;
+  const chy = ridge - 26;
+  c.fillStyle = "#d9d0bc";
+  c.fillRect(chx, chy, 16, 26);
+  c.fillStyle = "#b9ae98";
+  c.fillRect(chx - 2, chy - 3, 20, 5);
+  for (let i = 0; i < 4; i++) {
+    const ph = (t * 0.0002 + i / 4) % 1;
+    c.fillStyle = `rgba(230,228,222,${0.5 * (1 - ph)})`;
+    c.beginPath();
+    c.arc(chx + 8 + ph * 20 + Math.sin(ph * 6) * 3, chy - 6 - ph * 50, 4 + ph * 9, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+}

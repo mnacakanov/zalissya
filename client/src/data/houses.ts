@@ -17,12 +17,14 @@ import { type Rect } from "../world/geometry";
 //   hut1 — Vesna's khata (SE, by the pond): herbs under the ceiling, tinctures
 //   otaman — Myroslav's khata by the maidan: a different, richer house
 //     altogether (see OTAMAN_ROOM below)
-export type HouseId = "hut0" | "hut1" | "otaman";
+//   korchma — the inn on the chumak road past the khutir (KORCHMA_ROOM)
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   hut0: { x: 200, y: 150, w: 320, h: 210 },
   hut1: { x: 1180, y: 700, w: 320, h: 210 },
   otaman: { x: 250, y: 396, w: 380, h: 200 },
+  korchma: { x: 1830, y: 1000, w: 350, h: 210 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -62,7 +64,24 @@ export const OTAMAN_ROOM = {
   lavaE: { x: 352, y: 42, w: 14, h: 110 },
 } as const satisfies Record<string, Rect>;
 
+// The korchma: one big log-walled hall. The shynkvas (bar counter) runs
+// across the back with the barrels behind it, where Odarka stands; two
+// long tables with benches for the drinkers; the pich in the corner by
+// the door. Footprint 350×210, the door at x 152…198.
+export const KORCHMA_ROOM = {
+  barrels: { x: 150, y: BACK_WALL, w: 150, h: 20 },
+  counter: { x: 146, y: 70, w: 190, h: 16 },
+  tableW: { x: 26, y: 62, w: 96, h: 26 },
+  benchWn: { x: 26, y: 50, w: 96, h: 8 },
+  benchWs: { x: 26, y: 92, w: 96, h: 8 },
+  tableE: { x: 212, y: 128, w: 96, h: 26 },
+  benchEn: { x: 212, y: 116, w: 96, h: 8 },
+  benchEs: { x: 212, y: 158, w: 96, h: 8 },
+  pich: { x: 14, y: 128, w: 70, h: 68 },
+} as const satisfies Record<string, Rect>;
+
 function furniture(id: HouseId): Rect[] {
+  if (id === "korchma") return Object.values(KORCHMA_ROOM);
   if (id !== "otaman") return Object.values(ROOM);
   const parts: Rect[] = [];
   for (const px of [OTAMAN_WALLS.west, OTAMAN_WALLS.east]) {

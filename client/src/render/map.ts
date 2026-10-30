@@ -146,6 +146,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   label("map.hemp", 1460, 1462, 11, "#f2f6e8");
   label("map.tobacco", 2080, 1930, 11);
   label("map.pond", POND.x, POND.y, 10, "#e9f4f8");
+  label("map.korchma", HOUSE_RECTS.korchma.x + HOUSE_RECTS.korchma.w / 2, HOUSE_RECTS.korchma.y - 30, 11);
 
   // the quest's goal: a pulsing gold star
   if (target) {

@@ -6,8 +6,10 @@ import { flagCount, flagHas } from "./flags";
 //
 // Songs are real Ukrainian folk songs, referred to by title only (no lyrics
 // in the game). Each has a MOOD:
-//   happy   — the hopak, «Ой на горі та й женці жнуть», «Розпрягайте, хлопці, коней»
-//   neutral — the duma of Holota, the lullaby, «Ой ви, воли мої половії»
+//   happy   — the hopak, «Ой на горі та й женці жнуть», «Розпрягайте, хлопці, коней»,
+//             «Ти ж мене підманула»
+//   neutral — the duma of Holota, the lullaby, «Ой ви, воли мої половії»,
+//             «Їхав козак за Дунай»
 //   sad     — «Ой полечко, поле», the duma of the Black Sea storm
 // They are learned from people and spirits (story flags "song:<id>"); see
 // dialogue/songTopics.ts and dialogue/chumaky.ts for who teaches what.
@@ -22,15 +24,18 @@ import { flagCount, flagHas } from "./flags";
 export type Mood = "happy" | "neutral" | "sad";
 export type SongId =
   | "holota" | "kolyskova" | "hopak" | "burya"
-  | "zhentsi" | "rozpriahaite" | "voly" | "polechko";
+  | "zhentsi" | "rozpriahaite" | "voly" | "polechko"
+  | "pidmanula" | "dunai";
 
 export const SONGS: Record<SongId, { mood: Mood }> = {
   holota: { mood: "neutral" },
   kolyskova: { mood: "neutral" },
   voly: { mood: "neutral" },
+  dunai: { mood: "neutral" },
   hopak: { mood: "happy" },
   zhentsi: { mood: "happy" },
   rozpriahaite: { mood: "happy" },
+  pidmanula: { mood: "happy" },
   polechko: { mood: "sad" },
   burya: { mood: "sad" },
 };

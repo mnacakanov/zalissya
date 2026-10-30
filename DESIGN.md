@@ -219,3 +219,13 @@ The third khata on the maidan was a closed façade the same size as the others. 
 - **Right room:** the svitlytsia, the clean room where the otaman receives people. It has a plank floor, a kylym, sabres, pistols and a musket on a red cloth, and a red skrynia with his kuntush on the lid. His table holds the pernach, papers, an inkwell and a brass candlestick, with a carved chair at its head.
 
 Two herb spots that ended up inside the walls moved out into the yards.
+
+## The korchma
+
+Past the khutir, where the chumak road turns south toward the river, there is now a korchma. Like the khaty, you walk into it.
+
+- **Outside:** it is a long log house rather than a clay one, with a shaggy dark thatch and small lamplit windows. The door stands open with warm light spilling out, and a vykha (a sheaf of straw on a pole) hangs over it. There are barrels, a bench and a hitching rail.
+- **Inside:** one smoky hall. The shynkvas runs across the back, with barrels and shelves of mugs behind it. Okhrim's three winters of debt are chalked on its front. There are two long tables with benches, the pich by the door, a cellar hatch and a dog asleep.
+- **Odarka**, the shynkarka, keeps it. Her husband rode to the Sich seven years ago. She sells supper (a meal) for one fish, passes on news from the road, and teaches «Ти ж мене підманула».
+- **Okhrim** is the last of his kurin. He drinks on credit and Odarka never collects, because she hopes someone out there is feeding her Stepan the same way. He talks about the Sich and about the friend who looked at Viy, and teaches «Їхав козак за Дунай».
+- **Playing:** in the evening you can play here instead of at the campfire. You still play only once an evening, so it is a choice. The korchma has moods of its own: merry most nights, maudlin every fourth night, quiet when the khutir mourns, and roaring when the chumaky feast. On the same night the two rooms often want different songs. Odarka pays in varenyky.

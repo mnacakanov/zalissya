@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -17,6 +17,7 @@ export function drawKhataInterior(
   flags: ReadonlySet<string>,
 ): void {
   if (id === "otaman") { drawOtamanInterior(c, x, y, t); return; }
+  if (id === "korchma") { drawKorchmaInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -715,5 +716,204 @@ function drawOtamanInterior(c: CanvasRenderingContext2D, x: number, y: number, t
     rr(c, tb.x - 14, tb.y + 10, 12, 22, 2); c.fill();
     c.fillStyle = "#8a2a24";
     rr(c, tb.x - 12, tb.y + 13, 8, 16, 2); c.fill();
+  }
+}
+
+// --- The korchma --------------------------------------------------------------
+// One smoky hall with log walls: the shynkvas across the back with the
+// barrels behind it, Okhrim's debt chalked on its front, two long tables
+// with mugs and pickles, the pich by the door, a lantern over it all, and
+// a dog asleep where the floor is warmest.
+function drawKorchmaInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.korchma;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: Box) => {
+    c.fillStyle = "rgba(30,18,6,0.3)";
+    rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill();
+  };
+  const room = KORCHMA_ROOM;
+
+  // a plank floor, dark with years of spilled horilka, straw underfoot
+  c.fillStyle = "#7e5630";
+  c.fillRect(x, y, w, h);
+  c.strokeStyle = "rgba(50,30,12,0.5)"; c.lineWidth = 1;
+  for (let py = y + BACK_WALL + 11; py < y + h; py += 11) {
+    c.beginPath(); c.moveTo(x, py); c.lineTo(x + w, py); c.stroke();
+  }
+  c.strokeStyle = "rgba(224,190,100,0.5)"; c.lineWidth = 1;
+  for (let i = 0; i < 46; i++) {
+    const sx = x + hash2(i, 91) * w;
+    const sy = y + BACK_WALL + hash2(i, 93) * (h - BACK_WALL);
+    const a = hash2(i, 95) * Math.PI;
+    c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + Math.cos(a) * 6, sy + Math.sin(a) * 6); c.stroke();
+  }
+  c.fillStyle = "rgba(40,24,10,0.22)";
+  for (let i = 0; i < 6; i++) {
+    c.beginPath(); c.ellipse(x + 40 + hash2(i, 61) * (w - 80), y + 60 + hash2(i, 63) * 120, 8 + hash2(i, 65) * 8, 4, 0, 0, Math.PI * 2); c.fill();
+  }
+  // daylight (or lamplight) from the front windows
+  c.fillStyle = "rgba(255,230,170,0.16)";
+  for (const wx of [34, 96, w - 126, w - 64]) {
+    c.beginPath();
+    c.moveTo(x + wx, y + h - WALL); c.lineTo(x + wx + 26, y + h - WALL);
+    c.lineTo(x + wx + 32, y + h - WALL - 30); c.lineTo(x + wx + 6, y + h - WALL - 30);
+    c.closePath(); c.fill();
+  }
+
+  // --- walls: logs, inside as outside
+  for (let ly = y + WALL; ly < y + BACK_WALL; ly += 7) {
+    c.fillStyle = (ly - y) % 14 < 7 ? "#7e5230" : "#8a5a32";
+    c.fillRect(x, ly, w, 6.4);
+    c.fillStyle = "rgba(40,24,10,0.45)";
+    c.fillRect(x, ly + 6, w, 1);
+  }
+  c.fillStyle = "#5a3a20";
+  c.fillRect(x, y, w, WALL);
+  c.fillRect(x, y, WALL, h);
+  c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL);
+  c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "rgba(255,210,140,0.12)";
+  c.fillRect(x, y + WALL - 2, w, 2);
+  for (const wx of [34, 96, w - 126, w - 64]) {
+    c.fillStyle = "#ffcf7a";
+    c.fillRect(x + wx, y + h - WALL + 4, 26, 6);
+  }
+  c.fillStyle = "#8a6238";
+  c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+  // shelves of mugs and bottles behind the counter, and a rushnyk-hung
+  // icon in the corner that has seen everything and forgives most of it
+  c.fillStyle = "#5a3a20";
+  c.fillRect(x + 152, y + WALL + 8, 146, 3);
+  const ware = ["#c98d45", "#5d6b72", "#a85f38", "#3f6a3a", "#c98d45", "#e8e2cc", "#7a9ab0", "#a85f38", "#5d6b72", "#c98d45"];
+  ware.forEach((col, i) => {
+    c.fillStyle = col;
+    if (i % 3 === 1) { rr(c, x + 158 + i * 14, y + WALL - 2, 6, 10, 2); c.fill(); }
+    else { rr(c, x + 156 + i * 14, y + WALL + 1, 9, 7, 2); c.fill(); }
+  });
+  drawIcon(c, x + w - WALL - 30, y + WALL + 2, t);
+
+  // --- the barrels behind the counter, lying in a cradle, taps out
+  {
+    const b = R(room.barrels);
+    c.fillStyle = "#4e3018";
+    c.fillRect(b.x, b.y + b.h - 4, b.w, 4);
+    for (let i = 0; i < 5; i++) {
+      const bx = b.x + 4 + i * 29;
+      c.fillStyle = "#7a4a24";
+      rr(c, bx, b.y + 1, 25, b.h - 3, 6); c.fill();
+      c.fillStyle = "#3a3230";
+      c.fillRect(bx + 4, b.y + 1, 2, b.h - 3); c.fillRect(bx + 19, b.y + 1, 2, b.h - 3);
+      c.fillStyle = "#c9a040";
+      c.fillRect(bx + 11, b.y + b.h - 4, 3, 5);
+    }
+  }
+  // --- the shynkvas, with Okhrim's three winters chalked on its front
+  {
+    const ct = R(room.counter);
+    shadow(ct);
+    c.fillStyle = "#6a4020";
+    rr(c, ct.x, ct.y, ct.w, ct.h, 2); c.fill();
+    c.fillStyle = "#8a5a32";
+    c.fillRect(ct.x, ct.y, ct.w, 5);
+    c.strokeStyle = "rgba(245,240,230,0.85)"; c.lineWidth = 1;
+    for (let g = 0; g < 9; g++) {
+      const gx = ct.x + 8 + g * 13;
+      for (let k = 0; k < 4; k++) {
+        c.beginPath(); c.moveTo(gx + k * 2.4, ct.y + 7); c.lineTo(gx + k * 2.4, ct.y + 14); c.stroke();
+      }
+      c.beginPath(); c.moveTo(gx - 1, ct.y + 13); c.lineTo(gx + 9, ct.y + 8); c.stroke();
+    }
+    // a jug and two cups on the counter top
+    c.fillStyle = "#a85f38";
+    c.beginPath(); c.ellipse(ct.x + 150, ct.y + 3, 5, 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#c98d45";
+    c.beginPath(); c.arc(ct.x + 164, ct.y + 3, 3, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(ct.x + 172, ct.y + 3, 3, 0, Math.PI * 2); c.fill();
+  }
+
+  // --- the long tables with their benches
+  const table = (tb: Box, west: boolean) => {
+    shadow(tb);
+    c.fillStyle = "#6a4020";
+    rr(c, tb.x, tb.y, tb.w, tb.h, 3); c.fill();
+    c.fillStyle = "rgba(255,220,160,0.14)";
+    c.fillRect(tb.x + 2, tb.y + 2, tb.w - 4, 3);
+    c.strokeStyle = "rgba(40,24,10,0.5)"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(tb.x + 2, tb.y + tb.h / 2); c.lineTo(tb.x + tb.w - 2, tb.y + tb.h / 2); c.stroke();
+    // mugs, a jug, a dish of pickles, a heel of bread, spilled drink
+    const mugs = west ? [[12, 8], [30, 18], [66, 9], [84, 17]] : [[14, 17], [40, 8], [76, 16]];
+    for (const [mx, my] of mugs) {
+      c.fillStyle = "#c98d45";
+      c.beginPath(); c.arc(tb.x + (mx ?? 0), tb.y + (my ?? 0), 3.4, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#5a3418";
+      c.beginPath(); c.arc(tb.x + (mx ?? 0), tb.y + (my ?? 0), 2, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = "#e8e2cc";
+    c.beginPath(); c.ellipse(tb.x + 50, tb.y + 14, 8, 5, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#5d8a3a";
+    for (const [px, py] of [[47, 13], [52, 15], [50, 12]] as const) {
+      c.beginPath(); c.ellipse(tb.x + px, tb.y + py, 2.4, 1.4, 0.5, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = "#a85f38";
+    c.beginPath(); c.ellipse(tb.x + (west ? 46 : 60), tb.y + (west ? 4 : 22), 4.4, 3.4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(200,170,110,0.35)";
+    c.beginPath(); c.ellipse(tb.x + (west ? 74 : 26), tb.y + 20, 6, 2.4, 0, 0, Math.PI * 2); c.fill();
+  };
+  for (const r of [room.benchWn, room.benchWs, room.benchEn, room.benchEs]) {
+    const b = R(r);
+    shadow(b);
+    c.fillStyle = "#7a4a24";
+    rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+  }
+  table(R(room.tableW), true);
+  table(R(room.tableE), false);
+
+  // --- the pich, with a cauldron of something meaty in its mouth
+  {
+    const p = R(room.pich);
+    const { mx, my } = drawPich(c, p, t);
+    c.fillStyle = "#2e2a26";
+    c.beginPath(); c.ellipse(mx + 15, my + 17, 8, 7, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#c8a060";
+    c.beginPath(); c.ellipse(mx + 15, my + 15, 6, 3, 0, 0, Math.PI * 2); c.fill();
+    drawUkhvat(c, p);
+  }
+  // the dog, asleep by the pich
+  {
+    const dx = x + 104;
+    const dy = y + 186;
+    const br = Math.sin(t * 0.0018) * 0.6;
+    c.fillStyle = "rgba(30,18,6,0.3)";
+    c.beginPath(); c.ellipse(dx, dy + 4, 16, 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#a07a4a";
+    c.beginPath(); c.ellipse(dx, dy, 14 + br, 7, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(dx + 12, dy - 2, 6, 5, 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#6e4e2a";
+    c.beginPath(); c.ellipse(dx + 12, dy - 6, 3, 2, 0.6, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#a07a4a"; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(dx - 13, dy + 1); c.quadraticCurveTo(dx - 20, dy + 4, dx - 18, dy - 4); c.stroke();
+  }
+  // the cellar hatch (liada) in the floor
+  {
+    const hx = x + 252;
+    const hy = y + 176;
+    c.fillStyle = "#5a3a20";
+    c.fillRect(hx, hy, 30, 16);
+    c.strokeStyle = "#3a2410"; c.lineWidth = 1;
+    c.strokeRect(hx, hy, 30, 16);
+    c.beginPath(); c.moveTo(hx + 10, hy); c.lineTo(hx + 10, hy + 16); c.moveTo(hx + 20, hy); c.lineTo(hx + 20, hy + 16); c.stroke();
+    c.fillStyle = "#3a3230";
+    c.beginPath(); c.arc(hx + 15, hy + 8, 2.2, 0, Math.PI * 2); c.fill();
+  }
+  // the lantern over the hall: the light everyone drinks under
+  for (const lx of [x + 80, x + 260]) {
+    const ly = y + 100;
+    const lg = c.createRadialGradient(lx, ly, 6, lx, ly, 120);
+    lg.addColorStop(0, "rgba(255,180,90,0.26)");
+    lg.addColorStop(1, "rgba(255,180,90,0)");
+    c.fillStyle = lg;
+    c.fillRect(lx - 120, ly - 120, 240, 240);
   }
 }

@@ -72,7 +72,9 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
   add("mallow", [[512, 486], [640, 488], [300, 378], [450, 378], [1296, 316], [1312, 318], [1170, 880], [1515, 880], [1180, 316]]);
   // feather grass all over the open steppe
   for (let i = 0; i < 90; i++) {
-    DECOR.push({ x: 1720 + hash2(i, 31) * 900, y: 60 + hash2(i, 37) * 1140, kind: "kovyla", seed: hash2(i, 41) });
+    const x = 1720 + hash2(i, 31) * 900;
+    const y = 60 + hash2(i, 37) * 1140;
+    if (!indoors(x, y)) DECOR.push({ x, y, kind: "kovyla", seed: hash2(i, 41) });
   }
   add("kovyla", [[1556, 520], [1596, 560], [1540, 700], [1590, 724], [1500, 530], [1446, 742], [1552, 800], [1430, 800], [1600, 610]]);
 }
