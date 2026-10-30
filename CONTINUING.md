@@ -1,6 +1,6 @@
 # CONTINUING.md
 
-How to carry on the work: (A) from the Claude mobile app, (B) back into your Muse app, (C) with collaborators. Do the one-time GitHub setup at the bottom first.
+How to carry on the work: (A) from the Claude mobile app, (B) back into your Muse app, (C) with collaborators.
 
 ---
 
@@ -11,7 +11,7 @@ How to carry on the work: (A) from the Claude mobile app, (B) back into your Mus
 3. The session works on its own `claude/...` branch and pushes there, never to `main`. It can run `bun run typecheck`, `bun run test` and `bun run build` in `pages/`, and it can play the build in a headless browser to check its work.
 4. When the change is ready, ask: *"Open a PR."* Then, in the GitHub app or on the PR page:
    - wait for the **Pages** check (typecheck, tests, build) to go green;
-   - **Squash and merge**. Pages redeploys from `main` within a minute or two;
+   - **Squash and merge**. CI rebuilds `docs/index.html` and Pages redeploys within a few minutes;
    - if something broke, revert the PR from its page. `main` must stay playable.
 5. Prompts worth repeating when relevant:
    - "No joystick or drag controls in the Muse build."
@@ -72,14 +72,13 @@ bun run test
 3. Branch from `main` (`feat/...`, `fix/...`, `content/...`, `refactor/...`). Open a PR into `main`. CI must pass, and branch protection asks for one review. Squash-merge.
 4. Read `CLAUDE.md` before your first PR: the layout, the recipes, and especially the naming and controls rules.
 
-## One-time GitHub setup (repo owner)
+## GitHub setup (repo owner)
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions.** This replaces "deploy from branch /docs". The first deploy runs on the next push to `main`, or start it from **Actions → Pages → Run workflow**.
-2. Once the Actions-deployed site works, delete `docs/index.html` in a small PR. It is the old hand-made build.
-3. **Settings → Rules → Rulesets** (or Branches → add a rule) for `main`:
-   - require a pull request with 1 approval;
-   - require the **Pages / build** status check;
-   - block force pushes and deletions.
+1. **Pages is already live** and needs no setting change. It serves `main` → `/docs`, and on every push to `main` the **Pages** workflow typechecks, tests and builds the game, then commits the build to `docs/index.html`. If the site ever stops updating, check **Actions → Pages**.
+2. Optional, once collaborators join: add a ruleset for `main` in **Settings → Rules → Rulesets**:
+   - require a pull request;
+   - require the **Pages / build** check;
+   - block force pushes.
 
-   If you work alone from your phone, set required approvals to 0 so you can merge your own PRs.
-4. **Settings → Collaborators**: invite people.
+   The CI publish commit pushes to `main`. If a ruleset blocks it, add `github-actions` to the ruleset's bypass list.
+3. **Settings → Collaborators**: invite people.

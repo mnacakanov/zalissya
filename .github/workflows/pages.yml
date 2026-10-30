@@ -1,16 +1,21 @@
-# Typecheck, test and build the GitHub Pages version on every PR; deploy it from main.
-# One-time setup: repo Settings → Pages → Build and deployment → Source:
-# "GitHub Actions".
+# Typecheck, test and build the GitHub Pages version.
+#   · on pull requests: check only.
+#   · on pushes to main: also publish — the build is committed as
+#     docs/index.html, which GitHub Pages serves (Settings → Pages:
+#     "Deploy from a branch", main, /docs). No settings change needed.
+# The publish commit is made with GITHUB_TOKEN, so it does not trigger this
+# workflow again. Never edit docs/index.html by hand.
 name: Pages
 
 on:
   pull_request:
   push:
     branches: [main]
+    paths-ignore: ["docs/**"]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -31,21 +36,19 @@ jobs:
       - run: bun run typecheck
       - run: bun run test
       - run: bun run build
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
-        with:
-          path: pages/dist
-
-  deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish to docs/ on main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        working-directory: .
+        run: |
+          mkdir -p docs
+          cp pages/dist/index.html docs/index.html
+          touch docs/.nojekyll
+          git add docs/index.html docs/.nojekyll
+          if git diff --cached --quiet; then
+            echo "docs/ already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish Pages build from ${GITHUB_SHA::7}"
+          git push
