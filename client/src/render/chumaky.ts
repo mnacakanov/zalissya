@@ -1,3 +1,5 @@
+import { darken } from "./people";
+import { rr } from "./shapes";
 import { GRAVE } from "../data/chumaky";
 
 // --- The chumak camp: drawing ----------------------------------------------
@@ -35,55 +37,81 @@ export function drawCart(c: CanvasRenderingContext2D, x: number, y: number, camX
   c.beginPath(); c.moveTo(sx + 34, sy - 2); c.lineTo(sx + 66, sy - 6); c.stroke();
 }
 
+const INK = "rgba(34,22,14,0.85)";
+function paint(c: CanvasRenderingContext2D, col: string, x0: number, w: number): CanvasGradient {
+  const g = c.createLinearGradient(x0, 0, x0 + w, 0);
+  g.addColorStop(0, col); g.addColorStop(0.55, col); g.addColorStop(1, darken(col, 0.7));
+  return g;
+}
+function ink(c: CanvasRenderingContext2D, w = 0.9): void { c.strokeStyle = INK; c.lineWidth = w; c.stroke(); }
+
+// A grey steppe ox, the chumak's patient engine: long lyre horns, a dewlap,
+// a slow chew, a tail at the flies.
 export function drawOx(c: CanvasRenderingContext2D, x: number, y: number, face: number, camX: number, camY: number, t: number): void {
   const sx = x - camX;
   const sy = y - camY;
   const chew = Math.sin(t * 0.004 + x) * 1.2;
   c.fillStyle = "rgba(30,50,20,0.3)";
-  c.beginPath(); c.ellipse(sx, sy + 10, 24, 5, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#6f6a62";
-  for (const lx of [-14, -6, 8, 15]) c.fillRect(sx + lx, sy, 4, 11);
-  c.fillStyle = "#9d978c";
-  c.beginPath(); c.ellipse(sx, sy - 6, 22, 11, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#b8b2a6";
-  c.beginPath(); c.ellipse(sx - 2, sy - 9, 15, 5, 0, 0, Math.PI * 2); c.fill();
-  // head
-  const hx = sx + face * 22;
-  c.fillStyle = "#8a847a";
-  c.beginPath(); c.ellipse(hx, sy - 8 + chew * 0.3, 8, 7, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(sx, sy + 11, 26, 5, 0, 0, Math.PI * 2); c.fill();
+  // legs, the far pair darker
+  for (const [lx, far] of [[-15, true], [9, true], [-10, false], [15, false]] as const) {
+    c.fillStyle = far ? "#5e5a52" : "#7a756c";
+    c.beginPath(); c.rect(sx + lx * face, sy - 2, 4.4, 13); c.fill(); ink(c, 0.6);
+    c.fillStyle = "#2e2a26"; c.fillRect(sx + lx * face, sy + 9, 4.4, 2.4);
+  }
+  // the tail
+  c.strokeStyle = "#6f6a62"; c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(sx - face * 23, sy - 9); c.quadraticCurveTo(sx - face * (27 + Math.sin(t * 0.003) * 2), sy, sx - face * 25, sy + 6); c.stroke();
+  // the body: a big grey barrel with a paler back
+  c.fillStyle = paint(c, "#a8a296", sx - 24, 48);
+  c.beginPath(); c.ellipse(sx, sy - 7, 24, 12, 0, 0, Math.PI * 2); c.fill(); ink(c);
+  c.fillStyle = "rgba(220,214,200,0.5)";
+  c.beginPath(); c.ellipse(sx - 2, sy - 12, 16, 4.6, 0, 0, Math.PI * 2); c.fill();
+  // the yoke on its neck
+  c.fillStyle = "#6e4525";
+  c.fillRect(sx + face * 14 - 2, sy - 20, 4, 14);
+  // the head with its dewlap and the great horns
+  const hx = sx + face * 24;
+  c.fillStyle = paint(c, "#948e84", hx - 8, 16);
+  c.beginPath(); c.ellipse(hx, sy - 8 + chew * 0.3, 8, 7.4, 0, 0, Math.PI * 2); c.fill(); ink(c);
   c.fillStyle = "#4e4a44";
   c.beginPath(); c.ellipse(hx + face * 5, sy - 5 + chew * 0.3, 4, 3, 0, 0, Math.PI * 2); c.fill();
-  // long grey-steppe horns
-  c.strokeStyle = "#e6dcc4";
-  c.lineWidth = 2.2;
-  c.beginPath();
-  c.moveTo(hx - 3, sy - 13); c.quadraticCurveTo(hx - 12, sy - 20, hx - 16, sy - 28);
-  c.moveTo(hx + 3, sy - 13); c.quadraticCurveTo(hx + 12, sy - 20, hx + 16, sy - 28);
-  c.stroke();
-  // tail
-  c.strokeStyle = "#6f6a62";
-  c.lineWidth = 1.6;
-  c.beginPath(); c.moveTo(sx - face * 22, sy - 8); c.lineTo(sx - face * (25 + Math.sin(t * 0.003) * 2), sy + 6); c.stroke();
+  c.fillStyle = "#1e1a16";
+  c.beginPath(); c.arc(hx + face * 2, sy - 10, 1, 0, Math.PI * 2); c.fill();
+  c.lineCap = "round";
+  for (const s of [-1, 1]) {
+    c.strokeStyle = INK; c.lineWidth = 3.4;
+    c.beginPath(); c.moveTo(hx + s * 3, sy - 13); c.quadraticCurveTo(hx + s * 13, sy - 18, hx + s * 15, sy - 30); c.stroke();
+    c.strokeStyle = "#e6dcc4"; c.lineWidth = 2.2;
+    c.beginPath(); c.moveTo(hx + s * 3, sy - 13); c.quadraticCurveTo(hx + s * 13, sy - 18, hx + s * 15, sy - 30); c.stroke();
+  }
+  c.lineCap = "butt";
 }
 
+// Ostap in the fever, lying on a sheepskin by the cart.
 export function drawSickChumak(c: CanvasRenderingContext2D, x: number, y: number, tunic: string, hair: string, t: number): void {
   const breathe = Math.sin(t * 0.004) * 0.8;
-  // sheepskin
-  c.fillStyle = "#d8cbb0";
-  c.beginPath(); c.ellipse(x, y, 30, 11, 0, 0, Math.PI * 2); c.fill();
-  // body under a blanket, lying
-  c.fillStyle = tunic;
-  c.beginPath(); c.ellipse(x + 3, y - 3 - breathe, 20, 7, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#7e2430";
-  c.fillRect(x - 2, y - 9 - breathe, 22, 8);
-  // head, flushed with fever
-  c.fillStyle = "#e8a88e";
-  c.beginPath(); c.arc(x - 20, y - 5, 6.4, 0, Math.PI * 2); c.fill();
+  // the sheepskin, curly
+  c.fillStyle = paint(c, "#e4d8bc", x - 32, 64);
+  c.beginPath(); c.ellipse(x, y, 32, 11, 0, 0, Math.PI * 2); c.fill(); ink(c);
+  c.fillStyle = "rgba(190,176,146,0.6)";
+  for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(x - 26 + i * 6.4, y + (i % 2 ? 3 : -3), 2, 0, Math.PI * 2); c.fill(); }
+  // his body under a red blanket, breathing
+  c.fillStyle = paint(c, tunic, x - 16, 36);
+  c.beginPath(); c.ellipse(x + 3, y - 3 - breathe, 20, 7.4, 0, 0, Math.PI * 2); c.fill(); ink(c);
+  c.fillStyle = paint(c, "#9a2a30", x - 2, 24);
+  rr(c, x - 2, y - 10 - breathe, 24, 9, 3); c.fill(); ink(c, 0.7);
+  // the head, flushed with fever, a wet cloth on the brow
+  c.fillStyle = paint(c, "#eaa88e", x - 27, 14);
+  c.beginPath(); c.arc(x - 20, y - 5, 6.4, 0, Math.PI * 2); c.fill(); ink(c);
   c.fillStyle = hair;
   c.beginPath(); c.arc(x - 22, y - 7, 5.4, Math.PI * 0.9, Math.PI * 1.9); c.fill();
-  // a wet cloth on the brow
+  c.fillStyle = "#3a2a1c";
+  c.beginPath(); c.moveTo(x - 20, y - 2); c.quadraticCurveTo(x - 16, y - 1, x - 15, y + 2); c.lineTo(x - 18, y - 1); c.closePath(); c.fill();
+  c.strokeStyle = "#2e2018"; c.lineWidth = 0.9;
+  c.beginPath(); c.moveTo(x - 19, y - 6); c.lineTo(x - 16.6, y - 6); c.stroke(); // eyes shut
   c.fillStyle = "#f3efe4";
-  c.fillRect(x - 24, y - 11, 8, 3);
+  rr(c, x - 25, y - 12, 9, 3.4, 1); c.fill(); ink(c, 0.5);
 }
 
 export function drawGrave(c: CanvasRenderingContext2D, camX: number, camY: number): void {

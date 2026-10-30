@@ -1,3 +1,4 @@
+import { darken, drawFolk } from "./people";
 import { LYSA_OFFER_SPOT, LYSA_STONES, LYSA_SUMMIT, LYSA_THRONE } from "../data/lysa";
 import { rr } from "./shapes";
 import { LYSA_H, LYSA_W } from "../world/areas";
@@ -223,102 +224,61 @@ export function drawLysaFire(c: CanvasRenderingContext2D, camX: number, camY: nu
   }
 }
 
+// The witches and the dancers are people, in the people's storybook hand
+// (render/people.ts, style "witch"); the dancers dance with arms up.
 export function drawWitch(c: CanvasRenderingContext2D, x: number, y: number, tunic: string, hair: string, t: number, dancing: boolean) {
-  const bob = dancing ? Math.abs(Math.sin(t * 0.006 + x * 0.2)) * 3 : Math.sin(t * 0.002 + x * 0.13) * 0.8;
-  const top = y - 42 + bob * 0.4;
-  c.fillStyle = "rgba(8,8,14,0.4)";
-  c.beginPath(); c.ellipse(x, y + 3, 13, 4.4, 0, 0, Math.PI * 2); c.fill();
-  // long skirt + bodice
-  c.fillStyle = tunic;
-  c.beginPath();
-  c.moveTo(x, top + 10);
-  c.lineTo(x - 11, top + 38);
-  c.lineTo(x + 11, top + 38);
-  c.closePath(); c.fill();
-  rr(c, x - 7.4, top + 9, 14.8, 12, 3); c.fill();
-  // arms — raised when dancing
-  c.strokeStyle = tunic;
-  c.lineWidth = 4;
-  c.beginPath();
-  if (dancing) {
-    c.moveTo(x - 6, top + 12); c.lineTo(x - 13, top + 2 + Math.sin(t * 0.006 + x) * 2);
-    c.moveTo(x + 6, top + 12); c.lineTo(x + 13, top + 4 + Math.cos(t * 0.006 + x) * 2);
-  } else {
-    c.moveTo(x - 6, top + 12); c.lineTo(x - 11, top + 24);
-    c.moveTo(x + 6, top + 12); c.lineTo(x + 11, top + 24);
-  }
-  c.stroke();
-  // head + tall pointed hat, the honest silhouette of a vidma
-  c.fillStyle = "#e8b88a";
-  c.beginPath(); c.ellipse(x, top + 3, 6.4, 6.8, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = hair;
-  c.fillRect(x - 7.4, top + 4, 3.4, 10);
-  c.fillRect(x + 4, top + 4, 3.4, 10);
-  c.fillStyle = "#241f2c";
-  c.beginPath(); c.ellipse(x, top - 2.6, 10.4, 2.6, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath();
-  c.moveTo(x - 5.4, top - 3);
-  c.quadraticCurveTo(x + 3, top - 24, x + 8.6, top - 27);
-  c.quadraticCurveTo(x + 2, top - 12, x + 5, top - 3);
-  c.closePath(); c.fill();
+  const phase = t * 0.012 + x * 0.3;
+  drawFolk(c, x, y, { tunic, hair, style: "witch", moving: dancing, phase, face: 0, t, ...(dancing ? { pose: "dance" as const } : {}) });
 }
 
+// Beelzebub presiding: broad, horned, enthroned — twice a mortal's width,
+// ember eyes, a grin of gold teeth he keeps for guests, smoke for a beard.
 export function drawBeelzebub(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  // Beelzebub presiding: broad, horned, seated — roughly twice a mortal's
-  // width, with ember eyes and a grin he keeps for guests.
   const breathe = Math.sin(t * 0.0011) * 1.6;
-  const top = y - 66 + breathe;
+  const top = y - 70 + breathe;
+  const INK = "rgba(20,12,16,0.9)";
+  const paint = (col: string, x0: number, w: number) => {
+    const g = c.createLinearGradient(x0, 0, x0 + w, 0);
+    g.addColorStop(0, col); g.addColorStop(0.55, col); g.addColorStop(1, darken(col, 0.65));
+    return g;
+  };
+  const ink = (w = 1.1) => { c.strokeStyle = INK; c.lineWidth = w; c.stroke(); };
   c.fillStyle = "rgba(6,6,10,0.5)";
-  c.beginPath(); c.ellipse(x, y + 4, 34, 8, 0, 0, Math.PI * 2); c.fill();
-  // vast dark robe
-  c.fillStyle = "#2c2130";
-  c.beginPath();
-  c.moveTo(x, top + 8);
-  c.lineTo(x - 26, y + 2);
-  c.lineTo(x + 26, y + 2);
-  c.closePath(); c.fill();
-  c.fillStyle = "#3a2a3e";
-  c.beginPath();
-  c.moveTo(x, top + 8);
-  c.lineTo(x - 10, y + 2);
-  c.lineTo(x + 12, y + 2);
-  c.closePath(); c.fill();
-  // clawed hands resting on the throne arms
-  c.fillStyle = "#4c3542";
-  c.beginPath(); c.ellipse(x - 24, top + 40, 6, 8, 0.3, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(x + 24, top + 40, 6, 8, -0.3, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#d8d2c4";
-  c.lineWidth = 1.4;
+  c.beginPath(); c.ellipse(x, y + 4, 38, 9, 0, 0, Math.PI * 2); c.fill();
+  // the throne of black stone behind him
+  c.fillStyle = paint("#2a2630", x - 34, 68);
+  c.beginPath(); c.moveTo(x - 34, y); c.lineTo(x - 32, top - 6); c.quadraticCurveTo(x, top - 26, x + 32, top - 6); c.lineTo(x + 34, y); c.closePath(); c.fill(); ink();
+  // the robe, vast and dark, with a crimson lining
+  c.fillStyle = paint("#3a2a40", x - 28, 56);
+  c.beginPath(); c.moveTo(x - 10, top + 10); c.lineTo(x - 28, y + 2); c.lineTo(x + 28, y + 2); c.lineTo(x + 10, top + 10); c.closePath(); c.fill(); ink();
+  c.fillStyle = "#7a1a2a";
+  c.beginPath(); c.moveTo(x - 4, top + 14); c.lineTo(x - 9, y + 2); c.lineTo(x + 9, y + 2); c.lineTo(x + 4, top + 14); c.closePath(); c.fill();
+  // clawed hands on the throne's arms
   for (const s of [-1, 1]) {
-    for (let f = -1; f <= 1; f++) {
-      c.beginPath();
-      c.moveTo(x + s * 24 + f * 2.6, top + 46);
-      c.lineTo(x + s * 24 + f * 3.4, top + 51);
-      c.stroke();
-    }
+    c.fillStyle = paint("#5a3a4a", x + s * 26 - 6, 12);
+    c.beginPath(); c.ellipse(x + s * 26, top + 42, 6, 8, s * 0.3, 0, Math.PI * 2); c.fill(); ink(0.8);
+    c.strokeStyle = "#e8e0cc"; c.lineWidth = 1.4;
+    for (let f = -1; f <= 1; f++) { c.beginPath(); c.moveTo(x + s * 26 + f * 2.6, top + 48); c.lineTo(x + s * 26 + f * 3.4, top + 53); c.stroke(); }
   }
-  // head: heavy brow, great curved horns, ember eyes
-  c.fillStyle = "#503040";
-  c.beginPath(); c.ellipse(x, top + 2, 13, 12, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#e7ddc4";
-  c.lineWidth = 3.4;
+  // the head: heavy brow, great curled horns, ember eyes
+  c.fillStyle = paint("#5a3444", x - 13, 26);
+  c.beginPath(); c.ellipse(x, top + 2, 13, 12.6, 0, 0, Math.PI * 2); c.fill(); ink();
   for (const s of [-1, 1]) {
+    c.fillStyle = paint("#e7ddc4", x + s * 8 - 6, 12);
     c.beginPath();
-    c.moveTo(x + s * 8, top - 6);
-    c.quadraticCurveTo(x + s * 22, top - 12, x + s * 20, top - 26);
-    c.stroke();
+    c.moveTo(x + s * 7, top - 7);
+    c.quadraticCurveTo(x + s * 24, top - 12, x + s * 21, top - 30);
+    c.quadraticCurveTo(x + s * 16, top - 14, x + s * 4, top - 3);
+    c.closePath(); c.fill(); ink(0.8);
   }
   const glowE = 0.7 + Math.sin(t * 0.0026) * 0.25;
   c.fillStyle = `rgba(255,120,40,${glowE})`;
-  c.fillRect(x - 6.4, top + 0.4, 3.6, 3);
-  c.fillRect(x + 2.8, top + 0.4, 3.6, 3);
-  // a grin of filed gold teeth, kept for guests
-  c.strokeStyle = "#e8c96a";
-  c.lineWidth = 1.6;
+  c.beginPath(); c.ellipse(x - 4.6, top + 1.4, 2.2, 1.6, 0, 0, Math.PI * 2); c.ellipse(x + 4.6, top + 1.4, 2.2, 1.6, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#e8c96a"; c.lineWidth = 1.6;
   c.beginPath(); c.arc(x, top + 6, 6.4, 0.3, Math.PI - 0.3); c.stroke();
-  // beard of smoke-grey hair
-  c.fillStyle = "#6a6472";
-  c.beginPath(); c.ellipse(x, top + 13, 7.4, 7, 0, 0, Math.PI * 2); c.fill();
+  // a beard of smoke-grey hair, drifting
+  c.fillStyle = paint("#7a7482", x - 8, 16);
+  c.beginPath(); c.moveTo(x - 8, top + 10); c.quadraticCurveTo(x - 6 + Math.sin(t * 0.002) * 2, top + 26, x, top + 30); c.quadraticCurveTo(x + 6, top + 24, x + 8, top + 10); c.closePath(); c.fill(); ink(0.8);
 }
 
 export function drawLysaFlower(c: CanvasRenderingContext2D, sx: number, sy: number, camX: number, camY: number, t: number, available: boolean) {

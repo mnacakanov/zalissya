@@ -18,13 +18,15 @@ import { rr } from "./shapes";
 //   shynkarka — Odarka: a married woman's kerchief, a white apron
 //   kozak     — Okhrim: a red zhupan, the oseledets, moustaches to the chest
 
-export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak";
+export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch";
 
 export type FolkOpts = {
   tunic: string; hair: string; style: FolkStyle;
   moving: boolean; phase: number; face: number; t: number;
   shadow?: boolean;
   who?: string;
+  // "dance": arms up and swinging (the Lysa Hora sabbath)
+  pose?: "dance";
 };
 
 type Costume = {
@@ -36,7 +38,8 @@ type Costume = {
   pants?: string; boots: string;
   skirt?: string; skirt2?: string; apron?: string;
   sash?: string; leather?: string;
-  kobza?: boolean; hat?: "brryl" | "cap" | "khustka";
+  kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch";
+  loose?: boolean;
   oseledets?: boolean; moust?: string; longMoust?: boolean; pipe?: boolean;
   vinok?: boolean; braid?: boolean;
 };
@@ -61,13 +64,17 @@ function costumeFor(o: FolkOpts): Costume {
     case "shynkarka":
       return { kind: "f", skin: "#e6b890", hair: o.hair, shirt: "#f4ecdc", emb: "#2c4a8a", vest: "#3a2a2a",
         skirt: o.tunic, skirt2: "#3a1a1a", apron: "#f3ead8", boots: "#4a2a14", hat: "khustka" };
+    case "witch":
+      // a vidma of Lysa Hora: dark skirt, loose hair, the pointed hat
+      return { kind: "f", skin: "#e2b894", hair: o.hair, shirt: "#e8dfcc", emb: "#5a2a5a", vest: "#241f2c",
+        skirt: o.tunic, skirt2: "#141018", apron: darken(o.tunic, 0.7), boots: "#241a1c", hat: "witch", loose: true };
     case "kozak":
       return { kind: "m", skin: "#dcae86", hair: o.hair, shirt: "#efe6d4", emb: "#b0302a", coat: o.tunic, trim: "#c9a040", coatLen: 0.24,
         pants: "#2c4a8a", boots: "#4a2a14", sash: "#3a5a8a", oseledets: true, moust: o.hair, longMoust: true };
   }
 }
 
-function darken(hex: string, f: number): string {
+export function darken(hex: string, f: number): string {
   if (!hex.startsWith("#") || hex.length < 7) return hex;
   const n = parseInt(hex.slice(1, 7), 16);
   return `rgb(${Math.round((n >> 16) * f)},${Math.round(((n >> 8) & 255) * f)},${Math.round((n & 255) * f)})`;
@@ -206,8 +213,10 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     const swing = o.moving ? -s * step * hh * 0.35 : 0;
     const ax = x + s * shW * 0.5;
     const ay = shY + hh * 0.15;
-    const hx = x + s * shW * 0.62 + swing * 0.4;
-    const hy = hip - hh * 0.1 - Math.abs(swing) * 0.3;
+    const up = o.pose === "dance";
+    const wave = Math.sin(o.t * 0.006 + x + s) * hh * 0.25;
+    const hx = up ? x + s * shW * 0.95 + wave * 0.5 : x + s * shW * 0.62 + swing * 0.4;
+    const hy = up ? top + hh * 0.2 + wave : hip - hh * 0.1 - Math.abs(swing) * 0.3;
     limb(ax, ay, hx, hy, hh * 0.36, s > 0 ? darken(armCol, 0.82) : armCol);
     c.fillStyle = C.skin;
     c.beginPath(); c.arc(hx, hy + hh * 0.12, hh * 0.17, 0, Math.PI * 2); c.fill(); ink();
@@ -244,6 +253,10 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     c.beginPath(); c.ellipse(x, headCy - hh * 0.12, hh * 0.44, hh * 0.42, 0, Math.PI, 0); c.fill();
     c.fillRect(x - hh * 0.44, headCy - hh * 0.14, hh * 0.1, hh * 0.5);
     c.fillRect(x + hh * 0.34, headCy - hh * 0.14, hh * 0.1, hh * 0.5);
+    if (C.loose) {
+      c.fillRect(x - hh * 0.5, headCy - hh * 0.1, hh * 0.16, hh * 1.3);
+      c.fillRect(x + hh * 0.34, headCy - hh * 0.1, hh * 0.16, hh * 1.3);
+    }
     if (C.braid) for (let i = 0; i < 5; i++) {
       c.beginPath(); c.ellipse(x + hh * 0.42, headCy + hh * 0.4 + i * hh * 0.28, hh * 0.1, hh * 0.16, 0.2, 0, Math.PI * 2); c.fill();
     }
@@ -261,6 +274,18 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     rr(c, x - hh * 0.44, headCy - hh * 0.62, hh * 0.88, hh * 0.36, hh * 0.1); c.fill(); ink();
     c.fillStyle = "#24242a";
     c.beginPath(); c.ellipse(x + fx * 2, headCy - hh * 0.26, hh * 0.36, hh * 0.08, 0, 0, Math.PI * 2); c.fill();
+  }
+  if (C.hat === "witch") {
+    // the honest silhouette of a vidma: a broad brim and a crooked point
+    c.fillStyle = paint("#241f2c", x - hh * 0.9, hh * 1.8);
+    c.beginPath(); c.ellipse(x, headCy - hh * 0.36, hh * 0.9, hh * 0.2, 0, 0, Math.PI * 2); c.fill(); ink();
+    c.beginPath();
+    c.moveTo(x - hh * 0.4, headCy - hh * 0.4);
+    c.quadraticCurveTo(x + hh * 0.1, headCy - hh * 1.5, x + hh * 0.7, headCy - hh * 1.8);
+    c.quadraticCurveTo(x + hh * 0.2, headCy - hh * 1.0, x + hh * 0.42, headCy - hh * 0.4);
+    c.closePath(); c.fill(); ink();
+    c.fillStyle = "#7a2a5a";
+    c.fillRect(x - hh * 0.4, headCy - hh * 0.52, hh * 0.82, hh * 0.1);
   }
   if (C.vinok) {
     const cols = ["#d94f3d", "#f2c14e", "#f5efdc", "#4a7ad0", "#d96a5a", "#f2c14e", "#d94f3d"];

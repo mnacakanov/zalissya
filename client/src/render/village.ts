@@ -909,21 +909,29 @@ export function drawPerson(c: CanvasRenderingContext2D, x: number, y: number, op
 }
 
 export function drawChicken(c: CanvasRenderingContext2D, x: number, y: number, peck: number, camX: number, camY: number) {
+  // a speckled hen, painted and outlined like everyone else
   const sx = x - camX;
   const sy = y - camY;
-  c.fillStyle = "rgba(30,50,20,0.22)";
-  c.beginPath(); c.ellipse(sx, sy + 3, 8, 2.8, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#f5efdc";
-  c.beginPath(); c.ellipse(sx, sy - 3, 8.4, 6, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(sx - 7, sy - 8, 4.4, 2.6, -0.7, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "rgba(30,50,20,0.25)";
+  c.beginPath(); c.ellipse(sx, sy + 3, 8.4, 2.8, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#d9a020"; c.lineWidth = 1.2;
+  c.beginPath(); c.moveTo(sx - 1.6, sy - 1); c.lineTo(sx - 2, sy + 3); c.moveTo(sx + 1.6, sy - 1); c.lineTo(sx + 2, sy + 3); c.stroke();
+  const g = c.createLinearGradient(sx - 9, 0, sx + 9, 0);
+  g.addColorStop(0, "#fbf6ea"); g.addColorStop(0.6, "#f0e8d6"); g.addColorStop(1, "#c8bea8");
+  c.fillStyle = g;
+  c.strokeStyle = "rgba(34,22,14,0.8)"; c.lineWidth = 0.8;
+  c.beginPath(); c.ellipse(sx - 7, sy - 8, 4.4, 2.6, -0.7, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.beginPath(); c.ellipse(sx, sy - 3, 8.4, 6, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fillStyle = "rgba(140,120,90,0.5)";
+  for (const [dx, dy] of [[-3, -4], [1, -2], [3, -5], [-1, -1]] as const) { c.beginPath(); c.arc(sx + dx, sy + dy, 0.8, 0, Math.PI * 2); c.fill(); }
   const hy = sy - 8 + peck * 4;
-  c.beginPath(); c.arc(sx + 7.4, hy, 3.8, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#f8f2e4";
+  c.beginPath(); c.arc(sx + 7.4, hy, 3.8, 0, Math.PI * 2); c.fill(); c.stroke();
   c.fillStyle = "#d94f3d";
-  c.beginPath(); c.arc(sx + 7.4, hy - 3.8, 1.8, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(sx + 7, hy - 3.8, 1.6, 0, Math.PI * 2); c.arc(sx + 8.6, hy - 3.6, 1.4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(sx + 9.6, hy + 2.6, 1, 1.4, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#e8a020";
-  c.beginPath();
-  c.moveTo(sx + 10.8, hy); c.lineTo(sx + 13.6, hy + 1.4); c.lineTo(sx + 10.8, hy + 2.6);
-  c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(sx + 10.8, hy - 0.4); c.lineTo(sx + 13.6, hy + 0.8); c.lineTo(sx + 10.8, hy + 2); c.closePath(); c.fill();
   c.fillStyle = "#2e2018";
   c.fillRect(sx + 7.8, hy - 1, 1.4, 1.4);
 }

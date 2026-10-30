@@ -301,3 +301,19 @@ The owner said the roads still looked too even and pointed at Drova's ground as 
 - **Grass:** deep, uneven greens with sunny patches, drying to gold on the steppe.
 - **The edge between them:** torn by noise at two scales, so grass reaches into the road in clumps and bare earth bites into the grass.
 - **Crisp detail:** ruts, puddles, potholes and blades are recoloured to sit on the darker earth.
+
+## Creatures in the storybook style
+
+The spirits and the animals now match the people: painted side light, a thin ink outline, faces that read at a glance.
+
+- **Domovyk:** a little shaggy grandad in bast shoes, beard to the floor, his wooden spoon held like a sceptre.
+- **Chort:** Gogol's "in front, a German exactly": a black tailcoat over a red waistcoat with a starched collar, a pig's snout, curled horns, goat legs with hooves, a tufted tail, and a polished pitchfork.
+- **Lisovyk:** tree-tall, with a bark face, a moss beard, branching antlers, a ragged moss cloak and a staff still in leaf.
+- **Bolotianyk:** a frog-faced old man risen to the chest from the pond, draped in weed, a lily on his crown.
+- **Viy:** after Gogol: an iron face, dented and rusted. His body is clad in black earth, root-arms grip the ground, the eyelids hang to the ground, and the withered servants hold the forks.
+- **The witches and the dancers:** drawn as people (`render/people.ts`, style `witch`) with loose hair and a crooked pointed hat. The dancers dance with their arms up.
+- **Others:**
+  - Beelzebub sits on a black throne in a crimson-lined robe.
+  - Ostap lies on a curly sheepskin.
+  - The steppe oxen wear the yoke.
+  - The hens are speckled.
