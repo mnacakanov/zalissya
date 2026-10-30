@@ -6,7 +6,7 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/c
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, FIRE, HOUSES, KAPLYTSIA, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { DECOR, FENCES, HOUSES, KAPLYTSIA, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -35,7 +35,8 @@ import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
-import { drawNight, drawVigil, drawVigilOverlay } from "./render/viyFight";
+import { drawVigil, drawVigilOverlay } from "./render/viyFight";
+import { drawDark, drawFog, gradeDay } from "./render/light";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
@@ -1905,33 +1906,23 @@ export function App() {
           ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
         }
       }
+      // the colour of the hour, and mist on the water at dawn
+      if (area === "village") {
+        drawFog(ctx2d, clockRef.current.minute, camX, camY, vw, vh, now);
+        gradeDay(ctx2d, clockRef.current.minute, vw, vh);
+      }
       const vg = ctx2d.createRadialGradient(vw / 2, vh * 0.42, Math.min(vw, vh) * 0.36, vw / 2, vh * 0.5, Math.max(vw, vh) * 0.78);
       vg.addColorStop(0, "rgba(60,30,0,0)");
       vg.addColorStop(1, area === "lysa" ? "rgba(6,6,24,0.42)" : "rgba(43,26,4,0.28)");
       ctx2d.fillStyle = vg;
       ctx2d.fillRect(0, 0, vw, vh);
 
-      // night over the open village (huts are lamp-lit; Lysa Hora is
-      // always moonlit), then the vigil on top so the chalk stays bright
+      // night over the open world (render/light.ts): darkness with holes
+      // where light falls — the fire, lit windows, the korchma door, the
+      // room the kobzar is in — then the vigil on top so the chalk stays
+      // bright
       if (!isHutArea(area)) {
-        drawNight(ctx2d, darkness(clockRef.current.minute), vw, vh, FIRE.x + FIRE.w / 2 - camX, FIRE.y + FIRE.h / 2 - camY);
-      }
-      // lamplight inside a khata, so a room at night is not black
-      const lit = insideRef.current;
-      if (lit && !isHutArea(area)) {
-        const r = HOUSE_RECTS[lit];
-        const dark = darkness(clockRef.current.minute);
-        if (dark > 0.05) {
-          ctx2d.save();
-          ctx2d.beginPath(); ctx2d.rect(r.x - camX, r.y - camY, r.w, r.h); ctx2d.clip();
-          ctx2d.globalCompositeOperation = "lighter";
-          const lg = ctx2d.createRadialGradient(r.x + r.w / 2 - camX, r.y + r.h / 2 - camY, 10, r.x + r.w / 2 - camX, r.y + r.h / 2 - camY, r.w * 0.6);
-          lg.addColorStop(0, `rgba(255,170,80,${dark * 0.7})`);
-          lg.addColorStop(1, `rgba(255,170,80,${dark * 0.25})`);
-          ctx2d.fillStyle = lg;
-          ctx2d.fillRect(r.x - camX, r.y - camY, r.w, r.h);
-          ctx2d.restore();
-        }
+        drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current);
       }
       if (fight) {
         drawVigil(ctx2d, fight, VIGIL_CENTER.x, VIGIL_CENTER.y, camX, camY, now);

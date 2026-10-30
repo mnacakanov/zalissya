@@ -1,3 +1,4 @@
+import { HOUSE_RECTS } from "../data/houses";
 import { LYSA_WORLD } from "../data/lysa";
 const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
 import { VILLAGE_W } from "../world/areas";
@@ -8,97 +9,200 @@ import { rr } from "./shapes";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { clamp, hash2, type Rect } from "../world/geometry";
 
-// Blend two #rrggbb colours (t = 0 → a, 1 → b).
-function mixHex(a: string, b: string, t: number): string {
-  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
-  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
-  return `rgb(${pa.map((v, i) => Math.round(v + ((pb[i] ?? v) - v) * t)).join(",")})`;
+
+// --- The ground, baked once ---------------------------------------------------
+// The grass used to be a grid of flat 34 px tiles, and it read as a
+// checkerboard. Now the whole world's ground is painted once into a small
+// texture (one texel per GROUND_TEXEL world px): soft value-noise patches of
+// green that dry into steppe gold eastward, and every road, path and yard
+// worn into it with a feathered edge. Each frame just stretches the visible
+// part of it over the screen, smooth; the crisp detail (blades, flowers,
+// ruts, pebbles) is drawn on top at full resolution.
+const GROUND_TEXEL = 4;
+let groundTex: HTMLCanvasElement | null = null;
+let dirtMask: Uint8ClampedArray | null = null;
+let maskW = 0;
+
+function smooth(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+function valueNoise(x: number, y: number, seed: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = smooth(x - ix);
+  const fy = smooth(y - iy);
+  const a = hash2(ix + seed, iy);
+  const b = hash2(ix + 1 + seed, iy);
+  const c = hash2(ix + seed, iy + 1);
+  const d = hash2(ix + 1 + seed, iy + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+
+// Every worn surface in the world, in world coordinates: roads, the maidan,
+// the trail, the korchma's track, and the footpaths from each door.
+function paintPaths(g: CanvasRenderingContext2D, widen: number): void {
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  // the steppe roads: the trail to Lysa Hora and the chumak road south
+  g.lineWidth = 34 + widen;
+  g.beginPath();
+  g.moveTo(VILLAGE_W - 80, 456);
+  g.bezierCurveTo(2000, 330, 2350, 760, LYSA_TRAILHEAD.x, LYSA_TRAILHEAD.y);
+  g.stroke();
+  g.lineWidth = 46 + widen;
+  g.beginPath();
+  g.moveTo(VILLAGE_W - 60, 646);
+  g.bezierCurveTo(1950, 660, 2250, 900, 2250, 1300);
+  g.lineTo(2250, WORLD_H + 40);
+  g.stroke();
+  g.lineWidth = 28 + widen;
+  g.beginPath();
+  g.moveTo(2005, 1214);
+  g.quadraticCurveTo(2120, 1240, 2244, 1170);
+  g.stroke();
+  // the khutir's own: the road west–east, the road south to the bridge,
+  // the maidan, and the trail's spur past Vesna's door
+  const w2 = widen / 2;
+  rr(g, -w2, 600 - w2, VILLAGE_W + widen, 92 + widen, 40); g.fill();
+  rr(g, 768 - w2, 300 - w2, 144 + widen, 1380 + widen, 60); g.fill();
+  g.beginPath(); g.ellipse(840, 568, 190 + w2, 128 + w2, 0, 0, Math.PI * 2); g.fill();
+  rr(g, 1468 - w2, 416 - w2, VILLAGE_W - 1468 + widen, 72 + widen, 30); g.fill();
+  rr(g, 1468 - w2, 416 - w2, 64 + widen, 260 + widen, 30); g.fill();
+  // footpaths worn from each door to the nearest road
+  g.lineWidth = 20 + widen;
+  for (const r of Object.values(HOUSE_RECTS)) {
+    const dx = r.x + r.w / 2;
+    const dy = r.y + r.h;
+    const ty = dy < 600 ? 610 : dy + 30;
+    g.beginPath(); g.moveTo(dx, dy - 4);
+    g.quadraticCurveTo(dx, (dy + ty) / 2, dx + (dx < 840 ? 10 : -10), ty);
+    g.stroke();
+  }
+  // the pustka's path runs down to the maidan, past the well
+  g.beginPath(); g.moveTo(1189, 312); g.quadraticCurveTo(1100, 420, 1000, 470); g.stroke();
+  // the forge's yard opens straight onto the road
+  g.beginPath(); g.moveTo(328, 560); g.lineTo(328, 610); g.stroke();
+}
+
+function bakeGround(): HTMLCanvasElement {
+  const w = Math.ceil(WORLD_W / GROUND_TEXEL);
+  const h = Math.ceil(WORLD_H / GROUND_TEXEL);
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const g = cv.getContext("2d");
+  if (!g) return cv;
+  // grass: two layers of soft patches, drying into steppe eastward
+  const img = g.createImageData(w, h);
+  const lushDark = [86, 140, 54], lushLight = [132, 180, 84];
+  const dryDark = [150, 156, 86], dryLight = [192, 186, 112];
+  for (let ty = 0; ty < h; ty++) {
+    for (let tx = 0; tx < w; tx++) {
+      const wx = tx * GROUND_TEXEL;
+      const wy = ty * GROUND_TEXEL;
+      const n = 0.55 * valueNoise(wx / 280, wy / 280, 3) + 0.3 * valueNoise(wx / 95, wy / 95, 17) + 0.15 * valueNoise(wx / 28, wy / 28, 41);
+      const dry = clamp((wx - VILLAGE_W + 160 + (valueNoise(wx / 220, wy / 220, 59) - 0.5) * 300) / 620, 0, 1);
+      const i = (ty * w + tx) * 4;
+      for (let k = 0; k < 3; k++) {
+        const lush = (lushDark[k] ?? 0) + ((lushLight[k] ?? 0) - (lushDark[k] ?? 0)) * n;
+        const st = (dryDark[k] ?? 0) + ((dryLight[k] ?? 0) - (dryDark[k] ?? 0)) * n;
+        img.data[i + k] = lush + (st - lush) * dry;
+      }
+      img.data[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  // the paths, on their own layer first so their shape can be read back
+  // (no grass blades are drawn on dirt)
+  const pc = document.createElement("canvas");
+  pc.width = w; pc.height = h;
+  const p = pc.getContext("2d");
+  if (!p) return cv;
+  p.scale(1 / GROUND_TEXEL, 1 / GROUND_TEXEL);
+  // a worn, half-bare fringe, then the trodden earth itself
+  p.fillStyle = p.strokeStyle = "rgba(168,140,84,0.45)";
+  paintPaths(p, 18);
+  p.fillStyle = p.strokeStyle = "rgb(200,165,104)";
+  paintPaths(p, 0);
+  // dust lighter in the middle of the maidan, where everyone stands
+  const mg = p.createRadialGradient(840, 600, 20, 840, 600, 200);
+  mg.addColorStop(0, "rgba(222,192,132,0.8)");
+  mg.addColorStop(1, "rgba(222,192,132,0)");
+  p.fillStyle = mg;
+  p.beginPath(); p.ellipse(840, 568, 190, 128, 0, 0, Math.PI * 2); p.fill();
+  const pd = p.getImageData(0, 0, w, h).data;
+  dirtMask = new Uint8ClampedArray(w * h);
+  for (let i = 0; i < w * h; i++) dirtMask[i] = pd[i * 4 + 3] ?? 0;
+  maskW = w;
+  g.drawImage(pc, 0, 0);
+  return cv;
+}
+
+// How bare the earth is at a world point (0 grass … 255 trodden dirt).
+function dirtAt(x: number, y: number): number {
+  if (!dirtMask) return 0;
+  return dirtMask[Math.floor(y / GROUND_TEXEL) * maskW + Math.floor(x / GROUND_TEXEL)] ?? 0;
 }
 
 export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number) {
-  const cell = 34;
+  if (!groundTex) groundTex = bakeGround();
+  c.imageSmoothingEnabled = true;
+  c.drawImage(groundTex, camX / GROUND_TEXEL, camY / GROUND_TEXEL, vw / GROUND_TEXEL, vh / GROUND_TEXEL, 0, 0, vw, vh);
+
+  // grass detail at full resolution: tufts of blades, clover, wildflowers,
+  // scattered on a jittered grid so no tiling shows; none on the dirt
+  const cell = 30;
   const x0 = Math.max(0, Math.floor(camX / cell) - 1);
   const y0 = Math.max(0, Math.floor(camY / cell) - 1);
   const x1 = Math.min(Math.ceil(WORLD_W / cell), Math.ceil((camX + vw) / cell) + 1);
   const y1 = Math.min(Math.ceil(WORLD_H / cell), Math.ceil((camY + vh) / cell) + 1);
-  const shades = ["#6da344", "#6aa141", "#6ea646", "#68a03f"];
-  // east of the khutir the grass dries into steppe, gold-green and wide
-  const steppe = ["#9fae5c", "#a7b062", "#98a656", "#b2b56c"];
+  c.lineCap = "round";
   for (let gy = y0; gy < y1; gy++) {
     for (let gx = x0; gx < x1; gx++) {
       const h = hash2(gx, gy);
-      const dry = Math.min(1, Math.max(0, (gx * cell - VILLAGE_W + 160 + (hash2(gx, gy * 3) - 0.5) * 120) / 620));
-      const idx = Math.floor(h * shades.length);
-      c.fillStyle = dry <= 0 ? (shades[idx] ?? shades[0]!) : mixHex(shades[idx] ?? shades[0]!, steppe[idx] ?? steppe[0]!, dry);
-      c.fillRect(gx * cell - camX, gy * cell - camY, cell + 1, cell + 1);
-      // grass blades
-      c.strokeStyle = "rgba(46,84,28,0.35)";
-      c.lineWidth = 1.4;
-      const bx = gx * cell - camX;
-      const by = gy * cell - camY;
-      for (let b = 0; b < 3; b++) {
-        const px = bx + hash2(gx * 7 + b, gy * 3) * cell;
-        const py = by + hash2(gx * 5, gy * 9 + b) * cell;
-        const sway = Math.sin(t * 0.0016 + px * 0.05 + py * 0.03) * 1.6;
+      const wx = gx * cell + hash2(gx * 3, gy * 7) * cell;
+      const wy = gy * cell + hash2(gx * 5, gy * 11) * cell;
+      if (dirtAt(wx, wy) > 90) continue;
+      const steppe = wx > VILLAGE_W - 100;
+      const px = wx - camX;
+      const py = wy - camY;
+      // a tuft: 3–5 blades fanned from one root, light ones in front
+      const blades = 3 + Math.floor(h * 3);
+      for (let b = 0; b < blades; b++) {
+        const a = (b / (blades - 1) - 0.5) * 1.1;
+        const len = (steppe ? 8 : 6) + hash2(b, gx + gy) * 5;
+        const sway = Math.sin(t * 0.0016 + wx * 0.05 + wy * 0.03) * 1.6;
+        c.strokeStyle = b % 2 ? (steppe ? "rgba(120,110,50,0.55)" : "rgba(52,96,30,0.5)") : (steppe ? "rgba(200,190,120,0.55)" : "rgba(150,196,96,0.55)");
+        c.lineWidth = 1.3;
         c.beginPath();
-        c.moveTo(px, py);
-        c.lineTo(px + sway, py - 5 - hash2(b, gx) * 3);
+        c.moveTo(px + b - blades / 2, py);
+        c.quadraticCurveTo(px + Math.sin(a) * len * 0.5, py - len * 0.6, px + Math.sin(a) * len + sway, py - len);
         c.stroke();
+      }
+      // clover in the lush grass
+      if (!steppe && h > 0.62 && h < 0.7) {
+        c.fillStyle = "rgba(70,124,46,0.7)";
+        for (let k = 0; k < 3; k++) {
+          c.beginPath(); c.arc(px + 8 + Math.cos(k * 2.1) * 2.4, py - 6 + Math.sin(k * 2.1) * 2.4, 2, 0, Math.PI * 2); c.fill();
+        }
       }
       // wildflowers
       if (h > 0.9) {
-        const fx = bx + 6 + hash2(gx, gy * 13) * 22;
-        const fy = by + 6 + hash2(gx * 11, gy) * 22;
-        const cols = ["#f5efdc", "#f2c14e", "#d96a5a", "#b48ad6"];
+        const fx = px + 6 + hash2(gx, gy * 13) * 14;
+        const fy = py - 4 + hash2(gx * 11, gy) * 10;
+        const cols = steppe ? ["#e8d8a0", "#c9a0d8", "#f2c14e"] : ["#f5efdc", "#f2c14e", "#d96a5a", "#b48ad6"];
         const col = cols[Math.floor(hash2(gy, gx) * cols.length)] ?? "#fff";
         c.strokeStyle = "#4c7a2e";
-        c.beginPath();
-        c.moveTo(fx, fy + 4);
-        c.lineTo(fx, fy);
-        c.stroke();
+        c.lineWidth = 1.2;
+        c.beginPath(); c.moveTo(fx, fy + 4); c.lineTo(fx, fy); c.stroke();
         c.fillStyle = col;
-        c.beginPath();
-        c.arc(fx, fy - 1, 2.4, 0, Math.PI * 2);
-        c.fill();
+        c.beginPath(); c.arc(fx, fy - 1, 2.4, 0, Math.PI * 2); c.fill();
         c.fillStyle = "#e8a020";
         c.fillRect(fx - 0.7, fy - 1.7, 1.4, 1.4);
       }
     }
   }
-
-  // The steppe roads, under the khutir's own paths: the trail north-east
-  // up to Lysa Hora, and the chumak road bending south toward Crimea.
-  c.lineCap = "round";
-  for (const [w, col] of [[46, "#b89a5e"], [34, "#c8a568"]] as const) {
-    c.strokeStyle = col;
-    c.lineWidth = w;
-    c.beginPath();
-    c.moveTo(VILLAGE_W - 80 - camX, 456 - camY);
-    c.bezierCurveTo(2000 - camX, 330 - camY, 2350 - camX, 760 - camY, LYSA_TRAILHEAD.x - camX, LYSA_TRAILHEAD.y - camY);
-    c.stroke();
-    c.lineWidth = w + 12;
-    c.beginPath();
-    c.moveTo(VILLAGE_W - 60 - camX, 646 - camY);
-    c.bezierCurveTo(1950 - camX, 660 - camY, 2250 - camX, 900 - camY, 2250 - camX, 1300 - camY);
-    c.lineTo(2250 - camX, WORLD_H + 40 - camY);
-    c.stroke();
-    // a trodden yard and a track off the road to the korchma's door
-    c.lineWidth = w - 6;
-    c.beginPath();
-    c.moveTo(2005 - camX, 1214 - camY);
-    c.quadraticCurveTo(2120 - camX, 1240 - camY, 2244 - camX, 1170 - camY);
-    c.stroke();
-  }
   c.lineCap = "butt";
 
-  // Dirt paths — a cross through the clearing.
-  c.fillStyle = "#c8a568";
-  rr(c, 0 - camX, 600 - camY, VILLAGE_W, 92, 40); c.fill();
-  // the khutir's road south runs out past the gardens and fields to the bridge
-  rr(c, 768 - camX, 300 - camY, 144, 1380, 60); c.fill();
-  // the maidan: a trodden square round the fire and the well, where the
-  // khutir meets, argues, and listens to the kobzar in the evening
-  c.beginPath(); c.ellipse(840 - camX, 568 - camY, 190, 128, 0, 0, Math.PI * 2); c.fill();
   // the chumak road east: two cart ruts worn into the dirt
   c.strokeStyle = "rgba(140,104,58,0.45)";
   c.lineWidth = 3;
@@ -119,10 +223,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   // The Lysa Hora trail — a narrower spur leaving the clearing eastward
   // into the steppe. Two cairns mark the edge where the khutir lets go
   // of you.
-  c.fillStyle = "#b99c62";
-  // (it leaves the east road past Vesna's khata, then runs out east)
-  rr(c, 1468 - camX, 416 - camY, VILLAGE_W - 1468, 72, 30); c.fill();
-  rr(c, 1468 - camX, 416 - camY, 64, 260, 30); c.fill();
+  // (it is baked into the ground with the other paths: paintPaths)
   for (const cy of [404, 502]) {
     const cx = VILLAGE_W - 26 - camX;
     const cyy = cy - camY;
@@ -132,12 +233,6 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     c.beginPath(); c.ellipse(cx, cyy - 3, 5, 3.4, 0, 0, Math.PI * 2); c.fill();
   }
 
-  // Central clearing — worn pale earth around the fire.
-  const grad = c.createRadialGradient(840 - camX, 640 - camY, 20, 840 - camX, 640 - camY, 210);
-  grad.addColorStop(0, "rgba(216,182,120,0.55)");
-  grad.addColorStop(1, "rgba(216,182,120,0)");
-  c.fillStyle = grad;
-  c.fillRect(840 - 210 - camX, 640 - 210 - camY, 420, 420);
 
   // Pond
   const px = POND.x - camX;

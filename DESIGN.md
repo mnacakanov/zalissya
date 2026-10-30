@@ -252,3 +252,17 @@ The last closed façade, the little hut on the north-east of the ring, is now a 
 - **His skrynia:** an empty scabbard, a pouch with no tobacco, and his letter, which leaves the tobacco to the otaman and asks that the hut be left to wait.
 
 While doing this I found that the korchma had no walls to bump into. Every walk-in house now gets its walls and furniture from one list.
+
+## Ground and light
+
+The owner chose to keep the smooth, painted look of the new khaty for the whole game, and the visuals pass started with the two things every screenshot shares.
+
+- **Ground:** the grass used to be a grid of flat 34 px tiles that read as a checkerboard. The whole world's ground is now baked once into a small texture and stretched smoothly over the screen each frame (`render/village.ts`):
+  - soft noise patches of green that dry into steppe gold eastward;
+  - every road, the maidan, the trail, the korchma's track, and a footpath from every door, worn in with a feathered edge.
+- **Grass detail:** tufts of blades, clover and wildflowers are drawn crisp on top. They sit on a jittered grid so nothing tiles, and they stay off the dirt.
+- **Light** (`render/light.ts`):
+  - The hour has a colour: pink-gold at dawn, a warm golden hour before dusk, violet as the sun goes.
+  - Mist lies on the river and the pond at dawn and late at night.
+  - Night is a dark layer with holes where light falls: the fire, every lit window (with a pool of light on the ground under it), the korchma's open door, the chapel lamp, and the room the kobzar is in. Then the warm colour of those lights is added back.
+  - The pustka stays dark.

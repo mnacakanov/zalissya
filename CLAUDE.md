@@ -4,7 +4,7 @@ Read this before you change anything. It is the shared context for every Claude 
 
 ## What this is
 
-Zalissya is a 2D top-down pixel-art RPG set on a **Cossack khutir** (Zalissya) in Gogol's Ukraine. The player is a **wandering kobzar** — a minstrel with a kobza — and the tone is Gogol's: earthy, cheeky humour that turns into real dread around Viy at night. Everything is drawn procedurally on a `<canvas>` with React around it. There are no image assets. **One client codebase** (`client/src`) ships to two targets:
+Zalissya is a 2D top-down RPG in a smooth, painted style (owner decision: painted, not pixel art) set on a **Cossack khutir** (Zalissya) in Gogol's Ukraine. The player is a **wandering kobzar** — a minstrel with a kobza — and the tone is Gogol's: earthy, cheeky humour that turns into real dread around Viy at night. Everything is drawn procedurally on a `<canvas>` with React around it. There are no image assets. **One client codebase** (`client/src`) ships to two targets:
 
 | Target | Where it runs | Save layer | Movement controls |
 |---|---|---|---|
@@ -28,7 +28,7 @@ client/src/
   data/              village / lysa / houses (walk-in khaty) layouts, items (herbs, spots, catch), characters (+ charPos)
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), chumaky.ts (the caravan conversations), viyNight.ts (Viy's night storyline)
   systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), korchma (its evening moods), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
-  render/            canvas drawing: village, spirits, lysa, khataInterior, viyFight (vigil and night), shapes
+  render/            canvas drawing: village (ground baked once into a texture), light (time-of-day grade, fog, night with light holes), spirits, lysa, khutir, khataInterior, viyFight (vigil), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map, an item: flag `map`, from Hnat or bought from the Chort — dialogue/mapTopics.ts; drawing in render/map.ts, quest stars in questTarget)
 server/src/          Muse server actions and drizzle schema (one save slot)
