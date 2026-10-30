@@ -4,7 +4,7 @@ Read this before you change anything. It is the shared context for every Claude 
 
 ## What this is
 
-Zalissya is a 2D top-down pixel-art RPG set in a Ukrainian folklore village. Everything is drawn procedurally on a `<canvas>` with React around it. There are no image assets. **One client codebase** (`client/src`) ships to two targets:
+Zalissya is a 2D top-down pixel-art RPG set on a **Cossack khutir** (Zalissya) in Gogol's Ukraine. The player is a **wandering kobzar** — a minstrel with a kobza — and the tone is Gogol's: earthy, cheeky humour that turns into real dread around Viy at night. Everything is drawn procedurally on a `<canvas>` with React around it. There are no image assets. **One client codebase** (`client/src`) ships to two targets:
 
 | Target | Where it runs | Save layer | Movement controls |
 |---|---|---|---|
@@ -26,8 +26,8 @@ client/src/
   save/              types.ts (SaveData, SaveAdapter, areas, limits), muse.ts, local.ts
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
   data/              village / lysa / huts layouts, items (herbs, spots, catch), characters (+ charPos)
-  dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), viyNight.ts (Viy's night storyline)
-  systems/           flags, skills, stats, carry, time (day/night), viyFight (the vigil), quests (quest log) + *.test.ts
+  dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), viyNight.ts (Viy's night storyline)
+  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
@@ -85,6 +85,12 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 - **New interactable:** add a `Prompt` kind (`ui/types.ts`), detect it in the frame loop's "nearest interactable" block, handle it in `doInteract`, and give it a label in `promptLabel`.
 - **New area:** add it to `AreaId` (`world/areas.ts`) **and** `SAVE_AREAS` (`save/types.ts`) **and** `areaEnum` in `server/src/actions.ts`. The column is plain text, so no migration is needed.
 - **Pure logic goes in `systems/`, with tests.** Keep `App.tsx` as wiring.
+
+## Setting and voice (owner decisions)
+
+- **Cossack, not generic Slavic.** A Cossack khutir past the forest, near the steppe, in the Hetmanate era of Gogol's tales (*Вечори на хуторі біля Диканьки*, *Вій*). Use Cossack life and words: otaman, Sich, kulish, horilka, lyulka (pipe), hopak, duma, khutir, sabre, horses.
+- **The player is a kobzar** (masculine): people call him «кобзарю», «співаче», «синку». His tools are songs: **the kobza is the core mechanic** (`systems/songs.ts`). He learns songs from people and spirits and plays them: for the khutir at the campfire in the evening (Music skill → CHA, paid in kulish), a lullaby for the Domovyk, the hopak for the Lysa Hora sabbath, and a duma sung all night in Viy's vigil (Gogol's Khoma read prayers; a kobzar sings).
+- **Ukrainian is written first**; English is translated from it. Keep lines short and punchy, with Gogol's humour and dread. Characters have voices: the otaman is gruff and fatherly, Vesna is dry and warm, **Radek** is a Pole who ran from his lord and swears in Polish («пся крев», «Jezus Maria»), the Chort is a vain, chatty dandy, the Bolotianyk speaks slow and cold in «…».
 
 ## Rules (do not break these)
 

@@ -23,7 +23,7 @@ export function drawVigil(
   c.lineWidth = 1;
   c.setLineDash([4, 8]);
   c.beginPath();
-  c.ellipse(x, y, wardReach(s.prep.wis), wardReach(s.prep.wis) * 0.62, 0, 0, Math.PI * 2);
+  c.ellipse(x, y, wardReach(s.prep.cha), wardReach(s.prep.cha) * 0.62, 0, 0, Math.PI * 2);
   c.stroke();
   c.setLineDash([]);
   // the chalk ring (squashed for the top-down tilt)
@@ -45,7 +45,7 @@ export function drawVigil(
   // the ward's flash
   if (s.t < s.wardFlashUntil) {
     const k = (s.wardFlashUntil - s.t) / 0.35;
-    const r = wardReach(s.prep.wis) * (1 - k * 0.4);
+    const r = wardReach(s.prep.cha) * (1 - k * 0.4);
     c.strokeStyle = `rgba(255,236,170,${0.7 * k})`;
     c.lineWidth = 6 * k + 1;
     c.beginPath();

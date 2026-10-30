@@ -1,6 +1,6 @@
 # Zalissya
 
-A 2D top-down pixel-art RPG set in a Ukrainian folklore village. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
+A 2D top-down pixel-art RPG on a Cossack khutir in Gogol's Ukraine. You are a wandering kobzar: you learn songs, play for the khutir by the evening fire, and sing a duma all night to keep Viy asleep. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
 
 The game is in **Ukrainian** (the default) and **English**; switch on the title screen. It plays with touch, keyboard, or a gamepad (Steam Deck included).
 
@@ -11,7 +11,7 @@ It runs in two places from one codebase:
 ## What's in the game
 
 - **Zalissya village**: huts (two enterable), a well, a forge, a campfire, a pond and a forest ring.
-  - Villagers: Starosta Myroslav, Vesna the znakharka, and Radek, a Polish smith visiting from a faraway village.
+  - Otaman Myroslav (an old Zaporozhian), Vesna the znakharka, and Radek, a Polish smith who ran from his lord.
 - **Spirits and monsters**:
   - the Domovyk, the house spirit;
   - the Lisovyk, the forest spirit;
@@ -23,7 +23,7 @@ It runs in two places from one codebase:
   - After dark, hold the chalk circle through one night. Ward off the nechyst, look away when Viy roars for his eyelids, and survive until the rooster crows.
 - **Lysa Hora (Bald Mountain)**: a sabbath summit east of the clearing, with Beelzebub, the witches Solokha and Motrya, night-blooms (nichnyky), an offering stone, a dance, and the Moonstone keepsake.
 - **Day and night**: a day passes in about ten minutes. Meals and tonics last until dawn, the village darkens at night, and you can sleep in the Domovyk's bed until morning or nightfall.
-- **Skills**: Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy.
+- **Skills**: Music (the kobza), Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy.
 - **Systems**:
   - carry capacity from STR, and alchemy tiers gated by INT;
   - honest stat checks, and keepsake bonuses;

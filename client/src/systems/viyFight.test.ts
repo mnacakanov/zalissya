@@ -12,12 +12,12 @@ function run(s: FightState, policy: (s: FightState) => FightInput): FightState {
 // eyes at the last moment and keeps them covered while the gaze is open.
 const careful = (s: FightState): FightInput => {
   const lookAway = s.gaze === "open" || (s.gaze === "rising" && s.gazePhaseEnd - s.t < 0.3);
-  const near = s.spirits.some((sp) => sp.dist < wardReach(s.prep.wis) - 10);
+  const near = s.spirits.some((sp) => sp.dist < wardReach(s.prep.cha) - 10);
   return { lookAway, ward: !lookAway && near && s.t >= s.wardReadyAt };
 };
 
 describe("Viy's vigil", () => {
-  const base = { con: 1, wis: 1, dex: 1, wreath: false, ironWard: false };
+  const base = { con: 1, cha: 1, dex: 1, wreath: false, ironWard: false };
 
   test("doing nothing breaks your nerve before cockcrow", () => {
     const s = run(startFight(base, 7), () => ({ lookAway: false, ward: false }));

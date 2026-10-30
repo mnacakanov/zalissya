@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import { questLog, type QuestView } from "./quests";
 
 const view = (over: Partial<QuestView> = {}): QuestView => ({
-  area: "village", talked: [], herbs: 0, flags: new Set(), soulPrice: 3, night: false, ...over,
+  area: "village", talked: [], herbs: 0, flags: new Set(), soulPrice: 3, night: false, evening: false, ...over,
 });
 const everyone = ["myroslav", "vesna", "radek", "domovyk", "lisovyk", "chort", "bolotianyk"];
 
@@ -16,13 +16,13 @@ describe("quest log", () => {
   });
 
   test("Viy's night opens after looking upon him, and starts with the old way", () => {
-    const q = questLog(view({ talked: [...everyone, "viy"], herbs: 5, flags: new Set(["visitedLysa"]) }));
+    const q = questLog(view({ talked: [...everyone, "viy"], herbs: 5, flags: new Set(["visitedLysa", "played=1"]) }));
     expect(q.activeId).toBe("oldway");
     expect(q.sections.find((s) => s.id === "viy")?.quests.map((x) => x.id)).toEqual(["oldway"]);
   });
 
   test("with the chalk in hand, night points the keeper to the vigil", () => {
-    const flags = new Set(["visitedLysa", "chalk"]);
+    const flags = new Set(["visitedLysa", "chalk", "played=1"]);
     const base = { talked: [...everyone, "viy"], herbs: 5, flags };
     expect(questLog(view(base)).activeId).toBe("domovyk");
     expect(questLog(view({ ...base, night: true })).activeId).toBe("vigil");

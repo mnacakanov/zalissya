@@ -6,7 +6,7 @@ import { t } from "../i18n";
 // points to assign — a stat grows because its skill grows). A stat's BASE
 // is derived, never stored, so old saves get honest values for free:
 //   STR = Smithing level    DEX = Fishing level     CON = Cooking level
-//   INT = Alchemy level     WIS = Herbalism level   CHA = 1 + ⌊met/2⌋
+//   INT = Alchemy level     WIS = Herbalism level   CHA = Music level
 // Keepsakes, food and tonics add BONUSES on top; the TOTAL is what the
 // world feels (bite window, walking pace, double finds, the Chort's price).
 export type StatKey = "str" | "dex" | "con" | "int" | "wis" | "cha";
@@ -23,7 +23,7 @@ export type StatLine = { base: number; bonus: number; total: number; bonusWhy: s
 
 export function computeStats(input: {
   herbs: number; fishTotal: number; cooked: number; smithed: number; brewed: number;
-  met: number; flags: ReadonlySet<string>;
+  played: number; flags: ReadonlySet<string>;
 }): Record<StatKey, StatLine> {
   const base: Record<StatKey, number> = {
     str: craftLevel(input.smithed),
@@ -31,7 +31,7 @@ export function computeStats(input: {
     con: craftLevel(input.cooked),
     int: craftLevel(input.brewed),
     wis: herbLevel(input.herbs),
-    cha: 1 + Math.floor(input.met / 2),
+    cha: craftLevel(input.played),
   };
   const bonus: Record<StatKey, number> = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
   const why: Record<StatKey, string[]> = { str: [], dex: [], con: [], int: [], wis: [], cha: [] };
@@ -40,6 +40,7 @@ export function computeStats(input: {
   if (input.flags.has("pebble")) give("dex", 1, t("stat.computeStats.1"));
   if (input.flags.has("stone")) give("con", 1, t("stat.computeStats.2"));
   if (input.flags.has("wellfed")) give("con", 1, t("stat.computeStats.3"));
+  if (input.flags.has("rested")) give("con", 1, t("stat.rested"));
   if (input.flags.has("tonic")) { give("int", 1, t("stat.computeStats.4")); give("wis", 1, t("stat.computeStats.5")); }
   if (input.flags.has("strongtonic")) { give("int", 2, t("stat.computeStats.6")); give("wis", 2, t("stat.computeStats.7")); }
   if (input.flags.has("gold")) give("cha", 2, t("stat.computeStats.8"));

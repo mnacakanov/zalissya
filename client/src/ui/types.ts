@@ -23,6 +23,7 @@ export type Prompt =
   | { kind: "dance" }
   | { kind: "blessing" }
   | { kind: "sleep" }
+  | { kind: "play" }
   | { kind: "vigil" }
   | null;
 
@@ -61,7 +62,7 @@ export type Dialogue = {
   // choiceKind "options": a list of buttons at the choice page, answered
   // by App's pickOption(optionsTag, option id).
   options?: DialogueOption[];
-  optionsTag?: "sleep";
+  optionsTag?: "sleep" | "play";
   topics?: DialogueTopic[];
   asked?: string[];
   view?: "lines" | "menu" | "topic";

@@ -1,4 +1,5 @@
 import { flagCount, flagHas } from "./flags";
+import { knowsSong } from "./songs";
 import { t } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
@@ -24,6 +25,8 @@ export type QuestView = {
   soulPrice: number;
   // is it night now (21:00 – 04:00)?
   night: boolean;
+  // is it evening (18:00 – 23:30), when the khutir gathers at the fire?
+  evening: boolean;
 };
 
 export type SectionId = "story" | "viy" | "life" | "lysa";
@@ -90,6 +93,12 @@ const QUESTS: QuestDef[] = [
     done: (d) => d.metVillagers >= 3,
     detail: (d) => t("quest.meet.0", { metVillagers: d.metVillagers }),
     objective: (d) => t("quest.meet.1", { metVillagers: d.metVillagers }),
+  },
+  {
+    id: "evening", section: "story", title: t("quest.evening.title"),
+    done: (d) => flagCount(d.f, "played") >= 1,
+    detail: (d) => (flagCount(d.f, "played") >= 1 ? t("quest.evening.done", { played: flagCount(d.f, "played") }) : t("quest.evening.detail")),
+    objective: (d) => (d.v.evening ? t("quest.evening.now") : t("quest.evening.wait")),
   },
   {
     id: "herbs", section: "story", title: t("quest.herbs.title.0"),
@@ -220,7 +229,7 @@ const QUESTS: QuestDef[] = [
         : flagHas(d.f, "lysaDanced")
           ? t("quest.lysa-sabbath.1")
           : flagHas(d.f, "lysaOffering")
-            ? t("quest.lysa-sabbath.2")
+            ? knowsSong(d.f, "hopak") ? t("quest.lysa-sabbath.2") : t("quest.lysa-sabbath.hopak")
             : d.lysaFlowers >= 3
               ? t("quest.lysa-sabbath.3")
               : t("quest.lysa-sabbath.4", { lysaFlowers: d.lysaFlowers }),
@@ -230,7 +239,7 @@ const QUESTS: QuestDef[] = [
         : flagHas(d.f, "lysaDanced")
           ? t("quest.lysa-sabbath.6")
           : flagHas(d.f, "lysaOffering")
-            ? t("quest.lysa-sabbath.7")
+            ? knowsSong(d.f, "hopak") ? t("quest.lysa-sabbath.7") : t("quest.lysa-sabbath.hopak")
             : d.lysaFlowers >= 3
               ? t("quest.lysa-sabbath.8")
               : t("quest.lysa-sabbath.9", { lysaFlowers: d.lysaFlowers }),
@@ -240,7 +249,7 @@ const QUESTS: QuestDef[] = [
 // The order the HUD walks the threads in. Optional preparations (wreath,
 // iron ward) are listed in the log but never become the objective.
 const PRIORITY = [
-  "meet", "herbs", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway",
+  "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway",
   "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "vigil", "lysa-sabbath",
 ];
 

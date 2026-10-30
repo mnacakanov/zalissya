@@ -96,3 +96,15 @@ The touch controls hide while a pad is in use.
   - the sheet is «Персонаж», with «Характеристики» for the stats;
   - Nerve is «Мужність»;
   - Viy roars Gogol's own words: «Підніміть мені повіки: не бачу!»
+
+## The Cossack pivot: a kobzar on the khutir
+
+The setting moved from a generic Slavic village to a **Cossack khutir** in Gogol's Ukraine, and the player became a **wandering kobzar**. All the content was rewritten, Ukrainian first, in Gogol's tone: short, cheeky, colloquial lines that turn genuinely frightening around Viy. English is now the translation.
+- **People:** Myroslav is the khutir's otaman, an old Zaporozhian. Radek is a Pole who fled his lord, which makes for jokes and friction. Karas soup became kulish, and the forge turns out horseshoes.
+
+**The kobza** is the new core mechanic (`systems/songs.ts`, `dialogue/songTopics.ts`):
+- **Songs:** you start knowing the *Duma of Cossack Holota*. Vesna teaches a lullaby, the Chort or Motrya teach the hopak, and the otaman gives the *Duma of the Black Sea storm* with the chalk.
+- **Evenings** (18:00–23:30): play for the khutir at the campfire, once an evening. The listeners pay in kulish, and **Music** grows. Music is a sixth skill, and its level is now your **Charisma** (meeting people no longer raises CHA).
+- **The lullaby:** sung in the Domovyk's hut, it makes you wake rested, with CON +1 until the next dawn.
+- **The hopak:** Lysa Hora's sabbath dances only to it. You play, the witches dance.
+- **The vigil:** WARD became **Duma**. The kobzar sings through Viy's night, and his Charisma decides how far the duma carries.

@@ -8,12 +8,13 @@ import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_
 import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from "./data/lysa";
 import { FENCES, FIRE, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
 import { linesFor, linesForLysa } from "./dialogue/lines";
+import { songTopics } from "./dialogue/songTopics";
 import { canForgeWard, canWeaveWreath, VIGIL_BROKEN_LINES, VIGIL_INTRO_LINES, VIGIL_WON_LINES, type VigilContext, vigilTopics, viyNarration, WREATH_HERBS } from "./dialogue/viyNight";
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
 import { createGamepadReader, lookAwayHeld, moveFocus, type PadState } from "./input/gamepad";
 import { Joystick } from "./input/Joystick";
 import { PadButton } from "./input/PadButton";
-import { type Lang, setLanguage } from "./i18n";
+import { type Lang, setLanguage, type TextKey } from "./i18n";
 import { LanguagePicker } from "./ui/LanguagePicker";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
@@ -24,6 +25,7 @@ import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
+import { fireCheck, isEvening, knownSongs, knowsSong, songFlag, type SongId } from "./systems/songs";
 import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { advance, type Clock, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
@@ -42,6 +44,13 @@ const BED_SPOT = { x: 635, y: 196 };
 const BED_NPC: Npc = {
   id: "bed", name: t("ui.bed.name.0"), pron: "", role: t("ui.bed.role.0"),
   x: BED_SPOT.x, y: BED_SPOT.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
+};
+// The log bench east of the campfire — where the kobzar plays for the
+// khutir in the evening.
+const PLAY_SPOT = { x: 918, y: 618 };
+const FIRE_NPC: Npc = {
+  id: "fire", name: t("ui.fire.name"), pron: "", role: t("ui.fire.role"),
+  x: PLAY_SPOT.x, y: PLAY_SPOT.y, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder",
 };
 // Where the chalk ring is drawn for Viy's vigil: just south of his hollow.
 const VIGIL_CENTER = { x: 1420, y: 440 };
@@ -393,7 +402,7 @@ export function App() {
       cooked: flagCount(flagsRef.current, "cooked"),
       smithed: flagCount(flagsRef.current, "smithed"),
       brewed: flagCount(flagsRef.current, "brewed"),
-      met: talkedRef.current.size,
+      played: flagCount(flagsRef.current, "played"),
       flags: flagsRef.current,
     });
 
@@ -437,17 +446,49 @@ export function App() {
     showToast(expired ? t("ui.sleepUntil.0", { msg }) : msg);
   };
   // A dialogue whose last page is a row of option buttons.
-  const openOptions = (npc: Npc, lines: string[], tag: "sleep", options: DialogueOption[]) => {
+  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play", options: DialogueOption[]) => {
     const d: Dialogue = { npc, lines, line: 0, choiceAt: lines.length - 1, choiceKind: "options", options, optionsTag: tag };
     dialogueRef.current = d;
     setDialogue(d);
   };
-  const pickOption = (tag: "sleep", id: string) => {
+  const pickOption = (tag: "sleep" | "play", id: string) => {
     endDialogue();
+    if (id === "cancel") return;
     if (tag === "sleep") {
-      if (id === "morning") sleepUntil(WAKE_MINUTE, t("ui.pickOption.0"));
-      else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, t("ui.pickOption.1"));
+      if (id === "morning") {
+        sleepUntil(WAKE_MINUTE, t("ui.pickOption.0"));
+        // The Domovyk hums the lullaby along — if you taught it to the hut.
+        if (knowsSong(flagsRef.current, "kolyskova")) {
+          setFlag("rested");
+          showToast(t("ui.sleep.rested"));
+        }
+      } else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, t("ui.pickOption.1"));
+    } else if (tag === "play") {
+      performAtFire(id as SongId);
     }
+  };
+
+  // --- the kobza ----------------------------------------------------------------
+  // Playing for the khutir at the campfire: once an evening, the listeners
+  // pay in kulish, and Music (= CHA) grows. See systems/songs.ts.
+  const songName = (id: SongId) => t(`song.name.${id}` as TextKey);
+  const performAtFire = (song: SongId) => {
+    const c = clockRef.current;
+    const check = fireCheck(flagsRef.current, c.day, c.minute);
+    if (!check.ok) return;
+    const before = flagCount(flagsRef.current, "played");
+    const after = bumpCount("played", 1);
+    for (const f of [...flagsRef.current]) if (f.startsWith("playedDay=")) flagsRef.current.delete(f);
+    flagsRef.current.add(`playedDay=${c.day}`);
+    bumpCount("meals", 1);
+    const lvlUp = craftLevel(after) > craftLevel(before);
+    const title = songName(song);
+    showToast(
+      lvlUp
+        ? t("ui.play.levelUp", { song: title, level: craftLevel(after), cha: liveStats().cha.total })
+        : t("ui.play.done", { song: title, level: craftLevel(after) }),
+    );
+    openDialogue(FIRE_NPC, [t(`ui.play.audience.${song}` as TextKey)]);
   };
 
   // --- Viy's night -------------------------------------------------------------
@@ -459,10 +500,16 @@ export function App() {
   });
   // Items handed over by asking a topic (see dialogue/viyNight.ts). The
   // checks repeat the topic's own, so re-asking never gives twice.
-  const applyGrant = (g: "chalk" | "wreath" | "ironward") => {
+  const applyGrant = (g: "chalk" | "wreath" | "ironward" | "kolyskova" | "hopak") => {
     const f = flagsRef.current;
+    if ((g === "kolyskova" || g === "hopak") && !knowsSong(f, g)) {
+      setFlag(songFlag(g));
+      showToast(t("ui.song.learned", { song: songName(g) }));
+      return;
+    }
     if (g === "chalk" && !flagHas(f, "chalk")) {
       setFlag("chalk");
+      setFlag(songFlag("burya"));
       showToast(t("ui.applyGrant.0"));
     } else if (g === "wreath" && !flagHas(f, "wreath") && canWeaveWreath(vigilContext())) {
       bumpCount("herbStock", -WREATH_HERBS);
@@ -483,7 +530,7 @@ export function App() {
     setLookHeld(false);
     wardQueuedRef.current = false;
     const f = startFight(
-      { con: st.con.total, wis: st.wis.total, dex: st.dex.total, wreath: flagHas(flagsRef.current, "wreath"), ironWard: flagHas(flagsRef.current, "ironward") },
+      { con: st.con.total, cha: st.cha.total, dex: st.dex.total, wreath: flagHas(flagsRef.current, "wreath"), ironWard: flagHas(flagsRef.current, "ironward") },
       Math.floor(performance.now()) || 1,
     );
     fightRef.current = f;
@@ -723,7 +770,7 @@ export function App() {
         if (areaRef.current === "lysa") {
           const tsetL = topicsForLysa(p.npc, flags, firstMeeting);
           if (tsetL) {
-            openTopicDialogue(p.npc, tsetL.intro, tsetL.topics);
+            openTopicDialogue(p.npc, tsetL.intro, [...tsetL.topics, ...songTopics(p.npc.id, "lysa", flags)]);
           } else {
             openDialogue(p.npc, linesForLysa(p.npc, flags));
           }
@@ -742,7 +789,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -979,6 +1026,11 @@ export function App() {
           showToast(t("ui.dance.0"));
           return;
         }
+        // The sabbath dances only to the hopak — and the kobzar plays it.
+        if (!knowsSong(flagsRef.current, "hopak")) {
+          showToast(t("ui.dance.noHopak"));
+          return;
+        }
         danceUntilRef.current = performance.now() + 5000;
         setFlag("lysaDanced");
         showToast(t("ui.dance.1"));
@@ -998,6 +1050,26 @@ export function App() {
             { id: "morning", label: t("ui.sleep.morning.label.0"), aria: t("ui.sleep.morning.aria.0") },
             { id: "night", label: t("ui.sleep.night.label.0"), aria: t("ui.sleep.night.aria.0") },
             { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.aria.0") },
+          ],
+        );
+        return;
+      }
+      case "play": {
+        const c = clockRef.current;
+        const check = fireCheck(flagsRef.current, c.day, c.minute);
+        if (!check.ok) {
+          showToast(t(check.reason === "daytime" ? "ui.play.daytime" : "ui.play.alreadyPlayed"));
+          return;
+        }
+        openOptions(
+          FIRE_NPC,
+          [t(check.firstEver ? "ui.play.first" : "ui.play.prompt")],
+          "play",
+          [
+            ...knownSongs(flagsRef.current)
+              .filter((id) => id !== "burya" || flagHas(flagsRef.current, "viySealed"))
+              .map((id) => ({ id, label: songName(id), aria: songName(id) })),
+            { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.label.0") },
           ],
         );
         return;
@@ -1392,6 +1464,7 @@ export function App() {
         spot(true, COOK_SPOT.x, COOK_SPOT.y, 60, () => ({ kind: "cook" }));
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
+        spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
         IRON_SPOTS.forEach((s, idx) => {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
@@ -1665,9 +1738,11 @@ export function App() {
   const cookLvl = craftLevel(cooked);
   const smithLvl = craftLevel(smithed);
   const alchemyLvl = craftLevel(brewed);
+  const played = flagCount(hudFlags, "played");
+  const musicLvl = craftLevel(played);
   const stats = computeStats({
     herbs: hudHerbs, fishTotal, cooked, smithed, brewed,
-    met: hudTalked.length, flags: hudFlags,
+    played, flags: hudFlags,
   });
   const price = soulPrice(stats);
   const carried = carriedWeight(hudFlags);
@@ -1676,7 +1751,7 @@ export function App() {
   const haulingIron = !flagHas(hudFlags, "horseshoe") && iron > 0;
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
-  const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute) });
+  const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute), evening: isEvening(hudClock.minute) });
   const objective = hudFight ? t("ui.objective.0") : quests.objective;
   const promptHerb =
     prompt?.kind === "gather" ? HERBS[HERB_SPOTS[prompt.idx]?.kind ?? "kropyva"] : null;
@@ -1716,6 +1791,8 @@ export function App() {
                                 ? t("ui.promptLabel.17")
                                 : prompt.kind === "sleep"
                                   ? t("ui.promptLabel.18")
+                                  : prompt.kind === "play"
+                                    ? t("ui.promptLabel.play")
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
                                     : t("ui.promptLabel.20");
@@ -1747,6 +1824,7 @@ export function App() {
     { name: t("ui.skillRows.name.2"), level: cookLvl, done: cooked, next: CRAFT_THRESH[cookLvl] ?? null, stat: t("ui.skillRows.stat.2") },
     { name: t("ui.skillRows.name.3"), level: smithLvl, done: smithed, next: CRAFT_THRESH[smithLvl] ?? null, stat: t("ui.skillRows.stat.3") },
     { name: t("ui.skillRows.name.4"), level: alchemyLvl, done: brewed, next: CRAFT_THRESH[alchemyLvl] ?? null, stat: t("ui.skillRows.stat.4") },
+    { name: t("ui.skillRows.name.music"), level: musicLvl, done: played, next: CRAFT_THRESH[musicLvl] ?? null, stat: t("ui.skillRows.stat.music") },
   ];
   // --- Quest log: every thread, from systems/quests.ts (the same source
   // as the objective line above, so the two always agree).
@@ -2384,6 +2462,9 @@ export function App() {
                     {t("ui.satchel.carrying", { carried, cap, str: stats.str.total })}
                     {haulingIron ? t("ui.misc.103", { iron }) : ""}
                     {carried > cap ? t("ui.misc.104") : ""}
+                  </p>
+                  <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">
+                    {t("ui.satchel.songs", { songs: knownSongs(hudFlags).map(songName).join(" · ") })}
                   </p>
                   {keepsakes.length > 0 && (
                     <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">{keepsakes.join(" · ")}</p>

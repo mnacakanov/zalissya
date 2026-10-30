@@ -1,7 +1,9 @@
 // --- Viy's vigil: the first fight -------------------------------------------
 // Not swords — Gogol's way. You stand inside a chalk circle by Viy's hollow
 // through one night. The nechyst (нечисть, the unclean host) crawls in from
-// the dark toward the chalk; WARD drives back every spirit near the ring.
+// the dark toward the chalk; WARD — the kobzar singing his duma — drives
+// back every spirit near the ring (Gogol's Khoma Brut read prayers; a
+// kobzar sings).
 // Every so often Viy roars for his servants to lift his eyelids — the lids
 // rise slowly (the warning), then his gaze opens. Whoever LOOKS at Viy is
 // lost: hold LOOK AWAY while the gaze is open. But while your eyes are
@@ -10,7 +12,7 @@
 // until the rooster crows and the night is won.
 //
 // Stats and preparations shape it:
-//   CON → Nerve (6 + 2×CON)           WIS → how far a ward reaches
+//   CON → Nerve (6 + 2×CON)           CHA (Music) → how far the duma carries
 //   DEX → how quickly you ward again  chalk circle → required to begin
 //   Vesna's wreath  → the gaze takes half as much nerve
 //   Radek's iron ward → the first 3 spirits to touch the chalk burn away
@@ -22,7 +24,7 @@ export const VIGIL_SECONDS = 80;
 export const CIRCLE_R = 64;
 export const SPAWN_R = 300;
 
-export type FightPrep = { con: number; wis: number; dex: number; wreath: boolean; ironWard: boolean };
+export type FightPrep = { con: number; cha: number; dex: number; wreath: boolean; ironWard: boolean };
 export type FightInput = { lookAway: boolean; ward: boolean };
 
 export type Spirit = { id: number; angle: number; dist: number; speed: number; wobble: number };
@@ -77,8 +79,8 @@ export function maxNerveFor(con: number): number {
   return 6 + 2 * Math.max(1, con);
 }
 
-export function wardReach(wis: number): number {
-  return CIRCLE_R + 70 + 14 * (Math.max(1, wis) - 1);
+export function wardReach(cha: number): number {
+  return CIRCLE_R + 70 + 14 * (Math.max(1, cha) - 1);
 }
 
 export function wardCooldown(dex: number): number {
@@ -151,7 +153,7 @@ export function stepFight(s: FightState, dt: number, input: FightInput): FightEv
   // --- warding (not while your eyes are covered)
   if (input.ward && !input.lookAway) {
     if (s.t >= s.wardReadyAt) {
-      const reach = wardReach(s.prep.wis);
+      const reach = wardReach(s.prep.cha);
       const before = s.spirits.length;
       s.spirits = s.spirits.filter((sp) => sp.dist > reach);
       s.wardReadyAt = s.t + wardCooldown(s.prep.dex);
