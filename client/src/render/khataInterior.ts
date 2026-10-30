@@ -1,0 +1,402 @@
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, ROOM, WALL } from "../data/houses";
+import { flagHas } from "../systems/flags";
+import { hash2 } from "../world/geometry";
+import { rr } from "./shapes";
+
+// --- Inside a khata ---------------------------------------------------------
+// Drawn at world scale into the khata's footprint once its roof lifts away
+// (layout and the reasons for it: data/houses.ts). A khata inside is white:
+// whitewashed walls, a clay floor (dolivka) smeared smooth, a painted pich,
+// and colour only where people put it — rushnyky, the ornament on the pich,
+// the skrynia, the lizhnyk on the pil. hut0 is the Domovyk's (and the
+// kobzar's bed); hut1 is Vesna's, all herbs and bottles and a cat.
+export function drawKhataInterior(
+  c: CanvasRenderingContext2D,
+  id: HouseId,
+  x: number, y: number, t: number,
+  flags: ReadonlySet<string>,
+): void {
+  const { w, h } = HOUSE_RECTS[id];
+  const vesna = id === "hut1";
+  const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: { x: number; y: number; w: number; h: number }) => {
+    c.fillStyle = "rgba(60,36,14,0.22)";
+    rr(c, r.x + 3, r.y + 4, r.w, r.h, 4); c.fill();
+  };
+
+  // the dolivka: clay floor, smeared smooth, a little darker where feet go
+  c.fillStyle = "#c19a68";
+  c.fillRect(x, y, w, h);
+  for (let i = 0; i < 70; i++) {
+    const fx = hash2(i, 31) * w;
+    const fy = hash2(i, 77) * h;
+    c.fillStyle = i % 2 ? "rgba(140,98,54,0.18)" : "rgba(230,200,150,0.18)";
+    c.beginPath(); c.ellipse(x + fx, y + fy, 6 + hash2(i, 5) * 10, 3 + hash2(i, 9) * 4, 0, 0, Math.PI * 2); c.fill();
+  }
+  // daylight from the two front windows lying on the floor
+  c.fillStyle = "rgba(255,244,210,0.22)";
+  for (const wx of [34, w - 70]) {
+    c.beginPath();
+    c.moveTo(x + wx, y + h - WALL); c.lineTo(x + wx + 36, y + h - WALL);
+    c.lineTo(x + wx + 44, y + h - WALL - 40); c.lineTo(x + wx + 8, y + h - WALL - 40);
+    c.closePath(); c.fill();
+  }
+  // a woven runner (dorizhka) from the door into the room
+  {
+    const rx = x + w / 2 - 13;
+    const ry = y + 100;
+    const rh = h - WALL - 100;
+    c.fillStyle = vesna ? "#3f6a3a" : "#a8322a";
+    c.fillRect(rx, ry, 26, rh);
+    c.fillStyle = "#1e1a16";
+    for (let sy = ry + 8; sy < ry + rh; sy += 16) c.fillRect(rx, sy, 26, 3);
+    c.fillStyle = "#e8c66a";
+    for (let sy = ry + 4; sy < ry + rh; sy += 16) c.fillRect(rx + 4, sy, 18, 2);
+    c.fillStyle = "rgba(255,255,255,0.25)";
+    for (let fx = rx + 2; fx < rx + 26; fx += 4) c.fillRect(fx, ry - 3, 1.4, 3);
+  }
+
+  // --- the walls: tops of clay walls, and the back wall's whitewashed face
+  c.fillStyle = "#f4efe3";
+  c.fillRect(x, y + WALL, w, BACK_WALL - WALL);
+  // a painted blue band at the foot of the wall, and a row of little
+  // painted flowers above it — the way the khaty were decorated for feasts
+  c.fillStyle = "#3f63a8";
+  c.fillRect(x, y + BACK_WALL - 4, w, 4);
+  for (let fx = 24; fx < w - 20; fx += 22) {
+    c.fillStyle = (fx / 22) % 2 < 1 ? "#c8402e" : "#e8a33a";
+    c.beginPath(); c.arc(x + fx, y + BACK_WALL - 9, 2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#3f7a2e";
+    c.fillRect(x + fx - 4, y + BACK_WALL - 8, 3, 1.4);
+    c.fillRect(x + fx + 1, y + BACK_WALL - 8, 3, 1.4);
+  }
+  c.fillStyle = "#ddd2bc";
+  c.fillRect(x, y, w, WALL); // north wall top
+  c.fillRect(x, y, WALL, h); // west
+  c.fillRect(x + w - WALL, y, WALL, h); // east
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL);
+  c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "rgba(120,100,70,0.35)";
+  c.fillRect(x + WALL, y + WALL, 2, h - 2 * WALL); // inner edges catch shadow
+  c.fillRect(x + w - WALL - 2, y + WALL, 2, h - 2 * WALL);
+  // window panes seen through the thickness of the front wall
+  for (const wx of [34, w - 70]) {
+    c.fillStyle = "#9cc4dc";
+    c.fillRect(x + wx, y + h - WALL + 4, 36, 6);
+    c.fillStyle = "#3f63a8";
+    c.fillRect(x + wx + 17, y + h - WALL + 4, 2, 6);
+  }
+  // the door step, and the door swung inward against the wall
+  c.fillStyle = "#a8643c";
+  c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+  c.fillStyle = "#5a3a22";
+  rr(c, x + half + DOOR_GAP - 6, y + h - WALL - 34, 6, 34, 2); c.fill();
+  // a small window in the back wall
+  {
+    const wx = x + 176;
+    const wy = y + 15;
+    c.fillStyle = "#3f63a8";
+    rr(c, wx - 2, wy - 1, 28, 15, 2); c.fill();
+    c.fillStyle = "#bfe0f0";
+    c.fillRect(wx, wy + 1, 24, 11);
+    c.fillStyle = "#3f63a8";
+    c.fillRect(wx + 11, wy + 1, 2, 11);
+  }
+
+  // --- the pokut: the icon in the NE corner under an embroidered rushnyk,
+  // a lampadka burning before it
+  {
+    const ix = x + w - WALL - 30;
+    const iy = y + WALL + 2;
+    c.fillStyle = "#b8862a";
+    rr(c, ix, iy, 18, 15, 1.5); c.fill();
+    c.fillStyle = "#6a3a20";
+    c.fillRect(ix + 3, iy + 3, 12, 9);
+    c.fillStyle = "#f0c860";
+    c.beginPath(); c.arc(ix + 9, iy + 6, 2.6, 0, Math.PI * 2); c.fill();
+    // the rushnyk draped over it, red ends hanging
+    c.fillStyle = "#faf6ec";
+    c.beginPath();
+    c.moveTo(ix - 7, iy - 1); c.quadraticCurveTo(ix + 9, iy + 5, ix + 25, iy - 1);
+    c.lineTo(ix + 25, iy + 17); c.lineTo(ix + 21, iy + 17); c.lineTo(ix + 21, iy + 3);
+    c.quadraticCurveTo(ix + 9, iy + 7, ix - 3, iy + 3);
+    c.lineTo(ix - 3, iy + 17); c.lineTo(ix - 7, iy + 17); c.closePath(); c.fill();
+    c.fillStyle = "#c8402e";
+    c.fillRect(ix - 7, iy + 12, 4, 3);
+    c.fillRect(ix + 21, iy + 12, 4, 3);
+    const fl = 1.6 + Math.sin(t * 0.013) * 0.4;
+    c.fillStyle = "#b03a2e";
+    c.beginPath(); c.arc(ix + 9, iy + 17, 2, 0, Math.PI); c.fill();
+    c.fillStyle = "#ffcf5a";
+    c.beginPath(); c.ellipse(ix + 9, iy + 15, 1.1, fl, 0, 0, Math.PI * 2); c.fill();
+  }
+
+  // on the back wall: the Domovyk's khata keeps a sabre and a lyulka
+  // hung on a nail; Vesna's has herbs drying on a pole under the ceiling
+  if (!vesna) {
+    c.strokeStyle = "#9aa0a6"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x + 26, y + 18); c.quadraticCurveTo(x + 52, y + 30, x + 80, y + 24); c.stroke();
+    c.fillStyle = "#5a3a22";
+    c.fillRect(x + 20, y + 15, 9, 5);
+    c.strokeStyle = "#6e4525"; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(x + 92, y + 18); c.lineTo(x + 104, y + 24); c.stroke();
+    c.fillStyle = "#6e4525";
+    c.beginPath(); c.arc(x + 105, y + 25, 2.6, 0, Math.PI * 2); c.fill();
+  } else {
+    c.fillStyle = "#6e4525";
+    c.fillRect(x + 20, y + 15, 150, 2);
+    const cols = ["#3f7a2e", "#8a9678", "#f28c1e", "#f2c416", "#e8e2cc", "#5d8a3a", "#b0507a", "#3f7a2e", "#f2c416"];
+    cols.forEach((col, i) => {
+      const bx = x + 28 + i * 16;
+      const sway = Math.sin(t * 0.002 + i * 1.7) * 0.8;
+      c.strokeStyle = "#c9b18a"; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(bx, y + 17); c.lineTo(bx + sway, y + 21); c.stroke();
+      c.fillStyle = col;
+      c.beginPath(); c.ellipse(bx + sway, y + 25, 3.2, 5.4, sway * 0.08, 0, Math.PI * 2); c.fill();
+    });
+  }
+
+  // --- the pil: a plank sleeping platform with a woollen lizhnyk and a
+  // stack of embroidered pillows
+  {
+    const p = R(ROOM.pil);
+    shadow(p);
+    c.fillStyle = "#7a4a24";
+    rr(c, p.x, p.y, p.w, p.h, 3); c.fill();
+    c.fillStyle = vesna ? "#4c6b35" : "#8a3a2e";
+    rr(c, p.x + 20, p.y + 3, p.w - 23, p.h - 6, 3); c.fill();
+    c.fillStyle = vesna ? "#d9c27a" : "#e8b84a";
+    for (let sx = p.x + 26; sx < p.x + p.w - 6; sx += 9) c.fillRect(sx, p.y + 3, 2.4, p.h - 6);
+    c.fillStyle = "rgba(0,0,0,0.18)";
+    c.fillRect(p.x + 20, p.y + p.h - 10, p.w - 23, 7);
+    for (const [py, ph] of [[p.y + 4, 22], [p.y + 28, 22]] as const) {
+      c.fillStyle = "#fbf7ee";
+      rr(c, p.x + 3, py, 18, ph, 4); c.fill();
+      c.fillStyle = "#c8402e";
+      c.fillRect(p.x + 5, py + ph - 4, 14, 2);
+    }
+  }
+
+  // --- the skrynia (painted dowry chest) — or Vesna's tinctures stand
+  {
+    const s = R(ROOM.skrynia);
+    shadow(s);
+    if (!vesna) {
+      c.fillStyle = "#2e6a6a";
+      rr(c, s.x, s.y, s.w, s.h, 3); c.fill();
+      c.fillStyle = "#3d8080";
+      c.fillRect(s.x + 2, s.y + 2, s.w - 4, 6);
+      c.fillStyle = "#3a3230";
+      c.fillRect(s.x + 8, s.y, 3, s.h);
+      c.fillRect(s.x + s.w - 11, s.y, 3, s.h);
+      for (const [fx, col] of [[s.x + 18, "#e8a33a"], [s.x + 24, "#c8402e"], [s.x + 30, "#e8a33a"]] as const) {
+        c.fillStyle = col;
+        c.beginPath(); c.arc(fx, s.y + 14, 2.6, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = "#d9a441";
+      c.fillRect(s.x + s.w / 2 - 2, s.y + 6, 4, 4);
+    } else {
+      c.fillStyle = "#6e4525";
+      rr(c, s.x, s.y, s.w, s.h, 2); c.fill();
+      const bc = ["#7fb069", "#c98d45", "#7a9ab0", "#b06a8a", "#d8c25a"];
+      bc.forEach((col, i) => {
+        const bx = s.x + 5 + i * 9;
+        c.fillStyle = col;
+        rr(c, bx, s.y + 4, 6, 12, 2); c.fill();
+        c.fillStyle = "rgba(255,255,255,0.4)";
+        c.fillRect(bx + 1, s.y + 6, 1.4, 6);
+        c.fillStyle = "#c9a86a";
+        c.fillRect(bx + 1.5, s.y + 1.5, 3, 3);
+      });
+    }
+  }
+
+  // --- lavy along the back and east walls
+  for (const r of [ROOM.lavaN, ROOM.lavaE]) {
+    const b = R(r);
+    shadow(b);
+    c.fillStyle = "#8a5a2e";
+    rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    c.fillStyle = "rgba(255,220,160,0.18)";
+    if (b.w > b.h) c.fillRect(b.x, b.y, b.w, 2); else c.fillRect(b.x, b.y, 2, b.h);
+  }
+
+  // --- the table in the pokut: a white cloth with a red border
+  {
+    const tb = R(ROOM.table);
+    shadow(tb);
+    c.fillStyle = "#7a4a24";
+    rr(c, tb.x, tb.y, tb.w, tb.h, 3); c.fill();
+    c.fillStyle = "#faf6ec";
+    rr(c, tb.x + 3, tb.y + 3, tb.w - 6, tb.h - 6, 2); c.fill();
+    c.strokeStyle = "#c8402e"; c.lineWidth = 1.4;
+    c.strokeRect(tb.x + 6, tb.y + 6, tb.w - 12, tb.h - 12);
+    if (!vesna) {
+      // a palianytsia, a salt cellar, a kahanets (clay lamp)
+      c.fillStyle = "#b8742e";
+      c.beginPath(); c.ellipse(tb.x + 22, tb.y + 20, 11, 8, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#d89a4a";
+      c.beginPath(); c.ellipse(tb.x + 22, tb.y + 18, 8, 5, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "#8a5420"; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(tb.x + 16, tb.y + 18); c.lineTo(tb.x + 28, tb.y + 18); c.stroke();
+      c.fillStyle = "#e8e2cc";
+      c.beginPath(); c.arc(tb.x + 38, tb.y + 16, 3, 0, Math.PI * 2); c.fill();
+    } else {
+      // a mortar and pestle, loose herbs, her book of cures
+      c.fillStyle = "#5d6b72";
+      c.beginPath(); c.ellipse(tb.x + 16, tb.y + 20, 7, 5, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "#8d8b85"; c.lineWidth = 2.2;
+      c.beginPath(); c.moveTo(tb.x + 14, tb.y + 17); c.lineTo(tb.x + 22, tb.y + 10); c.stroke();
+      c.fillStyle = "#3f7a2e";
+      for (const [hx, hy] of [[28, 14], [32, 22], [26, 26]] as const) {
+        c.beginPath(); c.arc(tb.x + hx, tb.y + hy, 2.2, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = "#6a3a20";
+      rr(c, tb.x + 40, tb.y + 10, 14, 18, 1.5); c.fill();
+      c.fillStyle = "#f7efdb";
+      c.fillRect(tb.x + 42, tb.y + 12, 10, 14);
+    }
+    // the kahanets, with its flame
+    const lx = tb.x + tb.w - 14;
+    const ly = tb.y + tb.h - 14;
+    c.fillStyle = "#a85f38";
+    c.beginPath(); c.ellipse(lx, ly, 5, 3.4, 0, 0, Math.PI * 2); c.fill();
+    const fl = 2.4 + Math.sin(t * 0.02) * 0.7;
+    c.fillStyle = "#ffb02e";
+    c.beginPath(); c.ellipse(lx + 3, ly - 3, 1.8, fl + 1, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#ffe89a";
+    c.beginPath(); c.ellipse(lx + 3, ly - 2.6, 0.9, fl, 0, 0, Math.PI * 2); c.fill();
+    const lg = c.createRadialGradient(lx, ly, 4, lx, ly, 90);
+    lg.addColorStop(0, "rgba(255,190,90,0.22)");
+    lg.addColorStop(1, "rgba(255,190,90,0)");
+    c.fillStyle = lg;
+    c.fillRect(lx - 90, ly - 90, 180, 180);
+  }
+
+  // --- the mysnyk by the door: bowls, plates and glechyky on its shelves
+  {
+    const m = R(ROOM.mysnyk);
+    shadow(m);
+    c.fillStyle = "#6e4525";
+    rr(c, m.x, m.y, m.w, m.h, 2); c.fill();
+    c.fillStyle = "#4e3018";
+    for (let sy = m.y + 14; sy < m.y + m.h; sy += 14) c.fillRect(m.x, sy, m.w, 2);
+    const dish = ["#e8e2cc", "#3f63a8", "#c8402e", "#e8a33a", "#e8e2cc", "#3f7a2e"];
+    dish.forEach((col, i) => {
+      c.fillStyle = col;
+      c.beginPath(); c.arc(m.x + 5 + (i % 2) * 6, m.y + 7 + Math.floor(i / 2) * 14, 3.4, 0, Math.PI * 2); c.fill();
+    });
+  }
+
+  // --- the pich: a broad whitewashed stove in the corner by the door,
+  // painted with flowers, its mouth (cheliusti) open to the room
+  {
+    const p = R(ROOM.pich);
+    const glow = c.createRadialGradient(p.x + p.w, p.y + 52, 4, p.x + p.w, p.y + 52, 90);
+    glow.addColorStop(0, "rgba(255,150,60,0.32)");
+    glow.addColorStop(1, "rgba(255,150,60,0)");
+    c.fillStyle = glow;
+    c.fillRect(p.x, p.y - 40, 190, 150);
+    shadow(p);
+    // the body, its top (the warm lezhanka where people sleep) lighter
+    c.fillStyle = "#e6dfcf";
+    rr(c, p.x, p.y, p.w, p.h, 6); c.fill();
+    c.fillStyle = "#f6f2e8";
+    rr(c, p.x + 2, p.y + 2, p.w - 4, p.h - 26, 5); c.fill();
+    // the chimney rising into the back corner
+    c.fillStyle = "#d9d0bc";
+    rr(c, p.x + 4, p.y + 4, 26, 24, 3); c.fill();
+    c.fillStyle = "#4a3e34";
+    c.fillRect(p.x + 10, p.y + 9, 14, 8);
+    // painted ornament along the front: red and blue flowers on green stems
+    for (let i = 0; i < 4; i++) {
+      const fx = p.x + 12 + i * 19;
+      const fy = p.y + p.h - 12;
+      c.strokeStyle = "#3f7a2e"; c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(fx, fy + 6); c.quadraticCurveTo(fx + 3, fy + 2, fx, fy - 2); c.stroke();
+      c.fillStyle = i % 2 ? "#3f63a8" : "#c8402e";
+      c.beginPath(); c.arc(fx, fy - 3, 3, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#e8a33a";
+      c.beginPath(); c.arc(fx, fy - 3, 1.2, 0, Math.PI * 2); c.fill();
+    }
+    // the mouth on the room side: a dark arch, fire breathing in it
+    const mx = p.x + p.w - 22;
+    const my = p.y + 34;
+    c.fillStyle = "#d9d0bc";
+    rr(c, mx - 4, my - 4, 26, 42, 4); c.fill();
+    c.fillStyle = "#241610";
+    c.beginPath();
+    c.moveTo(mx + 22, my); c.lineTo(mx + 8, my);
+    c.quadraticCurveTo(mx, my + 17, mx + 8, my + 34);
+    c.lineTo(mx + 22, my + 34); c.closePath(); c.fill();
+    const fl = 4 + Math.sin(t * 0.017) * 1.5 + Math.sin(t * 0.041) * 0.9;
+    c.fillStyle = "#ff8b2e";
+    c.beginPath(); c.ellipse(mx + 13, my + 17, fl + 2, 9, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#ffd76a";
+    c.beginPath(); c.ellipse(mx + 13, my + 18, fl - 1, 5, 0, 0, Math.PI * 2); c.fill();
+    if (vesna) {
+      // her pot sits in the mouth, something green at a slow bubble
+      c.fillStyle = "#2e2a26";
+      c.beginPath(); c.ellipse(mx + 15, my + 17, 8, 7, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = `rgba(140,220,150,${0.55 + Math.sin(t * 0.006) * 0.25})`;
+      c.beginPath(); c.ellipse(mx + 15, my + 15, 6, 3.4, 0, 0, Math.PI * 2); c.fill();
+      const st = (t * 0.0005) % 1;
+      c.fillStyle = `rgba(240,238,232,${0.45 * (1 - st)})`;
+      c.beginPath(); c.arc(mx + 20 + st * 14, my + 12 - st * 16, 2.4 + st * 4, 0, Math.PI * 2); c.fill();
+      // and the cat asleep on the warm top of the pich
+      const cx = p.x + 52;
+      const cy = p.y + 30;
+      const br = Math.sin(t * 0.0016) * 0.6;
+      c.fillStyle = "#4c4438";
+      c.beginPath(); c.ellipse(cx, cy, 11 + br, 6.4, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(cx + 9, cy - 2, 4.8, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.moveTo(cx + 6, cy - 6); c.lineTo(cx + 7.5, cy - 9.5); c.lineTo(cx + 9.5, cy - 6); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(cx + 10, cy - 6); c.lineTo(cx + 12.5, cy - 9.5); c.lineTo(cx + 13.5, cy - 5); c.closePath(); c.fill();
+      c.strokeStyle = "#4c4438"; c.lineWidth = 2.4;
+      c.beginPath(); c.moveTo(cx - 10, cy + 2); c.quadraticCurveTo(cx - 15, cy - 3, cx - 12, cy - 7); c.stroke();
+    } else {
+      // a pot of kulish on the lezhanka, keeping warm
+      c.fillStyle = "#a85f38";
+      c.beginPath(); c.ellipse(p.x + 48, p.y + 22, 7, 5.4, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#e0c070";
+      c.beginPath(); c.ellipse(p.x + 48, p.y + 20, 5, 2.4, 0, 0, Math.PI * 2); c.fill();
+    }
+    // the pripichok ledge in front of the mouth: where the Domovyk's
+    // crust is left, and where his gift glints in the morning
+    if (!vesna && flagHas(flags, "offering")) {
+      c.fillStyle = "#c98d45";
+      c.beginPath(); c.ellipse(p.x + p.w + 8, p.y + 76, 6, 3.6, -0.2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#e8c98a";
+      c.beginPath(); c.arc(p.x + p.w + 15, p.y + 79, 1.4, 0, Math.PI * 2); c.fill();
+      if (!flagHas(flags, "stone")) {
+        const tw = 0.5 + Math.sin(t * 0.005) * 0.5;
+        c.fillStyle = `rgba(255,250,210,${0.4 + tw * 0.5})`;
+        c.beginPath(); c.arc(p.x + p.w + 6, p.y + 66, 1.6 + tw * 1.4, 0, Math.PI * 2); c.fill();
+      }
+    }
+    // the ukhvat (oven fork) leaning against the pich
+    c.strokeStyle = "#7a5a30"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(p.x + p.w + 4, p.y + p.h - 4); c.lineTo(p.x + p.w - 6, p.y + 12); c.stroke();
+    c.strokeStyle = "#5d5852"; c.lineWidth = 1.6;
+    c.beginPath(); c.arc(p.x + p.w - 6, p.y + 9, 4, Math.PI * 0.9, Math.PI * 2.1); c.stroke();
+  }
+
+  // a broom by the door (no khata of the Domovyk's lacks one); Vesna
+  // keeps a basket of fresh-cut herbs there instead
+  const bx = x + w / 2 + DOOR_GAP / 2 + 10;
+  const by = y + h - WALL - 4;
+  if (!vesna) {
+    c.strokeStyle = "#7a5a30"; c.lineWidth = 2.4;
+    c.beginPath(); c.moveTo(bx + 6, by); c.lineTo(bx, by - 30); c.stroke();
+    c.fillStyle = "#c9a86a";
+    c.beginPath(); c.moveTo(bx + 6, by); c.lineTo(bx + 1, by - 12); c.lineTo(bx + 12, by - 12); c.closePath(); c.fill();
+  } else {
+    c.fillStyle = "#a8854a";
+    c.beginPath(); c.ellipse(bx + 6, by - 6, 10, 7, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#3f7a2e";
+    for (const [hx, hy] of [[2, -10], [8, -12], [12, -9], [5, -7]] as const) {
+      c.beginPath(); c.arc(bx + hx, by + hy, 2.6, 0, Math.PI * 2); c.fill();
+    }
+  }
+}

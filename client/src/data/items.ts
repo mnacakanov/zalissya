@@ -29,9 +29,6 @@ export const FISH_SPOT = { x: 1150, y: 1080 };
 export const BOBBER = { x: 1235, y: 1062 };
 // A crust of bread waits by the campfire for whoever thinks of the Domovyk.
 export const CRUST_SPOT = { x: 772, y: 660 };
-// The pich inside the Domovyk's hut — where offerings go, now that the
-// hut has an inside. Stand south of the stove, inside hut0.
-export const PICH_IN_SPOT = { x: 185, y: 226 };
 // The cooking fire's south side — stand here to work the pot that now
 // hangs over the campfire. Soup wants 1 fish + 1 herb from the satchel.
 export const COOK_SPOT = { x: 840, y: 672 };

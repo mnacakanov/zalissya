@@ -1,6 +1,6 @@
 import { hash2, type Rect } from "../world/geometry";
 import { FOREST_TREES } from "./land";
-import { houseSolids } from "./houses";
+import { HOUSE_RECTS, houseSolids } from "./houses";
 
 // --- World layout -----------------------------------------------------------
 
@@ -64,8 +64,11 @@ export const KURHAN_STEPPE = { x: 2150, y: 520 };
 export type DecorKind = "sunflower" | "mallow" | "kovyla";
 export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number }> = [];
 {
+  // nothing grows on a khata's floor (they show once the roof lifts)
+  const indoors = (x: number, y: number) =>
+    Object.values(HOUSE_RECTS).some((r) => x > r.x - 6 && x < r.x + r.w + 6 && y > r.y && y < r.y + r.h + 4);
   const add = (kind: DecorKind, pts: Array<[number, number]>) =>
-    pts.forEach(([x, y]) => DECOR.push({ x, y, kind, seed: hash2(x, y) }));
+    pts.forEach(([x, y]) => { if (!indoors(x, y)) DECOR.push({ x, y, kind, seed: hash2(x, y) }); });
   add("sunflower", [[488, 500], [190, 380], [208, 392], [1132, 318], [1148, 330], [432, 712], [446, 726], [1515, 760]]);
   add("mallow", [[512, 486], [640, 488], [300, 378], [450, 378], [1296, 316], [1312, 318], [1170, 880], [1515, 880], [1180, 316]]);
   // feather grass all over the open steppe

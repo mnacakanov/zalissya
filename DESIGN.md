@@ -191,3 +191,20 @@ The two khaty with insides, the Domovyk's and Vesna's, are no longer separate ro
 - **Unchanged:** the bed, the bread offering and the Domovyk's gift work where they always did, inside.
 
 The otaman's khata and the north-east hut are still closed façades.
+
+## Inside a khata
+
+The rooms used to be the old separate-area interiors shrunk into the new footprints, so a log cabin with a plank floor sat inside a whitewashed Cossack khata. Now each room is drawn at world scale and laid out the way a Ukrainian khata was:
+
+- **Walls and floor:** whitewashed walls with a painted blue band and little flowers on the back wall, and a clay floor (dolivka) with a woven runner from the door.
+- **Pich:** a painted pich in the corner by the door, with its mouth open to the room, a fire inside and an ukhvat leaning against it.
+- **Pokut:** diagonal from the pich, an icon under a rushnyk with a lampadka, and the table under them with a cloth and a kahanets.
+- **Lavy:** benches along the walls.
+- **Pil:** the plank sleeping platform, with a lizhnyk and pillows.
+- **Mysnyk:** a dish shelf by the door.
+
+The Domovyk's khata also has a painted skrynia, a sabre and lyulka on the wall, a palianytsia on the table and a broom by the door. The Domovyk sits in the nook between the pil and the pich, and his crust and gift lie on the pripichok in front of the pich's mouth.
+
+Vesna's khata has herbs drying on a pole under the ceiling, a stand of tinctures, her mortar and book of cures, a pot of something green bubbling in the pich, and a cat asleep on top of it.
+
+Furniture has collision at world scale. Only the sleep, offering and talk spots moved: they are spaced so each prompt can be reached on its own.

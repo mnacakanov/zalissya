@@ -25,10 +25,10 @@ client/src/
   platform/          target.ts (Muse) / target.pages.ts (Pages): save adapter, QueryClient, scrim, JOYSTICK_ALLOWED; prefs.ts (per-device settings)
   save/              types.ts (SaveData, SaveAdapter, areas, limits), muse.ts, local.ts
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
-  data/              village / lysa / huts layouts, items (herbs, spots, catch), characters (+ charPos)
+  data/              village / lysa / houses (walk-in khaty) layouts, items (herbs, spots, catch), characters (+ charPos)
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), chumaky.ts (the caravan conversations), viyNight.ts (Viy's night storyline)
   systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
-  render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
+  render/            canvas drawing: village, spirits, lysa, khataInterior, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map, an item: flag `map`, from Hnat or bought from the Chort — dialogue/mapTopics.ts; drawing in render/map.ts, quest stars in questTarget)
 server/src/          Muse server actions and drizzle schema (one save slot)
@@ -126,7 +126,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 - **Areas**:
   - `village`: the khutir and the steppe
   - `lysa`: the mountain, at the far end of the steppe trail
-  - `hut0` / `hut1`: no longer separate maps. The Domovyk's khata (pich, bed) and Vesna's khata stand **in the world** and you walk in through the door; the roof fades away while you are inside (`data/houses.ts`: footprints, walls with a door, furniture; the rooms are the old interiors from `render/huts.ts`, scaled into the footprint). Old saves with area `hut0`/`hut1` load inside the same khata.
+  - `hut0` / `hut1`: no longer separate maps. The Domovyk's khata (pich, bed) and Vesna's khata stand **in the world** and you walk in through the door; the roof fades away while you are inside (`data/houses.ts`: footprints, walls with a door, furniture in the traditional layout; the rooms are drawn at world scale by `render/khataInterior.ts`). Old saves with area `hut0`/`hut1` load inside the same khata.
 - **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith).
   - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy, the boss, sealed by the vigil.
   - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.

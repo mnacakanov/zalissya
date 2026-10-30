@@ -29,7 +29,7 @@ import { type Lang, setLanguage, type TextKey } from "./i18n";
 import { LanguagePicker } from "./ui/LanguagePicker";
 import { MapOverlay } from "./ui/MapOverlay";
 import { questTarget } from "./render/map";
-import { drawHutInterior } from "./render/huts";
+import { drawKhataInterior } from "./render/khataInterior";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
 import { drawNight, drawVigil, drawVigilOverlay } from "./render/viyFight";
@@ -1567,7 +1567,7 @@ export function App() {
         // The bread offering itself is made indoors now, at the pich.
         // inside the Domovyk's khata: his bed and his pich
         const inHut0 = houseAt(p.x, p.y) === "hut0";
-        spot(inHut0, BED_SPOT.x, BED_SPOT.y, 50, () => ({ kind: "sleep" }));
+        spot(inHut0, BED_SPOT.x, BED_SPOT.y, 30, () => ({ kind: "sleep" }));
         spot(inHut0 && flagHas(flagsNow, "bread"), PICH_SPOT.x, PICH_SPOT.y, 50, () => ({ kind: "offer" }));
         spot(inHut0 && flagHas(flagsNow, "offering") && !flagHas(flagsNow, "stone"), PICH_SPOT.x, PICH_SPOT.y + 8, 50, () => ({ kind: "gift" }));
         spot(true, WELL.x + WELL.w / 2, WELL.y + WELL.h / 2, 66, () => ({ kind: "wish" }));
@@ -1609,18 +1609,15 @@ export function App() {
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
       drawLand(ctx2d, camX, camY, vw, vh, now);
-      // the rooms of the khaty you can walk into, scaled into their
-      // footprints; their roofs (below, as drawables) cover them unless
-      // the kobzar is inside
+      // the rooms of the khaty you can walk into; their roofs (below, as
+      // drawables) cover them unless the kobzar is inside
       for (const id of HOUSE_IDS) {
         const r = HOUSE_RECTS[id];
         if (r.x - camX > vw || r.x + r.w - camX < 0 || r.y - camY > vh || r.y + r.h - camY < -60) continue;
         if (roofAlphaRef.current[id] >= 0.999) continue;
         ctx2d.save();
         ctx2d.beginPath(); ctx2d.rect(r.x - camX, r.y - camY, r.w, r.h); ctx2d.clip();
-        ctx2d.translate(r.x - camX, r.y - camY);
-        ctx2d.scale(r.w / 680, r.h / 472);
-        drawHutInterior(ctx2d, 70, 64, now, id === "hut1" ? 1 : 0, flagsNow);
+        drawKhataInterior(ctx2d, id, r.x - camX, r.y - camY, now, flagsNow);
         ctx2d.restore();
       }
       drawRiver(ctx2d, camX, camY, vw, vh, now);
