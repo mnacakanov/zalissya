@@ -49,7 +49,7 @@ If you change the game **inside Muse**, bring it back to GitHub too (Muse's GitH
 ## C. Collaborators
 
 1. Get collaborator access (repo owner: Settings → Collaborators), or fork the repo.
-2. Install [Bun](https://bun.sh) 1.3+. Then run these from `pages/`:
+2. Install [Bun](https://bun.sh) 1.4.4+ (the lockfile needs it). Then run these from `pages/`:
 
 ```bash
 cd pages && bun install
