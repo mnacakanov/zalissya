@@ -38,7 +38,7 @@ export function promptKeyOf(p: Prompt): string {
 }
 
 // A conversation in progress. Two shapes share the slot:
-//  · Linear: `lines` is a fixed script chosen when it opens (Vij's
+//  · Linear: `lines` is a fixed script chosen when it opens (Viy's
 //    narration, the well, the Chort's post-choice scripts, the brew
 //    bench). The Chort's old bargain pages set `choiceAt` — at that
 //    page the Next button is replaced by Sign / Walk away buttons;

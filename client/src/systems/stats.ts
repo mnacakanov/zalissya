@@ -14,7 +14,7 @@ export const STAT_DEFS: Array<{ key: StatKey; abbr: string; name: string; feeds:
   { key: "dex", abbr: "DEX", name: "Dexterity", feeds: "Fishing", effect: "Longer window to reel in a bite · luck tilts toward better fish" },
   { key: "con", abbr: "CON", name: "Constitution", feeds: "Cooking", effect: "Brisker walking pace" },
   { key: "int", abbr: "INT", name: "Intelligence", feeds: "Alchemy", effect: "Chance to brew a double tonic · at INT 3, Vesna's strong tonic unlocks" },
-  { key: "wis", abbr: "WIS", name: "Wisdom", feeds: "Herbalism", effect: "Keen eye: chance of a double herb · at WIS 2, you know Zvirobij" },
+  { key: "wis", abbr: "WIS", name: "Wisdom", feeds: "Herbalism", effect: "Keen eye: chance of a double herb · at WIS 2, you know Zvirobiy" },
   { key: "cha", abbr: "CHA", name: "Charisma", feeds: "Meeting people", effect: "At CHA 4+, the Chort's soul price drops to 2 fish · the well listens to a warm tongue" },
 ];
 

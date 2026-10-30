@@ -14,7 +14,7 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
         "Mind the forest edge, traveller. The Lisovyk walks among the pines, and he does not love strangers who take without asking.",
         "And be kind to the Domovyk in your hut — leave him bread by the pich, and he will keep your hearth warm through the winter.",
         "You will find him by the north hut most days, fussing over the woodpile. Do not thank him aloud — house spirits hate fuss. There is a crust by the campfire, if you have a mind to leave it for him.",
-        "And one thing more, traveller, and hear me well: far off in the north-east hollow sleeps Vij — Вій — the biggest and worst of the old things. His eyelids hang down to the very ground. Look upon him if you must. Do NOT wake him.",
+        "And one thing more, traveller, and hear me well: far off in the north-east hollow sleeps Viy — Вій — the biggest and worst of the old things. His eyelids hang down to the very ground. Look upon him if you must. Do NOT wake him.",
         "Radek at the forge is a guest among us — a Pole from a village many days' road from here. Treat him kindly; a traveller under your roof is a gift.",
         "Two more warnings, and then I will let you be. A Chort has taken to lounging by the old millstone south of the clearing — all bargains and grins. Whatever he offers, traveller, your soul is not spare change. And keep out of the pond reeds: the Bolotianyk has drowned better swimmers than you.",
         "East of here a trail climbs out of the clearing to Lysa Hora — the Bald Mountain, bare as a skull. On sabbath nights the devils and vidmy gather there around a great fire, and the Chort plays host. It is not forbidden ground, traveller — but go polite, go with empty hands for no one, and do not eat what you are offered. Much.",
@@ -23,20 +23,20 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
     case "vesna":
       return herbs >= 5
         ? [
-            "Look at your basket — kropyva, polyn, kalendula, zvirobij, derevij! Your eye has grown keen, just as I promised.",
+            "Look at your basket — kropyva, polyn, kalendula, zvirobiy, dereviy! Your eye has grown keen, just as I promised.",
             "Herbalism is not taught, it is gathered — one plant, one walk, one season at a time. You understand now.",
             "Two crafts wait for hands like yours now. At the campfire hangs a pot: one pond fish and one herb from your satchel makes a proper karas soup — that is Cooking, and a fed traveller walks brisker. And by the north-east hut stands my drying rack: two herbs, worked patiently, become a tonic — that is Alchemy. Drink one and the world goes clear for a while.",
             ...(intTotal >= 3
               ? ["And look at you — bright as bottled morning. Your INT has reached 3, so the deep work is open to you now: at my rack you may choose Vesna's strong tonic — three herbs, and drunk it sharpens mind AND eye twice as deep as the common brew (INT +2, WIS +2). Some knowledge only trusts a ready mind, traveller. Yours is ready."]
               : [`One secret I keep for a readier mind: my strong tonic — a deeper draught, three herbs, worth INT +2 and WIS +2 to whoever drinks it. It unlocks at INT 3, and no sooner; a green mind would only waste good polyn. Your INT stands at ${intTotal} today. Keep brewing the common tonic — every batch teaches, and the rack remembers.`]),
             ...(fish > 0
-              ? ["And the pond provides too, I see. Your satchel holds the makings of soup already, znak harka that you are becoming."]
+              ? ["And the pond provides too, I see. Your satchel holds the makings of soup already, znakharka that you are becoming."]
               : ["When the herbs rest, try the pond shore, west bank. A patient line catches more than karas — it catches quiet. And quiet is a remedy too."]),
           ]
         : [
             "You have gentle hands. I am Vesna — I tend the sick of Zalissya, and the horod both.",
-            "See the glowing patches among the grass? Kropyva the nettle, bitter polyn, kalendula like little suns, zvirobij, and derevij. Gather any of them for me — every herb teaches your eye.",
-            "One caution, gentle hands: the yellow zvirobij hides from a green eye. Until your Wisdom reaches 2 it will not let itself be known or gathered — learn the other herbs first, and in time it will open to you.",
+            "See the glowing patches among the grass? Kropyva the nettle, bitter polyn, kalendula like little suns, zvirobiy, and dereviy. Gather any of them for me — every herb teaches your eye.",
+            "One caution, gentle hands: the yellow zvirobiy hides from a green eye. Until your Wisdom reaches 2 it will not let itself be known or gathered — learn the other herbs first, and in time it will open to you.",
             "Bring me five herbs in all, and I will know the forest has accepted you.",
           ];
     case "radek": {
@@ -45,14 +45,14 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
         return [
           "The forge sings again, thanks to your bog iron. Feel that heat? THAT is a kuznya.",
           "That horseshoe I gave you — carry it, and not for luck alone: iron in the pocket puts strength in the arm. You will feel it. That is Smithing's first lesson, and it is free.",
-          "The anvil is yours to learn on now, traveller. Stand to it and work the forge — piece by piece, your Smithing grows, and with it your Strength. A strong arm now and then turns out a masterwork. When Vij's day comes, we will be glad of both.",
+          "The anvil is yours to learn on now, traveller. Stand to it and work the forge — piece by piece, your Smithing grows, and with it your Strength. A strong arm now and then turns out a masterwork. When Viy's day comes, we will be glad of both.",
         ];
       }
       if (iron >= 3) {
         return [
           "What is that weight in your arms — bog iron! Three good lumps, marsh-born and heavy. Traveller, you have just lit my forge.",
           "Here — the first thing off the anvil is yours: a horseshoe, still warm. Carry it for luck. Iron remembers who fed the fire.",
-          "Now the kuznya stands ready. When the day comes that Vij stirs, traveller, there will be iron enough in Zalissya. See that you are here for it.",
+          "Now the kuznya stands ready. When the day comes that Viy stirs, traveller, there will be iron enough in Zalissya. See that you are here for it.",
         ];
       }
       return [
@@ -62,7 +62,7 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
           ? [`Bog iron! You found a lump in the pond mud — good eye. ${3 - iron} more like that and this forge roars again.`]
           : ["My kuznya stands cold until I get good iron from the marsh. Bog iron sleeps in the pond mud, traveller — dark lumps that glint where the shore is soft. Three good lumps would light my fire."]),
         "If the Lisovyk troubles you, come to me. Iron has a way of settling arguments with the old things of the wood — in my country, and here too.",
-        "And if it is Vij you are asking after — aye, I have heard the tales. Lids so heavy they must be forked up by his servants. They say iron sings against such things. When that day comes, traveller, my forge had better be hot.",
+        "And if it is Viy you are asking after — aye, I have heard the tales. Lids so heavy they must be forked up by his servants. They say iron sings against such things. When that day comes, traveller, my forge had better be hot.",
       ];
     }
     case "domovyk":
@@ -84,14 +84,14 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
         "You left no bread yet. Hmm. New ones never do, the first night. Behind the pich, a crust, a little salt — that is all I ask, and I ask it every winter for a hundred years.",
         "There is a crust by the village campfire, if your hands are empty and your heart is not. Bring it to my pich — the north hut, mind — and leave it quiet.",
         "The Lisovyk thinks himself grand out there with his pines. Let him. Empires fall; a warm hearth does not.",
-        "…You smell of the north-east path. You have been near Vij. Do not go clattering about up there, little landlord. If those eyelids ever lift, no pich in Zalissya will keep out the cold that follows.",
+        "…You smell of the north-east path. You have been near Viy. Do not go clattering about up there, little landlord. If those eyelids ever lift, no pich in Zalissya will keep out the cold that follows.",
       ];
     case "lisovyk":
       return [
         "Stop there, two-legs. …You walk softly for one of the hut folk. I am Lisovyk. These pines are mine; the paths through them are mine; the lost are mine also.",
         "Take your herbs — kropyva, polyn, the little suns — the forest gives to hands that ask. But take greedily, and the paths will turn, and turn, and you will greet your own footprints until dark.",
         "Vesna's eye is on you. That is a good eye to be under. Mind it stays so.",
-        "You have seen him, then — Vij, in his hollow. Even I walk wide of that place, and I am the forest. Sleep is the only chain that holds him, traveller. See that you never file at it.",
+        "You have seen him, then — Viy, in his hollow. Even I walk wide of that place, and I am the forest. Sleep is the only chain that holds him, traveller. See that you never file at it.",
       ];
     case "chort": {
       if (flagHas(flags, "soulback")) {
@@ -120,18 +120,18 @@ export function linesFor(npc: Npc, herbs: number, flags: ReadonlySet<string>, fi
       return [
         "The reeds part. Two eyes rise out of the pond scum, then a head like a drowned log, green-grey and streaming. Bolotianyk looks at you the way deep water looks at a stone.",
         "“Little dry one… my pond. My mud. My bells — the church bells that sank here before your village had a name. I ring them, sometimes, for the ones who waded too far.”",
-        "“The znak harka takes my polyn and leaves me be. Wise. You — take your herbs from the grass, dry one. What grows in MY water is not for your basket.”",
+        "“The znakharka takes my polyn and leaves me be. Wise. You — take your herbs from the grass, dry one. What grows in MY water is not for your basket.”",
         ...(fish > 0
           ? ["“And yet you fish my pond, dry one, and I allow it. Your line is polite. Your shadow… hmm. Your shadow smells of the millstone devil lately. Curious.” Bolotianyk's eyes sink a little, watching."]
           : []),
         "“And tell the hut folk: Bolotianyk is patient. The pond was here before Zalissya. The pond — and what sleeps in the hollow — will be here after. Everything sinks to us, in the end.” The eyes slide back under, and the ripples close like nothing happened.",
       ];
-    case "vij":
+    case "viy":
       return [
         "The hollow is wrong-quiet. No birds. No insects. Only a sound like a mountain breathing — slow, wet, patient.",
         "He is enormous. A head like a boulder, grey as old ash, and eyelids — eyelids that hang from his brow all the way down to the earth, veined and heavy as wet sailcloth. Two withered servants lean on the forks that would lift them. They do not look at you. They look at the lids.",
         "Under one lid, something shifts. A seam of dull red light opens — just a seam — and every hair on your body stands. The servants freeze. The breathing stops.",
-        "…The seam closes. The breathing resumes. Whatever Vij dreams of, it is not you. Not yet. You back away very, very quietly, and the birds only start again when the village fire is in sight.",
+        "…The seam closes. The breathing resumes. Whatever Viy dreams of, it is not you. Not yet. You back away very, very quietly, and the birds only start again when the village fire is in sight.",
       ];
     default:
       return ["…"];

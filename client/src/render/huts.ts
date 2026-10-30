@@ -325,7 +325,7 @@ export function drawHutInterior(
         c.beginPath(); c.moveTo(x + 92, ly); c.lineTo(x + 106, ly); c.stroke();
       }
     });
-    // a cat asleep by the cauldron's warmth — every znak harka has one
+    // a cat asleep by the cauldron's warmth — every znakharka has one
     {
       const cx = 556 - camX;
       const cy = 196 - camY;

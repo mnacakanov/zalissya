@@ -2,7 +2,7 @@
 
 How the game grew, one build at a time. This was the header comment of the original single-file `App.tsx`, and it is kept here as the design record. Add a paragraph when a build changes how the game works.
 
-Zalissya — a Ukrainian village clearing. Top-down pixel-art game on canvas. All names use Ukrainian romanization (the system S.T.A.L.K.E.R. 2 uses: Chornobyl, not Chernobyl) — г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y.
+Zalissya — a Ukrainian village clearing. Top-down pixel-art game on canvas. All names use Ukrainian romanization (the system S.T.A.L.K.E.R. 2 uses: Chornobyl, not Chernobyl) — г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y, й→y.
 
 ## Movement
 
@@ -14,9 +14,9 @@ Gathering any herb raises Herbalism.
 
 ## Naming rule
 
-Villages, people, spirits/monsters and herbs keep Ukrainian names (Zalissya, Myroslav, Lisovyk; herbs: Kropyva, Polyn, Kalendula, Zvirobij, Derevij); skill names stay English (Herbalism).
+Villages, people, spirits/monsters and herbs keep Ukrainian names (Zalissya, Myroslav, Lisovyk; herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy); skill names stay English (Herbalism).
 
-Spirits are real presences, not just dialogue mentions: the Domovyk keeps to the hut by the pich, the Lisovyk walks the pine edge, a Chort (Чорт) lounges by the old millstone offering to buy your soul (a nod to the devil host of Dakhno's Cossacks cartoons and their mill sabbath), the Bolotianyk (болотяник) rises from the pond shallows, and Vij (Вій) — the game's big boss — sleeps in a hollow at the north-east forest edge, eyelids hanging to the ground. He is approachable and ominous, but the boss fight itself is not built yet: nobody wakes him. For now.
+Spirits are real presences, not just dialogue mentions: the Domovyk keeps to the hut by the pich, the Lisovyk walks the pine edge, a Chort (Чорт) lounges by the old millstone offering to buy your soul (a nod to the devil host of Dakhno's Cossacks cartoons and their mill sabbath), the Bolotianyk (болотяник) rises from the pond shallows, and Viy (Вій) — the game's big boss — sleeps in a hollow at the north-east forest edge, eyelids hanging to the ground. He is approachable and ominous, but the boss fight itself is not built yet: nobody wakes him. For now.
 
 Houses are called huts in English (user direction — no "khata").
 
@@ -30,7 +30,7 @@ The classic six stats — STR, DEX, CON, INT, WIS, CHA — all start at 1, KCD-s
 
 ## Stat-influenced activities
 
-The totals now GATE and SHAPE the work itself. Carry capacity is 6 + 2×STR total (weights: bog iron 3, forged piece 2, fish 1, herb 1, nichnyky 0) — a full satchel blocks pickups with a toast naming the weight and your STR, and iron for Radek is hauled in your arms (it counts toward the load once dug, but the dig itself is checked against your satchel load so the forge quest can never soft-lock). Alchemy has tiers: at INT ≥ 3 the rack offers a recipe choice and Vesna's strong tonic unlocks (3 herbs; INT +2, WIS +2 drunk — "strongPotions=n" / "strongtonic"). Honest stat checks with visible failures that consume nothing: the deepest bog-iron lump takes a STR check (certain at STR 3, a gamble below), Zvirobij will not be known until WIS 2, the well's lucky pebble answers a CHA-scaled roll, and DEX tilts the catch table toward pike and perch and away from the boot.
+The totals now GATE and SHAPE the work itself. Carry capacity is 6 + 2×STR total (weights: bog iron 3, forged piece 2, fish 1, herb 1, nichnyky 0) — a full satchel blocks pickups with a toast naming the weight and your STR, and iron for Radek is hauled in your arms (it counts toward the load once dug, but the dig itself is checked against your satchel load so the forge quest can never soft-lock). Alchemy has tiers: at INT ≥ 3 the rack offers a recipe choice and Vesna's strong tonic unlocks (3 herbs; INT +2, WIS +2 drunk — "strongPotions=n" / "strongtonic"). Honest stat checks with visible failures that consume nothing: the deepest bog-iron lump takes a STR check (certain at STR 3, a gamble below), Zvirobiy will not be known until WIS 2, the well's lucky pebble answers a CHA-scaled roll, and DEX tilts the catch table toward pike and perch and away from the boot.
 
 ## Lysa Hora
 
@@ -38,7 +38,7 @@ A second area — the Bald Mountain — reached by walking the east trail out of
 
 ## Branching dialogue
 
-Conversations are topic-driven. Talking opens a short greeting (full introduction first time, brief welcome after), then a menu of questions the player picks in any order — answers are 1–3 lines, state-aware because they are dealt out of the same linesFor/linesForLysa scripts by subject, and asked topics stay available, marked ✓. The scripted beats stay scripted: Vij's narration, the well, the brew bench, the Chort's bargain (now a topic whose answer ends in the Sign / Keep my soul choice), the soul buy-back, and Beelzebub's blessing (a topic after the dance).
+Conversations are topic-driven. Talking opens a short greeting (full introduction first time, brief welcome after), then a menu of questions the player picks in any order — answers are 1–3 lines, state-aware because they are dealt out of the same linesFor/linesForLysa scripts by subject, and asked topics stay available, marked ✓. The scripted beats stay scripted: Viy's narration, the well, the brew bench, the Chort's bargain (now a topic whose answer ends in the Sign / Keep my soul choice), the soul buy-back, and Beelzebub's blessing (a topic after the dance).
 
 ## Hut interiors
 

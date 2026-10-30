@@ -42,8 +42,8 @@ Zalissya is a 2D top-down pixel-art RPG set in a Ukrainian folklore village. Eve
 1. **Naming.** Use Ukrainian transliteration, S.T.A.L.K.E.R. 2 style (Zalissya, not Zalesye), for **villages, people, spirits/monsters, and herbs**. Examples: Myroslav, Vesna, Domovyk, Lisovyk, Chort, Bolotianyk, Kropyva, Polyn, Kalendula.
    - Use English for **skill names** (Herbalism, Fishing, Cooking, Smithing, Alchemy) and **common buildings**: "huts", never "khaty".
    - **Radek stays Polish.** He is a Polish smith visiting from afar.
-   - The code comment at the top of `App.tsx` gives the mapping: г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y.
-   - Open question: the code says "Vij", "Zvirobij" and "Derevij", but the README says "Viy". Wait for the owner to pick a spelling for й before you rename anything.
+   - The mapping (also in `DESIGN.md`): г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y, й→y.
+   - й is written **y**: Viy, Zvirobiy, Dereviy (owner decision). The healer is a **znakharka** (one word). Old saves that say `vij` are mapped to `viy` on load.
 2. **Controls.** The Muse version gets **no drag or joystick controls**. Muse's pull-to-refresh steals downward drags, and page-level locks did not stop it. Muse uses the hold-to-move D-pad and the keyboard only. A joystick may exist and be tested **on the Pages version only**, behind the platform or build switch.
 3. **Never commit `app.db` or any save data.** That includes exported saves, localStorage dumps and `.db` files. `.gitignore` covers `app.db`, so don't weaken it.
 4. **Keep the save backward compatible.** Existing Muse saves (`x, y, area, talked, herbs, flags`, with flags as plain names plus `name=n` counters) must keep loading. Any server schema change needs a new numbered migration in `drizzle/` plus a `_journal.json` entry. Never edit an existing migration.
@@ -62,5 +62,5 @@ Zalissya is a 2D top-down pixel-art RPG set in a Ukrainian folklore village. Eve
 ## Game at a glance (for orientation)
 
 - **Areas**: `village` (Zalissya, 1680×1260), `lysa` (Lysa Hora, reached by the east trail), `hut0` (the Domovyk's hut), `hut1` (Vesna's hut).
-- **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith). Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Vij/Viy (the sleeping boss). On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.
+- **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith). Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy (the sleeping boss). On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.
 - **Systems**: topic-based dialogue, 5 skills, 6 derived stats, carry weight (6 + 2×STR), a fishing bite minigame, cooking, smithing, two alchemy tiers, stat checks, keepsakes, the Chort's soul bargain, a wishing well, chickens, quest log, autosave every 2.5 s when dirty.

@@ -13,7 +13,7 @@ import { PadButton } from "./input/PadButton";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
-import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawVij } from "./render/spirits";
+import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
@@ -263,7 +263,7 @@ export function App() {
       playerRef.current.x = clamp(s.x, 30, ws.w - 30);
       playerRef.current.y = clamp(s.y, 60, ws.h - 20);
       // Map pre-rename save ids to their current forms.
-      const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek" };
+      const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek", vij: "viy" };
       const mappedTalked = s.talked.map((id) => idMap[id] ?? id);
       talkedRef.current = new Set(mappedTalked);
       herbsRef.current = s.herbs;
@@ -573,9 +573,9 @@ export function App() {
           }
           return;
         }
-        // Vij keeps his scripted narration — he is not a conversation.
+        // Viy keeps his scripted narration — he is not a conversation.
         // Everyone else in the village answers questions now.
-        if (p.npc.id !== "vij") {
+        if (p.npc.id !== "viy") {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
             openTopicDialogue(p.npc, tset.intro, tset.topics);
@@ -589,12 +589,12 @@ export function App() {
         const patch = patchesRef.current[p.idx];
         if (patch && patch.available) {
           const def = HERBS[patch.kind];
-          // Zvirobij is WIS-gated knowledge, not just a plant: below
+          // Zvirobiy is WIS-gated knowledge, not just a plant: below
           // WIS 2 the eye slides off it, the patch stays untouched,
           // and the failure says exactly what was checked.
           const wisNow = liveStats().wis.total;
-          if (patch.kind === "zvirobij" && wisNow < 2) {
-            showToast(`You reach for the Zvirobij — and hesitate. You do not truly know this herb yet: WIS check failed (your WIS ${wisNow}, it takes 2). Gather the other herbs first; Vesna's eye will teach yours. The patch stays, unpicked.`);
+          if (patch.kind === "zvirobiy" && wisNow < 2) {
+            showToast(`You reach for the Zvirobiy — and hesitate. You do not truly know this herb yet: WIS check failed (your WIS ${wisNow}, it takes 2). Gather the other herbs first; Vesna's eye will teach yours. The patch stays, unpicked.`);
             return;
           }
           // An herb is 1 of weight; a full satchel picks nothing.
@@ -702,7 +702,7 @@ export function App() {
         return;
       }
       case "cook": {
-        // Karas soup, the znak harka way: one pond fish, one herb,
+        // Karas soup, the znakharka way: one pond fish, one herb,
         // the pot over the campfire. Cooking level IS your Constitution.
         const fishIn = flagCount(flagsRef.current, "fish");
         const herbsIn = flagCount(flagsRef.current, "herbStock");
@@ -712,7 +712,7 @@ export function App() {
               ? "The pot wants 1 fish and 1 herb from your satchel. The pond is west, the herbs glow in the grass."
               : fishIn < 1
                 ? "The pot wants a fish — cast a line from the pond's west shore first."
-                : "The pot wants an herb — gather any glowing patch first (Kropyva, Polyn, Kalendula, Zvirobij, Derevij).",
+                : "The pot wants an herb — gather any glowing patch first (Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy).",
           );
           return;
         }
@@ -1072,9 +1072,9 @@ export function App() {
         for (const npc of ALL_CHARS) {
           const pos = charPos(npc, now);
           const d = Math.hypot(pos.x - p.x, pos.y - p.y);
-          // Vij is enormous and the Bolotianyk sits out in the pond, so both
+          // Viy is enormous and the Bolotianyk sits out in the pond, so both
           // can be addressed from further off than a person.
-          const reach = npc.id === "vij" ? 158 : npc.id === "bolotianyk" ? 92 : 64;
+          const reach = npc.id === "viy" ? 158 : npc.id === "bolotianyk" ? 92 : 64;
           if (d < reach && d - reach < best - 64) { best = d - reach + 64; nextPrompt = { kind: "talk", npc }; }
         }
         patchesRef.current.forEach((patch, idx) => {
@@ -1170,7 +1170,7 @@ export function App() {
             else if (npc.style === "lisovyk") drawLisovyk(ctx2d, sx, sy, now);
             else if (npc.style === "chort") drawChort(ctx2d, sx, sy, now);
             else if (npc.style === "bolotianyk") drawBolotianyk(ctx2d, sx, sy, now);
-            else if (npc.style === "vij") drawVij(ctx2d, sx, sy, now);
+            else if (npc.style === "viy") drawViy(ctx2d, sx, sy, now);
             else if (npc.style === "beelzebub") drawBeelzebub(ctx2d, sx, sy, now);
             else if (npc.style === "witch") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false);
             else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true);
@@ -1182,20 +1182,20 @@ export function App() {
             }
           },
         });
-        // name tag — each kind floats at its own height (Vij's is a warning)
-        const tagLift = npc.id === "vij" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "bolotianyk" ? 58 : 66;
-        const tagText = npc.id === "vij" ? "Вій · Vij" : npc.name;
+        // name tag — each kind floats at its own height (Viy's is a warning)
+        const tagLift = npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "bolotianyk" ? 58 : 66;
+        const tagText = npc.id === "viy" ? "Вій · Viy" : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
           draw: () => {
-            ctx2d.font = npc.id === "vij" ? "700 13px Georgia, serif" : "600 11px Georgia, serif";
+            ctx2d.font = npc.id === "viy" ? "700 13px Georgia, serif" : "600 11px Georgia, serif";
             ctx2d.textAlign = "center";
             const wText = ctx2d.measureText(tagText).width + 16;
-            ctx2d.fillStyle = npc.id === "vij" ? "rgba(38,10,14,0.72)" : "rgba(28,24,16,0.55)";
-            rr(ctx2d, pos.x - camX - wText / 2, pos.y - camY - tagLift, wText, npc.id === "vij" ? 20 : 16, 8);
+            ctx2d.fillStyle = npc.id === "viy" ? "rgba(38,10,14,0.72)" : "rgba(28,24,16,0.55)";
+            rr(ctx2d, pos.x - camX - wText / 2, pos.y - camY - tagLift, wText, npc.id === "viy" ? 20 : 16, 8);
             ctx2d.fill();
-            ctx2d.fillStyle = npc.id === "vij" ? "#f0b9a6" : "#f3e9d2";
-            ctx2d.fillText(tagText, pos.x - camX, pos.y - camY - tagLift + (npc.id === "vij" ? 14.5 : 12));
+            ctx2d.fillStyle = npc.id === "viy" ? "#f0b9a6" : "#f3e9d2";
+            ctx2d.fillText(tagText, pos.x - camX, pos.y - camY - tagLift + (npc.id === "viy" ? 14.5 : 12));
           },
         });
       }
@@ -1346,7 +1346,7 @@ export function App() {
   const metVillagers = hudTalked.filter((id) => VILLAGER_IDS.has(id)).length;
   const metSpirits = hudTalked.filter((id) => id === "domovyk" || id === "lisovyk").length;
   const metDark = hudTalked.filter((id) => id === "chort" || id === "bolotianyk").length;
-  const metVij = hudTalked.includes("vij");
+  const metViy = hudTalked.includes("viy");
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
   const visitedLysa = hudArea === "lysa" || flagHas(hudFlags, "visitedLysa");
@@ -1379,8 +1379,8 @@ export function App() {
             ? `Stranger things stir · Chort & Bolotianyk ${metDark}/2`
             : !visitedLysa
               ? "Lysa Hora stirs — follow the east trail out of the clearing to the Chort's sabbath"
-              : !metVij
-              ? "Vij sleeps in the north-east hollow — go and see him"
+              : !metViy
+              ? "Viy sleeps in the north-east hollow — go and see him"
               : soulLost
                 ? `Buy your soul back: catch fish for the Chort · ${Math.min(fish, price)}/${price}`
                 : !flagHas(hudFlags, "offering")
@@ -1397,13 +1397,13 @@ export function App() {
                             ? "Work Radek's forge — stand at the anvil and hammer"
                             : brewed < 1
                               ? "Brew a tonic at Vesna's drying rack, by the north-east hut · 2 herbs"
-                              : "Zalissya is home now. The fire is warm, and Vij still sleeps");
+                              : "Zalissya is home now. The fire is warm, and Viy still sleeps");
   const promptHerb =
     prompt?.kind === "gather" ? HERBS[HERB_SPOTS[prompt.idx]?.kind ?? "kropyva"] : null;
   const promptLabel = !prompt
     ? ""
     : prompt.kind === "talk"
-      ? prompt.npc.id === "vij" ? "Approach · Vij" : `Talk · ${prompt.npc.name}`
+      ? prompt.npc.id === "viy" ? "Approach · Viy" : `Talk · ${prompt.npc.name}`
       : prompt.kind === "enter"
         ? "Step inside 🚪"
         : prompt.kind === "exit"
@@ -1438,7 +1438,7 @@ export function App() {
   const promptAria = !prompt
     ? ""
     : prompt.kind === "talk"
-      ? prompt.npc.id === "vij" ? "Approach Vij — carefully" : `Talk to ${prompt.npc.name}`
+      ? prompt.npc.id === "viy" ? "Approach Viy — carefully" : `Talk to ${prompt.npc.name}`
       : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪]\s*/g, " ").trim();
   const keepsakes: string[] = [
     ...(flagHas(hudFlags, "moonstone") ? ["🌙 Moonstone (WIS +1, CHA +1)"] : []),
@@ -1478,8 +1478,8 @@ export function App() {
               ? "dark"
               : !visitedLysa
                 ? "lysa-visit"
-                : !metVij
-                  ? "vij"
+                : !metViy
+                  ? "viy"
                   : soulLost
                     ? "soul"
                     : !flagHas(hudFlags, "offering")
@@ -1517,7 +1517,7 @@ export function App() {
         { id: "herbs", title: "Herbs for Vesna", detail: `Gather herbs in the clearing · ${Math.min(hudHerbs, 5)}/5`, done: hudHerbs >= 5 },
         { id: "spirits", title: "Seek the spirits", detail: `Find the Domovyk and the Lisovyk · ${metSpirits}/2`, done: metSpirits >= 2 },
         { id: "dark", title: "Stranger things stir", detail: `Meet the Chort and the Bolotianyk · ${metDark}/2`, done: metDark >= 2 },
-        { id: "vij", title: "Look upon Vij", detail: "Approach Vij in the north-east hollow — look, but do not wake him", done: metVij },
+        { id: "viy", title: "Look upon Viy", detail: "Approach Viy in the north-east hollow — look, but do not wake him", done: metViy },
       ],
     },
     {

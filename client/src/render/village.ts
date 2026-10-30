@@ -126,7 +126,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     c.fillRect(rx - 4.4, ry - 30, 3, 11);
   }
 
-  // Vij's hollow — a blighted circle at the north-east forest edge where
+  // Viy's hollow — a blighted circle at the north-east forest edge where
   // nothing green grows and the grass will not take.
   {
     const hx = 1420 - camX;
@@ -476,7 +476,7 @@ export function drawBrewBench(c: CanvasRenderingContext2D, camX: number, camY: n
   c.fillRect(x - 26, y - 34, 4.6, 42);
   c.fillRect(x + 22, y - 34, 4.6, 42);
   c.fillRect(x - 29, y - 36, 58, 4.4);
-  // hanging herb bundles — a colour for every kind on the znak harka's shelf
+  // hanging herb bundles — a colour for every kind on the znakharka's shelf
   const bundleCols = ["#3f7a2e", "#8a9678", "#f28c1e", "#f2c416", "#e8e2cc"];
   bundleCols.forEach((col, i) => {
     const bx = x - 21 + i * 11;

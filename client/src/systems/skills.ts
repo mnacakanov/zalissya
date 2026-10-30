@@ -1,5 +1,5 @@
 // Herbalism thresholds: level n starts at THRESH[n-1] herbs gathered
-// (any kind counts — kropyva, polyn, kalendula, zvirobij, derevij).
+// (any kind counts — kropyva, polyn, kalendula, zvirobiy, dereviy).
 export const THRESH = [0, 3, 7, 12, 18, 25, 34];
 export function herbLevel(herbs: number): number {
   let lvl = 1;

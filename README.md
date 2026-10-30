@@ -4,11 +4,11 @@ A 2D top-down pixel-art action RPG set in a Ukrainian folklore village — built
 
 ## What's in the game
 
-- **Zalissya village** — huts (two enterable, with interiors), a well, a forge, a campfire, a pond, a forest ring. Villagers: Starosta Myroslav, Vesna the znak harka, and Radek, a Polish smith visiting from a faraway village.
+- **Zalissya village** — huts (two enterable, with interiors), a well, a forge, a campfire, a pond, a forest ring. Villagers: Starosta Myroslav, Vesna the znakharka, and Radek, a Polish smith visiting from a faraway village.
 - **Spirits and monsters** — Domovyk (house spirit), Lisovyk (forest spirit), the Chort (a Dakhno-style devil who bargains for your soul — he takes your shadow too; fish buy it back), the Bolotianyk in the pond, and **Viy (Вій)** sleeping in a blighted hollow: the big boss, seeded but not yet fightable (no combat system yet, by design — non-combat features come first).
 - **Lysa Hora (Bald Mountain)** — a second area east of the clearing: a sabbath summit with Beelzebub, the witches Solokha and Motrya, night-blooms (nichnyky), an offering stone, a dance, and the Moonstone keepsake.
-- **Skills** — Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobij, Derevij.
-- **Systems** — carry capacity from STR (bog iron is heavy), alchemy tiers gated by INT, stat checks (WIS 2 for Zvirobij, CHA rolls at the well, DEX tilts fishing), keepsake bonuses (horseshoe +1 STR, devil's gold +2 CHA, being soulless −1 WIS…), topic-based dialogue (you pick the questions; the Chort never re-offers a refused bargain), a Character sheet (Stats / Skills / Satchel), and a Quests log.
+- **Skills** — Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy.
+- **Systems** — carry capacity from STR (bog iron is heavy), alchemy tiers gated by INT, stat checks (WIS 2 for Zvirobiy, CHA rolls at the well, DEX tilts fishing), keepsake bonuses (horseshoe +1 STR, devil's gold +2 CHA, being soulless −1 WIS…), topic-based dialogue (you pick the questions; the Chort never re-offers a refused bargain), a Character sheet (Stats / Skills / Satchel), and a Quests log.
 - **Controls** — hold-to-move D-pad in a cross layout; corner cells hold both neighbouring directions for diagonals; WASD/arrows on desktop. (A floating joystick was tried first — inside the Muse app shell, its pull-to-refresh kept stealing downward drags, so drag controls were removed entirely; don't re-add them for the Muse version. In a plain browser — e.g. GitHub Pages — the page's overscroll locks actually hold, so a joystick may be viable there; untested.)
 
 ## Naming rules (please keep)

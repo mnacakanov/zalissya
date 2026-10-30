@@ -211,8 +211,8 @@ export function drawBolotianyk(c: CanvasRenderingContext2D, x: number, y: number
   c.fillRect(x + 16.2, top + 34 + ((t * 0.045 + 6) % 13), 1.6, 3);
 }
 
-export function drawVij(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  // Vij: a giant ash-grey head planted in the hollow, servants and all.
+export function drawViy(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
+  // Viy: a giant ash-grey head planted in the hollow, servants and all.
   // x, y is the ground point at his chin; he is ~150px wide, ~170 tall.
   c.fillStyle = "rgba(12,8,18,0.5)";
   c.beginPath(); c.ellipse(x, y + 8, 96, 20, 0, 0, Math.PI * 2); c.fill();

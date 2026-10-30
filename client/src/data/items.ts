@@ -1,7 +1,7 @@
 // Gatherable herbs — all keep their Ukrainian names; gathering any of them
 // counts toward the Herbalism skill. Each kind has its own colours so the
 // patches read differently in the grass.
-export type HerbKind = "kropyva" | "polyn" | "kalendula" | "zvirobij" | "derevij";
+export type HerbKind = "kropyva" | "polyn" | "kalendula" | "zvirobiy" | "dereviy";
 
 export type HerbDef = {
   name: string;
@@ -17,8 +17,8 @@ export const HERBS: Record<HerbKind, HerbDef> = {
   kropyva: { name: "Kropyva", pron: "kro-py-VAH", gloss: "nettle", glow: "120,220,110", flower: "#b9e39a", flowerCore: "#eaf7d0", leaf: "#3f7a2e" },
   polyn: { name: "Polyn", pron: "po-LYN", gloss: "wormwood", glow: "200,205,190", flower: "#d8dcc8", flowerCore: "#f2f2e2", leaf: "#7d8a72" },
   kalendula: { name: "Kalendula", pron: "ka-len-DOO-lah", gloss: "calendula", glow: "255,150,50", flower: "#f28c1e", flowerCore: "#ffd76a", leaf: "#4c7a2e" },
-  zvirobij: { name: "Zvirobij", pron: "zvee-ro-BEEY", gloss: "St. John's wort", glow: "255,205,70", flower: "#f2c416", flowerCore: "#ffe89a", leaf: "#4c7a2e" },
-  derevij: { name: "Derevij", pron: "deh-reh-VEEY", gloss: "yarrow", glow: "245,242,230", flower: "#f5f2e6", flowerCore: "#e8c96a", leaf: "#557d3a" },
+  zvirobiy: { name: "Zvirobiy", pron: "zvee-ro-BEEY", gloss: "St. John's wort", glow: "255,205,70", flower: "#f2c416", flowerCore: "#ffe89a", leaf: "#4c7a2e" },
+  dereviy: { name: "Dereviy", pron: "deh-reh-VEEY", gloss: "yarrow", glow: "245,242,230", flower: "#f5f2e6", flowerCore: "#e8c96a", leaf: "#557d3a" },
 };
 
 // --- Village life spots (non-combat interactivity) --------------------------
@@ -63,13 +63,13 @@ export const WISH_LINES: string[] = [
   "The pebble sinks. For a moment the well smells of rain that has not fallen yet. They say the well keeps every wish it is ever given, stacked like coins.",
   "Plip. A ring spreads on the black water below. In the ring, just for a heartbeat, the stars are wrong — too many, and too close. Then it is only a well again.",
   "You wish quietly, the way the old ones teach: not for gold, not for glory — those wishes curdle. The rope creaks, approving.",
-  "Down in the dark, something small and silver turns once — a fish where no fish should live. The znak harky say a well-fish means the wish was heard.",
+  "Down in the dark, something small and silver turns once — a fish where no fish should live. The znakharky say a well-fish means the wish was heard.",
 ];
 
 export const HERB_SPOTS: Array<{ x: number; y: number; kind: HerbKind }> = [
   { x: 520, y: 560, kind: "kropyva" }, { x: 1080, y: 520, kind: "polyn" },
-  { x: 700, y: 980, kind: "kalendula" }, { x: 1240, y: 900, kind: "zvirobij" },
-  { x: 420, y: 880, kind: "derevij" }, { x: 980, y: 760, kind: "kropyva" },
+  { x: 700, y: 980, kind: "kalendula" }, { x: 1240, y: 900, kind: "zvirobiy" },
+  { x: 420, y: 880, kind: "dereviy" }, { x: 980, y: 760, kind: "kropyva" },
   { x: 620, y: 340, kind: "polyn" }, { x: 900, y: 900, kind: "kalendula" },
-  { x: 350, y: 420, kind: "zvirobij" }, { x: 1380, y: 620, kind: "derevij" },
+  { x: 350, y: 420, kind: "zvirobiy" }, { x: 1380, y: 620, kind: "dereviy" },
 ];

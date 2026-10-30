@@ -11,7 +11,7 @@ export type Npc = {
   y: number;
   tunic: string;
   hair: string;
-  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "vij" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer";
+  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer";
 };
 
 export const NPCS: Npc[] = [
@@ -27,7 +27,7 @@ export const SPIRITS: Npc[] = [
   { id: "lisovyk", name: "Lisovyk", pron: "lee-so-VYK", role: "Forest spirit · lord of the pines", x: 1010, y: 196, tunic: "#33502e", hair: "#4c6b35", style: "lisovyk" },
   { id: "chort", name: "Chort", pron: "chort", role: "Чорт · devil and trickster — mind your soul", x: 545, y: 1052, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
   { id: "bolotianyk", name: "Bolotianyk", pron: "bo-lo-TYAH-nyk", role: "Swamp demon · the pond's dark keeper", x: 1182, y: 992, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
-  { id: "vij", name: "Vij", pron: "veey", role: "Вій · the Big Boss — asleep, for now", x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "vij" },
+  { id: "viy", name: "Viy", pron: "veey", role: "Вій · the Big Boss — asleep, for now", x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "viy" },
 ];
 
 export const ALL_CHARS: Npc[] = [...NPCS, ...SPIRITS];
@@ -37,7 +37,7 @@ export const VILLAGER_IDS = new Set(NPCS.map((n) => n.id));
 // them inside counts the same as outside), anchored in their rooms.
 // The Domovyk keeps by his pich; Vesna keeps by her work table. They
 // are home when you step in — a house spirit never leaves his house,
-// and the znak harka is in for the evening.
+// and the znakharka is in for the evening.
 export const DOMOVYK_IN: Npc = {
   id: "domovyk", name: "Domovyk", pron: "do-mo-VYK", role: "House spirit · keeper of the pich",
   x: 330, y: 165, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
@@ -74,7 +74,7 @@ export const LYSA_DANCERS: Npc[] = [0, 1, 2, 3].map((i) => ({
 
 // Where a character actually is at time `now`: villagers stand still, the
 // Domovyk shuffles by his hut, the Lisovyk drifts along the pine edge.
-// Vij does not move. Vij will never move. That is rather the point.
+// Viy does not move. Viy will never move. That is rather the point.
 export function charPos(ch: Npc, now: number): { x: number; y: number } {
   if (ch.id === "domovyk") {
     return {

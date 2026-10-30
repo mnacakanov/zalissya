@@ -44,7 +44,7 @@ export const SOLID: Rect[] = [
   ...HOUSES.map((h) => ({ x: h.x, y: h.y + 26, w: h.w, h: h.h - 26 })),
   WELL,
   FIRE,
-  // Vij's bulk — the boss sleeps in the north-east hollow; you cannot walk
+  // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk
   // through him (and you would not want to).
   { x: 1352, y: 196, w: 136, h: 84 },
   ...TREES.map((t) => ({ x: t.x - 10, y: t.y - 8, w: 20, h: 14 })),
