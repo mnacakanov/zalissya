@@ -10,6 +10,7 @@ import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, POND, SOLID, TREES,
 import { drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
+import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
 import { tobaccoTopics } from "./dialogue/tobacco";
 import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
 import { drawLand, drawRiver } from "./render/land";
@@ -573,6 +574,22 @@ export function App() {
       }
       return;
     }
+    // The map: Hnat's gift, or the Chort's for fish (dialogue/mapTopics.ts)
+    if (g === "chumakMap" || g === "buyMap") {
+      if (g === "chumakMap" && (!flagHas(f, "map") || flagHas(f, "mapChort"))) {
+        // Hnat's chumak map replaces a devil's one: it is the better map
+        f.delete("mapChort");
+        setFlag("map");
+        syncFlags();
+        showToast(t("map.toast.chumak"));
+      } else if (g === "buyMap" && !flagHas(f, "map") && flagCount(f, "fish") >= MAP_PRICE) {
+        bumpCount("fish", -MAP_PRICE);
+        setFlag("map");
+        setFlag("mapChort");
+        showToast(t("map.toast.chort"));
+      }
+      return;
+    }
     // «Люлька отамана» (systems/tobacco.ts)
     if (g === "tobaccoQuest" || g === "giveTobacco") {
       if (g === "tobaccoQuest" && tobaccoStage(f) === "none") {
@@ -856,7 +873,7 @@ export function App() {
         if (areaRef.current === "lysa") {
           const tsetL = topicsForLysa(p.npc, flags, firstMeeting);
           if (tsetL) {
-            openTopicDialogue(p.npc, tsetL.intro, [...tsetL.topics, ...songTopics(p.npc.id, "lysa", flags)]);
+            openTopicDialogue(p.npc, tsetL.intro, [...tsetL.topics, ...songTopics(p.npc.id, "lysa", flags), ...mapTopics(p.npc.id, flags, fish)]);
           } else {
             openDialogue(p.npc, linesForLysa(p.npc, flags));
           }
@@ -881,7 +898,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -2012,6 +2029,7 @@ export function App() {
         : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯]\s*/g, " ").trim();
   const sealed = flagHas(hudFlags, "viySealed");
   const keepsakes: string[] = [
+    ...(flagHas(hudFlags, "map") ? [t(flagHas(hudFlags, "mapChort") ? "map.keepsake.chort" : "map.keepsake.chumak")] : []),
     ...(flagHas(hudFlags, "lyulka") ? [t("tobacco.keepsake")] : []),
     ...(sealed ? [t("ui.keepsakes.0")] : []),
     ...(flagHas(hudFlags, "chalk") && !sealed ? [t("ui.keepsakes.1")] : []),
@@ -2040,6 +2058,11 @@ export function App() {
 
   const openMap = () => {
     if (fightRef.current || dialogueRef.current) return;
+    // the map is a thing you carry (dialogue/mapTopics.ts)
+    if (!flagHas(flagsRef.current, "map")) {
+      showToast(t("map.none"));
+      return;
+    }
     panelRef.current = true;
     setMapOpen(true);
   };
@@ -2120,14 +2143,16 @@ export function App() {
             </div>
             <div className="pointer-events-auto mt-2 flex flex-col items-end gap-1.5">
               <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  aria-label={t("map.open")}
-                  onClick={openMap}
-                  className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
-                >
-                  {t("map.button")}
-                </button>
+                {flagHas(hudFlags, "map") && (
+                  <button
+                    type="button"
+                    aria-label={t("map.open")}
+                    onClick={openMap}
+                    className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
+                  >
+                    {t("map.button")}
+                  </button>
+                )}
                 <button
                   type="button"
                   aria-label={t("ui.misc.12")}
@@ -2519,6 +2544,7 @@ export function App() {
               player={hudArea === "hut0" ? { x: 384, y: 336 } : hudArea === "hut1" ? { x: 1285, y: 810 } : mapPlayer}
               flags={hudFlags}
               target={questTarget(quests.activeId, hudFlags)}
+              title={t(flagHas(hudFlags, "mapChort") ? "map.title.chort" : "map.title.chumak")}
               onClose={closeMap}
             />
           )}

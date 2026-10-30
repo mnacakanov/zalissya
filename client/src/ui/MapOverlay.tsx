@@ -9,6 +9,7 @@ export function MapOverlay(props: {
   player: { x: number; y: number };
   flags: ReadonlySet<string>;
   target: { x: number; y: number } | null;
+  title: string;
   onClose: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -39,7 +40,7 @@ export function MapOverlay(props: {
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#16281a]/75 p-3" style={{ touchAction: "none" }}>
       <div data-pad-scope className="flex max-h-full w-full max-w-3xl flex-col rounded-2xl border border-[#d9c491]/60 bg-[#f3e9d2] p-3 shadow-2xl">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-serif text-lg font-bold text-[#33241a]">{t("map.title")}</h2>
+          <h2 className="font-serif text-lg font-bold text-[#33241a]">{props.title}</h2>
           <button
             type="button"
             onClick={props.onClose}

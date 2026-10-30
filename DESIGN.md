@@ -173,3 +173,9 @@ The world is big now, so there is a **map** (`ui/MapOverlay.tsx`, `render/map.ts
 - **What it shows:** a hand-drawn parchment view of the whole world. It has the khutir's khaty, the gardens and fields, the roads, the pond and river with its bridges, and the forests. It also shows the steppe with its kurhany, Lysa Hora, and the tobacco and hemp fields, plus the chumak cart or the grave when they're there.
 - **Markers:** a red marker shows where you stand, and a gold **★** shows where your current quest leads (`questTarget`).
 - **Zoom:** «Увесь світ» shows everything, and «Довкола мене» shows a closer view around you.
+
+**The map is a thing you earn** (`dialogue/mapTopics.ts`). There is no Map button until you own one.
+- **Hnat's gift:** if Ostap lives, Hnat hands over his **chumak map**, drawn over thirty years on the road.
+- **The Chort's sale:** the Chort sells his **devil's map** (it smells of sulphur) for **3 fish**, by the millstone or on the mountain. He won't take his own gold back.
+
+Without a map, M and the Y button only say where one can be had.

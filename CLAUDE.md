@@ -30,7 +30,7 @@ client/src/
   systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
-  ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map; drawing in render/map.ts, quest stars in questTarget)
+  ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map, an item: flag `map`, from Hnat or bought from the Chort — dialogue/mapTopics.ts; drawing in render/map.ts, quest stars in questTarget)
 server/src/          Muse server actions and drizzle schema (one save slot)
 drizzle/             migrations (numbered; never edit an old one)
 pages/               Pages tooling: package.json, build.ts, tsconfig + type shims for the Muse SDK

@@ -38,6 +38,7 @@ export function chumakTopicSet(npcId: string, c: ChumakContext, firstMeeting: bo
         intro: L("chumak.gnat.healedIntro"),
         topics: [
           topic("thanks", "chumak.gnat.t.thanks", L("chumak.gnat.thanks.0", "chumak.gnat.thanks.1")),
+          ...(flagHas(c.flags, "map") && !flagHas(c.flags, "mapChort") ? [] : [topic("map", "chumak.gnat.t.map", L("chumak.gnat.map.0", "chumak.gnat.map.1"), "chumakMap")]),
           ...(knowsSong(c.flags, "polechko") ? [] : [topic("polechko", "chumak.gnat.t.polechko", L("chumak.gnat.polechko.0", "chumak.gnat.polechko.1"), "polechko")]),
           topic("road", "chumak.gnat.t.road", L("chumak.gnat.road.0", "chumak.gnat.road.1")),
         ],
