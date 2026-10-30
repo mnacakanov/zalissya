@@ -25,6 +25,9 @@ export type Prompt =
   | { kind: "sleep" }
   | { kind: "play" }
   | { kind: "grave" }
+  | { kind: "tobacco"; idx: number }
+  | { kind: "hemp" }
+  | { kind: "hangTobacco" }
   | { kind: "vigil" }
   | null;
 
@@ -37,6 +40,7 @@ export function promptKeyOf(p: Prompt): string {
     case "gather": return `g:${p.idx}`;
     case "iron": return `i:${p.idx}`;
     case "bloom": return `b:${p.idx}`;
+    case "tobacco": return `tb:${p.idx}`;
     default: return p.kind;
   }
 }

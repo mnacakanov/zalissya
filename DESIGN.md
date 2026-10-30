@@ -153,3 +153,16 @@ Lysa Hora is no longer a separate map you teleport to. The world is now 3980×12
 - **The Chort** keeps two addresses: the millstone by day, the sabbath by night.
 
 Hut interiors stay separate rooms.
+
+## Fields, a river, forests — and tobacco for the otaman
+
+The world grows south to 3980×2300 (`data/land.ts`, `render/land.ts`).
+- **Городи:** kitchen gardens by the last fences, with rows of cabbage, beets, cucumbers, carrots, radish, onion and garlic.
+- **Fields:** strip fields of **buckwheat** (white-pink), **barley** (golden ears with awns), **oats** and **hemp**, and another buckwheat field on the steppe. You can walk through them.
+- **The river:** it crosses the whole map, with reeds and two plank bridges, one on the khutir's road and one on the chumak road. It can't be waded.
+- **Forests:** a large one beyond the river to the south-west, and another below Lysa Hora.
+
+**«Люлька отамана»** (`systems/tobacco.ts`): the otaman has had a pipe and no tobacco since spring.
+- The old tobacco field across the river was planted by Taras the Long, who went to the Sich and never came back. Folk say the devil tends it, since tobacco is the devil's herb, and the Chort happily agrees.
+- Pick three leaves, strip hemp fibre to tie them, and hang the bundle on Vesna's rack. It dries at the next dawn.
+- The otaman smokes Taras's tobacco in long silence and gives you his old Sich pipe, worth +2 Nerve at Viy's vigil.

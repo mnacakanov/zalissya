@@ -1,7 +1,8 @@
 import { flagCount, flagHas } from "./flags";
 import { knowsSong } from "./songs";
 import { ostapState } from "./chumaky";
-import { t } from "../i18n";
+import { tobaccoStage } from "./tobacco";
+import { t, type TextKey } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
 // Every thread the game tracks, as data. Each quest derives its progress
@@ -107,6 +108,13 @@ const QUESTS: QuestDef[] = [
       return flagHas(d.f, "defiedOtaman") ? t("quest.chumaky.defied") : t("quest.chumaky.relented");
     },
     objective: () => t("quest.chumaky.objective"),
+  },
+  {
+    id: "tobacco", section: "life", title: t("quest.tobacco.title"),
+    visible: (d) => tobaccoStage(d.f) !== "none",
+    done: (d) => tobaccoStage(d.f) === "done",
+    detail: (d) => t(`quest.tobacco.${tobaccoStage(d.f)}` as TextKey, { leaves: Math.min(3, flagCount(d.f, "tobaccoLeaves")) }),
+    objective: (d) => t(`quest.tobacco.${tobaccoStage(d.f)}` as TextKey, { leaves: Math.min(3, flagCount(d.f, "tobaccoLeaves")) }),
   },
   {
     id: "evening", section: "story", title: t("quest.evening.title"),
@@ -263,7 +271,7 @@ const QUESTS: QuestDef[] = [
 // The order the HUD walks the threads in. Optional preparations (wreath,
 // iron ward) are listed in the log but never become the objective.
 const PRIORITY = [
-  "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway",
+  "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "tobacco",
   "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "vigil", "lysa-sabbath",
 ];
 

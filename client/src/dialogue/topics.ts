@@ -23,7 +23,7 @@ import { t } from "../i18n";
 
 // What asking a topic can hand over (App.applyGrant): Viy's night items,
 // the chumak choices, or a song (any SongId).
-export type GrantId = "chalk" | "wreath" | "ironward" | "persuade" | "treatOstap" | "vesnaTonic" | SongId;
+export type GrantId = "chalk" | "wreath" | "ironward" | "persuade" | "treatOstap" | "vesnaTonic" | "tobaccoQuest" | "giveTobacco" | SongId;
 
 export type DialogueTopic = {
   id: string;

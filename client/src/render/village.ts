@@ -79,7 +79,8 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     c.lineWidth = w + 12;
     c.beginPath();
     c.moveTo(VILLAGE_W - 60 - camX, 646 - camY);
-    c.bezierCurveTo(1950 - camX, 660 - camY, 2150 - camX, 900 - camY, 2240 - camX, WORLD_H + 40 - camY);
+    c.bezierCurveTo(1950 - camX, 660 - camY, 2250 - camX, 900 - camY, 2250 - camX, 1300 - camY);
+    c.lineTo(2250 - camX, WORLD_H + 40 - camY);
     c.stroke();
   }
   c.lineCap = "butt";
@@ -87,7 +88,8 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   // Dirt paths — a cross through the clearing.
   c.fillStyle = "#c8a568";
   rr(c, 0 - camX, 600 - camY, VILLAGE_W, 92, 40); c.fill();
-  rr(c, 768 - camX, 120 - camY, 144, 900, 60); c.fill();
+  // the khutir's road south runs out past the gardens and fields to the bridge
+  rr(c, 768 - camX, 120 - camY, 144, 1560, 60); c.fill();
   // the maidan: a trodden square round the fire and the well, where the
   // khutir meets, argues, and listens to the kobzar in the evening
   c.beginPath(); c.ellipse(840 - camX, 568 - camY, 190, 128, 0, 0, Math.PI * 2); c.fill();

@@ -1,4 +1,5 @@
 import { hash2, type Rect } from "../world/geometry";
+import { FOREST_TREES } from "./land";
 
 // --- World layout -----------------------------------------------------------
 
@@ -45,6 +46,8 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
   }
   TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
+  // the forests beyond the fields and the river (data/land.ts)
+  TREES.push(...FOREST_TREES);
   // lone oaks out on the steppe, where the chumaky rest at noon
   for (const [x, y] of [[1980, 230], [2330, 1040], [2480, 300], [1880, 900]] as const) {
     TREES.push({ x, y, kind: "oak", s: 1.1 + hash2(x, y) * 0.3 });

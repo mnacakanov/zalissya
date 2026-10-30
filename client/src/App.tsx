@@ -10,6 +10,10 @@ import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, POND, SOLID, TREES,
 import { drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
+import { tobaccoTopics } from "./dialogue/tobacco";
+import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
+import { drawLand, drawRiver } from "./render/land";
+import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
 import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
@@ -37,7 +41,7 @@ import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { advance, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_BORDER_X, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, WORLD_H, WORLD_W, worldSize } from "./world/areas";
+import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, WORLD_H, WORLD_W, worldSize } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
@@ -455,6 +459,10 @@ export function App() {
       const lastDawnDay = clock.minute >= DAWN ? clock.day : clock.day - 1;
       let news: string | null = null;
       for (let d = lastDawnDay - dawns + 1; d <= lastDawnDay; d++) {
+        for (const f of tobaccoDawn(flagsRef.current, d)) {
+          flagsRef.current.add(f);
+          news = "tobacco.news.dry";
+        }
         for (const f of chumakDawn(flagsRef.current, d)) {
           flagsRef.current.add(f);
           if (f.startsWith("chumakyArrivedDay=")) news = "chumak.news.arrived";
@@ -562,6 +570,18 @@ export function App() {
       }
       return;
     }
+    // «Люлька отамана» (systems/tobacco.ts)
+    if (g === "tobaccoQuest" || g === "giveTobacco") {
+      if (g === "tobaccoQuest" && tobaccoStage(f) === "none") {
+        setFlag("tobaccoQuest");
+        showToast(t("tobacco.toast.started"));
+      } else if (g === "giveTobacco" && tobaccoStage(f) === "ready") {
+        setFlag("tobaccoGiven");
+        setFlag("lyulka");
+        showToast(t("tobacco.toast.lyulka"));
+      }
+      return;
+    }
     if (g in SONGS) {
       const song = g as SongId;
       if (!knowsSong(f, song)) {
@@ -593,7 +613,7 @@ export function App() {
     setLookHeld(false);
     wardQueuedRef.current = false;
     const f = startFight(
-      { con: st.con.total, cha: st.cha.total, dex: st.dex.total, wreath: flagHas(flagsRef.current, "wreath"), ironWard: flagHas(flagsRef.current, "ironward") },
+      { con: st.con.total, cha: st.cha.total, dex: st.dex.total, wreath: flagHas(flagsRef.current, "wreath"), ironWard: flagHas(flagsRef.current, "ironward"), lyulka: flagHas(flagsRef.current, "lyulka") },
       Math.floor(performance.now()) || 1,
     );
     fightRef.current = f;
@@ -858,7 +878,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -1143,6 +1163,22 @@ export function App() {
         );
         return;
       }
+      case "tobacco": {
+        if (flagHas(flagsRef.current, `tobaccoLeaf${p.idx}`)) return;
+        setFlag(`tobaccoLeaf${p.idx}`);
+        const n = bumpCount("tobaccoLeaves", 1);
+        showToast(t(n >= LEAVES_NEEDED ? (flagHas(flagsRef.current, "hempFibre") ? "tobacco.toast.leavesDone" : "tobacco.toast.leavesNeedHemp") : "tobacco.toast.leaf", { n, need: LEAVES_NEEDED }));
+        return;
+      }
+      case "hemp":
+        setFlag("hempFibre");
+        showToast(t("tobacco.toast.hemp"));
+        return;
+      case "hangTobacco":
+        flagsRef.current.add(`tobaccoDryingDay=${clockRef.current.day}`);
+        syncFlags();
+        showToast(t("tobacco.toast.hung"));
+        return;
       case "grave": {
         if (knowsSong(flagsRef.current, "polechko") && !flagHas(flagsRef.current, "sangAtGrave")) {
           setFlag("sangAtGrave");
@@ -1319,9 +1355,9 @@ export function App() {
         const stepY = ny * speed * dt * Math.min(1, len);
         // axis-separated collision
         let tx = clamp(p.x + stepX, PLAYER_R + 4, ws.w - PLAYER_R - 4);
-        if (!solids.some((b) => circleRectCollide(tx, p.y - 6, PLAYER_R, b)) && (area !== "village" || !inPond(tx, p.y))) p.x = tx;
+        if (!solids.some((b) => circleRectCollide(tx, p.y - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(tx, p.y) && !inRiver(tx, p.y)))) p.x = tx;
         let ty = clamp(p.y + stepY, 46, ws.h - 10);
-        if (!solids.some((b) => circleRectCollide(p.x, ty - 6, PLAYER_R, b)) && (area !== "village" || !inPond(p.x, ty))) p.y = ty;
+        if (!solids.some((b) => circleRectCollide(p.x, ty - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(p.x, ty) && !inRiver(p.x, ty)))) p.y = ty;
         dirtyRef.current = true;
       }
 
@@ -1367,7 +1403,7 @@ export function App() {
       if (!dialogueRef.current && !panelRef.current) {
         // One world: crossing the steppe onto the mountain just changes the
         // region (the HUD, the sabbath's rules) — no teleport.
-        const region: AreaId | null = isHutArea(area) ? null : p.x >= LYSA_BORDER_X ? "lysa" : "village";
+        const region: AreaId | null = isHutArea(area) ? null : p.x >= LYSA_BORDER_X && p.y < LYSA_BORDER_Y ? "lysa" : "village";
         if (region && region !== area) {
           areaRef.current = region;
           setHudArea(region);
@@ -1547,6 +1583,12 @@ export function App() {
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
         spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
+        const tStage = tobaccoStage(flagsNow);
+        TOBACCO_SPOTS.forEach((ts, idx) => {
+          spot(tStage === "gather" && !flagHas(flagsNow, `tobaccoLeaf${idx}`), ts.x, ts.y, 48, () => ({ kind: "tobacco", idx }));
+        });
+        spot(tStage === "gather" && !flagHas(flagsNow, "hempFibre"), HEMP_SPOT.x, HEMP_SPOT.y, 50, () => ({ kind: "hemp" }));
+        spot(tStage === "hang", BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "hangTobacco" }));
         IRON_SPOTS.forEach((s, idx) => {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
@@ -1573,6 +1615,21 @@ export function App() {
         drawHutInterior(ctx2d, camX, camY, now, area === "hut1" ? 1 : 0, flagsNow);
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
+      drawLand(ctx2d, camX, camY, vw, vh, now);
+      drawRiver(ctx2d, camX, camY, vw, vh, now);
+      // the tobacco quest's spots glow softly while they are wanted
+      if (tobaccoStage(flagsNow) === "gather") {
+        const pulse = 0.35 + Math.sin(now * 0.004) * 0.15;
+        const glow = (x: number, y: number) => {
+          const g = ctx2d.createRadialGradient(x - camX, y - camY, 2, x - camX, y - camY, 26);
+          g.addColorStop(0, `rgba(255,236,150,${pulse})`);
+          g.addColorStop(1, "rgba(255,236,150,0)");
+          ctx2d.fillStyle = g;
+          ctx2d.fillRect(x - 26 - camX, y - 26 - camY, 52, 52);
+        };
+        TOBACCO_SPOTS.forEach((ts, idx) => { if (!flagHas(flagsNow, `tobaccoLeaf${idx}`)) glow(ts.x, ts.y); });
+        if (!flagHas(flagsNow, "hempFibre")) glow(HEMP_SPOT.x, HEMP_SPOT.y);
+      }
       // Lysa Hora at the steppe's end: its bald rock, drawn in its own
       // local coordinates and clipped to the mountain's oval.
       const lx = LYSA_ORIGIN.x - camX;
@@ -1921,6 +1978,12 @@ export function App() {
                                     ? t("ui.promptLabel.play")
                                   : prompt.kind === "grave"
                                     ? t("ui.promptLabel.grave")
+                                  : prompt.kind === "tobacco"
+                                    ? t("tobacco.prompt.leaf")
+                                  : prompt.kind === "hemp"
+                                    ? t("tobacco.prompt.hemp")
+                                  : prompt.kind === "hangTobacco"
+                                    ? t("tobacco.prompt.hang")
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
                                     : t("ui.promptLabel.20");
@@ -1933,6 +1996,7 @@ export function App() {
         : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯]\s*/g, " ").trim();
   const sealed = flagHas(hudFlags, "viySealed");
   const keepsakes: string[] = [
+    ...(flagHas(hudFlags, "lyulka") ? [t("tobacco.keepsake")] : []),
     ...(sealed ? [t("ui.keepsakes.0")] : []),
     ...(flagHas(hudFlags, "chalk") && !sealed ? [t("ui.keepsakes.1")] : []),
     ...(flagHas(hudFlags, "wreath") && !sealed ? [t("ui.keepsakes.2")] : []),

@@ -2,9 +2,11 @@
 // the far end (see data/lysa.ts LYSA_ORIGIN). Hut interiors are separate.
 export const VILLAGE_W = 1680;
 export const WORLD_W = 3980;
-export const WORLD_H = 1260;
-// Past this x the player is "on Lysa Hora" (the HUD, the sabbath rules).
+export const WORLD_H = 2300;
+// Past this x (and north of the river country) the player is "on Lysa
+// Hora" (the HUD, the sabbath rules).
 export const LYSA_BORDER_X = 2620;
+export const LYSA_BORDER_Y = 1150;
 export const PLAYER_SPEED = 175;
 export const PLAYER_R = 13;
 export const SPAWN = { x: 840, y: 760 };

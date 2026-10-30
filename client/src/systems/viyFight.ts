@@ -24,7 +24,7 @@ export const VIGIL_SECONDS = 80;
 export const CIRCLE_R = 64;
 export const SPAWN_R = 300;
 
-export type FightPrep = { con: number; cha: number; dex: number; wreath: boolean; ironWard: boolean };
+export type FightPrep = { con: number; cha: number; dex: number; wreath: boolean; ironWard: boolean; lyulka?: boolean };
 export type FightInput = { lookAway: boolean; ward: boolean };
 
 export type Spirit = { id: number; angle: number; dist: number; speed: number; wobble: number };
@@ -88,7 +88,8 @@ export function wardCooldown(dex: number): number {
 }
 
 export function startFight(prep: FightPrep, seed = 1): FightState {
-  const maxNerve = maxNerveFor(prep.con);
+  // the otaman's pipe (systems/tobacco.ts): a smoke steadies the hand
+  const maxNerve = maxNerveFor(prep.con) + (prep.lyulka ? 2 : 0);
   return {
     t: 0,
     nerve: maxNerve,

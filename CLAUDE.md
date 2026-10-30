@@ -27,7 +27,7 @@ client/src/
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
   data/              village / lysa / huts layouts, items (herbs, spots, catch), characters (+ charPos)
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), chumaky.ts (the caravan conversations), viyNight.ts (Viy's night storyline)
-  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), viyFight (the vigil), quests (quest log) + *.test.ts
+  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
@@ -121,7 +121,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
 ## Game at a glance
 
-- **One open world** (3980×1260): the khutir (x 0–1680), the steppe east of it, and Lysa Hora at the far end (`LYSA_ORIGIN` in `data/lysa.ts`). The areas `village` and `lysa` are regions of that one world (the region switches at `LYSA_BORDER_X`), not separate maps.
+- **One open world** (3980×2300): the khutir (x 0–1680), the steppe east of it, Lysa Hora at the far end, and to the south kitchen gardens, strip fields (buckwheat, barley, oats, hemp), a river with two bridges, forests and the old tobacco field (`data/land.ts`) (`LYSA_ORIGIN` in `data/lysa.ts`). The areas `village` and `lysa` are regions of that one world (the region switches at `LYSA_BORDER_X`), not separate maps.
 - **Areas**:
   - `village`: the khutir and the steppe
   - `lysa`: the mountain, at the far end of the steppe trail
