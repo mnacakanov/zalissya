@@ -2,31 +2,49 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, loadControlPref, SafeAreaTopScrim, storeControlPref } from "./platform/target";
-import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN, VILLAGER_IDS } from "./data/characters";
+import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN } from "./data/characters";
 import { hutSolids } from "./data/huts";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
 import { LYSA_DANCE_SPOT, LYSA_FLOWER_SPOTS, LYSA_OFFER_SPOT, LYSA_SOLID } from "./data/lysa";
-import { FENCES, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
+import { FENCES, FIRE, HOUSES, POND, SOLID, TREES, WELL } from "./data/village";
 import { linesFor, linesForLysa } from "./dialogue/lines";
+import { canForgeWard, canWeaveWreath, VIGIL_BROKEN_LINES, VIGIL_INTRO_LINES, VIGIL_WON_LINES, type VigilContext, vigilTopics, viyNarration, WREATH_HERBS } from "./dialogue/viyNight";
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
 import { Joystick } from "./input/Joystick";
 import { PadButton } from "./input/PadButton";
 import { drawHutInterior } from "./render/huts";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { rr } from "./render/shapes";
+import { drawNight, drawVigil, drawVigilOverlay } from "./render/viyFight";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
+import { type QuestItem, questLog } from "./systems/quests";
 import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
-import { type BrewRecipe, type Dialogue, type Prompt, promptKeyOf } from "./ui/types";
+import { advance, type Clock, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
+import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
+import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
 import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_SPAWN, PLAYER_R, PLAYER_SPEED, SPAWN, TRAIL_Y_MAX, TRAIL_Y_MIN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, VILLAGE_RETURN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 
 // Zalissya — the game component: state, the frame loop, interaction, and
 // the HUD/sheets. Data, dialogue, systems and drawing live in their own
 // modules (see CLAUDE.md for the layout, DESIGN.md for the design record).
+
+// The Domovyk's bed (hut0, north-east corner) — sleep here to pass time.
+const BED_SPOT = { x: 635, y: 196 };
+const BED_NPC: Npc = {
+  id: "bed", name: "The Domovyk's bed", pron: "", role: "Straw, sheepskin, and the pich's warmth",
+  x: BED_SPOT.x, y: BED_SPOT.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
+};
+// Where the chalk ring is drawn for Viy's vigil: just south of his hollow.
+const VIGIL_CENTER = { x: 1420, y: 440 };
+const VIGIL_NPC: Npc = {
+  id: "vigil", name: "The vigil", pron: "", role: "Viy's hollow · one night",
+  x: VIGIL_CENTER.x, y: VIGIL_CENTER.y, tunic: "#3a3444", hair: "#55506a", style: "elder",
+};
 
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -77,6 +95,16 @@ export function App() {
   const smithReadyRef = useRef(0);
   // Character sheet open? The render loop reads the ref to freeze walking.
   const panelRef = useRef(false);
+  // The day-night clock (systems/time.ts); real ms pile up in clockAccRef
+  // and are paid out as game minutes.
+  const clockRef = useRef<Clock>({ day: 1, minute: START_MINUTE });
+  const clockAccRef = useRef(0);
+  // Viy's vigil while it runs (systems/viyFight.ts) and its two controls.
+  const fightRef = useRef<FightState | null>(null);
+  const lookHeldRef = useRef(false);
+  const wardQueuedRef = useRef(false);
+  // Set when the vigil's opening narration opens; the fight starts as it closes.
+  const vigilPendingRef = useRef(false);
 
   const [started, setStarted] = useState(false);
   const [hudArea, setHudArea] = useState<AreaId>("village");
@@ -92,6 +120,9 @@ export function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
+  const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
+  const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
+  const [lookHeld, setLookHeld] = useState(false);
 
   // Defense in depth against pull-to-refresh / page scroll. The game is
   // full-screen and never scrolls. The scroll container is NOT the
@@ -249,6 +280,7 @@ export function App() {
       openDialogue(dlg.npc, [...linesForLysa(dlg.npc, flagsRef.current), ...LYSA_BLESSING_LINES]);
       return;
     }
+    if (topic.grant) applyGrant(topic.grant);
     const asked = dlg.asked?.includes(topic.id) ? dlg.asked : [...(dlg.asked ?? []), topic.id];
     const next: Dialogue = { ...dlg, view: "topic", topic, topicLine: 0, asked };
     dialogueRef.current = next;
@@ -273,6 +305,8 @@ export function App() {
       talkedRef.current = new Set(mappedTalked);
       herbsRef.current = s.herbs;
       flagsRef.current = new Set(s.flags);
+      clockRef.current = readClock(flagsRef.current);
+      setHudClock(clockRef.current);
       // Stats/skills migration for older saves: spendable herb stock
       // starts as everything ever gathered (nothing was spendable
       // before), and lifetime fish starts as the fish on hand (the old
@@ -374,6 +408,104 @@ export function App() {
     showToast("Dark, deep, twice as clarifying — Vesna's strong tonic. INT +2 and WIS +2 while it lasts.");
   };
 
+  // --- time --------------------------------------------------------------------
+  // Move the clock on and store it in the flags. Every dawn crossed ends
+  // the until-dawn bonuses (meals, tonics); returns whether any ended.
+  const passTime = (minutes: number): boolean => {
+    const { clock, dawns } = advance(clockRef.current, minutes);
+    clockRef.current = clock;
+    writeClock(flagsRef.current, clock);
+    let expired = false;
+    if (dawns > 0) {
+      for (const f of UNTIL_DAWN_FLAGS) if (flagsRef.current.delete(f)) expired = true;
+    }
+    setHudClock(clock);
+    syncFlags();
+    return expired;
+  };
+  const sleepUntil = (target: number, msg: string) => {
+    const expired = passTime(minutesUntil(clockRef.current, target));
+    showToast(expired ? `${msg} Yesterday's meal and tonics have worn off.` : msg);
+  };
+  // A dialogue whose last page is a row of option buttons.
+  const openOptions = (npc: Npc, lines: string[], tag: "sleep", options: DialogueOption[]) => {
+    const d: Dialogue = { npc, lines, line: 0, choiceAt: lines.length - 1, choiceKind: "options", options, optionsTag: tag };
+    dialogueRef.current = d;
+    setDialogue(d);
+  };
+  const pickOption = (tag: "sleep", id: string) => {
+    endDialogue();
+    if (tag === "sleep") {
+      if (id === "morning") sleepUntil(WAKE_MINUTE, "You sleep like a stone on the Domovyk's warm bed and wake to birdsong.");
+      else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, "You doze the day away. Something small tugs your sleeve: dusk. The Domovyk kept his word.");
+    }
+  };
+
+  // --- Viy's night -------------------------------------------------------------
+  const vigilContext = (): VigilContext => ({
+    flags: flagsRef.current,
+    talked: talkedRef.current,
+    wis: liveStats().wis.total,
+    herbStock: flagCount(flagsRef.current, "herbStock"),
+  });
+  // Items handed over by asking a topic (see dialogue/viyNight.ts). The
+  // checks repeat the topic's own, so re-asking never gives twice.
+  const applyGrant = (g: "chalk" | "wreath" | "ironward") => {
+    const f = flagsRef.current;
+    if (g === "chalk" && !flagHas(f, "chalk")) {
+      setFlag("chalk");
+      showToast("Myroslav's blessed chalk — and the old way with it. Viy can be faced after dark.");
+    } else if (g === "wreath" && !flagHas(f, "wreath") && canWeaveWreath(vigilContext())) {
+      bumpCount("herbStock", -WREATH_HERBS);
+      setFlag("wreath");
+      showToast("Vesna's wreath of polyn and zvirobiy. Viy's gaze will take half.");
+    } else if (g === "ironward" && !flagHas(f, "ironward") && canForgeWard(vigilContext())) {
+      bumpCount("forged", -1);
+      setFlag("ironward");
+      showToast("Three iron nails for the chalk. The first three of the host will burn.");
+    }
+  };
+  const startVigil = () => {
+    const st = liveStats();
+    playerRef.current.x = VIGIL_CENTER.x;
+    playerRef.current.y = VIGIL_CENTER.y;
+    playerRef.current.moving = false;
+    lookHeldRef.current = false;
+    setLookHeld(false);
+    wardQueuedRef.current = false;
+    const f = startFight(
+      { con: st.con.total, wis: st.wis.total, dex: st.dex.total, wreath: flagHas(flagsRef.current, "wreath"), ironWard: flagHas(flagsRef.current, "ironward") },
+      Math.floor(performance.now()) || 1,
+    );
+    fightRef.current = f;
+    setHudFight({ nerve: f.nerve, max: f.maxNerve, t: 0, gaze: f.gaze, ready: true });
+  };
+  const releaseLook = () => {
+    lookHeldRef.current = false;
+    setLookHeld(false);
+  };
+  const endVigil = (won: boolean) => {
+    fightRef.current = null;
+    setHudFight(null);
+    releaseLook();
+    if (won) {
+      setFlag("viySealed");
+      passTime(minutesUntil(clockRef.current, 5 * 60 + 40));
+      openDialogue(VIGIL_NPC, VIGIL_WON_LINES);
+      showToast("Viy is sealed under the hollow. Keeper of the vigil: WIS +1, CHA +1 ✦");
+    } else {
+      // Nothing is lost but the night: you wake in the Domovyk's bed.
+      bumpCount("vigilBroken", 1);
+      areaRef.current = "hut0";
+      setHudArea("hut0");
+      playerRef.current.x = BED_SPOT.x;
+      playerRef.current.y = BED_SPOT.y + 24;
+      passTime(minutesUntil(clockRef.current, WAKE_MINUTE));
+      openDialogue(VIGIL_NPC, VIGIL_BROKEN_LINES);
+    }
+    dirtyRef.current = true;
+  };
+
   // The honest "no" of the carry system: name the load, the limit, and
   // the stat that sets it. Nothing is consumed when this fires.
   const carryBlockedToast = (addWeight: number) => {
@@ -437,6 +569,11 @@ export function App() {
   };
 
   const doInteract = () => {
+    // During the vigil the interact key is the ward.
+    if (fightRef.current) {
+      wardQueuedRef.current = true;
+      return;
+    }
     const dlg = dialogueRef.current;
     if (dlg) {
       // Topic conversations: the menu is driven by its buttons, answers
@@ -484,6 +621,10 @@ export function App() {
           blessingPendingRef.current = false;
           setFlag("moonstone");
           showToast("The Moonstone of Lysa Hora is yours — WIS +1, CHA +1 while you carry it. 🌙");
+        }
+        if (vigilPendingRef.current) {
+          vigilPendingRef.current = false;
+          startVigil();
         }
       }
       return;
@@ -578,12 +719,20 @@ export function App() {
           }
           return;
         }
-        // Viy keeps his scripted narration — he is not a conversation.
-        // Everyone else in the village answers questions now.
-        if (p.npc.id !== "viy") {
+        // Viy keeps his scripted narration — he is not a conversation —
+        // and it changes with the night and the chalk in your pocket.
+        // Everyone else in the village answers questions, Viy's night
+        // included (dialogue/viyNight.ts).
+        if (p.npc.id === "viy") {
+          const n = viyNarration(flags, isNight(clockRef.current.minute));
+          if (n) {
+            openDialogue(p.npc, n);
+            return;
+          }
+        } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, tset.topics);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -829,6 +978,24 @@ export function App() {
         // Granted through Beelzebub's dialogue; the prompt spot only
         // exists to draw the eye to his seat.
         return;
+      case "sleep": {
+        const c = clockRef.current;
+        openOptions(
+          BED_NPC,
+          [`Straw, a sheepskin, and the pich's warmth through the wall. ${timeLabel(c)}. How long will you lie down?`],
+          "sleep",
+          [
+            { id: "morning", label: "Sleep until morning 🌅", aria: "Sleep until seven in the morning" },
+            { id: "night", label: "Rest until nightfall 🌙", aria: "Rest until nine in the evening" },
+            { id: "cancel", label: "Not now", aria: "Get up again" },
+          ],
+        );
+        return;
+      }
+      case "vigil":
+        vigilPendingRef.current = true;
+        openDialogue(VIGIL_NPC, VIGIL_INTRO_LINES);
+        return;
     }
   };
   const interactRef = useRef(doInteract);
@@ -866,6 +1033,7 @@ export function App() {
     let raf = 0;
     let last = performance.now();
     let promptKey = "";
+    let fightHudKey = "";
 
     const resize = () => {
       const rect = wrap.getBoundingClientRect();
@@ -909,7 +1077,7 @@ export function App() {
       const ws = worldSize(area);
       const solids = area === "lysa" ? LYSA_SOLID : isHutArea(area) ? hutSolids(area) : SOLID;
       const dancing = area === "lysa" && now < danceUntilRef.current;
-      const frozen = dialogueRef.current != null || panelRef.current || dancing;
+      const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
       // Walking off abandons the cast — the line comes in empty.
       if (p.moving && fishingRef.current) fishingRef.current = null;
@@ -929,6 +1097,41 @@ export function App() {
         let ty = clamp(p.y + stepY, 46, ws.h - 10);
         if (!solids.some((b) => circleRectCollide(p.x, ty - 6, PLAYER_R, b)) && (area !== "village" || !inPond(p.x, ty))) p.y = ty;
         dirtyRef.current = true;
+      }
+
+      // --- the clock: stops while talking, reading, dancing, or keeping
+      // the vigil; paid out in 5-minute steps so the HUD is not redrawn
+      // every frame.
+      if (!frozen) {
+        clockAccRef.current += dt * 1000;
+        const mins = Math.floor(clockAccRef.current / MS_PER_GAME_MINUTE);
+        if (mins >= 5) {
+          clockAccRef.current -= mins * MS_PER_GAME_MINUTE;
+          if (passTime(mins)) showToast("Dawn over Zalissya. Last night's meal and tonics have worn off.");
+        }
+      }
+
+      // --- Viy's vigil
+      const fight = fightRef.current;
+      const lookingAway = lookHeldRef.current || keysRef.current.has("shift") || keysRef.current.has("l");
+      if (fight) {
+        const events = stepFight(fight, dt, { lookAway: lookingAway, ward: wardQueuedRef.current });
+        wardQueuedRef.current = false;
+        for (const e of events) {
+          if (e.kind === "gazeWarning") showToast("“LIFT MY EYELIDS!” The servants strain at their forks. Look away before they open!");
+          else if (e.kind === "gazeHit") showToast(`You met his eyes! Nerve −${e.damage}.`);
+          else if (e.kind === "gazeAvoided") showToast("The lids fall again. You never looked.");
+        }
+        if (fight.outcome) {
+          endVigil(fight.outcome === "won");
+        } else {
+          const ready = fight.t >= fight.wardReadyAt;
+          const hudKey = `${fight.nerve}|${Math.floor(fight.t * 4)}|${fight.gaze}|${ready}`;
+          if (hudKey !== fightHudKey) {
+            fightHudKey = hudKey;
+            setHudFight({ nerve: fight.nerve, max: fight.maxNerve, t: fight.t, gaze: fight.gaze, ready });
+          }
+        }
       }
 
       // --- area transitions: walk off the trail's end, arrive on the
@@ -1029,6 +1232,9 @@ export function App() {
 
       // --- nearest interactable
       const flagsNow = flagsRef.current;
+      // Once Viy is sealed, his hollow is only a hollow.
+      const villageChars = flagHas(flagsNow, "viySealed") ? ALL_CHARS.filter((c) => c.id !== "viy") : ALL_CHARS;
+      const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
       let nextPrompt: Prompt = null;
       let best = 64;
       if (area === "lysa") {
@@ -1069,6 +1275,7 @@ export function App() {
           if (d < reach && d <= best + 14) { best = d; nextPrompt = make(); }
         };
         if (area === "hut0") {
+          hspot(true, BED_SPOT.x, BED_SPOT.y, 58, () => ({ kind: "sleep" }));
           hspot(flagHas(flagsNow, "bread"), PICH_IN_SPOT.x, PICH_IN_SPOT.y, 58, () => ({ kind: "offer" }));
           hspot(flagHas(flagsNow, "offering") && !flagHas(flagsNow, "stone"), PICH_IN_SPOT.x, PICH_IN_SPOT.y + 14, 58, () => ({ kind: "gift" }));
         }
@@ -1076,13 +1283,17 @@ export function App() {
       } else if (fishingRef.current?.phase === "bite") {
         nextPrompt = { kind: "reel" };
       } else {
-        for (const npc of ALL_CHARS) {
+        for (const npc of villageChars) {
           const pos = charPos(npc, now);
           const d = Math.hypot(pos.x - p.x, pos.y - p.y);
           // Viy is enormous and the Bolotianyk sits out in the pond, so both
-          // can be addressed from further off than a person.
+          // can be addressed from further off than a person. With the
+          // chalk, after dark, approaching Viy begins the vigil.
           const reach = npc.id === "viy" ? 158 : npc.id === "bolotianyk" ? 92 : 64;
-          if (d < reach && d - reach < best - 64) { best = d - reach + 64; nextPrompt = { kind: "talk", npc }; }
+          if (d < reach && d - reach < best - 64) {
+            best = d - reach + 64;
+            nextPrompt = npc.id === "viy" && vigilReady ? { kind: "vigil" } : { kind: "talk", npc };
+          }
         }
         patchesRef.current.forEach((patch, idx) => {
           if (!patch.available) return;
@@ -1110,6 +1321,7 @@ export function App() {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
       }
+      if (fight) nextPrompt = null;
       const key = promptKeyOf(nextPrompt);
       if (key !== promptKey) {
         promptKey = key;
@@ -1118,8 +1330,11 @@ export function App() {
       }
 
       // --- camera
+      // (during the vigil the camera looks up toward Viy, so both the
+      // chalk ring and his lids are in view)
+      const focusY = fight ? p.y - 110 : p.y;
       const camX = clamp(p.x - vw / 2, 0, Math.max(0, ws.w - vw));
-      const camY = clamp(p.y - vh / 2, 0, Math.max(0, ws.h - vh));
+      const camY = clamp(focusY - vh / 2, 0, Math.max(0, ws.h - vh));
 
       // --- render
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1166,7 +1381,7 @@ export function App() {
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
-      for (const npc of area === "lysa" ? [...LYSA_CHARS, ...LYSA_DANCERS] : area === "hut0" ? [DOMOVYK_IN] : area === "hut1" ? [VESNA_IN] : ALL_CHARS) {
+      for (const npc of area === "lysa" ? [...LYSA_CHARS, ...LYSA_DANCERS] : area === "hut0" ? [DOMOVYK_IN] : area === "hut1" ? [VESNA_IN] : villageChars) {
         const pos = charPos(npc, now);
         drawables.push({
           y: pos.y,
@@ -1254,6 +1469,16 @@ export function App() {
       vg.addColorStop(1, area === "lysa" ? "rgba(6,6,24,0.42)" : "rgba(43,26,4,0.28)");
       ctx2d.fillStyle = vg;
       ctx2d.fillRect(0, 0, vw, vh);
+
+      // night over the open village (huts are lamp-lit; Lysa Hora is
+      // always moonlit), then the vigil on top so the chalk stays bright
+      if (area === "village") {
+        drawNight(ctx2d, darkness(clockRef.current.minute), vw, vh, FIRE.x + FIRE.w / 2 - camX, FIRE.y + FIRE.h / 2 - camY);
+      }
+      if (fight) {
+        drawVigil(ctx2d, fight, VIGIL_CENTER.x, VIGIL_CENTER.y, camX, camY, now);
+        drawVigilOverlay(ctx2d, fight, vw, vh, lookingAway, now);
+      }
     };
     raf = requestAnimationFrame(frame);
     return () => {
@@ -1331,6 +1556,12 @@ export function App() {
         setConfirmReset(false);
         dialogueRef.current = null;
         setDialogue(null);
+        clockRef.current = { day: 1, minute: START_MINUTE };
+        clockAccRef.current = 0;
+        setHudClock(clockRef.current);
+        fightRef.current = null;
+        setHudFight(null);
+        vigilPendingRef.current = false;
       },
     });
   };
@@ -1359,61 +1590,10 @@ export function App() {
   const cap = carryCap(stats);
   const iron = flagCount(hudFlags, "iron");
   const haulingIron = !flagHas(hudFlags, "horseshoe") && iron > 0;
-  const metVillagers = hudTalked.filter((id) => VILLAGER_IDS.has(id)).length;
-  const metSpirits = hudTalked.filter((id) => id === "domovyk" || id === "lisovyk").length;
-  const metDark = hudTalked.filter((id) => id === "chort" || id === "bolotianyk").length;
-  const metViy = hudTalked.includes("viy");
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
-  const visitedLysa = hudArea === "lysa" || flagHas(hudFlags, "visitedLysa");
-  const lysaObjective =
-    hudArea !== "lysa"
-      ? null
-      : flagHas(hudFlags, "moonstone")
-        ? "Blessed by Beelzebub 🌙 — the west trail leads back down to Zalissya"
-        : flagHas(hudFlags, "lysaDanced")
-          ? "Ask Beelzebub for his blessing — the great seat, north of the fire"
-          : flagHas(hudFlags, "lysaOffering")
-            ? "Join the dance — step into the ring south of the bonfire"
-            : lysaFlowers >= 3
-              ? "Lay your nichnyky on the offering stone, north of the bonfire"
-              : `Gather nichnyky on the slopes for the offering · ${lysaFlowers}/3`;
-  const hutObjective =
-    hudArea === "hut0"
-      ? "Inside the Domovyk's hut — the pich is its warm heart. The door is south."
-      : hudArea === "hut1"
-        ? "Inside Vesna's hut — mind the cauldron. The door is south."
-        : null;
-  const objective = hutObjective ?? lysaObjective ??
-    (metVillagers < 3
-      ? `Meet the villagers · ${metVillagers}/3`
-      : hudHerbs < 5
-        ? `Gather herbs for Vesna · ${Math.min(hudHerbs, 5)}/5`
-        : metSpirits < 2
-          ? `Seek the spirits · Domovyk & Lisovyk ${metSpirits}/2`
-          : metDark < 2
-            ? `Stranger things stir · Chort & Bolotianyk ${metDark}/2`
-            : !visitedLysa
-              ? "Lysa Hora stirs — follow the east trail out of the clearing to the Chort's sabbath"
-              : !metViy
-              ? "Viy sleeps in the north-east hollow — go and see him"
-              : soulLost
-                ? `Buy your soul back: catch fish for the Chort · ${Math.min(fish, price)}/${price}`
-                : !flagHas(hudFlags, "offering")
-                  ? "Leave the campfire crust for the Domovyk — step inside his hut, by the pich"
-                  : iron < 3
-                    ? `Dig bog iron in the pond mud for Radek · ${iron}/3`
-                    : !flagHas(hudFlags, "horseshoe")
-                      ? "Bring the bog iron to Radek at the forge"
-                      : fishTotal < 1
-                        ? "Try fishing from the pond's west shore"
-                        : cooked < 1
-                          ? "Cook karas soup at the campfire pot · 1 fish + 1 herb"
-                          : smithed < 1
-                            ? "Work Radek's forge — stand at the anvil and hammer"
-                            : brewed < 1
-                              ? "Brew a tonic at Vesna's drying rack, by the north-east hut · 2 herbs"
-                              : "Zalissya is home now. The fire is warm, and Viy still sleeps");
+  const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute) });
+  const objective = hudFight ? "Hold the chalk circle until the rooster crows" : quests.objective;
   const promptHerb =
     prompt?.kind === "gather" ? HERBS[HERB_SPOTS[prompt.idx]?.kind ?? "kropyva"] : null;
   const promptLabel = !prompt
@@ -1450,13 +1630,24 @@ export function App() {
                               ? "Lay the offering 🌙"
                               : prompt.kind === "dance"
                                 ? "Join the dance 💃"
-                                : "Make a wish ✨";
+                                : prompt.kind === "sleep"
+                                  ? "Lie down 🛏"
+                                  : prompt.kind === "vigil"
+                                    ? "Draw the chalk circle ◯"
+                                    : "Make a wish ✨";
   const promptAria = !prompt
     ? ""
     : prompt.kind === "talk"
       ? prompt.npc.id === "viy" ? "Approach Viy — carefully" : `Talk to ${prompt.npc.name}`
-      : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪]\s*/g, " ").trim();
+      : prompt.kind === "vigil"
+        ? "Draw the chalk circle and begin Viy's vigil"
+        : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯]\s*/g, " ").trim();
+  const sealed = flagHas(hudFlags, "viySealed");
   const keepsakes: string[] = [
+    ...(sealed ? ["✦ Keeper of the vigil (WIS +1, CHA +1)"] : []),
+    ...(flagHas(hudFlags, "chalk") && !sealed ? ["◯ Blessed chalk"] : []),
+    ...(flagHas(hudFlags, "wreath") && !sealed ? ["🌿 Vesna's wreath"] : []),
+    ...(flagHas(hudFlags, "ironward") && !sealed ? ["⚒ Iron nails for the chalk"] : []),
     ...(flagHas(hudFlags, "moonstone") ? ["🌙 Moonstone (WIS +1, CHA +1)"] : []),
     ...(flagHas(hudFlags, "gold") ? ["🪙 Devil's gold (CHA +2)"] : []),
     ...(flagHas(hudFlags, "stone") ? ["🪨 Warm stone (CON +1)"] : []),
@@ -1473,128 +1664,12 @@ export function App() {
     { name: "Smithing", level: smithLvl, done: smithed, next: CRAFT_THRESH[smithLvl] ?? null, stat: "STR" },
     { name: "Alchemy", level: alchemyLvl, done: brewed, next: CRAFT_THRESH[alchemyLvl] ?? null, stat: "INT" },
   ];
-  // --- Quest log ------------------------------------------------------------
-  // Every thread the game is tracking, derived from the same flags and
-  // counters the objective line reads — the HUD shows only the single
-  // current step, so the full list lives here. "active" mirrors the
-  // objective chain's priority (on Lysa Hora, the sabbath chain wins).
-  type QuestItem = { id: string; title: string; detail: string; done: boolean };
-  type QuestStatus = "done" | "active" | "todo";
-  const lysaChainDone = flagHas(hudFlags, "moonstone");
-  const activeQuestId: string | null =
-    hudArea === "lysa" && !lysaChainDone
-      ? "lysa-sabbath"
-      : metVillagers < 3
-        ? "meet"
-        : hudHerbs < 5
-          ? "herbs"
-          : metSpirits < 2
-            ? "spirits"
-            : metDark < 2
-              ? "dark"
-              : !visitedLysa
-                ? "lysa-visit"
-                : !metViy
-                  ? "viy"
-                  : soulLost
-                    ? "soul"
-                    : !flagHas(hudFlags, "offering")
-                      ? "domovyk"
-                      : iron < 3
-                        ? "forge"
-                        : !flagHas(hudFlags, "horseshoe")
-                          ? "forge"
-                          : fishTotal < 1
-                            ? "fishing"
-                            : cooked < 1
-                              ? "cooking"
-                              : smithed < 1
-                                ? "smithing"
-                                : brewed < 1
-                                  ? "alchemy"
-                                  : !lysaChainDone
-                                    ? "lysa-sabbath"
-                                    : null;
-  const soulQuest: QuestItem[] = flagHas(hudFlags, "soulsold")
-    ? [{
-        id: "soul",
-        title: "The Chort's bargain",
-        detail: flagHas(hudFlags, "soulback")
-          ? "Bought back — soul, shadow and all"
-          : `Catch fish for the Chort to buy your soul back · ${Math.min(fish, price)}/${price}`,
-        done: flagHas(hudFlags, "soulback"),
-      }]
-    : [];
-  const questSections: Array<{ title: string; quests: QuestItem[] }> = [
-    {
-      title: "Story",
-      quests: [
-        { id: "meet", title: "Meet the villagers", detail: `Talk to Myroslav, Vesna and Radek · ${metVillagers}/3`, done: metVillagers >= 3 },
-        { id: "herbs", title: "Herbs for Vesna", detail: `Gather herbs in the clearing · ${Math.min(hudHerbs, 5)}/5`, done: hudHerbs >= 5 },
-        { id: "spirits", title: "Seek the spirits", detail: `Find the Domovyk and the Lisovyk · ${metSpirits}/2`, done: metSpirits >= 2 },
-        { id: "dark", title: "Stranger things stir", detail: `Meet the Chort and the Bolotianyk · ${metDark}/2`, done: metDark >= 2 },
-        { id: "viy", title: "Look upon Viy", detail: "Approach Viy in the north-east hollow — look, but do not wake him", done: metViy },
-      ],
-    },
-    {
-      title: "Village life",
-      quests: [
-        {
-          id: "domovyk",
-          title: "Bread for the Domovyk",
-          detail: flagHas(hudFlags, "stone")
-            ? "Bread left, thanks received — his warm stone is yours"
-            : flagHas(hudFlags, "offering")
-              ? "The crust is eaten. See what waits by his door"
-              : flagHas(hudFlags, "bread")
-                ? "Leave the crust by the pich, inside his hut"
-                : "Take the crust by the campfire and leave it by the Domovyk's pich",
-          done: flagHas(hudFlags, "stone"),
-        },
-        {
-          id: "forge",
-          title: "Light Radek's forge",
-          detail: flagHas(hudFlags, "horseshoe")
-            ? "The forge is lit, and the horseshoe is yours"
-            : iron >= 3
-              ? "Bring the bog iron to Radek at the forge"
-              : `Dig bog iron in the pond mud · ${iron}/3`,
-          done: flagHas(hudFlags, "horseshoe"),
-        },
-        ...soulQuest,
-        { id: "fishing", title: "First catch", detail: fishTotal > 0 ? `Lifetime catch · ${fishTotal} fish` : "Cast from the pond's west shore and wait for the bite", done: fishTotal >= 1 },
-        { id: "cooking", title: "Cook karas soup", detail: "At the campfire pot · 1 fish + 1 herb", done: cooked >= 1 },
-        { id: "smithing", title: "Work the forge", detail: flagHas(hudFlags, "horseshoe") ? "Work the anvil at Radek's lit forge" : "Needs Radek's forge lit first", done: smithed >= 1 },
-        { id: "alchemy", title: "Brew a tonic", detail: "At Vesna's drying rack, by the north-east hut · 2 herbs", done: brewed >= 1 },
-      ],
-    },
-    {
-      title: "Lysa Hora",
-      quests: [
-        { id: "lysa-visit", title: "Climb to Lysa Hora", detail: "Follow the east trail out of the clearing", done: visitedLysa },
-        {
-          id: "lysa-sabbath",
-          title: "The sabbath",
-          detail: lysaChainDone
-            ? "Beelzebub's blessing received — the Moonstone is yours"
-            : flagHas(hudFlags, "lysaDanced")
-              ? "Ask Beelzebub for his blessing"
-              : flagHas(hudFlags, "lysaOffering")
-                ? "Join the dance, south of the bonfire"
-                : lysaFlowers >= 3
-                  ? "Lay your nichnyky on the offering stone"
-                  : `Gather nichnyky on the slopes · ${lysaFlowers}/3`,
-          done: lysaChainDone,
-        },
-      ],
-    },
-  ];
-  const allQuests = questSections.flatMap((s) => s.quests);
-  const questsDone = allQuests.filter((q) => q.done).length;
-  const questStatus = (q: QuestItem): QuestStatus =>
-    q.done ? "done" : q.id === activeQuestId ? "active" : "todo";
+  // --- Quest log: every thread, from systems/quests.ts (the same source
+  // as the objective line above, so the two always agree).
+  const questStatus = (q: QuestItem): "done" | "active" | "todo" => (q.done ? "done" : q.active ? "active" : "todo");
 
   const openPanel = (tab: "stats" | "skills" | "quests") => {
+    if (fightRef.current) return;
     setPanelTab(tab);
     panelRef.current = true;
     setPanelOpen(true);
@@ -1614,7 +1689,7 @@ export function App() {
       >
         <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} aria-label="Zalissya village clearing — game view" />
         {/* warm sunlight wash in the village; cold moonwash on Lysa Hora */}
-        <div className="pointer-events-none absolute inset-0" style={{ background: hudArea === "lysa" ? "linear-gradient(160deg, rgba(140,160,255,0.13) 0%, rgba(140,160,255,0) 50%)" : isHutArea(hudArea) ? "linear-gradient(165deg, rgba(255,170,80,0.15) 0%, rgba(255,170,80,0) 55%)" : "linear-gradient(135deg, rgba(255,196,86,0.14) 0%, rgba(255,196,86,0) 45%)" }} />
+        <div className="pointer-events-none absolute inset-0" style={{ background: hudArea === "lysa" || (hudArea === "village" && isNight(hudClock.minute)) ? "linear-gradient(160deg, rgba(140,160,255,0.13) 0%, rgba(140,160,255,0) 50%)" : isHutArea(hudArea) ? "linear-gradient(165deg, rgba(255,170,80,0.15) 0%, rgba(255,170,80,0) 55%)" : "linear-gradient(135deg, rgba(255,196,86,0.14) 0%, rgba(255,196,86,0) 45%)" }} />
       </div>
 
       {!started && (
@@ -1647,6 +1722,7 @@ export function App() {
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
                 {hudArea === "lysa" ? "🌙 Lysa Hora · the Bald Mountain" : hudArea === "hut0" ? "🏠 Inside · the Domovyk's hut" : hudArea === "hut1" ? "🏠 Inside · Vesna's hut" : "Zalissya"}
+                <span className="ml-1.5 normal-case tracking-normal text-[#e8d7ad]">{timeLabel(hudClock)}</span>
               </p>
               <p className="font-serif text-[13px] font-bold leading-tight">
                 {objective}
@@ -1674,7 +1750,7 @@ export function App() {
                 </button>
                 <button
                   type="button"
-                  aria-label={`Open quest log — ${questsDone} of ${allQuests.length} quests done`}
+                  aria-label={`Open quest log — ${quests.done} of ${quests.total} quests done`}
                   onClick={() => openPanel("quests")}
                   className="rounded-lg bg-[#7a4a2b]/85 px-3 py-2 text-xs font-bold text-[#f3e9d2] shadow backdrop-blur-[2px]"
                 >
@@ -1724,7 +1800,7 @@ export function App() {
               is what the phone's pull-to-refresh steals. */}
           {/* Pad / Stick toggle — only where a joystick is allowed (the
               GitHub Pages build). Muse never shows it. */}
-          {JOYSTICK_ALLOWED && !dialogue && !panelOpen && (
+          {JOYSTICK_ALLOWED && !dialogue && !panelOpen && !hudFight && (
             <div className="absolute bottom-[212px] left-4 z-10 flex overflow-hidden rounded-lg border border-[#f3e9d2]/40 shadow" role="group" aria-label="Movement control style">
               {(["pad", "stick"] as const).map((c) => (
                 <button
@@ -1740,12 +1816,12 @@ export function App() {
               ))}
             </div>
           )}
-          {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && (
+          {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && !hudFight && (
             <div className="absolute bottom-5 left-4 z-10">
               <Joystick stickRef={stickRef} />
             </div>
           )}
-          {controls === "pad" && !dialogue && !panelOpen && (
+          {controls === "pad" && !dialogue && !panelOpen && !hudFight && (
             <div
               className="absolute bottom-5 left-4 z-10"
               style={{ touchAction: "none" }}
@@ -1778,6 +1854,78 @@ export function App() {
             </div>
           )}
 
+          {/* Viy's vigil — nerve, the night left, and the two controls.
+              Both are press/hold buttons (no drags), so they are safe in
+              the Muse build. Keyboard: E / Space wards, hold Shift or L
+              to look away. */}
+          {hudFight && !dialogue && (
+            <>
+              <div className="pointer-events-none absolute inset-x-0 bottom-[140px] z-10 flex justify-center px-4 pb-safe">
+                <div className="w-full max-w-xs rounded-xl bg-[#1c1409]/75 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
+                  <div className="flex justify-between text-[11px] font-semibold">
+                    <span>Nerve</span>
+                    <span>{hudFight.nerve}/{hudFight.max}</span>
+                  </div>
+                  <div className="mt-1 h-2 rounded-full bg-[#f3e9d2]/20">
+                    <div className="h-2 rounded-full bg-[#c23b2a]" style={{ width: `${(100 * hudFight.nerve) / hudFight.max}%` }} />
+                  </div>
+                  <div className="mt-2 flex justify-between text-[11px] font-semibold">
+                    <span>Until cockcrow 🐓</span>
+                    <span>{Math.max(0, Math.ceil(VIGIL_SECONDS - hudFight.t))}s</span>
+                  </div>
+                  <div className="mt-1 h-2 rounded-full bg-[#f3e9d2]/20">
+                    <div className="h-2 rounded-full bg-[#d99a2b]" style={{ width: `${Math.min(100, (100 * hudFight.t) / VIGIL_SECONDS)}%` }} />
+                  </div>
+                </div>
+              </div>
+              {hudFight.gaze !== "closed" && (
+                <p className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center font-serif text-2xl font-bold text-[#f0a696] [text-shadow:0_2px_6px_rgba(0,0,0,0.9)]">
+                  {hudFight.gaze === "rising" ? "“Lift my eyelids!”" : lookHeld ? "…eyes covered…" : "DON'T LOOK!"}
+                </p>
+              )}
+              <div className="absolute inset-x-0 bottom-6 z-10 flex justify-between gap-3 px-4 pb-safe" style={{ touchAction: "none" }}>
+                <button
+                  type="button"
+                  aria-label="Look away — hold while Viy's eyes are open"
+                  aria-pressed={lookHeld}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                    lookHeldRef.current = true;
+                    setLookHeld(true);
+                  }}
+                  onPointerUp={releaseLook}
+                  onPointerCancel={releaseLook}
+                  onLostPointerCapture={releaseLook}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`flex h-24 w-32 flex-col items-center justify-center rounded-2xl border font-serif text-base font-bold shadow-xl ${
+                    lookHeld ? "border-[#f3e9d2] bg-[#3a3444] text-[#f3e9d2]" : "border-[#f3e9d2]/50 bg-[#1c1409]/75 text-[#f3e9d2]"
+                  }`}
+                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }}
+                >
+                  Look away 🙈
+                  <span className="text-[10px] font-semibold opacity-75">hold</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Ward — drive back the host from the chalk"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    wardQueuedRef.current = true;
+                  }}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`flex h-24 w-32 flex-col items-center justify-center rounded-2xl font-serif text-base font-bold shadow-xl ${
+                    hudFight.ready && !lookHeld ? "bg-[#d99a2b] text-[#33241a]" : "bg-[#8a7350] text-[#33241a]/70"
+                  }`}
+                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }}
+                >
+                  Ward ✋
+                  <span className="text-[10px] font-semibold opacity-75">{hudFight.ready ? "tap" : "catching breath…"}</span>
+                </button>
+              </div>
+            </>
+          )}
+
           {/* Toast — catches, keepsakes, and consequences */}
           {toast && (
             <div className="pointer-events-none absolute inset-x-0 top-24 z-20 flex justify-center px-4">
@@ -1788,7 +1936,7 @@ export function App() {
           )}
 
           {/* Interact button */}
-          {!dialogue && !panelOpen && prompt && (
+          {!dialogue && !panelOpen && !hudFight && prompt && (
             <button
               type="button"
               aria-label={promptAria}
@@ -1803,7 +1951,7 @@ export function App() {
               {promptLabel}
             </button>
           )}
-          {!dialogue && !panelOpen && !prompt && controls === "pad" && (
+          {!dialogue && !panelOpen && !hudFight && !prompt && controls === "pad" && (
             <p className="pointer-events-none absolute bottom-6 right-5 z-10 max-w-[38%] text-right text-[11px] leading-snug text-[#f3e9d2]/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
               Hold a direction to walk · WASD works too
             </p>
@@ -1815,7 +1963,7 @@ export function App() {
               <div className="mx-auto max-w-xl rounded-2xl border border-[#d9c491]/60 bg-[#f3e9d2] p-4 shadow-2xl">
                 <p className="font-serif text-sm font-bold text-[#7a4a2b]">
                   {dialogue.npc.name}{" "}
-                  <span className="font-normal italic text-[#a3805a]">({dialogue.npc.pron})</span>{" "}
+                  {dialogue.npc.pron && <span className="font-normal italic text-[#a3805a]">({dialogue.npc.pron}) </span>}
                   <span className="font-normal text-[#a3805a]">· {dialogue.npc.role}</span>
                 </p>
                 {dialogue.view === "topic" && dialogue.topic && (
@@ -1898,7 +2046,23 @@ export function App() {
                     </div>
                   )
                 ) : dialogue.choiceAt != null && dialogue.line === dialogue.choiceAt ? (
-                  dialogue.choiceKind === "brew" ? (
+                  dialogue.choiceKind === "options" && dialogue.options && dialogue.optionsTag ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {dialogue.options.map((o) => (
+                        <button
+                          key={o.id}
+                          type="button"
+                          aria-label={o.aria}
+                          onClick={() => pickOption(dialogue.optionsTag ?? "sleep", o.id)}
+                          className={`rounded-lg px-3.5 py-2 font-serif text-sm font-bold ${
+                            o.id === "cancel" ? "bg-[#e2d3ae] text-[#5d4630] active:bg-[#d3c096]" : "bg-[#7a4a2b] text-[#f3e9d2] active:bg-[#5d3a1f]"
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : dialogue.choiceKind === "brew" ? (
                     <div className="mt-2">
                       <span className="text-[11px] italic text-[#a3805a]">The cauldron bubbles, waiting…</span>
                       <div className="mt-1.5 flex flex-wrap gap-2">
@@ -2043,10 +2207,10 @@ export function App() {
                 {panelTab === "quests" ? (
                   <div className="mt-3">
                     <p className="text-[12px] italic leading-snug text-[#7a6248]">
-                      {questsDone} of {allQuests.length} done. The step marked <span className="font-bold not-italic text-[#7a4a2b]">Now</span> is
+                      {quests.done} of {quests.total} done. The step marked <span className="font-bold not-italic text-[#7a4a2b]">Now</span> is
                       where the story stands — the rest wait their turn, and nothing is lost by wandering.
                     </p>
-                    {questSections.map((section) => (
+                    {quests.sections.map((section) => (
                       <div key={section.title} className="mt-3">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a3805a]">{section.title}</p>
                         {section.quests.map((q) => {

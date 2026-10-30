@@ -5,6 +5,7 @@
   "description": "Static GitHub Pages build of the shared client in ../client. Installs and builds without the Muse SDK.",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test ../client/src",
     "build": "bun ./build.ts",
     "dev": "bun ./build.ts --watch --serve"
   },

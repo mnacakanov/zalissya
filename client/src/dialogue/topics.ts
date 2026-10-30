@@ -25,6 +25,8 @@ export type DialogueTopic = {
   question: string;
   lines: string[];
   action?: "bargain" | "blessing";
+  // Asking hands this item over (Viy's night preparations — see viyNight.ts).
+  grant?: "chalk" | "wreath" | "ironward";
 };
 
 export type TopicSet = { intro: string[]; topics: DialogueTopic[] };

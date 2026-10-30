@@ -22,6 +22,8 @@ export type Prompt =
   | { kind: "offering" }
   | { kind: "dance" }
   | { kind: "blessing" }
+  | { kind: "sleep" }
+  | { kind: "vigil" }
   | null;
 
 export function promptKeyOf(p: Prompt): string {
@@ -55,12 +57,18 @@ export type Dialogue = {
   lines: string[];
   line: number;
   choiceAt?: number;
-  choiceKind?: "chort" | "brew";
+  choiceKind?: "chort" | "brew" | "options";
+  // choiceKind "options": a list of buttons at the choice page, answered
+  // by App's pickOption(optionsTag, option id).
+  options?: DialogueOption[];
+  optionsTag?: "sleep";
   topics?: DialogueTopic[];
   asked?: string[];
   view?: "lines" | "menu" | "topic";
   topic?: DialogueTopic;
   topicLine?: number;
 };
+
+export type DialogueOption = { id: string; label: string; aria: string };
 
 export type BrewRecipe = "base" | "strong";
