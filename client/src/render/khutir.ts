@@ -342,3 +342,93 @@ export function drawKurhan(c: CanvasRenderingContext2D, x: number, y: number): v
   c.fillStyle = "rgba(255,255,255,0.12)";
   c.fillRect(bx - 7, by - 32, 3, 28);
 }
+
+// A khata you can walk into, seen from outside: a deep hipped thatch roof
+// over the whole footprint and the whitewashed front wall with its door.
+// `alpha` fades it out while the kobzar is inside (the room shows through).
+export function drawKhataBig(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, seed: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  c.save();
+  c.globalAlpha = alpha;
+  const front = 64; // height of the visible front wall
+  const wallTop = y + h - front;
+  // shadow on the ground
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + w / 2, y + h + 8, w * 0.58, 13, 0, 0, Math.PI * 2); c.fill();
+  // front wall
+  c.fillStyle = "#f3eee3";
+  rr(c, x, wallTop, w, front, 4); c.fill();
+  c.fillStyle = "rgba(150,140,120,0.18)";
+  c.fillRect(x + w * 0.74, wallTop, w * 0.26, front);
+  c.fillStyle = "#a8643c";
+  rr(c, x - 4, y + h - 12, w + 8, 12, 3); c.fill();
+  // door (matches the gap in the walls: houseSolids, DOOR_GAP 46)
+  const dx = x + w / 2 - 17;
+  c.fillStyle = "#e4dccb";
+  c.fillRect(dx - 3, y + h - 54, 40, 44);
+  c.fillStyle = "#5a3a22";
+  rr(c, dx, y + h - 51, 34, 41, 2); c.fill();
+  c.fillStyle = "#46301c";
+  c.fillRect(dx + 16, y + h - 51, 2, 41);
+  c.fillStyle = "#d9a441";
+  c.fillRect(dx + 25, y + h - 32, 3, 3);
+  // windows either side
+  for (const wx of [x + 34, x + w - 70]) {
+    const wy = wallTop + 14;
+    c.fillStyle = "#3f63a8";
+    rr(c, wx - 3, wy - 3, 42, 30, 3); c.fill();
+    c.fillStyle = "#ffe2a4";
+    c.fillRect(wx, wy, 36, 24);
+    c.fillStyle = "#3f63a8";
+    c.fillRect(wx + 17, wy, 2, 24);
+    c.fillRect(wx, wy + 11, 36, 2);
+    for (let i = 0; i < 5; i++) {
+      c.fillStyle = i % 2 ? "#c8402e" : "#3f7a2e";
+      c.beginPath(); c.arc(wx + 4 + i * 7, wy - 8 - (i === 2 ? 2 : 0), 2.2, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // the roof: back slope (darker), ridge, front slope over the eave
+  const eave = wallTop + 6;
+  const ridge = y + (eave - y) * 0.42;
+  c.fillStyle = "#86672f";
+  c.beginPath();
+  c.moveTo(x - 16, ridge); c.quadraticCurveTo(x - 18, y - 6, x + w * 0.2, y - 14);
+  c.lineTo(x + w * 0.8, y - 14); c.quadraticCurveTo(x + w + 18, y - 6, x + w + 16, ridge);
+  c.closePath(); c.fill();
+  c.fillStyle = "#b8954f";
+  c.beginPath();
+  c.moveTo(x - 18, eave + 4); c.lineTo(x - 16, ridge); c.lineTo(x + w + 16, ridge); c.lineTo(x + w + 18, eave + 4);
+  c.closePath(); c.fill();
+  c.strokeStyle = "rgba(110,82,36,0.42)";
+  c.lineWidth = 1.2;
+  for (let i = 0; i < 34; i++) {
+    const px = x - 14 + (i / 33) * (w + 28);
+    c.beginPath(); c.moveTo(px, ridge + 2); c.lineTo(px + (hash2(i, seed) - 0.5) * 5, eave + 2); c.stroke();
+  }
+  c.strokeStyle = "rgba(90,66,28,0.35)";
+  for (let i = 0; i < 24; i++) {
+    const px = x - 10 + (i / 23) * (w + 20);
+    c.beginPath(); c.moveTo(px, y - 10); c.lineTo(px + (hash2(seed, i) - 0.5) * 4, ridge - 2); c.stroke();
+  }
+  c.fillStyle = "#7d6030";
+  rr(c, x - 18, ridge - 4, w + 36, 8, 4); c.fill();
+  c.fillStyle = "#7d6030";
+  c.fillRect(x - 18, eave + 2, w + 36, 6);
+  c.fillStyle = "rgba(60,40,20,0.18)";
+  c.fillRect(x, eave + 8, w, 6);
+  // clay chimney with smoke
+  const chx = x + w * 0.66;
+  const chy = ridge - 26;
+  c.fillStyle = "#e9e3d6";
+  c.fillRect(chx, chy, 16, 26);
+  c.fillStyle = "#c9c0ae";
+  c.fillRect(chx - 2, chy - 3, 20, 5);
+  for (let i = 0; i < 3; i++) {
+    const ph = (t * 0.00016 + i / 3 + hash2(seed, i)) % 1;
+    c.fillStyle = `rgba(240,238,232,${0.45 * (1 - ph)})`;
+    c.beginPath();
+    c.arc(chx + 8 + ph * 16 + Math.sin(ph * 6 + seed) * 3, chy - 6 - ph * 44, 4 + ph * 8, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+}

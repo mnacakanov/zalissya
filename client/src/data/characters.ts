@@ -1,4 +1,5 @@
 import { LYSA_ORIGIN, LYSA_WORLD } from "./lysa";
+import { DOMOVYK_HOME } from "./houses";
 import { t } from "../i18n";
 
 // --- People -----------------------------------------------------------------
@@ -17,17 +18,17 @@ export type Npc = {
 
 export const NPCS: Npc[] = [
   { id: "myroslav", name: t("char.myroslav.name.0"), pron: t("char.myroslav.pron.0"), role: t("char.myroslav.role.0"), x: 760, y: 520, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder" },
-  { id: "vesna", name: t("char.vesna.name.0"), pron: t("char.vesna.pron.0"), role: t("char.vesna.role.0"), x: 1196, y: 824, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist" },
+  { id: "vesna", name: t("char.vesna.name.0"), pron: t("char.vesna.pron.0"), role: t("char.vesna.role.0"), x: 1150, y: 840, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist" },
   { id: "radek", name: t("char.radek.name.0"), pron: t("char.radek.pron.0"), role: t("char.radek.role.0"), x: 340, y: 806, tunic: "#4c4a48", hair: "#2e2018", style: "smith" },
 ];
 
 // The spirits — present in the world, approachable, talkable. Positions here
 // are home anchors; charPos() adds each spirit's slow wander on top.
 export const SPIRITS: Npc[] = [
-  { id: "domovyk", name: t("char.domovyk.name.0"), pron: t("char.domovyk.pron.0"), role: t("char.domovyk.role.0"), x: 430, y: 352, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk" },
+  { id: "domovyk", name: t("char.domovyk.name.0"), pron: t("char.domovyk.pron.0"), role: t("char.domovyk.role.0"), x: DOMOVYK_HOME.x, y: DOMOVYK_HOME.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk" },
   { id: "lisovyk", name: t("char.lisovyk.name.0"), pron: t("char.lisovyk.pron.0"), role: t("char.lisovyk.role.0"), x: 1010, y: 196, tunic: "#33502e", hair: "#4c6b35", style: "lisovyk" },
   { id: "chort", name: t("char.chort.name.0"), pron: t("char.chort.pron.0"), role: t("char.chort.role.0"), x: 545, y: 1052, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
-  { id: "bolotianyk", name: t("char.bolotianyk.name.0"), pron: t("char.bolotianyk.pron.0"), role: t("char.bolotianyk.role.0"), x: 1182, y: 992, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
+  { id: "bolotianyk", name: t("char.bolotianyk.name.0"), pron: t("char.bolotianyk.pron.0"), role: t("char.bolotianyk.role.0"), x: 1182, y: 1032, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
   { id: "viy", name: t("char.viy.name.0"), pron: t("char.viy.pron.0"), role: t("char.viy.role.0"), x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "viy" },
 ];
 

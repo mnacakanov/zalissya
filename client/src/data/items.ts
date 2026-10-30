@@ -25,8 +25,8 @@ export const HERBS: Record<HerbKind, HerbDef> = {
 // --- Village life spots (non-combat interactivity) --------------------------
 
 // The fishing shore: stand on the pond's west bank, cast toward the water.
-export const FISH_SPOT = { x: 1150, y: 1040 };
-export const BOBBER = { x: 1235, y: 1022 };
+export const FISH_SPOT = { x: 1150, y: 1080 };
+export const BOBBER = { x: 1235, y: 1062 };
 // A crust of bread waits by the campfire for whoever thinks of the Domovyk.
 export const CRUST_SPOT = { x: 772, y: 660 };
 // The pich inside the Domovyk's hut — where offerings go, now that the
@@ -43,9 +43,9 @@ export const FORGE_SPOT = { x: 330, y: 764 };
 export const BREW_SPOT = { x: 1224, y: 340 };
 // Lumps of bog iron glinting in the pond mud — Radek's forge needs iron.
 export const IRON_SPOTS: Array<{ x: number; y: number }> = [
-  { x: 1150, y: 928 },
-  { x: 1492, y: 1092 },
-  { x: 1300, y: 1142 },
+  { x: 1150, y: 968 },
+  { x: 1492, y: 1132 },
+  { x: 1300, y: 1182 },
 ];
 
 // What the pond gives up. Karas (карась, crucian carp) keeps its Ukrainian
@@ -70,7 +70,7 @@ export const WISH_LINES: string[] = [
 
 export const HERB_SPOTS: Array<{ x: number; y: number; kind: HerbKind }> = [
   { x: 520, y: 560, kind: "kropyva" }, { x: 1080, y: 520, kind: "polyn" },
-  { x: 700, y: 980, kind: "kalendula" }, { x: 1240, y: 900, kind: "zvirobiy" },
+  { x: 700, y: 980, kind: "kalendula" }, { x: 1050, y: 990, kind: "zvirobiy" },
   { x: 420, y: 880, kind: "dereviy" }, { x: 980, y: 760, kind: "kropyva" },
   { x: 620, y: 340, kind: "polyn" }, { x: 900, y: 900, kind: "kalendula" },
   { x: 350, y: 420, kind: "zvirobiy" }, { x: 1380, y: 620, kind: "dereviy" },

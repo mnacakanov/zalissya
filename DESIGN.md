@@ -179,3 +179,15 @@ The world is big now, so there is a **map** (`ui/MapOverlay.tsx`, `render/map.ts
 - **The Chort's sale:** the Chort sells his **devil's map** (it smells of sulphur) for **3 fish**, by the millstone or on the mountain. He won't take his own gold back.
 
 Without a map, M and the Y button only say where one can be had.
+
+## Walking into the khaty
+
+The two khaty with insides, the Domovyk's and Vesna's, are no longer separate rooms you teleport into.
+- **Bigger and in the world:** they are now nearly twice the size and stand in the world (`data/houses.ts`). Their walls have a real door in the middle of the front wall.
+- **The roof lifts:** walk through the door and the roof fades away to show the room, with the same pich, bed, table, rug and cauldron as before, scaled into the footprint. Walk out and it settles back.
+- **Lamplight:** at night the room keeps a warm glow.
+- **Residents:** the Domovyk now really lives inside, by his pich.
+- **Rearranged:** Vesna's garden, a herb patch, the kurhan and the yard flowers moved to make room, and the pond shifted south so there's space outside Vesna's door.
+- **Unchanged:** the bed, the bread offering and the Domovyk's gift work where they always did, inside.
+
+The otaman's khata and the north-east hut are still closed façades.

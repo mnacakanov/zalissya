@@ -1,4 +1,5 @@
 import { CART } from "../data/chumaky";
+import { DOMOVYK_HOME, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
 import { BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
 import { BREW_SPOT, FISH_SPOT, IRON_SPOTS } from "../data/items";
@@ -21,11 +22,11 @@ export type MapView = { zoom: "world" | "near"; player: { x: number; y: number }
 export function questTarget(activeId: string | null, flags: ReadonlySet<string>): { x: number; y: number } | null {
   switch (activeId) {
     case "meet": case "evening": case "oldway": return { x: 840, y: 560 };
-    case "spirits": return { x: 430, y: 352 };
+    case "spirits": return DOMOVYK_HOME;
     case "dark": return { x: 545, y: 1052 };
     case "viy": case "vigil": return { x: 1420, y: 300 };
     case "chumaky": return chumakyPresent(flags) ? CART : null;
-    case "domovyk": return { x: 384, y: 336 };
+    case "domovyk": return PICH_SPOT;
     case "forge": return flagCount(flags, "iron") >= 3 ? { x: 340, y: 806 } : IRON_SPOTS[0] ?? null;
     case "soul": case "fishing": return FISH_SPOT;
     case "cooking": return { x: 840, y: 672 };
@@ -108,7 +109,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.fillStyle = "#e7853a";
   c.beginPath(); c.arc(X(LYSA_WORLD.summit.x), Y(LYSA_WORLD.summit.y), Math.max(2, 26 * s), 0, Math.PI * 2); c.fill();
   // khaty, windmill, kurhany
-  for (const ho of HOUSES) {
+  for (const ho of [...HOUSES, ...Object.values(HOUSE_RECTS).map((r) => ({ ...r, y: r.y + 30, h: r.h - 30 }))]) {
     c.fillStyle = "#f6f1e6"; c.fillRect(X(ho.x), Y(ho.y + 20), ho.w * s, (ho.h - 20) * s);
     c.fillStyle = "#a8854a"; c.fillRect(X(ho.x - 8), Y(ho.y - 10), (ho.w + 16) * s, 34 * s);
   }

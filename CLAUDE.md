@@ -84,7 +84,8 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 - **New conversation topic:** add it in `dialogue/topics.ts`, or in a story module like `dialogue/viyNight.ts` that is appended in `App.tsx`. A topic with `grant` hands over an item through `applyGrant`.
 - **New interactable:** add a `Prompt` kind (`ui/types.ts`), detect it in the frame loop's "nearest interactable" block, handle it in `doInteract`, and give it a label in `promptLabel`.
 - **New place in the open world:** put it on the big map (`data/`), with its drawing in `render/`. Prefer this over a new area: the owner wants places you walk to.
-- **New area (interiors only):** add it to `AreaId` (`world/areas.ts`) **and** `SAVE_AREAS` (`save/types.ts`) **and** `areaEnum` in `server/src/actions.ts`. The column is plain text, so no migration is needed.
+- **New walk-in building:** add a footprint in `data/houses.ts` (walls + door from `houseSolids`), its room drawing, and its roof (`drawKhataBig`). Prefer this over a new area.
+- **New area (rarely needed):** add it to `AreaId` (`world/areas.ts`) **and** `SAVE_AREAS` (`save/types.ts`) **and** `areaEnum` in `server/src/actions.ts`. The column is plain text, so no migration is needed.
 - **Pure logic goes in `systems/`, with tests.** Keep `App.tsx` as wiring.
 
 ## Setting and voice (owner decisions)
@@ -125,8 +126,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 - **Areas**:
   - `village`: the khutir and the steppe
   - `lysa`: the mountain, at the far end of the steppe trail
-  - `hut0`: the Domovyk's hut, with the pich and the bed you sleep in
-  - `hut1`: Vesna's hut
+  - `hut0` / `hut1`: no longer separate maps. The Domovyk's khata (pich, bed) and Vesna's khata stand **in the world** and you walk in through the door; the roof fades away while you are inside (`data/houses.ts`: footprints, walls with a door, furniture; the rooms are the old interiors from `render/huts.ts`, scaled into the footprint). Old saves with area `hut0`/`hut1` load inside the same khata.
 - **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith).
   - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy, the boss, sealed by the vigil.
   - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.

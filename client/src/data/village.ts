@@ -1,12 +1,11 @@
 import { hash2, type Rect } from "../world/geometry";
 import { FOREST_TREES } from "./land";
+import { houseSolids } from "./houses";
 
 // --- World layout -----------------------------------------------------------
 
 export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
-  { x: 300, y: 210, w: 168, h: 104, kind: "hut" },
   { x: 1140, y: 190, w: 168, h: 104, kind: "hut" },
-  { x: 1210, y: 700, w: 150, h: 96, kind: "hut" },
   { x: 250, y: 690, w: 156, h: 92, kind: "forge" },
   // the otaman's khata, facing the maidan
   { x: 500, y: 396, w: 150, h: 96, kind: "hut" },
@@ -14,8 +13,8 @@ export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
 
 export const WELL: Rect = { x: 806, y: 470, w: 68, h: 52 };
 export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
-export const POND = { x: 1330, y: 1010, rx: 165, ry: 92 };
-export const GARDEN: Rect = { x: 1150, y: 850, w: 150, h: 96 };
+export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
+export const GARDEN: Rect = { x: 960, y: 860, w: 150, h: 96 };
 
 export type TreeKind = "pine" | "birch" | "oak" | "cherry" | "willow";
 export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> = [];
@@ -42,7 +41,7 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     TREES.push({ x, y, kind: nearPond ? "willow" : kinds[i % 3] ?? "pine", s: 0.9 + hash2(x, y) * 0.45 });
   });
   // cherry trees by the khaty — «садок вишневий коло хати»
-  for (const [x, y] of [[262, 352], [1330, 334], [1398, 806], [500, 342]] as const) {
+  for (const [x, y] of [[165, 360], [1330, 334], [1530, 700], [555, 330]] as const) {
     TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
   }
   TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
@@ -57,7 +56,7 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
 // Landmarks: the windmill by the Chort's old millstone, and a burial mound
 // with its stone idol where the khutir gives way to the steppe.
 export const WINDMILL = { x: 404, y: 1012 };
-export const KURHAN = { x: 1496, y: 770 };
+export const KURHAN = { x: 1600, y: 800 };
 export const KURHAN_STEPPE = { x: 2150, y: 520 };
 
 // Yard plants (no collision): sunflowers, mallows, and feather grass on the
@@ -67,8 +66,8 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
 {
   const add = (kind: DecorKind, pts: Array<[number, number]>) =>
     pts.forEach(([x, y]) => DECOR.push({ x, y, kind, seed: hash2(x, y) }));
-  add("sunflower", [[488, 500], [292, 334], [306, 346], [474, 330], [1132, 318], [1148, 330], [432, 712], [446, 726], [1372, 812]]);
-  add("mallow", [[512, 486], [640, 488], [316, 322], [452, 324], [1296, 316], [1312, 318], [1226, 812], [1342, 814], [1180, 316]]);
+  add("sunflower", [[488, 500], [190, 380], [208, 392], [1132, 318], [1148, 330], [432, 712], [446, 726], [1515, 760]]);
+  add("mallow", [[512, 486], [640, 488], [300, 378], [450, 378], [1296, 316], [1312, 318], [1170, 880], [1515, 880], [1180, 316]]);
   // feather grass all over the open steppe
   for (let i = 0; i < 90; i++) {
     DECOR.push({ x: 1720 + hash2(i, 31) * 900, y: 60 + hash2(i, 37) * 1140, kind: "kovyla", seed: hash2(i, 41) });
@@ -86,6 +85,9 @@ export const FENCES: Rect[] = [
 
 export const SOLID: Rect[] = [
   ...HOUSES.map((h) => ({ x: h.x, y: h.y + 26, w: h.w, h: h.h - 26 })),
+  // the khaty you walk into: walls with a door, and their furniture
+  ...houseSolids("hut0"),
+  ...houseSolids("hut1"),
   WELL,
   FIRE,
   // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk

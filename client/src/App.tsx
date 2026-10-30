@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
-import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN } from "./data/characters";
-import { hutSolids } from "./data/huts";
-import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
+import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/characters";
+import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT } from "./data/houses";
+import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
-import { drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
+import { drawKhataBig, drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -44,7 +44,7 @@ import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { advance, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, HUT_DOOR_IN, HUT_H, HUT_SPAWN, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, VILLAGE_FROM_HUT0, VILLAGE_FROM_HUT1, WORLD_H, WORLD_W, worldSize } from "./world/areas";
+import { type AreaId, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
@@ -52,8 +52,8 @@ import { t } from "./i18n";
 // the HUD/sheets. Data, dialogue, systems and drawing live in their own
 // modules (see CLAUDE.md for the layout, DESIGN.md for the design record).
 
-// The Domovyk's bed (hut0, north-east corner) — sleep here to pass time.
-const BED_SPOT = { x: 635, y: 196 };
+// The Domovyk's bed (inside his khata, data/houses.ts) — sleep here to pass time.
+const BED_SPOT = BED_SPOT_WORLD;
 const BED_NPC: Npc = {
   id: "bed", name: t("ui.bed.name.0"), pron: "", role: t("ui.bed.role.0"),
   x: BED_SPOT.x, y: BED_SPOT.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
@@ -156,6 +156,11 @@ export function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  // which khata the kobzar stands in, if any (data/houses.ts), and how
+  // visible each khata's roof is (1 = closed, 0 = lifted away)
+  const [hudInside, setHudInside] = useState<HouseId | null>(null);
+  const insideRef = useRef<HouseId | null>(null);
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -276,36 +281,6 @@ export function App() {
     dialogueRef.current = null;
     setDialogue(null);
   };
-  // Stepping through a hut door — the interior twin of the Lysa trail
-  // transition: swap the area, land just inside (or just outside) the
-  // door, and let the autosave carry the new area like any other.
-  const enterHut = (hut: 0 | 1) => {
-    const dest: AreaId = hut === 0 ? "hut0" : "hut1";
-    areaRef.current = dest;
-    setHudArea(dest);
-    playerRef.current.x = HUT_SPAWN.x;
-    playerRef.current.y = HUT_SPAWN.y;
-    fishingRef.current = null;
-    promptRef.current = null;
-    setPrompt(null);
-    dirtyRef.current = true;
-    showToast(
-      hut === 0
-        ? t("ui.enterHut.0")
-        : t("ui.enterHut.1"),
-    );
-  };
-  const exitHut = () => {
-    const door = areaRef.current === "hut1" ? VILLAGE_FROM_HUT1 : VILLAGE_FROM_HUT0;
-    areaRef.current = "village";
-    setHudArea("village");
-    playerRef.current.x = door.x;
-    playerRef.current.y = door.y;
-    promptRef.current = null;
-    setPrompt(null);
-    dirtyRef.current = true;
-    showToast(t("ui.exitHut.0"));
-  };
   // Picking a question from the menu. The blessing topic never pages —
   // it hands straight over to Beelzebub's blessing script, and the
   // Moonstone lands when that script closes (blessingPendingRef).
@@ -330,7 +305,10 @@ export function App() {
     loadedRef.current = true;
     const s = saveQuery.data;
     if (s.exists) {
-      const area: AreaId = s.area === "lysa" ? "lysa" : s.area === "hut0" ? "hut0" : s.area === "hut1" ? "hut1" : "village";
+      // Saves from when the khaty were separate rooms come back inside the
+      // same khata, now standing in the world (data/houses.ts).
+      const oldRoom: HouseId | null = s.area === "hut0" || s.area === "hut1" ? s.area : null;
+      const area: AreaId = s.area === "lysa" ? "lysa" : "village";
       areaRef.current = area;
       setHudArea(area);
       // Saves from before the one-world map stored Lysa Hora in its own
@@ -339,6 +317,11 @@ export function App() {
       const ws = worldSize(area);
       playerRef.current.x = clamp(s.x + (onOldMountain ? LYSA_ORIGIN.x : 0), 30, ws.w - 30);
       playerRef.current.y = clamp(s.y + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, ws.h - 20);
+      if (oldRoom) {
+        const c0 = HOUSE_CENTER(oldRoom);
+        playerRef.current.x = c0.x;
+        playerRef.current.y = c0.y;
+      }
       // Map pre-rename save ids to their current forms.
       const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek", vij: "viy" };
       const mappedTalked = s.talked.map((id) => idMap[id] ?? id);
@@ -655,8 +638,8 @@ export function App() {
     } else {
       // Nothing is lost but the night: you wake in the Domovyk's bed.
       bumpCount("vigilBroken", 1);
-      areaRef.current = "hut0";
-      setHudArea("hut0");
+      areaRef.current = "village";
+      setHudArea("village");
       playerRef.current.x = BED_SPOT.x;
       playerRef.current.y = BED_SPOT.y + 24;
       passTime(minutesUntil(clockRef.current, WAKE_MINUTE));
@@ -835,12 +818,6 @@ export function App() {
     const p = promptRef.current;
     if (!p) return;
     switch (p.kind) {
-      case "enter":
-        enterHut(p.hut);
-        return;
-      case "exit":
-        exitHut();
-        return;
       case "talk": {
         const firstMeeting = !talkedRef.current.has(p.npc.id);
         if (firstMeeting) {
@@ -1367,7 +1344,7 @@ export function App() {
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
-      const solids = isHutArea(area) ? hutSolids(area) : [...SOLID, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
+      const solids = [...SOLID, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
@@ -1389,6 +1366,19 @@ export function App() {
         let ty = clamp(p.y + stepY, 46, ws.h - 10);
         if (!solids.some((b) => circleRectCollide(p.x, ty - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(p.x, ty) && !inRiver(p.x, ty)))) p.y = ty;
         dirtyRef.current = true;
+      }
+
+      // --- inside a khata? its roof lifts away (fades) while you are in
+      const insideNow = houseAt(p.x, p.y);
+      for (const id of HOUSE_IDS) {
+        const want = insideNow === id ? 0 : 1;
+        const cur = roofAlphaRef.current[id];
+        roofAlphaRef.current[id] = cur + (want - cur) * Math.min(1, dt * 8);
+      }
+      if (insideNow !== insideRef.current) {
+        insideRef.current = insideNow;
+        setHudInside(insideNow);
+        if (insideNow) showToast(t(insideNow === "hut0" ? "ui.enterHut.0" : "ui.enterHut.1"));
       }
 
       // --- the clock: stops while talking, reading, dancing, or keeping
@@ -1450,17 +1440,6 @@ export function App() {
             }
           }
           dirtyRef.current = true;
-        } else if (area === "village" && my < 0 && Math.abs(p.x - 384) < 34 && p.y >= 316 && p.y <= 342) {
-          // Walking up into the Domovyk's hut door (north-west hut).
-          enterHut(0);
-        } else if (area === "village" && my < 0 && Math.abs(p.x - 1285) < 34 && p.y >= 798 && p.y <= 822) {
-          // Walking up into Vesna's hut door (south-east hut — the one
-          // she stands beside, by her garden).
-          enterHut(1);
-        } else if (isHutArea(area) && p.y >= HUT_H - 70) {
-          // Out of the interior's south door — only the door gap in
-          // the south wall lets the player reach this far down.
-          exitHut();
         }
       }
 
@@ -1555,25 +1534,6 @@ export function App() {
         if (flagHas(flagsNow, "lysaOffering") && !flagHas(flagsNow, "lysaDanced")) {
           lspot(LYSA_WORLD.dance.x, LYSA_WORLD.dance.y, 66, () => ({ kind: "dance" }));
         }
-      } else if (isHutArea(area)) {
-        // Inside a hut: the resident, the pich offering spots (the
-        // Domovyk's hut only — the bread offering and his gift live
-        // indoors now), and the door back out.
-        const resident = area === "hut1" ? VESNA_IN : DOMOVYK_IN;
-        const rpos = charPos(resident, now);
-        const rd = Math.hypot(rpos.x - p.x, rpos.y - p.y);
-        if (rd < 64) { best = rd; nextPrompt = { kind: "talk", npc: resident }; }
-        const hspot = (cond: boolean, x: number, y: number, reach: number, make: () => Prompt) => {
-          if (!cond) return;
-          const d = Math.hypot(x - p.x, y - p.y);
-          if (d < reach && d <= best + 14) { best = d; nextPrompt = make(); }
-        };
-        if (area === "hut0") {
-          hspot(true, BED_SPOT.x, BED_SPOT.y, 58, () => ({ kind: "sleep" }));
-          hspot(flagHas(flagsNow, "bread"), PICH_IN_SPOT.x, PICH_IN_SPOT.y, 58, () => ({ kind: "offer" }));
-          hspot(flagHas(flagsNow, "offering") && !flagHas(flagsNow, "stone"), PICH_IN_SPOT.x, PICH_IN_SPOT.y + 14, 58, () => ({ kind: "gift" }));
-        }
-        hspot(true, HUT_DOOR_IN.x, HUT_DOOR_IN.y, 50, () => ({ kind: "exit" }));
       } else if (fishingRef.current?.phase === "bite") {
         nextPrompt = { kind: "reel" };
       } else {
@@ -1605,8 +1565,11 @@ export function App() {
         // The two enterable hut doors: stepping up to one offers entry
         // (and walking into it enters directly — see the transitions).
         // The bread offering itself is made indoors now, at the pich.
-        spot(true, 384, 336, 46, () => ({ kind: "enter", hut: 0 as const }));
-        spot(true, 1285, 810, 46, () => ({ kind: "enter", hut: 1 as const }));
+        // inside the Domovyk's khata: his bed and his pich
+        const inHut0 = houseAt(p.x, p.y) === "hut0";
+        spot(inHut0, BED_SPOT.x, BED_SPOT.y, 50, () => ({ kind: "sleep" }));
+        spot(inHut0 && flagHas(flagsNow, "bread"), PICH_SPOT.x, PICH_SPOT.y, 50, () => ({ kind: "offer" }));
+        spot(inHut0 && flagHas(flagsNow, "offering") && !flagHas(flagsNow, "stone"), PICH_SPOT.x, PICH_SPOT.y + 8, 50, () => ({ kind: "gift" }));
         spot(true, WELL.x + WELL.w / 2, WELL.y + WELL.h / 2, 66, () => ({ kind: "wish" }));
         spot(true, COOK_SPOT.x, COOK_SPOT.y, 60, () => ({ kind: "cook" }));
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
@@ -1642,10 +1605,24 @@ export function App() {
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx2d.clearRect(0, 0, vw, vh);
       if (isHutArea(area)) {
-        drawHutInterior(ctx2d, camX, camY, now, area === "hut1" ? 1 : 0, flagsNow);
+        // (no separate rooms any more — the khaty stand in the world)
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
       drawLand(ctx2d, camX, camY, vw, vh, now);
+      // the rooms of the khaty you can walk into, scaled into their
+      // footprints; their roofs (below, as drawables) cover them unless
+      // the kobzar is inside
+      for (const id of HOUSE_IDS) {
+        const r = HOUSE_RECTS[id];
+        if (r.x - camX > vw || r.x + r.w - camX < 0 || r.y - camY > vh || r.y + r.h - camY < -60) continue;
+        if (roofAlphaRef.current[id] >= 0.999) continue;
+        ctx2d.save();
+        ctx2d.beginPath(); ctx2d.rect(r.x - camX, r.y - camY, r.w, r.h); ctx2d.clip();
+        ctx2d.translate(r.x - camX, r.y - camY);
+        ctx2d.scale(r.w / 680, r.h / 472);
+        drawHutInterior(ctx2d, 70, 64, now, id === "hut1" ? 1 : 0, flagsNow);
+        ctx2d.restore();
+      }
       drawRiver(ctx2d, camX, camY, vw, vh, now);
       // the tobacco quest's spots glow softly while they are wanted
       if (tobaccoStage(flagsNow) === "gather") {
@@ -1709,6 +1686,10 @@ export function App() {
       type Drawable = { y: number; draw: () => void };
       const drawables: Drawable[] = [];
       if (!isHutArea(area)) {
+      for (const id of HOUSE_IDS) {
+        const r = HOUSE_RECTS[id];
+        drawables.push({ y: r.y + r.h, draw: () => drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, roofAlphaRef.current[id]) });
+      }
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
@@ -1733,7 +1714,7 @@ export function App() {
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
-      for (const npc of area === "hut0" ? [DOMOVYK_IN] : area === "hut1" ? [VESNA_IN] : [...villageChars, ...lysaChars, ...LYSA_DANCERS]) {
+      for (const npc of [...villageChars, ...lysaChars, ...LYSA_DANCERS]) {
         const pos = charPos(npc, now);
         drawables.push({
           y: pos.y,
@@ -1835,6 +1816,23 @@ export function App() {
       // always moonlit), then the vigil on top so the chalk stays bright
       if (!isHutArea(area)) {
         drawNight(ctx2d, darkness(clockRef.current.minute), vw, vh, FIRE.x + FIRE.w / 2 - camX, FIRE.y + FIRE.h / 2 - camY);
+      }
+      // lamplight inside a khata, so a room at night is not black
+      const lit = insideRef.current;
+      if (lit && !isHutArea(area)) {
+        const r = HOUSE_RECTS[lit];
+        const dark = darkness(clockRef.current.minute);
+        if (dark > 0.05) {
+          ctx2d.save();
+          ctx2d.beginPath(); ctx2d.rect(r.x - camX, r.y - camY, r.w, r.h); ctx2d.clip();
+          ctx2d.globalCompositeOperation = "lighter";
+          const lg = ctx2d.createRadialGradient(r.x + r.w / 2 - camX, r.y + r.h / 2 - camY, 10, r.x + r.w / 2 - camX, r.y + r.h / 2 - camY, r.w * 0.6);
+          lg.addColorStop(0, `rgba(255,170,80,${dark * 0.7})`);
+          lg.addColorStop(1, `rgba(255,170,80,${dark * 0.25})`);
+          ctx2d.fillStyle = lg;
+          ctx2d.fillRect(r.x - camX, r.y - camY, r.w, r.h);
+          ctx2d.restore();
+        }
       }
       if (fight) {
         drawVigil(ctx2d, fight, VIGIL_CENTER.x, VIGIL_CENTER.y, camX, camY, now);
@@ -2091,7 +2089,7 @@ export function App() {
       >
         <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} aria-label={t("ui.misc.0")} />
         {/* warm sunlight wash in the village; cold moonwash on Lysa Hora */}
-        <div className="pointer-events-none absolute inset-0" style={{ background: hudArea === "lysa" || (hudArea === "village" && isNight(hudClock.minute)) ? "linear-gradient(160deg, rgba(140,160,255,0.13) 0%, rgba(140,160,255,0) 50%)" : isHutArea(hudArea) ? "linear-gradient(165deg, rgba(255,170,80,0.15) 0%, rgba(255,170,80,0) 55%)" : "linear-gradient(135deg, rgba(255,196,86,0.14) 0%, rgba(255,196,86,0) 45%)" }} />
+        <div className="pointer-events-none absolute inset-0" style={{ background: hudArea === "lysa" || (hudArea === "village" && isNight(hudClock.minute)) ? "linear-gradient(160deg, rgba(140,160,255,0.13) 0%, rgba(140,160,255,0) 50%)" : hudInside ? "linear-gradient(165deg, rgba(255,170,80,0.15) 0%, rgba(255,170,80,0) 55%)" : "linear-gradient(135deg, rgba(255,196,86,0.14) 0%, rgba(255,196,86,0) 45%)" }} />
       </div>
 
       {!started && (
@@ -2124,7 +2122,7 @@ export function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
-                {hudArea === "lysa" ? t("ui.misc.5") : hudArea === "hut0" ? t("ui.misc.6") : hudArea === "hut1" ? t("ui.misc.7") : t("ui.zalissya")}
+                {hudArea === "lysa" ? t("ui.misc.5") : hudInside === "hut0" ? t("ui.misc.6") : hudInside === "hut1" ? t("ui.misc.7") : t("ui.zalissya")}
                 <span className="ml-1.5 normal-case tracking-normal text-[#e8d7ad]">{timeLabel(hudClock)}</span>
               </p>
               <p className="font-serif text-[13px] font-bold leading-tight">
@@ -2541,7 +2539,7 @@ export function App() {
 
           {mapOpen && (
             <MapOverlay
-              player={hudArea === "hut0" ? { x: 384, y: 336 } : hudArea === "hut1" ? { x: 1285, y: 810 } : mapPlayer}
+              player={mapPlayer}
               flags={hudFlags}
               target={questTarget(quests.activeId, hudFlags)}
               title={t(flagHas(hudFlags, "mapChort") ? "map.title.chort" : "map.title.chumak")}
