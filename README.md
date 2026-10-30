@@ -1,15 +1,34 @@
 # Zalissya
 
-A 2D top-down pixel-art action RPG set in a Ukrainian folklore village — built as a Muse web app. No classes, no XP pool: skills grow by doing (KCD-style), perks and unlocks come from milestones, and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus item bonuses.
+A 2D top-down pixel-art RPG set in a Ukrainian folklore village. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
+
+It runs in two places from one codebase:
+- **Muse**, the original fullstack web app, which saves on the server.
+- **GitHub Pages**, a static site that saves in the browser. It deploys automatically from `main`.
 
 ## What's in the game
 
-- **Zalissya village** — huts (two enterable, with interiors), a well, a forge, a campfire, a pond, a forest ring. Villagers: Starosta Myroslav, Vesna the znakharka, and Radek, a Polish smith visiting from a faraway village.
-- **Spirits and monsters** — Domovyk (house spirit), Lisovyk (forest spirit), the Chort (a Dakhno-style devil who bargains for your soul — he takes your shadow too; fish buy it back), the Bolotianyk in the pond, and **Viy (Вій)** sleeping in a blighted hollow: the big boss, seeded but not yet fightable (no combat system yet, by design — non-combat features come first).
-- **Lysa Hora (Bald Mountain)** — a second area east of the clearing: a sabbath summit with Beelzebub, the witches Solokha and Motrya, night-blooms (nichnyky), an offering stone, a dance, and the Moonstone keepsake.
-- **Skills** — Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy.
-- **Systems** — carry capacity from STR (bog iron is heavy), alchemy tiers gated by INT, stat checks (WIS 2 for Zvirobiy, CHA rolls at the well, DEX tilts fishing), keepsake bonuses (horseshoe +1 STR, devil's gold +2 CHA, being soulless −1 WIS…), topic-based dialogue (you pick the questions; the Chort never re-offers a refused bargain), a Character sheet (Stats / Skills / Satchel), and a Quests log.
-- **Controls** — hold-to-move D-pad in a cross layout; corner cells hold both neighbouring directions for diagonals; WASD/arrows on desktop. (A floating joystick was tried first — inside the Muse app shell, its pull-to-refresh kept stealing downward drags, so drag controls were removed entirely; don't re-add them for the Muse version. In a plain browser — e.g. GitHub Pages — the page's overscroll locks actually hold, so a joystick may be viable there; untested.)
+- **Zalissya village**: huts (two enterable), a well, a forge, a campfire, a pond and a forest ring.
+  - Villagers: Starosta Myroslav, Vesna the znakharka, and Radek, a Polish smith visiting from a faraway village.
+- **Spirits and monsters**:
+  - the Domovyk, the house spirit;
+  - the Lisovyk, the forest spirit;
+  - the Chort, a Dakhno-style devil who bargains for your soul, and your shadow with it;
+  - the Bolotianyk in the pond;
+  - **Viy (Вій)**, asleep in a blighted hollow.
+- **Viy's night**: once you have looked upon Viy, he stirs.
+  - Myroslav teaches the old way (blessed chalk). Vesna can weave a wreath against his gaze, and Radek can forge an iron ward.
+  - After dark, hold the chalk circle through one night. Ward off the nechyst, look away when Viy roars for his eyelids, and survive until the rooster crows.
+- **Lysa Hora (Bald Mountain)**: a sabbath summit east of the clearing, with Beelzebub, the witches Solokha and Motrya, night-blooms (nichnyky), an offering stone, a dance, and the Moonstone keepsake.
+- **Day and night**: a day passes in about ten minutes. Meals and tonics last until dawn, the village darkens at night, and you can sleep in the Domovyk's bed until morning or nightfall.
+- **Skills**: Herbalism, Fishing, Cooking, Smithing, Alchemy. Five gatherable herbs: Kropyva, Polyn, Kalendula, Zvirobiy, Dereviy.
+- **Systems**:
+  - carry capacity from STR, and alchemy tiers gated by INT;
+  - honest stat checks, and keepsake bonuses;
+  - topic-based dialogue, a Character sheet (Stats / Skills / Satchel), and a quest log.
+- **Controls**:
+  - Hold-to-move D-pad, plus WASD/arrows. E or Space interacts.
+  - On GitHub Pages, a floating joystick is available through the Pad/Stick toggle. Inside the Muse app, drag controls are deliberately absent, because Muse's pull-to-refresh steals downward drags.
 
 ## Naming rules (please keep)
 
@@ -17,15 +36,16 @@ A 2D top-down pixel-art action RPG set in a Ukrainian folklore village — built
 - **Skill names stay English** (Herbalism, not Zillyaznavstvo). Common buildings are English too: **huts**, not khaty.
 - Radek is the exception: a Polish name for a Polish character.
 
-## Layout
+## Working on it
 
-- `client/src/App.tsx` — essentially the whole game (rendering, world, dialogue, systems)
-- `client/src/api.ts`, `client/src/theme.css`, `client/src/main.tsx`
-- `server/src/actions.ts` + `server/src/schema.ts` — the save system (getSave / saveProgress)
-- `drizzle/` — database migrations for the save table
+- **`CLAUDE.md`**: architecture, commands, recipes and rules. Read it first, whether you are a person or an AI session.
+- **`CONTINUING.md`**: working from the Claude mobile app, bringing changes back into Muse, collaborator setup, and the one-time GitHub settings.
+- **`DESIGN.md`**: the design record, one paragraph per build.
 
-## Important: running it outside Muse
+To play locally:
 
-This was authored as a **Muse fullstack web artifact**. The client is plain TypeScript/React-style canvas code, but saving/loading goes through the server actions in `server/src/actions.ts`, backed by a database that Muse hosts (`app.db` is deliberately **not** in this repo — it contains personal save data).
+```bash
+cd pages && bun install && bun run dev
+```
 
-To run it standalone (e.g. GitHub Pages), replace the save actions with `localStorage` equivalents — the client only depends on `getSave` / `saveProgress` shapes in `client/src/api.ts`, so the swap is small. Everything else (rendering, input, dialogue, game logic) is self-contained in the client.
+`app.db` (the Muse save database) is deliberately **not** in this repo. Never commit save data.

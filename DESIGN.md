@@ -47,3 +47,29 @@ Two of the village huts have insides now — "hut0", the Domovyk's north-west hu
 ## Slim HUD + quest log
 
 The always-on overlay had grown to duplicate the Character sheet (skill levels, stat totals, carrying, keepsakes), so it now shows only what a player needs at a glance — where they are, the current objective, and two urgent warnings (soulless, over the carry limit). Everything else lives in the Character sheet. The single-line objective also hid the parallel threads (the Domovyk's bread, Radek's forge, the Lysa sabbath…), so a Quests menu joins Character in the same sheet: every thread with its progress, the current step marked, grouped as Story / Village life / Lysa Hora. Quest state is derived from the same flags and counters as everything else — no new storage.
+## One codebase, two homes
+
+The client was split out of the single `App.tsx` into modules (world, data, dialogue, systems, render, input, ui). The Muse and GitHub Pages builds now share it. They differ only in `platform/target.ts` vs `target.pages.ts`: which save adapter `api.ts` hands the game (server actions or localStorage), whether the safe-area scrim exists, and whether the floating joystick is allowed (Pages only, since Muse's pull-to-refresh steals drags). Spelling settled on й→y: Viy, Zvirobiy, Dereviy. The healer is a znakharka. Saves that recorded `vij` load as `viy`.
+
+## Day and night
+
+Zalissya keeps time. A day passes in about ten real minutes of walking about, and the clock stops while you talk, read the sheet, dance, or keep the vigil. It is saved as the counters `day=n` and `clock=m`; old saves start at 08:00 on day 1.
+- **Until dawn:** meals and tonics finally mean "while it lasts". They end at the next dawn.
+- **Night:** the open village darkens to blue-black around the campfire's glow. Lysa Hora was always night, and the huts are lamp-lit.
+- **Sleep:** the Domovyk's bed (`hut0`, north-east corner) sleeps you until morning, or rests you until nightfall.
+
+## Viy's night
+
+The big boss is faced Gogol's way, not with weapons.
+- **The chalk:** after you have looked upon Viy, Myroslav remembers the old way and hands over blessed chalk. With it, after dark (21:00–04:00), approaching Viy offers to draw the chalk circle.
+- **The vigil:** it lasts 80 seconds of play. The nechyst crawls in from every side, and WARD (a tap) drives back every spirit within reach of the ring. Every 9–15 seconds Viy roars for his servants to lift his eyelids. The lids rise slowly while the host keeps crawling. When they open, the host bows and holds still, and anyone not holding LOOK AWAY loses 4 nerve. Hold until the rooster crows.
+- **Stats:** CON sets Nerve (6 + 2×CON), WIS how far a ward reaches, DEX how soon you can ward again.
+- **Preparations** (both optional):
+  - Vesna's wreath (3 herbs, WIS 2) halves the gaze.
+  - Radek's iron ward (one forged piece) burns the first three spirits to touch the chalk.
+- **Winning** seals Viy under the earth (`viySealed`): the hollow empties, everyone has something to say about it, and you become Keeper of the vigil (WIS +1, CHA +1).
+- **Breaking** costs only the night: you wake in the Domovyk's bed at seven, with everything you carried, and can try again.
+
+## Quests as data
+
+The quest log and the HUD objective used to be two hand-kept if-chains that could drift apart. `systems/quests.ts` now lists every quest once: its section, title, done-test, detail and objective, all derived from the save. A priority list picks the active one. On Lysa Hora the sabbath comes first; at night, with the chalk in hand, the vigil does.
