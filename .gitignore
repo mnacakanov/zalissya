@@ -5,3 +5,7 @@ app.db
 *.tsbuildinfo
 .harness/
 audits/
+pages/.build/
+pages/dist/
+*.db
+*.sqlite

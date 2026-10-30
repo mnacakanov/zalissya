@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["bun", "react", "react-dom"],
+    "typeRoots": ["./node_modules/@types"],
+    "baseUrl": ".",
+    "tsBuildInfoFile": "./.build/.tsbuildinfo",
+    "paths": {
+      "@hatch/space-sdk/client": ["./shims/space-sdk-client.d.ts"],
+      "@space/server/*": ["./shims/server/*"],
+      "*": ["./node_modules/@types/*", "./node_modules/*"]
+    }
+  },
+  "include": ["../client/src/**/*", "./shims/**/*", "./build.ts"]
+}

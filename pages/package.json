@@ -1,0 +1,25 @@
+{
+  "name": "zalissya-pages",
+  "private": true,
+  "type": "module",
+  "description": "Static GitHub Pages build of the shared client in ../client. Installs and builds without the Muse SDK.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "bun ./build.ts",
+    "dev": "bun ./build.ts --watch --serve"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.100.10",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.13",
+    "@types/bun": "1.4.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "tailwindcss": "4.1.13",
+    "tailwindcss-safe-area": "1.3.0",
+    "typescript": "5.6.3"
+  }
+}

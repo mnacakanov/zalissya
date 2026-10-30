@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { SafeAreaTopScrim } from "@hatch/space-sdk/client";
-import { api } from "./api";
+import { save } from "./api";
+import { SafeAreaTopScrim } from "./platform/target";
 
 // ---------------------------------------------------------------------------
 // Zalissya — a Ukrainian village clearing. Top-down pixel-art game on canvas.
@@ -3327,9 +3327,9 @@ export function App() {
     };
   }, []);
 
-  const saveQuery = useQuery({ queryKey: ["game-save"], queryFn: () => api.getSave({}) });
-  const saveMut = useMutation({ mutationFn: (v: { x: number; y: number; area: AreaId; talked: string[]; herbs: number; flags: string[] }) => api.saveProgress(v) });
-  const resetMut = useMutation({ mutationFn: () => api.resetSave({}) });
+  const saveQuery = useQuery({ queryKey: ["game-save"], queryFn: () => save.load() });
+  const saveMut = useMutation({ mutationFn: (v: { x: number; y: number; area: AreaId; talked: string[]; herbs: number; flags: string[] }) => save.save(v) });
+  const resetMut = useMutation({ mutationFn: () => save.reset() });
 
   // --- feedback + flags ------------------------------------------------------
   const showToast = (msg: string) => {
