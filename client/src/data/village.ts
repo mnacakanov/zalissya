@@ -11,7 +11,7 @@ export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
   // (the otaman's khata, facing the maidan, is walk-in: data/houses.ts)
 ];
 
-export const WELL: Rect = { x: 950, y: 470, w: 68, h: 52 };
+export const WELL: Rect = { x: 916, y: 470, w: 68, h: 52 };
 // The kaplytsia: a small wooden chapel at the head of the maidan, where the
 // fire is, with the otaman's khata behind it (render/khutir.ts drawKaplytsia).
 export const KAPLYTSIA: Rect = { x: 800, y: 404, w: 80, h: 56 };

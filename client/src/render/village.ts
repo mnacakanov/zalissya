@@ -433,7 +433,7 @@ export function drawFire(c: CanvasRenderingContext2D, camX: number, camY: number
 }
 
 // Vesna's alchemy bench: a drying rack hung with herb bundles over a
-// little copper cauldron, south of the north-east hut (BREW_SPOT).
+// little copper cauldron, in Vesna's yard by her khata (BREW_SPOT).
 export function drawBrewBench(c: CanvasRenderingContext2D, camX: number, camY: number, t: number) {
   const x = BREW_SPOT.x - camX;
   const y = BREW_SPOT.y - camY;

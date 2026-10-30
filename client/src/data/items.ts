@@ -35,9 +35,9 @@ export const COOK_SPOT = { x: 840, y: 672 };
 // Radek's anvil, inside the forge — workable once the forge is lit
 // (the "horseshoe" flag). Hammering has a short cooldown between pieces.
 export const FORGE_SPOT = { x: 300, y: 590 };
-// Vesna's herb drying rack, south of the north-east hut — her alchemy
+// Vesna's herb drying rack, in her yard west of her khata — her alchemy
 // bench. A tonic wants 2 herbs from the satchel.
-export const BREW_SPOT = { x: 1224, y: 340 };
+export const BREW_SPOT = { x: 1066, y: 504 };
 // Lumps of bog iron glinting in the pond mud — Radek's forge needs iron.
 export const IRON_SPOTS: Array<{ x: number; y: number }> = [
   { x: 1150, y: 968 },
@@ -66,7 +66,7 @@ export const WISH_LINES: string[] = [
 ];
 
 export const HERB_SPOTS: Array<{ x: number; y: number; kind: HerbKind }> = [
-  { x: 690, y: 390, kind: "kropyva" }, { x: 1080, y: 520, kind: "polyn" },
+  { x: 690, y: 390, kind: "kropyva" }, { x: 1040, y: 770, kind: "polyn" },
   { x: 700, y: 980, kind: "kalendula" }, { x: 1050, y: 990, kind: "zvirobiy" },
   { x: 420, y: 880, kind: "dereviy" }, { x: 980, y: 760, kind: "kropyva" },
   { x: 620, y: 340, kind: "polyn" }, { x: 900, y: 900, kind: "kalendula" },
