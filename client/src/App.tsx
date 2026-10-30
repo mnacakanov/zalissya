@@ -1832,7 +1832,7 @@ export function App() {
             else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
             else {
               drawPerson(ctx2d, sx, sy, {
-                tunic: npc.tunic, hair: npc.hair, style: npc.style === "chumak" ? "elder" : npc.style,
+                tunic: npc.tunic, hair: npc.hair, style: npc.style, who: npc.id,
                 moving: false, phase: 0, face: clamp(p.x - pos.x, -1, 1) * 0.7, t: now,
               });
             }

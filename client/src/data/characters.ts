@@ -17,7 +17,7 @@ export type Npc = {
 };
 
 export const NPCS: Npc[] = [
-  { id: "myroslav", name: t("char.myroslav.name.0"), pron: t("char.myroslav.pron.0"), role: t("char.myroslav.role.0"), x: 760, y: 520, tunic: "#7a4a2b", hair: "#cfc8bb", style: "elder" },
+  { id: "myroslav", name: t("char.myroslav.name.0"), pron: t("char.myroslav.pron.0"), role: t("char.myroslav.role.0"), x: 760, y: 520, tunic: "#9a2a24", hair: "#cfc8bb", style: "elder" },
   { id: "vesna", name: t("char.vesna.name.0"), pron: t("char.vesna.pron.0"), role: t("char.vesna.role.0"), x: 1236, y: 626, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist" },
   { id: "radek", name: t("char.radek.name.0"), pron: t("char.radek.pron.0"), role: t("char.radek.role.0"), x: 372, y: 596, tunic: "#4c4a48", hair: "#2e2018", style: "smith" },
 ];

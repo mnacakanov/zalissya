@@ -6,6 +6,7 @@ import { drawCherry, drawCraneWell, drawKhata, drawTyn, drawWillow } from "./khu
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
 import { rr } from "./shapes";
+import { drawFolk, type FolkOpts } from "./people";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { clamp, hash2, type Rect } from "../world/geometry";
 
@@ -676,125 +677,10 @@ export function drawHerbPatch(c: CanvasRenderingContext2D, sx: number, sy: numbe
   c.fillRect(x + Math.sin(t * 0.003 + sx) * 12, y - 10 - sp, 1.8, 1.8);
 }
 
-export function drawPerson(
-  c: CanvasRenderingContext2D,
-  x: number, y: number,
-  opts: { tunic: string; hair: string; style: "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak"; moving: boolean; phase: number; face: number; t: number; shadow?: boolean },
-) {
-  const bob = opts.moving ? Math.abs(Math.sin(opts.phase)) * 2.2 : Math.sin(opts.t * 0.002 + x * 0.13) * 0.7;
-  const top = y - 40 + bob * 0.4;
-  // shadow === false: the Chort has it. It is a bargain, not a bug.
-  if (opts.shadow !== false) {
-    c.fillStyle = "rgba(30,50,20,0.3)";
-    c.beginPath(); c.ellipse(x, y + 3, 13, 4.6, 0, 0, Math.PI * 2); c.fill();
-  }
-  const swing = opts.moving ? Math.sin(opts.phase) * 3.4 : 0;
-  // legs + boots
-  c.fillStyle = "#4c3a28";
-  c.fillRect(x - 7, top + 27 + (swing > 0 ? -swing * 0.4 : 0), 5.6, 9);
-  c.fillRect(x + 1.6, top + 27 + (swing < 0 ? swing * 0.4 : 0), 5.6, 9);
-  c.fillStyle = "#2c2015";
-  c.fillRect(x - 7.6, top + 34.4 + (swing > 0 ? -swing * 0.4 : 0), 7, 3.4);
-  c.fillRect(x + 1.2, top + 34.4 + (swing < 0 ? swing * 0.4 : 0), 7, 3.4);
-  // arms
-  c.fillStyle = opts.tunic;
-  c.fillRect(x - 12.4, top + 12 - swing * 0.5, 4.6, 13);
-  c.fillRect(x + 7.8, top + 12 + swing * 0.5, 4.6, 13);
-  c.fillStyle = "#e8b88a";
-  c.fillRect(x - 12.4, top + 24 - swing * 0.5, 4.6, 3.6);
-  c.fillRect(x + 7.8, top + 24 + swing * 0.5, 4.6, 3.6);
-  // tunic body
-  c.fillStyle = opts.tunic;
-  rr(c, x - 9, top + 9, 18, 20, 3); c.fill();
-  if (opts.style === "player" || opts.style === "herbalist") {
-    // embroidered chest — white base with red pattern for the player
-    if (opts.style === "player") {
-      c.fillStyle = "#efe3c8";
-      rr(c, x - 9, top + 9, 18, 20, 3); c.fill();
-      c.fillStyle = "#b03a2e";
-      for (let i = 0; i < 3; i++) c.fillRect(x - 1.2, top + 12 + i * 5, 2.4, 2.4);
-      c.fillRect(x - 5, top + 14.4, 2, 2);
-      c.fillRect(x + 3, top + 14.4, 2, 2);
-      c.fillRect(x - 5, top + 24.4, 2, 2);
-      c.fillRect(x + 3, top + 24.4, 2, 2);
-    } else {
-      c.fillStyle = "#f3e9d2";
-      c.fillRect(x - 9, top + 20, 18, 3);
-      c.fillStyle = "#e8b13c";
-      for (let i = 0; i < 4; i++) c.fillRect(x - 7 + i * 4.4, top + 21, 2, 1.6);
-    }
-  }
-  if (opts.style === "smith") {
-    c.fillStyle = "#33302c";
-    rr(c, x - 7, top + 13, 14, 15, 2); c.fill();
-  }
-  if (opts.style === "shynkarka") {
-    // a white apron over the skirt, embroidered at the hem
-    c.fillStyle = "#f3e9d2";
-    rr(c, x - 6, top + 15, 12, 16, 2); c.fill();
-    c.fillStyle = "#b03a2e";
-    c.fillRect(x - 6, top + 28, 12, 2);
-  }
-  if (opts.style === "kozak") {
-    // wide red sharovary over the boots, and a sash
-    c.fillStyle = "#8a2a24";
-    rr(c, x - 9, top + 26, 18, 9, 3); c.fill();
-  }
-  // belt
-  c.fillStyle = "#5d3d20";
-  c.fillRect(x - 9, top + 25, 18, 3.4);
-  c.fillStyle = "#d9a441";
-  c.fillRect(x - 1.8, top + 25.4, 3.6, 2.6);
-  // head
-  c.fillStyle = "#e8b88a";
-  rr(c, x - 7, top - 5, 14, 14, 4); c.fill();
-  c.fillStyle = "#2e2018";
-  const fx = clamp(opts.face, -1.6, 1.6);
-  c.fillRect(x - 3.6 + fx, top + 2.4, 2, 2.6);
-  c.fillRect(x + 1.8 + fx, top + 2.4, 2, 2.6);
-  if (opts.style === "elder") {
-    c.fillStyle = opts.hair;
-    rr(c, x - 7.6, top - 6.4, 15.2, 6, 3); c.fill();
-    c.fillStyle = "#cfc8bb";
-    rr(c, x - 5.4, top + 5, 10.8, 7.6, 3); c.fill(); // beard
-  } else if (opts.style === "herbalist") {
-    c.fillStyle = opts.hair;
-    rr(c, x - 8, top - 6.4, 16, 7, 3); c.fill();
-    c.fillRect(x - 8.6, top, 4.4, 15);
-    c.fillRect(x + 4.2, top, 4.4, 15);
-    // flower wreath
-    const wc = ["#d94f3d", "#f2c14e", "#f5efdc", "#d96a5a"];
-    for (let i = 0; i < 5; i++) {
-      c.fillStyle = wc[i % wc.length] ?? "#fff";
-      c.beginPath(); c.arc(x - 6 + i * 3, top - 5.4, 1.7, 0, Math.PI * 2); c.fill();
-    }
-  } else if (opts.style === "shynkarka") {
-    // a married woman's kerchief (khustka), knotted at the nape
-    c.fillStyle = "#2c4a8a";
-    rr(c, x - 8.4, top - 7, 16.8, 9, 4); c.fill();
-    c.fillStyle = "#e8b84a";
-    for (let i = 0; i < 4; i++) c.fillRect(x - 6 + i * 4, top - 4, 1.6, 1.6);
-    c.fillStyle = "#2c4a8a";
-    c.beginPath(); c.moveTo(x + 6, top); c.lineTo(x + 11, top + 6); c.lineTo(x + 7, top + 7); c.closePath(); c.fill();
-  } else if (opts.style === "kozak") {
-    // shaved head, the oseledets (scalp lock) curled over one ear, and
-    // moustaches that hang past the chin
-    c.fillStyle = "#d9a882";
-    rr(c, x - 7, top - 6, 14, 6, 3); c.fill();
-    c.strokeStyle = opts.hair; c.lineWidth = 2.2;
-    c.beginPath(); c.moveTo(x, top - 6); c.quadraticCurveTo(x - 6, top - 12, x - 8.6, top + 1); c.stroke();
-    c.fillStyle = opts.hair;
-    c.beginPath(); c.moveTo(x - 1, top + 5.6); c.quadraticCurveTo(x - 7, top + 6, x - 6.4, top + 13); c.lineTo(x - 4.6, top + 7.4); c.closePath(); c.fill();
-    c.beginPath(); c.moveTo(x + 1, top + 5.6); c.quadraticCurveTo(x + 7, top + 6, x + 6.4, top + 13); c.lineTo(x + 4.6, top + 7.4); c.closePath(); c.fill();
-  } else if (opts.style === "player") {
-    c.fillStyle = opts.hair;
-    rr(c, x - 7.4, top - 6.2, 14.8, 6.4, 3); c.fill();
-    c.fillStyle = "#b03a2e"; // headband
-    c.fillRect(x - 7.4, top - 1.6, 14.8, 2.4);
-  } else {
-    c.fillStyle = opts.hair;
-    rr(c, x - 7.4, top - 6.2, 14.8, 5.6, 3); c.fill();
-  }
+// Every human figure, the kobzar included, is drawn in the storybook style
+// (render/people.ts); this keeps the old call shape.
+export function drawPerson(c: CanvasRenderingContext2D, x: number, y: number, opts: FolkOpts) {
+  drawFolk(c, x, y, opts);
 }
 
 export function drawChicken(c: CanvasRenderingContext2D, x: number, y: number, peck: number, camX: number, camY: number) {

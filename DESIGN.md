@@ -266,3 +266,19 @@ The owner chose to keep the smooth, painted look of the new khaty for the whole 
   - Mist lies on the river and the pond at dawn and late at night.
   - Night is a dark layer with holes where light falls: the fire, every lit window (with a pool of light on the ground under it), the korchma's open door, the chapel lamp, and the room the kobzar is in. Then the warm colour of those lights is added back.
   - The pustka stays dark.
+
+## People in the storybook style
+
+The owner was shown three styles for people side by side (refined, realistic, storybook) and chose storybook. Every human figure is now drawn by `render/people.ts`:
+
+- **Proportions:** about five heads tall (50 px, up from 40), painted with soft side shading and a thin ink outline, so they match the khaty.
+- **Costumes:** each figure wears the costume of who they are:
+  - the kobzar: an embroidered shirt, a brown svytka, sharovary, a straw brryl and the kobza on his back;
+  - the otaman: a red zhupan with gold trim, the oseledets, grey moustaches and his smoking lyulka;
+  - the chumaky: tarred svytky and straw hats;
+  - Radek: a leather apron and his Polish cap;
+  - Vesna: plakhta, kersetka, a vinok with ribbons that flutter, and a braid;
+  - Odarka: a married woman's kerchief and a white apron;
+  - Okhrim: the oseledets and moustaches to his chest.
+- **Walking:** legs step, arms swing against them and the body bobs. Faces turn toward the kobzar.
+- **Spirits:** they keep their own drawings.
