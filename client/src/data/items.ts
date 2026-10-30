@@ -34,7 +34,7 @@ export const CRUST_SPOT = { x: 772, y: 660 };
 export const COOK_SPOT = { x: 840, y: 672 };
 // Radek's anvil, inside the forge — workable once the forge is lit
 // (the "horseshoe" flag). Hammering has a short cooldown between pieces.
-export const FORGE_SPOT = { x: 330, y: 764 };
+export const FORGE_SPOT = { x: 300, y: 590 };
 // Vesna's herb drying rack, south of the north-east hut — her alchemy
 // bench. A tonic wants 2 herbs from the satchel.
 export const BREW_SPOT = { x: 1224, y: 340 };

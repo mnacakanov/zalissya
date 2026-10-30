@@ -95,7 +95,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   c.fillStyle = "#c8a568";
   rr(c, 0 - camX, 600 - camY, VILLAGE_W, 92, 40); c.fill();
   // the khutir's road south runs out past the gardens and fields to the bridge
-  rr(c, 768 - camX, 120 - camY, 144, 1560, 60); c.fill();
+  rr(c, 768 - camX, 300 - camY, 144, 1380, 60); c.fill();
   // the maidan: a trodden square round the fire and the well, where the
   // khutir meets, argues, and listens to the kobzar in the evening
   c.beginPath(); c.ellipse(840 - camX, 568 - camY, 190, 128, 0, 0, Math.PI * 2); c.fill();
@@ -109,7 +109,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   for (let i = 0; i < 260; i++) {
     const onH = hash2(i, 77) > 0.35;
     const px = onH ? hash2(i, 1) * VILLAGE_W : 768 + hash2(i, 2) * 144;
-    const py = onH ? 600 + hash2(i, 3) * 92 : 120 + hash2(i, 4) * 900;
+    const py = onH ? 600 + hash2(i, 3) * 92 : 320 + hash2(i, 4) * 700;
     if (px < camX - 10 || px > camX + vw + 10 || py < camY - 10 || py > camY + vh + 10) continue;
     c.beginPath();
     c.arc(px - camX, py - camY, 1.6 + hash2(i, 5) * 2.6, 0, Math.PI * 2);
@@ -120,7 +120,9 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   // into the steppe. Two cairns mark the edge where the khutir lets go
   // of you.
   c.fillStyle = "#b99c62";
-  rr(c, 1120 - camX, 416 - camY, VILLAGE_W - 1120, 72, 30); c.fill();
+  // (it leaves the east road past Vesna's khata, then runs out east)
+  rr(c, 1468 - camX, 416 - camY, VILLAGE_W - 1468, 72, 30); c.fill();
+  rr(c, 1468 - camX, 416 - camY, 64, 260, 30); c.fill();
   for (const cy of [404, 502]) {
     const cx = VILLAGE_W - 26 - camX;
     const cyy = cy - camY;

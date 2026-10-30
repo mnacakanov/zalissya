@@ -6,8 +6,8 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/c
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
-import { drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
+import { DECOR, FENCES, FIRE, HOUSES, KAPLYTSIA, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -332,6 +332,12 @@ export function App() {
         const c0 = HOUSE_CENTER(oldRoom);
         playerRef.current.x = c0.x;
         playerRef.current.y = c0.y;
+      }
+      // The khutir was rebuilt around the maidan: a save standing where a
+      // wall or a chapel now is starts again on the road south of the fire.
+      else if (area === "village" && SOLID.some((b) => circleRectCollide(playerRef.current.x, playerRef.current.y - 6, PLAYER_R, b))) {
+        playerRef.current.x = SPAWN.x;
+        playerRef.current.y = SPAWN.y;
       }
       // Map pre-rename save ids to their current forms.
       const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek", vij: "viy" };
@@ -1765,6 +1771,7 @@ export function App() {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
+      drawables.push({ y: KAPLYTSIA.y + KAPLYTSIA.h, draw: () => drawKaplytsia(ctx2d, KAPLYTSIA.x - camX, KAPLYTSIA.y - camY, KAPLYTSIA.w, KAPLYTSIA.h, now) });
       drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now) });
       drawables.push({ y: WINDMILL.y, draw: () => drawWindmill(ctx2d, WINDMILL.x - camX, WINDMILL.y - camY, now) });
       for (const k of [KURHAN, KURHAN_STEPPE]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });

@@ -1,8 +1,8 @@
-import { CART } from "../data/chumaky";
+import { CART, GRAVE } from "../data/chumaky";
 import { DOMOVYK_HOME, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
 import { BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
-import { BREW_SPOT, FISH_SPOT, IRON_SPOTS } from "../data/items";
+import { BREW_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
 import { HOUSES, KURHAN, KURHAN_STEPPE, POND, TREES, WINDMILL } from "../data/village";
 import { t, type TextKey } from "../i18n";
 import { chumakyPresent } from "../systems/chumaky";
@@ -27,10 +27,10 @@ export function questTarget(activeId: string | null, flags: ReadonlySet<string>)
     case "viy": case "vigil": return { x: 1420, y: 300 };
     case "chumaky": return chumakyPresent(flags) ? CART : null;
     case "domovyk": return PICH_SPOT;
-    case "forge": return flagCount(flags, "iron") >= 3 ? { x: 340, y: 806 } : IRON_SPOTS[0] ?? null;
+    case "forge": return flagCount(flags, "iron") >= 3 ? FORGE_SPOT : IRON_SPOTS[0] ?? null;
     case "soul": case "fishing": return FISH_SPOT;
     case "cooking": return { x: 840, y: 672 };
-    case "smithing": return { x: 330, y: 764 };
+    case "smithing": return FORGE_SPOT;
     case "alchemy": return BREW_SPOT;
     case "lysa-visit": case "lysa-sabbath": return LYSA_WORLD.summit;
     case "tobacco": {
@@ -88,7 +88,8 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.strokeStyle = "#b38f58"; c.lineCap = "round";
   c.lineWidth = Math.max(2, 60 * s);
   c.beginPath(); c.moveTo(X(0), Y(646)); c.lineTo(X(VILLAGE_W), Y(646)); c.stroke();
-  c.beginPath(); c.moveTo(X(840), Y(120)); c.lineTo(X(840), Y(1680)); c.stroke();
+  c.beginPath(); c.moveTo(X(840), Y(330)); c.lineTo(X(840), Y(1680)); c.stroke();
+  c.beginPath(); c.moveTo(X(1500), Y(646)); c.lineTo(X(1500), Y(456)); c.lineTo(X(VILLAGE_W), Y(456)); c.stroke();
   c.lineWidth = Math.max(1.6, 40 * s);
   c.beginPath(); c.moveTo(X(VILLAGE_W - 80), Y(456));
   c.bezierCurveTo(X(2000), Y(330), X(2350), Y(760), X(LYSA_WORLD.trailhead.x), Y(LYSA_WORLD.trailhead.y)); c.stroke();
@@ -122,7 +123,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   glyph(KURHAN.x, KURHAN.y - 10, "▲");
   glyph(KURHAN_STEPPE.x, KURHAN_STEPPE.y - 10, "▲");
   if (chumakyPresent(flags)) glyph(CART.x, CART.y, "⛟");
-  if (flagHas(flags, "ostapDied")) glyph(1446, 660, "✝");
+  if (flagHas(flags, "ostapDied")) glyph(GRAVE.x, GRAVE.y - 8, "✝");
   if (!flagHas(flags, "viySealed")) glyph(1420, 260, "◉");
   c.restore();
 

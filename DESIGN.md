@@ -229,3 +229,16 @@ Past the khutir, where the chumak road turns south toward the river, there is no
 - **Odarka**, the shynkarka, keeps it. Her husband rode to the Sich seven years ago. She sells supper (a meal) for one fish, passes on news from the road, and teaches «Ти ж мене підманула».
 - **Okhrim** is the last of his kurin. He drinks on credit and Odarka never collects, because she hopes someone out there is feeding her Stepan the same way. He talks about the Sich and about the friend who looked at Viy, and teaches «Їхав козак за Дунай».
 - **Playing:** in the evening you can play here instead of at the campfire. You still play only once an evening, so it is a choice. The korchma has moods of its own: merry most nights, maudlin every fourth night, quiet when the khutir mourns, and roaring when the chumaky feast. On the same night the two rooms often want different songs. Odarka pays in varenyky.
+
+## The khutir in a horseshoe
+
+The owner sent a photo of the reconstructed Zaporozhian Sich: houses ringed round a square with a wooden church in the middle. Zalissya is a khutir, not the Sich, so it gets that plan without the palisade and the gate.
+
+- **The maidan** stays the heart of the khutir, with the fire where the kobzar plays. A small log kaplytsia with one onion dome and a gold cross now stands at its head, and the crane well has moved to its east side.
+- **The ring:** the houses stand in a horseshoe round the maidan, open to the south: the otaman's khata at the head (its porch and korohva looking down on the chapel), the Domovyk's khata north-west, the forge west on the road, the north-east hut, and Vesna's khata on the east side over the road.
+- **Why it opens south:** the camera looks from the south, so every door is on a south wall. The open side faces the road down to the fields, the pond and the river.
+- **What moved:**
+  - The chumak camp is now south-east of the road.
+  - The Lysa Hora trail leaves the east road past Vesna's door.
+  - Radek, Vesna and the Lisovyk moved with their places.
+- **Old saves:** a save standing where a wall or the chapel now is starts again on the road south of the fire.

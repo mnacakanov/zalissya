@@ -21,9 +21,12 @@ import { type Rect } from "../world/geometry";
 export type HouseId = "hut0" | "hut1" | "otaman" | "korchma";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
-  hut0: { x: 200, y: 150, w: 320, h: 210 },
-  hut1: { x: 1180, y: 700, w: 320, h: 210 },
-  otaman: { x: 250, y: 396, w: 380, h: 200 },
+  // the khutir stands in a horseshoe round the maidan, open to the south
+  // (fields, river and road): the otaman at the head, the Domovyk's khata
+  // north-west, Vesna's east (data/village.ts has the rest of the ring)
+  hut0: { x: 260, y: 200, w: 320, h: 210 },
+  hut1: { x: 1120, y: 380, w: 320, h: 210 },
+  otaman: { x: 650, y: 120, w: 380, h: 200 },
   korchma: { x: 1830, y: 1000, w: 350, h: 210 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];

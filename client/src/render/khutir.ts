@@ -698,3 +698,72 @@ export function drawKorchma(c: CanvasRenderingContext2D, x: number, y: number, w
   }
   c.restore();
 }
+
+// The kaplytsia at the head of the maidan: a small log chapel of pale
+// pine, like the Sich church in miniature — a shingled roof, one dark
+// onion dome on a drum, a gold cross, an arched door facing the fire.
+export function drawKaplytsia(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number): void {
+  const base = y + h;
+  const wallH = 52;
+  const top = base - wallH;
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + w / 2, base + 6, w * 0.7, 10, 0, 0, Math.PI * 2); c.fill();
+  // log walls, pale pine
+  for (let ly = top; ly < base; ly += 7) {
+    c.fillStyle = (ly - top) % 14 < 7 ? "#d4a868" : "#c8995a";
+    c.fillRect(x, ly, w, 6.4);
+    c.fillStyle = "rgba(90,60,26,0.35)";
+    c.fillRect(x, ly + 6, w, 1);
+  }
+  c.fillStyle = "rgba(120,80,30,0.2)";
+  c.fillRect(x + w * 0.75, top, w * 0.25, wallH);
+  // the arched door and two narrow windows
+  const dx = x + w / 2;
+  c.fillStyle = "#5a3a22";
+  c.beginPath();
+  c.moveTo(dx - 11, base); c.lineTo(dx - 11, base - 26); c.quadraticCurveTo(dx, base - 40, dx + 11, base - 26); c.lineTo(dx + 11, base);
+  c.closePath(); c.fill();
+  c.fillStyle = "#d9a441";
+  c.fillRect(dx + 5, base - 16, 2, 3);
+  for (const wx of [x + 10, x + w - 18]) {
+    c.fillStyle = "#3f4a5a";
+    c.beginPath(); c.moveTo(wx, top + 30); c.lineTo(wx, top + 16); c.quadraticCurveTo(wx + 4, top + 10, wx + 8, top + 16); c.lineTo(wx + 8, top + 30); c.closePath(); c.fill();
+    c.fillStyle = "rgba(255,210,120,0.5)";
+    c.fillRect(wx + 2, top + 20, 4, 8);
+  }
+  c.fillStyle = "#8a6238";
+  rr(c, dx - 18, base - 2, 36, 6, 2); c.fill();
+  // the shingled roof: a deep gable whose eaves overhang the logs
+  const ridge = top - 30;
+  c.fillStyle = "#4e4036";
+  c.beginPath();
+  c.moveTo(x - 10, top + 4); c.lineTo(x + w / 2, ridge); c.lineTo(x + w + 10, top + 4);
+  c.closePath(); c.fill();
+  c.strokeStyle = "rgba(30,22,16,0.45)"; c.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    const yy = ridge + (top + 4 - ridge) * (i / 5);
+    const half = (w / 2 + 10) * (i / 5);
+    c.beginPath(); c.moveTo(x + w / 2 - half, yy); c.lineTo(x + w / 2 + half, yy); c.stroke();
+  }
+  c.fillStyle = "#3a2e26";
+  c.fillRect(x - 12, top + 2, w + 24, 4);
+  // the drum and the onion dome, and the cross catching the light
+  const cx = x + w / 2;
+  c.fillStyle = "#c8995a";
+  c.fillRect(cx - 11, ridge - 18, 22, 22);
+  c.fillStyle = "#4e4036";
+  c.fillRect(cx - 14, ridge - 20, 28, 4);
+  c.fillStyle = "#3e342c";
+  c.beginPath();
+  c.moveTo(cx - 14, ridge - 20);
+  c.bezierCurveTo(cx - 18, ridge - 34, cx - 4, ridge - 38, cx, ridge - 48);
+  c.bezierCurveTo(cx + 4, ridge - 38, cx + 18, ridge - 34, cx + 14, ridge - 20);
+  c.closePath(); c.fill();
+  c.strokeStyle = "rgba(255,230,180,0.18)"; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(cx - 6, ridge - 24); c.quadraticCurveTo(cx - 6, ridge - 36, cx - 1, ridge - 44); c.stroke();
+  const glint = 0.75 + Math.sin(t * 0.002) * 0.25;
+  c.fillStyle = `rgba(232,198,106,${glint})`;
+  c.fillRect(cx - 1.2, ridge - 64, 2.4, 17);
+  c.fillRect(cx - 6, ridge - 59, 12, 2.4);
+  c.fillRect(cx - 4, ridge - 53, 8, 2);
+}

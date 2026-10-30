@@ -122,7 +122,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
 ## Game at a glance
 
-- **One open world** (3980×2300): the khutir (x 0–1680), the steppe east of it, Lysa Hora at the far end, and to the south kitchen gardens, strip fields (buckwheat, barley, oats, hemp), a river with two bridges, forests and the old tobacco field (`data/land.ts`) (`LYSA_ORIGIN` in `data/lysa.ts`). The areas `village` and `lysa` are regions of that one world (the region switches at `LYSA_BORDER_X`), not separate maps.
+- **One open world** (3980×2300): the khutir (x 0–1680; its houses stand in a horseshoe round the maidan and its kaplytsia, open to the south, after the Sich layout but with no palisade or gate), the steppe east of it, Lysa Hora at the far end, and to the south kitchen gardens, strip fields (buckwheat, barley, oats, hemp), a river with two bridges, forests and the old tobacco field (`data/land.ts`) (`LYSA_ORIGIN` in `data/lysa.ts`). The areas `village` and `lysa` are regions of that one world (the region switches at `LYSA_BORDER_X`), not separate maps.
 - **Areas**:
   - `village`: the khutir and the steppe
   - `lysa`: the mountain, at the far end of the steppe trail

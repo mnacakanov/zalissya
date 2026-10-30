@@ -6,11 +6,15 @@ import { HOUSE_RECTS, houseSolids } from "./houses";
 
 export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
   { x: 1140, y: 190, w: 168, h: 104, kind: "hut" },
-  { x: 250, y: 690, w: 156, h: 92, kind: "forge" },
+  // the forge on the west side of the ring, open to the road
+  { x: 250, y: 470, w: 156, h: 92, kind: "forge" },
   // (the otaman's khata, facing the maidan, is walk-in: data/houses.ts)
 ];
 
-export const WELL: Rect = { x: 806, y: 470, w: 68, h: 52 };
+export const WELL: Rect = { x: 950, y: 470, w: 68, h: 52 };
+// The kaplytsia: a small wooden chapel at the head of the maidan, where the
+// fire is, with the otaman's khata behind it (render/khutir.ts drawKaplytsia).
+export const KAPLYTSIA: Rect = { x: 800, y: 404, w: 80, h: 56 };
 export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
 export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
 export const GARDEN: Rect = { x: 960, y: 860, w: 150, h: 96 };
@@ -40,12 +44,19 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     TREES.push({ x, y, kind: nearPond ? "willow" : kinds[i % 3] ?? "pine", s: 0.9 + hash2(x, y) * 0.45 });
   });
   // cherry trees by the khaty — «садок вишневий коло хати»
-  for (const [x, y] of [[165, 360], [1330, 334], [1530, 700], [555, 330]] as const) {
+  for (const [x, y] of [[214, 400], [610, 400], [1080, 600], [1480, 560], [1060, 300]] as const) {
     TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
   }
   TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
   // the forests beyond the fields and the river (data/land.ts)
   TREES.push(...FOREST_TREES);
+  // nothing grows through a roof or on the maidan's chapel
+  const builtOn = (x: number, y: number) =>
+    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
+  for (let i = TREES.length - 1; i >= 0; i--) {
+    const tr = TREES[i];
+    if (tr && builtOn(tr.x, tr.y)) TREES.splice(i, 1);
+  }
   // lone oaks out on the steppe, where the chumaky rest at noon
   for (const [x, y] of [[1980, 230], [2330, 1040], [2480, 300], [1880, 900]] as const) {
     TREES.push({ x, y, kind: "oak", s: 1.1 + hash2(x, y) * 0.3 });
@@ -80,14 +91,12 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
 }
 
 // the otaman's korohva (banner) on its pole by his porch
-export const OTAMAN_FLAGPOLE: Rect = { x: 640, y: 584, w: 8, h: 8 };
+export const OTAMAN_FLAGPOLE: Rect = { x: 1050, y: 306, w: 8, h: 8 };
 
 export const FENCES: Rect[] = [
   { x: GARDEN.x - 8, y: GARDEN.y - 10, w: GARDEN.w + 16, h: 10 },
   { x: GARDEN.x - 8, y: GARDEN.y + GARDEN.h, w: GARDEN.w + 16, h: 10 },
   { x: GARDEN.x - 8, y: GARDEN.y - 10, w: 10, h: GARDEN.h + 20 },
-  { x: 560, y: 250, w: 120, h: 10 },
-  { x: 960, y: 250, w: 120, h: 10 },
 ];
 
 export const SOLID: Rect[] = [
@@ -99,6 +108,7 @@ export const SOLID: Rect[] = [
   OTAMAN_FLAGPOLE,
   WELL,
   FIRE,
+  KAPLYTSIA,
   // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk
   // through him (and you would not want to).
   { x: 1352, y: 196, w: 136, h: 84 },
