@@ -6,8 +6,8 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/c
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
-import { drawKhataBig, drawKovyla, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
+import { DECOR, FENCES, FIRE, HOUSES, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { drawKhataBig, drawKorohva, drawKovyla, drawOtamanKhata, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -160,7 +160,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -1378,7 +1378,7 @@ export function App() {
       if (insideNow !== insideRef.current) {
         insideRef.current = insideNow;
         setHudInside(insideNow);
-        if (insideNow) showToast(t(insideNow === "hut0" ? "ui.enterHut.0" : "ui.enterHut.1"));
+        if (insideNow) showToast(t(insideNow === "hut0" ? "ui.enterHut.0" : insideNow === "hut1" ? "ui.enterHut.1" : "ui.enterHut.2"));
       }
 
       // --- the clock: stops while talking, reading, dancing, or keeping
@@ -1685,11 +1685,15 @@ export function App() {
       if (!isHutArea(area)) {
       for (const id of HOUSE_IDS) {
         const r = HOUSE_RECTS[id];
-        drawables.push({ y: r.y + r.h, draw: () => drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, roofAlphaRef.current[id]) });
+        const alpha = roofAlphaRef.current[id];
+        drawables.push({ y: r.y + r.h, draw: () => id === "otaman"
+          ? drawOtamanKhata(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+          : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
+      drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now) });
       drawables.push({ y: WINDMILL.y, draw: () => drawWindmill(ctx2d, WINDMILL.x - camX, WINDMILL.y - camY, now) });
       for (const k of [KURHAN, KURHAN_STEPPE]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {
@@ -2119,7 +2123,7 @@ export function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
-                {hudArea === "lysa" ? t("ui.misc.5") : hudInside === "hut0" ? t("ui.misc.6") : hudInside === "hut1" ? t("ui.misc.7") : t("ui.zalissya")}
+                {hudArea === "lysa" ? t("ui.misc.5") : hudInside === "hut0" ? t("ui.misc.6") : hudInside === "hut1" ? t("ui.misc.7") : hudInside === "otaman" ? t("ui.hut.otaman") : t("ui.zalissya")}
                 <span className="ml-1.5 normal-case tracking-normal text-[#e8d7ad]">{timeLabel(hudClock)}</span>
               </p>
               <p className="font-serif text-[13px] font-bold leading-tight">

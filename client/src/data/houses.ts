@@ -15,11 +15,14 @@ import { type Rect } from "../world/geometry";
 // The back wall shows its whitewashed inner face, so it is deeper (34).
 //   hut0 — the Domovyk's khata (NW): where the kobzar sleeps
 //   hut1 — Vesna's khata (SE, by the pond): herbs under the ceiling, tinctures
-export type HouseId = "hut0" | "hut1";
+//   otaman — Myroslav's khata by the maidan: a different, richer house
+//     altogether (see OTAMAN_ROOM below)
+export type HouseId = "hut0" | "hut1" | "otaman";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   hut0: { x: 200, y: 150, w: 320, h: 210 },
   hut1: { x: 1180, y: 700, w: 320, h: 210 },
+  otaman: { x: 250, y: 396, w: 380, h: 200 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -27,8 +30,8 @@ export const WALL = 14;
 export const BACK_WALL = 34; // the north wall plus its inner face
 export const DOOR_GAP = 46;
 
-// Furniture, in footprint coordinates (shared by both khaty; each is
-// dressed differently by the renderer).
+// Furniture, in footprint coordinates (shared by the two plain khaty;
+// each is dressed differently by the renderer).
 export const ROOM = {
   pil: { x: 14, y: BACK_WALL, w: 78, h: 58 },
   skrynia: { x: 122, y: 36, w: 40, h: 22 },
@@ -38,6 +41,36 @@ export const ROOM = {
   mysnyk: { x: 290, y: 146, w: 16, h: 44 },
   pich: { x: 14, y: 108, w: 84, h: 88 },
 } as const satisfies Record<string, Rect>;
+
+// The otaman's khata is built "through the siny": the front door opens
+// into an unheated passage (sinky) in the middle, with a door left into
+// the khata proper — the pich, the pil, the bread trough — and a door
+// right into the svitlytsia, the clean room where the otaman receives
+// people: planked floor, a kylym, his table with the pernach, sabres and
+// a musket on the wall. Footprint 380×200, the front door at x 167…213.
+export const OTAMAN_DOORS = { y: 62, h: 60 }; // the gaps in the partitions
+export const OTAMAN_WALLS = { west: 146, east: 222, w: 12 };
+export const OTAMAN_ROOM = {
+  pich: { x: 14, y: 112, w: 76, h: 74 },
+  pil: { x: 14, y: BACK_WALL, w: 60, h: 50 },
+  lava: { x: 82, y: BACK_WALL, w: 58, h: 12 },
+  dizha: { x: 116, y: 150, w: 24, h: 26 },
+  ladder: { x: 166, y: BACK_WALL, w: 18, h: 12 },
+  barrel: { x: 196, y: 40, w: 20, h: 20 },
+  skrynia: { x: 242, y: 36, w: 46, h: 22 },
+  table: { x: 278, y: 76, w: 66, h: 42 },
+  lavaE: { x: 352, y: 42, w: 14, h: 110 },
+} as const satisfies Record<string, Rect>;
+
+function furniture(id: HouseId): Rect[] {
+  if (id !== "otaman") return Object.values(ROOM);
+  const parts: Rect[] = [];
+  for (const px of [OTAMAN_WALLS.west, OTAMAN_WALLS.east]) {
+    parts.push({ x: px, y: BACK_WALL, w: OTAMAN_WALLS.w, h: OTAMAN_DOORS.y - BACK_WALL });
+    parts.push({ x: px, y: OTAMAN_DOORS.y + OTAMAN_DOORS.h, w: OTAMAN_WALLS.w, h: 186 - OTAMAN_DOORS.y - OTAMAN_DOORS.h });
+  }
+  return [...parts, ...Object.values(OTAMAN_ROOM)];
+}
 
 export function toWorld(id: HouseId, p: { x: number; y: number }): { x: number; y: number } {
   const r = HOUSE_RECTS[id];
@@ -54,7 +87,7 @@ export function houseSolids(id: HouseId): Rect[] {
     { x: r.x + r.w - WALL, y: r.y, w: WALL, h: r.h },
     { x: r.x, y: r.y + r.h - WALL, w: half, h: WALL },
     { x: r.x + r.w - half, y: r.y + r.h - WALL, w: half, h: WALL },
-    ...Object.values(ROOM).map((f) => ({ x: r.x + f.x, y: r.y + f.y, w: f.w, h: f.h })),
+    ...furniture(id).map((f) => ({ x: r.x + f.x, y: r.y + f.y, w: f.w, h: f.h })),
   ];
 }
 
@@ -78,4 +111,4 @@ export function doorOf(id: HouseId): { x: number; y: number } {
 export const PICH_SPOT = toWorld("hut0", { x: 114, y: 162 });
 export const BED_SPOT_WORLD = toWorld("hut0", { x: 106, y: 60 });
 export const DOMOVYK_HOME = toWorld("hut0", { x: 62, y: 106 });
-export const HOUSE_CENTER = (id: HouseId) => toWorld(id, { x: 160, y: 150 });
+export const HOUSE_CENTER = (id: HouseId) => toWorld(id, { x: HOUSE_RECTS[id].w / 2, y: 150 });

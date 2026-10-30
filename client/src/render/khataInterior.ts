@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -16,6 +16,7 @@ export function drawKhataInterior(
   x: number, y: number, t: number,
   flags: ReadonlySet<string>,
 ): void {
+  if (id === "otaman") { drawOtamanInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -106,31 +107,7 @@ export function drawKhataInterior(
 
   // --- the pokut: the icon in the NE corner under an embroidered rushnyk,
   // a lampadka burning before it
-  {
-    const ix = x + w - WALL - 30;
-    const iy = y + WALL + 2;
-    c.fillStyle = "#b8862a";
-    rr(c, ix, iy, 18, 15, 1.5); c.fill();
-    c.fillStyle = "#6a3a20";
-    c.fillRect(ix + 3, iy + 3, 12, 9);
-    c.fillStyle = "#f0c860";
-    c.beginPath(); c.arc(ix + 9, iy + 6, 2.6, 0, Math.PI * 2); c.fill();
-    // the rushnyk draped over it, red ends hanging
-    c.fillStyle = "#faf6ec";
-    c.beginPath();
-    c.moveTo(ix - 7, iy - 1); c.quadraticCurveTo(ix + 9, iy + 5, ix + 25, iy - 1);
-    c.lineTo(ix + 25, iy + 17); c.lineTo(ix + 21, iy + 17); c.lineTo(ix + 21, iy + 3);
-    c.quadraticCurveTo(ix + 9, iy + 7, ix - 3, iy + 3);
-    c.lineTo(ix - 3, iy + 17); c.lineTo(ix - 7, iy + 17); c.closePath(); c.fill();
-    c.fillStyle = "#c8402e";
-    c.fillRect(ix - 7, iy + 12, 4, 3);
-    c.fillRect(ix + 21, iy + 12, 4, 3);
-    const fl = 1.6 + Math.sin(t * 0.013) * 0.4;
-    c.fillStyle = "#b03a2e";
-    c.beginPath(); c.arc(ix + 9, iy + 17, 2, 0, Math.PI); c.fill();
-    c.fillStyle = "#ffcf5a";
-    c.beginPath(); c.ellipse(ix + 9, iy + 15, 1.1, fl, 0, 0, Math.PI * 2); c.fill();
-  }
+  drawIcon(c, x + w - WALL - 30, y + WALL + 2, t);
 
   // on the back wall: the Domovyk's khata keeps a sabre and a lyulka
   // hung on a nail; Vesna's has herbs drying on a pole under the ceiling
@@ -293,48 +270,7 @@ export function drawKhataInterior(
   // painted with flowers, its mouth (cheliusti) open to the room
   {
     const p = R(ROOM.pich);
-    const glow = c.createRadialGradient(p.x + p.w, p.y + 52, 4, p.x + p.w, p.y + 52, 90);
-    glow.addColorStop(0, "rgba(255,150,60,0.32)");
-    glow.addColorStop(1, "rgba(255,150,60,0)");
-    c.fillStyle = glow;
-    c.fillRect(p.x, p.y - 40, 190, 150);
-    shadow(p);
-    // the body, its top (the warm lezhanka where people sleep) lighter
-    c.fillStyle = "#e6dfcf";
-    rr(c, p.x, p.y, p.w, p.h, 6); c.fill();
-    c.fillStyle = "#f6f2e8";
-    rr(c, p.x + 2, p.y + 2, p.w - 4, p.h - 26, 5); c.fill();
-    // the chimney rising into the back corner
-    c.fillStyle = "#d9d0bc";
-    rr(c, p.x + 4, p.y + 4, 26, 24, 3); c.fill();
-    c.fillStyle = "#4a3e34";
-    c.fillRect(p.x + 10, p.y + 9, 14, 8);
-    // painted ornament along the front: red and blue flowers on green stems
-    for (let i = 0; i < 4; i++) {
-      const fx = p.x + 12 + i * 19;
-      const fy = p.y + p.h - 12;
-      c.strokeStyle = "#3f7a2e"; c.lineWidth = 1.2;
-      c.beginPath(); c.moveTo(fx, fy + 6); c.quadraticCurveTo(fx + 3, fy + 2, fx, fy - 2); c.stroke();
-      c.fillStyle = i % 2 ? "#3f63a8" : "#c8402e";
-      c.beginPath(); c.arc(fx, fy - 3, 3, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#e8a33a";
-      c.beginPath(); c.arc(fx, fy - 3, 1.2, 0, Math.PI * 2); c.fill();
-    }
-    // the mouth on the room side: a dark arch, fire breathing in it
-    const mx = p.x + p.w - 22;
-    const my = p.y + 34;
-    c.fillStyle = "#d9d0bc";
-    rr(c, mx - 4, my - 4, 26, 42, 4); c.fill();
-    c.fillStyle = "#241610";
-    c.beginPath();
-    c.moveTo(mx + 22, my); c.lineTo(mx + 8, my);
-    c.quadraticCurveTo(mx, my + 17, mx + 8, my + 34);
-    c.lineTo(mx + 22, my + 34); c.closePath(); c.fill();
-    const fl = 4 + Math.sin(t * 0.017) * 1.5 + Math.sin(t * 0.041) * 0.9;
-    c.fillStyle = "#ff8b2e";
-    c.beginPath(); c.ellipse(mx + 13, my + 17, fl + 2, 9, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = "#ffd76a";
-    c.beginPath(); c.ellipse(mx + 13, my + 18, fl - 1, 5, 0, 0, Math.PI * 2); c.fill();
+    const { mx, my } = drawPich(c, p, t);
     if (vesna) {
       // her pot sits in the mouth, something green at a slow bubble
       c.fillStyle = "#2e2a26";
@@ -375,11 +311,7 @@ export function drawKhataInterior(
         c.beginPath(); c.arc(p.x + p.w + 6, p.y + 66, 1.6 + tw * 1.4, 0, Math.PI * 2); c.fill();
       }
     }
-    // the ukhvat (oven fork) leaning against the pich
-    c.strokeStyle = "#7a5a30"; c.lineWidth = 2;
-    c.beginPath(); c.moveTo(p.x + p.w + 4, p.y + p.h - 4); c.lineTo(p.x + p.w - 6, p.y + 12); c.stroke();
-    c.strokeStyle = "#5d5852"; c.lineWidth = 1.6;
-    c.beginPath(); c.arc(p.x + p.w - 6, p.y + 9, 4, Math.PI * 0.9, Math.PI * 2.1); c.stroke();
+    drawUkhvat(c, p);
   }
 
   // a broom by the door (no khata of the Domovyk's lacks one); Vesna
@@ -398,5 +330,390 @@ export function drawKhataInterior(
     for (const [hx, hy] of [[2, -10], [8, -12], [12, -9], [5, -7]] as const) {
       c.beginPath(); c.arc(bx + hx, by + hy, 2.6, 0, Math.PI * 2); c.fill();
     }
+  }
+}
+
+type Box = { x: number; y: number; w: number; h: number };
+
+// The pich every khata is built around: a broad whitewashed stove in the
+// corner by the door, painted with flowers, its mouth (cheliusti) open to
+// the room with the fire breathing in it. Returns where the mouth is, so
+// each khata can set its own pot in it.
+function drawPich(c: CanvasRenderingContext2D, p: Box, t: number): { mx: number; my: number } {
+  const glow = c.createRadialGradient(p.x + p.w, p.y + 52, 4, p.x + p.w, p.y + 52, 90);
+  glow.addColorStop(0, "rgba(255,150,60,0.32)");
+  glow.addColorStop(1, "rgba(255,150,60,0)");
+  c.fillStyle = glow;
+  c.fillRect(p.x, p.y - 40, 190, 150);
+  c.fillStyle = "rgba(60,36,14,0.22)";
+  rr(c, p.x + 3, p.y + 4, p.w, p.h, 4); c.fill();
+  // the body, its top (the warm lezhanka where people sleep) lighter
+  c.fillStyle = "#e6dfcf";
+  rr(c, p.x, p.y, p.w, p.h, 6); c.fill();
+  c.fillStyle = "#f6f2e8";
+  rr(c, p.x + 2, p.y + 2, p.w - 4, p.h - 26, 5); c.fill();
+  // the chimney rising into the back corner
+  c.fillStyle = "#d9d0bc";
+  rr(c, p.x + 4, p.y + 4, 26, 24, 3); c.fill();
+  c.fillStyle = "#4a3e34";
+  c.fillRect(p.x + 10, p.y + 9, 14, 8);
+  // painted ornament along the front: red and blue flowers on green stems
+  for (let i = 0; i < 4; i++) {
+    const fx = p.x + 12 + i * 19;
+    const fy = p.y + p.h - 12;
+    c.strokeStyle = "#3f7a2e"; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(fx, fy + 6); c.quadraticCurveTo(fx + 3, fy + 2, fx, fy - 2); c.stroke();
+    c.fillStyle = i % 2 ? "#3f63a8" : "#c8402e";
+    c.beginPath(); c.arc(fx, fy - 3, 3, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#e8a33a";
+    c.beginPath(); c.arc(fx, fy - 3, 1.2, 0, Math.PI * 2); c.fill();
+  }
+  // the mouth on the room side: a dark arch, fire breathing in it
+  const mx = p.x + p.w - 22;
+  const my = p.y + 34;
+  c.fillStyle = "#d9d0bc";
+  rr(c, mx - 4, my - 4, 26, 42, 4); c.fill();
+  c.fillStyle = "#241610";
+  c.beginPath();
+  c.moveTo(mx + 22, my); c.lineTo(mx + 8, my);
+  c.quadraticCurveTo(mx, my + 17, mx + 8, my + 34);
+  c.lineTo(mx + 22, my + 34); c.closePath(); c.fill();
+  const fl = 4 + Math.sin(t * 0.017) * 1.5 + Math.sin(t * 0.041) * 0.9;
+  c.fillStyle = "#ff8b2e";
+  c.beginPath(); c.ellipse(mx + 13, my + 17, fl + 2, 9, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#ffd76a";
+  c.beginPath(); c.ellipse(mx + 13, my + 18, fl - 1, 5, 0, 0, Math.PI * 2); c.fill();
+  return { mx, my };
+}
+
+// the ukhvat (oven fork) leaning against the pich
+function drawUkhvat(c: CanvasRenderingContext2D, p: Box): void {
+  c.strokeStyle = "#7a5a30"; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(p.x + p.w + 4, p.y + p.h - 4); c.lineTo(p.x + p.w - 6, p.y + 12); c.stroke();
+  c.strokeStyle = "#5d5852"; c.lineWidth = 1.6;
+  c.beginPath(); c.arc(p.x + p.w - 6, p.y + 9, 4, Math.PI * 0.9, Math.PI * 2.1); c.stroke();
+}
+
+// the icon under its rushnyk (red ends hanging), a lampadka before it
+function drawIcon(c: CanvasRenderingContext2D, ix: number, iy: number, t: number): void {
+  c.fillStyle = "#b8862a";
+  rr(c, ix, iy, 18, 15, 1.5); c.fill();
+  c.fillStyle = "#6a3a20";
+  c.fillRect(ix + 3, iy + 3, 12, 9);
+  c.fillStyle = "#f0c860";
+  c.beginPath(); c.arc(ix + 9, iy + 6, 2.6, 0, Math.PI * 2); c.fill();
+  // the rushnyk draped over it, red ends hanging
+  c.fillStyle = "#faf6ec";
+  c.beginPath();
+  c.moveTo(ix - 7, iy - 1); c.quadraticCurveTo(ix + 9, iy + 5, ix + 25, iy - 1);
+  c.lineTo(ix + 25, iy + 17); c.lineTo(ix + 21, iy + 17); c.lineTo(ix + 21, iy + 3);
+  c.quadraticCurveTo(ix + 9, iy + 7, ix - 3, iy + 3);
+  c.lineTo(ix - 3, iy + 17); c.lineTo(ix - 7, iy + 17); c.closePath(); c.fill();
+  c.fillStyle = "#c8402e";
+  c.fillRect(ix - 7, iy + 12, 4, 3);
+  c.fillRect(ix + 21, iy + 12, 4, 3);
+  const fl = 1.6 + Math.sin(t * 0.013) * 0.4;
+  c.fillStyle = "#b03a2e";
+  c.beginPath(); c.arc(ix + 9, iy + 17, 2, 0, Math.PI); c.fill();
+  c.fillStyle = "#ffcf5a";
+  c.beginPath(); c.ellipse(ix + 9, iy + 15, 1.1, fl, 0, 0, Math.PI * 2); c.fill();
+}
+
+// --- The otaman's khata -----------------------------------------------------
+// Built "through the siny" (data/houses.ts): the clay-floored passage in
+// the middle, the working khata with the pich to the west, and to the east
+// the svitlytsia — the clean room, planked and carpeted, where Myroslav
+// sits under his sabres and judges who stole whose fence-post.
+function drawOtamanInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.otaman;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: Box) => {
+    c.fillStyle = "rgba(60,36,14,0.22)";
+    rr(c, r.x + 3, r.y + 4, r.w, r.h, 4); c.fill();
+  };
+  const west = OTAMAN_WALLS.west;
+  const east = OTAMAN_WALLS.east + OTAMAN_WALLS.w;
+  const room = OTAMAN_ROOM;
+
+  // floors: clay in the khata and the siny, planks in the svitlytsia
+  c.fillStyle = "#c19a68";
+  c.fillRect(x, y, east, h);
+  for (let i = 0; i < 40; i++) {
+    c.fillStyle = i % 2 ? "rgba(140,98,54,0.18)" : "rgba(230,200,150,0.18)";
+    c.beginPath(); c.ellipse(x + hash2(i, 13) * east, y + hash2(i, 17) * h, 6 + hash2(i, 5) * 9, 3 + hash2(i, 9) * 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "rgba(90,60,30,0.16)"; // the siny are trodden darker
+  c.fillRect(x + west + OTAMAN_WALLS.w, y, OTAMAN_WALLS.east - west - OTAMAN_WALLS.w, h);
+  c.fillStyle = "#b07e4a";
+  c.fillRect(x + east, y, w - east, h);
+  c.strokeStyle = "rgba(90,56,26,0.45)"; c.lineWidth = 1;
+  for (let py = y + BACK_WALL + 12; py < y + h; py += 12) {
+    c.beginPath(); c.moveTo(x + east, py); c.lineTo(x + w, py); c.stroke();
+    const off = (py / 12) % 2 ? 40 : 0;
+    for (let px = x + east + 20 + off; px < x + w; px += 80) {
+      c.beginPath(); c.moveTo(px, py - 12); c.lineTo(px, py); c.stroke();
+    }
+  }
+  // the kylym on the svitlytsia floor: red field, black and gold lozenges
+  {
+    const kx = x + 248;
+    const ky = y + 130;
+    const kw = 96;
+    const kh = 48;
+    c.fillStyle = "#9c2a24";
+    c.fillRect(kx, ky, kw, kh);
+    c.fillStyle = "#1e1a16";
+    c.fillRect(kx, ky, kw, 5); c.fillRect(kx, ky + kh - 5, kw, 5);
+    for (let i = 0; i < 4; i++) {
+      const cx = kx + 14 + i * 23;
+      const cy = ky + kh / 2;
+      c.fillStyle = i % 2 ? "#e8b84a" : "#1e1a16";
+      c.beginPath(); c.moveTo(cx, cy - 12); c.lineTo(cx + 9, cy); c.lineTo(cx, cy + 12); c.lineTo(cx - 9, cy); c.closePath(); c.fill();
+      c.fillStyle = i % 2 ? "#9c2a24" : "#e8b84a";
+      c.beginPath(); c.moveTo(cx, cy - 5); c.lineTo(cx + 4, cy); c.lineTo(cx, cy + 5); c.lineTo(cx - 4, cy); c.closePath(); c.fill();
+    }
+    c.fillStyle = "rgba(255,255,255,0.3)";
+    for (let fx = kx + 2; fx < kx + kw; fx += 4) { c.fillRect(fx, ky - 3, 1.2, 3); c.fillRect(fx, ky + kh, 1.2, 3); }
+  }
+
+  // --- walls: the back wall's whitewashed face, with the blue band
+  c.fillStyle = "#f4efe3";
+  c.fillRect(x, y + WALL, w, BACK_WALL - WALL);
+  c.fillStyle = "#3f63a8";
+  c.fillRect(x, y + BACK_WALL - 4, w, 4);
+  // in the svitlytsia the band carries a painted vine, not just flowers
+  c.strokeStyle = "#3f7a2e"; c.lineWidth = 1.2;
+  c.beginPath();
+  for (let fx = east + 6; fx < w - WALL; fx += 2) {
+    const fy = y + BACK_WALL - 9 + Math.sin(fx * 0.25) * 2.2;
+    if (fx === east + 6) c.moveTo(x + fx, fy); else c.lineTo(x + fx, fy);
+  }
+  c.stroke();
+  for (let fx = east + 12; fx < w - WALL; fx += 16) {
+    c.fillStyle = (fx / 16) % 2 < 1 ? "#c8402e" : "#e8a33a";
+    c.beginPath(); c.arc(x + fx, y + BACK_WALL - 9 + Math.sin(fx * 0.25) * 2.2, 2, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "#ddd2bc";
+  c.fillRect(x, y, w, WALL);
+  c.fillRect(x, y, WALL, h);
+  c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL);
+  c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  // the two partitions, each with a door into the siny
+  for (const px of [west, OTAMAN_WALLS.east]) {
+    c.fillStyle = "#ddd2bc";
+    c.fillRect(x + px, y + BACK_WALL, OTAMAN_WALLS.w, OTAMAN_DOORS.y - BACK_WALL);
+    c.fillRect(x + px, y + OTAMAN_DOORS.y + OTAMAN_DOORS.h, OTAMAN_WALLS.w, 186 - OTAMAN_DOORS.y - OTAMAN_DOORS.h);
+    c.fillStyle = "rgba(120,100,70,0.35)";
+    c.fillRect(x + px, y + BACK_WALL, OTAMAN_WALLS.w, 2);
+    // the door, swung open against the partition
+    c.fillStyle = "#6e4525";
+    c.fillRect(x + px + 2, y + OTAMAN_DOORS.y - 1, OTAMAN_WALLS.w - 4, 3);
+    c.fillStyle = "#a8643c";
+    c.fillRect(x + px, y + OTAMAN_DOORS.y, OTAMAN_WALLS.w, OTAMAN_DOORS.h);
+  }
+  c.fillStyle = "rgba(120,100,70,0.35)";
+  c.fillRect(x + WALL, y + WALL, 2, h - 2 * WALL);
+  c.fillRect(x + w - WALL - 2, y + WALL, 2, h - 2 * WALL);
+  // windows in the front wall: two for each room, none for the siny
+  for (const wx of [30, 92, 250, 316]) {
+    c.fillStyle = "#9cc4dc";
+    c.fillRect(x + wx, y + h - WALL + 4, 32, 6);
+    c.fillStyle = "#3f63a8";
+    c.fillRect(x + wx + 15, y + h - WALL + 4, 2, 6);
+    c.fillStyle = "rgba(255,244,210,0.2)";
+    c.beginPath();
+    c.moveTo(x + wx, y + h - WALL); c.lineTo(x + wx + 32, y + h - WALL);
+    c.lineTo(x + wx + 40, y + h - WALL - 34); c.lineTo(x + wx + 8, y + h - WALL - 34);
+    c.closePath(); c.fill();
+  }
+  // the front door step
+  c.fillStyle = "#a8643c";
+  c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+
+  // --- the khata (west): the pich, the pil, a lava, the bread trough
+  {
+    const p = R(room.pil);
+    shadow(p);
+    c.fillStyle = "#7a4a24";
+    rr(c, p.x, p.y, p.w, p.h, 3); c.fill();
+    c.fillStyle = "#3a4a7a";
+    rr(c, p.x + 16, p.y + 3, p.w - 19, p.h - 6, 3); c.fill();
+    c.fillStyle = "#d8c27a";
+    for (let sx = p.x + 21; sx < p.x + p.w - 5; sx += 8) c.fillRect(sx, p.y + 3, 2, p.h - 6);
+    c.fillStyle = "#fbf7ee";
+    rr(c, p.x + 3, p.y + 5, 14, 18, 4); c.fill();
+    rr(c, p.x + 3, p.y + 26, 14, 18, 4); c.fill();
+  }
+  {
+    const b = R(room.lava);
+    shadow(b);
+    c.fillStyle = "#8a5a2e";
+    rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    // a cushion on the lava: the guest's place, kept for singers
+    c.fillStyle = "#c98d45";
+    c.beginPath(); c.ellipse(b.x + 40, b.y + 6, 7, 4, 0, 0, Math.PI * 2); c.fill();
+  }
+  {
+    const p = R(room.pich);
+    const { mx, my } = drawPich(c, p, t);
+    // a pot of borshch in the mouth, and a palianytsia cooling on top
+    c.fillStyle = "#a85f38";
+    c.beginPath(); c.ellipse(mx + 15, my + 17, 7, 6, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#a8322a";
+    c.beginPath(); c.ellipse(mx + 15, my + 15, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#b8742e";
+    c.beginPath(); c.ellipse(p.x + 44, p.y + 20, 10, 7, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#d89a4a";
+    c.beginPath(); c.ellipse(p.x + 44, p.y + 18, 7, 4.4, 0, 0, Math.PI * 2); c.fill();
+    drawUkhvat(c, p);
+  }
+  {
+    const d = R(room.dizha);
+    shadow(d);
+    c.fillStyle = "#7a4a24";
+    c.beginPath(); c.ellipse(d.x + d.w / 2, d.y + d.h / 2, d.w / 2, d.h / 2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#efe3c8"; // dough rising under a cloth
+    c.beginPath(); c.ellipse(d.x + d.w / 2, d.y + d.h / 2 - 1, d.w / 2 - 3, d.h / 2 - 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#c8402e";
+    c.fillRect(d.x + 3, d.y + d.h / 2 - 1, d.w - 6, 2);
+  }
+  // a rushnyk over the khata's corner, where its own little icon hangs
+  drawIcon(c, x + 112, y + WALL + 2, t);
+
+  // --- the siny: a ladder up to the horyshche, a barrel, a saddle on a peg
+  {
+    const l = R(room.ladder);
+    c.strokeStyle = "#7a5a30"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(l.x + 3, y + WALL); c.lineTo(l.x + 3, l.y + l.h); c.stroke();
+    c.beginPath(); c.moveTo(l.x + l.w - 3, y + WALL); c.lineTo(l.x + l.w - 3, l.y + l.h); c.stroke();
+    c.lineWidth = 1.6;
+    for (let ry = y + WALL + 4; ry < l.y + l.h; ry += 6) {
+      c.beginPath(); c.moveTo(l.x + 3, ry); c.lineTo(l.x + l.w - 3, ry); c.stroke();
+    }
+    const b = R(room.barrel);
+    shadow(b);
+    c.fillStyle = "#7a4a24";
+    c.beginPath(); c.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#3a3230"; c.lineWidth = 1.6;
+    c.beginPath(); c.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2 - 2, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "#5a3a22";
+    c.beginPath(); c.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2 - 4, 0, Math.PI * 2); c.fill();
+    // a kovsh (ladle) hooked on the rim
+    c.fillStyle = "#8a6a3a";
+    c.beginPath(); c.ellipse(b.x + b.w / 2 + 3, b.y + b.h / 2, 3.4, 2.4, 0, 0, Math.PI * 2); c.fill();
+    // a saddle and bridle on a peg by the front door
+    c.fillStyle = "#6a3a20";
+    rr(c, x + 196, y + 150, 18, 12, 4); c.fill();
+    c.fillStyle = "#8a5a2e";
+    c.fillRect(x + 196, y + 154, 18, 3);
+    c.strokeStyle = "#3a2a1c"; c.lineWidth = 1.2;
+    c.beginPath(); c.arc(x + 172, y + 158, 6, 0, Math.PI * 2); c.stroke();
+  }
+
+  // --- the svitlytsia (east)
+  // on the back wall, his arms: two crossed sabres, a pair of pistols and
+  // a long musket, all of it on a red cloth
+  {
+    c.fillStyle = "#8a2a24";
+    c.fillRect(x + 296, y + WALL + 1, 44, 18);
+    c.strokeStyle = "#c8ccd0"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x + 300, y + WALL + 16); c.quadraticCurveTo(x + 318, y + WALL + 6, x + 336, y + WALL + 2); c.stroke();
+    c.beginPath(); c.moveTo(x + 336, y + WALL + 16); c.quadraticCurveTo(x + 318, y + WALL + 6, x + 300, y + WALL + 2); c.stroke();
+    c.fillStyle = "#d9a441";
+    c.fillRect(x + 298, y + WALL + 14, 5, 4);
+    c.fillRect(x + 333, y + WALL + 14, 5, 4);
+    c.strokeStyle = "#5a3a22"; c.lineWidth = 2.4;
+    c.beginPath(); c.moveTo(x + 246, y + WALL + 6); c.lineTo(x + 292, y + WALL + 6); c.stroke();
+    c.strokeStyle = "#5d5852"; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(x + 262, y + WALL + 5); c.lineTo(x + 292, y + WALL + 5); c.stroke();
+    for (const px of [248, 270]) {
+      c.fillStyle = "#5a3a22";
+      rr(c, x + px, y + WALL + 11, 8, 5, 2); c.fill();
+      c.fillStyle = "#5d5852";
+      c.fillRect(x + px + 7, y + WALL + 12, 10, 2.4);
+    }
+  }
+  drawIcon(c, x + w - WALL - 30, y + WALL + 2, t);
+  {
+    const s = R(room.skrynia);
+    shadow(s);
+    c.fillStyle = "#9c3a2a";
+    rr(c, s.x, s.y, s.w, s.h, 3); c.fill();
+    c.fillStyle = "#b44a36";
+    c.fillRect(s.x + 2, s.y + 2, s.w - 4, 6);
+    c.fillStyle = "#3a3230";
+    c.fillRect(s.x + 7, s.y, 3, s.h);
+    c.fillRect(s.x + s.w - 10, s.y, 3, s.h);
+    for (const [fx, col] of [[s.x + 18, "#e8c66a"], [s.x + 24, "#3f63a8"], [s.x + 30, "#e8c66a"]] as const) {
+      c.fillStyle = col;
+      c.beginPath(); c.arc(fx, s.y + 14, 2.6, 0, Math.PI * 2); c.fill();
+    }
+    // his blue kuntush folded on the lid
+    c.fillStyle = "#2c4a8a";
+    rr(c, s.x + 12, s.y + 3, 22, 8, 2); c.fill();
+  }
+  {
+    const b = R(room.lavaE);
+    shadow(b);
+    c.fillStyle = "#8a5a2e";
+    rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    // a kylym thrown over the bench, as it is for guests
+    c.fillStyle = "#9c2a24";
+    c.fillRect(b.x + 1, b.y + 20, b.w - 2, 60);
+    c.fillStyle = "#e8b84a";
+    for (let ky = b.y + 26; ky < b.y + 78; ky += 12) c.fillRect(b.x + 4, ky, b.w - 8, 3);
+  }
+  {
+    const tb = R(room.table);
+    shadow(tb);
+    c.fillStyle = "#6a3a1c";
+    rr(c, tb.x, tb.y, tb.w, tb.h, 3); c.fill();
+    c.fillStyle = "#faf6ec";
+    rr(c, tb.x + 3, tb.y + 3, tb.w - 6, tb.h - 6, 2); c.fill();
+    c.strokeStyle = "#c8402e"; c.lineWidth = 1.4;
+    c.strokeRect(tb.x + 6, tb.y + 6, tb.w - 12, tb.h - 12);
+    c.strokeStyle = "#1e1a16"; c.lineWidth = 0.8;
+    c.strokeRect(tb.x + 8, tb.y + 8, tb.w - 16, tb.h - 16);
+    // the pernach (the otaman's mace), his papers, ink and a quill
+    c.strokeStyle = "#8a6a3a"; c.lineWidth = 2.4;
+    c.beginPath(); c.moveTo(tb.x + 12, tb.y + 30); c.lineTo(tb.x + 30, tb.y + 22); c.stroke();
+    c.fillStyle = "#d9a441";
+    c.beginPath(); c.arc(tb.x + 32, tb.y + 21, 4.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f2d07a";
+    c.beginPath(); c.arc(tb.x + 31, tb.y + 20, 1.6, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#efe3c8";
+    c.save(); c.translate(tb.x + 44, tb.y + 18); c.rotate(-0.12);
+    c.fillRect(-7, -6, 14, 18);
+    c.strokeStyle = "#8a7a6a"; c.lineWidth = 0.8;
+    for (let ly = -3; ly < 10; ly += 3) { c.beginPath(); c.moveTo(-5, ly); c.lineTo(5, ly); c.stroke(); }
+    c.restore();
+    c.fillStyle = "#1e1a16";
+    c.beginPath(); c.arc(tb.x + 54, tb.y + 30, 2.6, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#f4efe3"; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(tb.x + 54, tb.y + 29); c.lineTo(tb.x + 60, tb.y + 20); c.stroke();
+    // a brass candlestick with its flame and its light
+    const lx = tb.x + 22;
+    const ly = tb.y + tb.h - 10;
+    c.fillStyle = "#c9a040";
+    c.beginPath(); c.arc(lx, ly, 3.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f4efe3";
+    c.fillRect(lx - 1, ly - 7, 2, 6);
+    const fl = 2.4 + Math.sin(t * 0.02) * 0.7;
+    c.fillStyle = "#ffb02e";
+    c.beginPath(); c.ellipse(lx, ly - 9, 1.6, fl + 1, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#ffe89a";
+    c.beginPath(); c.ellipse(lx, ly - 8.6, 0.8, fl, 0, 0, Math.PI * 2); c.fill();
+    const lg = c.createRadialGradient(lx, ly, 4, lx, ly, 100);
+    lg.addColorStop(0, "rgba(255,190,90,0.22)");
+    lg.addColorStop(1, "rgba(255,190,90,0)");
+    c.fillStyle = lg;
+    c.fillRect(lx - 100, ly - 100, 200, 200);
+    // the otaman's carved chair at the head of the table
+    c.fillStyle = "#5a3a22";
+    rr(c, tb.x - 14, tb.y + 10, 12, 22, 2); c.fill();
+    c.fillStyle = "#8a2a24";
+    rr(c, tb.x - 12, tb.y + 13, 8, 16, 2); c.fill();
   }
 }

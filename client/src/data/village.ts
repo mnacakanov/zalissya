@@ -7,8 +7,7 @@ import { HOUSE_RECTS, houseSolids } from "./houses";
 export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
   { x: 1140, y: 190, w: 168, h: 104, kind: "hut" },
   { x: 250, y: 690, w: 156, h: 92, kind: "forge" },
-  // the otaman's khata, facing the maidan
-  { x: 500, y: 396, w: 150, h: 96, kind: "hut" },
+  // (the otaman's khata, facing the maidan, is walk-in: data/houses.ts)
 ];
 
 export const WELL: Rect = { x: 806, y: 470, w: 68, h: 52 };
@@ -78,6 +77,9 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
   add("kovyla", [[1556, 520], [1596, 560], [1540, 700], [1590, 724], [1500, 530], [1446, 742], [1552, 800], [1430, 800], [1600, 610]]);
 }
 
+// the otaman's korohva (banner) on its pole by his porch
+export const OTAMAN_FLAGPOLE: Rect = { x: 640, y: 584, w: 8, h: 8 };
+
 export const FENCES: Rect[] = [
   { x: GARDEN.x - 8, y: GARDEN.y - 10, w: GARDEN.w + 16, h: 10 },
   { x: GARDEN.x - 8, y: GARDEN.y + GARDEN.h, w: GARDEN.w + 16, h: 10 },
@@ -91,6 +93,8 @@ export const SOLID: Rect[] = [
   // the khaty you walk into: walls with a door, and their furniture
   ...houseSolids("hut0"),
   ...houseSolids("hut1"),
+  ...houseSolids("otaman"),
+  OTAMAN_FLAGPOLE,
   WELL,
   FIRE,
   // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk

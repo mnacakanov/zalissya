@@ -127,6 +127,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
   - `village`: the khutir and the steppe
   - `lysa`: the mountain, at the far end of the steppe trail
   - `hut0` / `hut1`: no longer separate maps. The Domovyk's khata (pich, bed) and Vesna's khata stand **in the world** and you walk in through the door; the roof fades away while you are inside (`data/houses.ts`: footprints, walls with a door, furniture in the traditional layout; the rooms are drawn at world scale by `render/khataInterior.ts`). Old saves with area `hut0`/`hut1` load inside the same khata.
+  - The otaman's khata by the maidan is walk-in too, but it is a house of its own kind (`id: "otaman"`, no save area): a long khata built through the siny, with the pich room to the west and the svitlytsia to the east (`OTAMAN_ROOM`, `drawOtamanKhata`, `drawOtamanInterior`).
 - **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith).
   - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy, the boss, sealed by the vigil.
   - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.

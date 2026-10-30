@@ -432,3 +432,153 @@ export function drawKhataBig(c: CanvasRenderingContext2D, x: number, y: number, 
   }
   c.restore();
 }
+
+// The otaman's khata: the richest house on the khutir, and it shows.
+// Longer (two rooms through the siny), whitewashed with a touch of blue,
+// a shingled (gont) roof instead of thatch, red shutters on four windows,
+// a carved porch (ganok) over a double door, and a brick chimney.
+export function drawOtamanKhata(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  c.save();
+  c.globalAlpha = alpha;
+  const front = 70;
+  const wallTop = y + h - front;
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + w / 2, y + h + 10, w * 0.58, 15, 0, 0, Math.PI * 2); c.fill();
+  // front wall, blued whitewash, and the red-ochre pryzba along its foot
+  c.fillStyle = "#e6eef3";
+  rr(c, x, wallTop, w, front, 4); c.fill();
+  c.fillStyle = "rgba(120,140,160,0.16)";
+  c.fillRect(x + w * 0.8, wallTop, w * 0.2, front);
+  c.fillStyle = "#b0583a";
+  rr(c, x - 4, y + h - 14, w + 8, 14, 3); c.fill();
+  // a painted band under the eaves
+  c.fillStyle = "#3f63a8";
+  c.fillRect(x, wallTop + 6, w, 3);
+  for (let fx = x + 10; fx < x + w - 6; fx += 18) {
+    c.fillStyle = ((fx - x) / 18) % 2 < 1 ? "#c8402e" : "#e8a33a";
+    c.beginPath(); c.arc(fx, wallTop + 14, 2, 0, Math.PI * 2); c.fill();
+  }
+  // four windows with red shutters (vikonnytsi) folded back
+  for (const wx of [x + 30, x + 92, x + 250, x + 316]) {
+    const wy = wallTop + 22;
+    c.fillStyle = "#a8322a";
+    c.fillRect(wx - 12, wy - 2, 10, 30);
+    c.fillRect(wx + 34, wy - 2, 10, 30);
+    c.fillStyle = "#e8c66a";
+    c.fillRect(wx - 9, wy + 4, 4, 18);
+    c.fillRect(wx + 37, wy + 4, 4, 18);
+    c.fillStyle = "#ffe2a4";
+    c.fillRect(wx, wy, 32, 26);
+    c.fillStyle = "#2c4a8a";
+    c.fillRect(wx + 15, wy, 2, 26);
+    c.fillRect(wx, wy + 12, 32, 2);
+    c.strokeStyle = "#2c4a8a"; c.lineWidth = 2;
+    c.strokeRect(wx, wy, 32, 26);
+  }
+  // the double door under the porch
+  const dx = x + w / 2 - 20;
+  c.fillStyle = "#3c5a3a";
+  rr(c, dx, y + h - 58, 40, 46, 2); c.fill();
+  c.fillStyle = "#2c442c";
+  c.fillRect(dx + 19, y + h - 58, 2, 46);
+  c.fillStyle = "#d9a441";
+  c.fillRect(dx + 14, y + h - 36, 3, 3);
+  c.fillRect(dx + 23, y + h - 36, 3, 3);
+  // the ganok: two carved posts, a little shingled gable, wooden steps
+  c.fillStyle = "#8a5a2e";
+  rr(c, dx - 16, y + h - 2, 72, 12, 2); c.fill();
+  c.fillStyle = "#6e4525";
+  c.fillRect(dx - 12, y + h + 6, 64, 4);
+  for (const px of [dx - 14, dx + 48]) {
+    c.fillStyle = "#7a4a24";
+    c.fillRect(px, y + h - 66, 6, 72);
+    c.fillStyle = "#a8743c";
+    for (let k = 0; k < 4; k++) c.fillRect(px - 1, y + h - 56 + k * 16, 8, 3);
+  }
+  c.fillStyle = "#5e4c3c";
+  c.beginPath();
+  c.moveTo(dx - 22, y + h - 64); c.lineTo(dx + 20, y + h - 90); c.lineTo(dx + 62, y + h - 64);
+  c.closePath(); c.fill();
+  c.strokeStyle = "#d9c79a"; c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(dx - 18, y + h - 66); c.lineTo(dx + 20, y + h - 88); c.lineTo(dx + 58, y + h - 66); c.stroke();
+  c.fillStyle = "#e8c66a";
+  c.beginPath(); c.arc(dx + 20, y + h - 74, 3.4, 0, Math.PI * 2); c.fill();
+  // the roof: shingles in staggered rows, back slope darker, a carved ridge
+  const eave = wallTop + 6;
+  const ridge = y + (eave - y) * 0.42;
+  c.fillStyle = "#4e4036";
+  c.beginPath();
+  c.moveTo(x - 14, ridge); c.lineTo(x + w * 0.12, y - 12); c.lineTo(x + w * 0.88, y - 12); c.lineTo(x + w + 14, ridge);
+  c.closePath(); c.fill();
+  c.fillStyle = "#6b5a4a";
+  c.beginPath();
+  c.moveTo(x - 18, eave + 4); c.lineTo(x - 14, ridge); c.lineTo(x + w + 14, ridge); c.lineTo(x + w + 18, eave + 4);
+  c.closePath(); c.fill();
+  c.strokeStyle = "rgba(40,30,24,0.45)"; c.lineWidth = 1;
+  let row = 0;
+  for (let ry = ridge + 8; ry < eave + 4; ry += 8, row++) {
+    c.beginPath(); c.moveTo(x - 16, ry); c.lineTo(x + w + 16, ry); c.stroke();
+    for (let rx = x - 14 + (row % 2) * 7; rx < x + w + 14; rx += 14) {
+      c.beginPath(); c.moveTo(rx, ry - 8); c.lineTo(rx, ry); c.stroke();
+    }
+  }
+  c.strokeStyle = "rgba(30,24,20,0.35)";
+  for (let ry = y - 4; ry < ridge; ry += 8) {
+    c.beginPath(); c.moveTo(x + w * 0.1, ry); c.lineTo(x + w * 0.9, ry); c.stroke();
+  }
+  c.fillStyle = "#3a2e26";
+  rr(c, x - 16, ridge - 4, w + 32, 8, 3); c.fill();
+  c.fillStyle = "#a8743c";
+  for (let px = x; px < x + w; px += 20) c.fillRect(px, ridge - 7, 4, 4);
+  c.fillStyle = "#3a2e26";
+  c.fillRect(x - 18, eave + 2, w + 36, 6);
+  c.fillStyle = "rgba(60,40,20,0.2)";
+  c.fillRect(x, eave + 8, w, 6);
+  // a brick chimney over the khata half, smoking
+  const chx = x + w * 0.2;
+  const chy = ridge - 28;
+  c.fillStyle = "#a84a32";
+  c.fillRect(chx, chy, 18, 28);
+  c.strokeStyle = "rgba(60,20,10,0.4)"; c.lineWidth = 1;
+  for (let by = chy + 6; by < chy + 28; by += 6) { c.beginPath(); c.moveTo(chx, by); c.lineTo(chx + 18, by); c.stroke(); }
+  c.fillStyle = "#7a3424";
+  c.fillRect(chx - 2, chy - 3, 22, 5);
+  for (let i = 0; i < 3; i++) {
+    const ph = (t * 0.00016 + i / 3) % 1;
+    c.fillStyle = `rgba(240,238,232,${0.45 * (1 - ph)})`;
+    c.beginPath();
+    c.arc(chx + 9 + ph * 16 + Math.sin(ph * 6) * 3, chy - 6 - ph * 44, 4 + ph * 8, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+}
+
+// The otaman's korohva: a crimson banner on a tall pole by his porch,
+// lifting and falling with the steppe wind.
+export function drawKorohva(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  c.fillStyle = "rgba(30,50,20,0.25)";
+  c.beginPath(); c.ellipse(x, y + 2, 10, 4, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#6e4525";
+  c.fillRect(x - 2, y - 150, 4, 152);
+  c.fillStyle = "#d9a441";
+  c.beginPath(); c.moveTo(x, y - 162); c.lineTo(x + 4, y - 150); c.lineTo(x - 4, y - 150); c.closePath(); c.fill();
+  c.fillStyle = "#a8222a";
+  c.beginPath();
+  c.moveTo(x + 2, y - 148);
+  for (let i = 0; i <= 10; i++) {
+    const fx = x + 2 + i * 5.4;
+    c.lineTo(fx, y - 148 + Math.sin(t * 0.004 + i * 0.7) * 3 * (i / 10));
+  }
+  for (let i = 10; i >= 0; i--) {
+    const fx = x + 2 + i * 5.4;
+    c.lineTo(fx, y - 112 + Math.sin(t * 0.004 + i * 0.7) * 3 * (i / 10));
+  }
+  c.closePath(); c.fill();
+  // a gold cross on it, as on the Zaporozhian banners
+  const cx = x + 26;
+  const cy = y - 130 + Math.sin(t * 0.004 + 4.5 * 0.7) * 1.4;
+  c.fillStyle = "#e8c66a";
+  c.fillRect(cx - 1.5, cy - 8, 3, 16);
+  c.fillRect(cx - 6, cy - 3, 12, 3);
+}

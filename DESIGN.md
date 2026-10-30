@@ -208,3 +208,14 @@ The Domovyk's khata also has a painted skrynia, a sabre and lyulka on the wall, 
 Vesna's khata has herbs drying on a pole under the ceiling, a stand of tinctures, her mortar and book of cures, a pot of something green bubbling in the pich, and a cat asleep on top of it.
 
 Furniture has collision at world scale. Only the sleep, offering and talk spots moved: they are spaced so each prompt can be reached on its own.
+
+## The otaman's khata
+
+The third khata on the maidan was a closed façade the same size as the others. Now it is Myroslav's house, you can walk into it, and it is meant to look unlike any other house on the khutir:
+
+- **Outside:** it is longer, and the whitewash is tinted blue. It has a shingled (gont) roof instead of thatch, a brick chimney, red shutters on four windows, and a carved porch over a green double door. A crimson korohva with a gold cross stands by the porch.
+- **Layout:** the house is built "through the siny". The front door opens into a clay-floored passage with a ladder to the loft, a barrel and a saddle on a peg. Doors lead off it left and right.
+- **Left room:** the working khata, with the pich (borshch in its mouth, a palianytsia cooling on top), the pil, a bench and a bread trough with dough rising under a cloth.
+- **Right room:** the svitlytsia, the clean room where the otaman receives people. It has a plank floor, a kylym, sabres, pistols and a musket on a red cloth, and a red skrynia with his kuntush on the lid. His table holds the pernach, papers, an inkwell and a brass candlestick, with a carved chair at its head.
+
+Two herb spots that ended up inside the walls moved out into the yards.
