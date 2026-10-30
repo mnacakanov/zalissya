@@ -294,3 +294,10 @@ The owner wanted the roads and the maidan less geometric, with mud, holes and un
   - potholes, with a sunlit lip;
   - patches of wet mud and pebbles;
   - two cart ruts with pale ridges, following the meander of every road the carts use.
+
+The owner said the roads still looked too even and pointed at Drova's ground as the reference: there you read a road by its texture, not its outline. So the ground is now painted per 2 px texel into 256 px tiles, baked as the camera reaches them (two a frame while walking, so nothing stalls).
+
+- **Earth:** dark, mottled brown, with damp hollows and grit.
+- **Grass:** deep, uneven greens with sunny patches, drying to gold on the steppe.
+- **The edge between them:** torn by noise at two scales, so grass reaches into the road in clumps and bare earth bites into the grass.
+- **Crisp detail:** ruts, puddles, potholes and blades are recoloured to sit on the darker earth.

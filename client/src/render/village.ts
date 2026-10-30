@@ -8,34 +8,48 @@ import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
 import { rr } from "./shapes";
 import { drawFolk, type FolkOpts } from "./people";
 import { WORLD_H, WORLD_W } from "../world/areas";
-import { clamp, hash2, type Rect } from "../world/geometry";
+import { hash2, type Rect } from "../world/geometry";
 
 
-// --- The ground, baked once ---------------------------------------------------
-// The grass used to be a grid of flat 34 px tiles, and it read as a
-// checkerboard. Now the whole world's ground is painted once into a small
-// texture (one texel per GROUND_TEXEL world px): soft value-noise patches of
-// green that dry into steppe gold eastward, and every road, path and yard
-// worn into it with a feathered edge. Each frame just stretches the visible
-// part of it over the screen, smooth; the crisp detail (blades, flowers,
-// ruts, pebbles) is drawn on top at full resolution.
-const GROUND_TEXEL = 4;
-let groundTex: HTMLCanvasElement | null = null;
-let dirtMask: Uint8ClampedArray | null = null;
+// --- The ground, painted in tiles -----------------------------------------------
+// After Drova's ground (an owner reference): roads are read by their
+// texture, not their outline. Dark, mottled brown earth with damp patches
+// and grit; grass in deep, uneven greens with lighter sunny patches; and
+// the border between them torn at several scales, grass reaching into the
+// road in clumps and bare earth biting into the grass.
+// The ground is painted per texel (GROUND_TEXEL world px) into 256 px tiles,
+// baked lazily as the camera reaches them (a few per frame, so walking
+// never stalls), then stretched onto the screen. Where the roads lie comes
+// from a coarse mask of the worn paths (paintPaths), sampled smoothly and
+// broken up by noise at the edge. The crisp detail (blades, flowers, ruts,
+// puddles) is drawn on top every frame.
+const GROUND_TEXEL = 2;
+const TILE = 256;
+const MASK_TEXEL = 8;
+let roadMask: Float32Array | null = null;
 let maskW = 0;
+let maskH = 0;
+const tiles = new Map<number, HTMLCanvasElement>();
 
 function smooth(t: number): number {
   return t * t * (3 - 2 * t);
+}
+// a fast integer hash in [0, 1)
+function ih(x: number, y: number, s: number): number {
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 982451653)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
 }
 function valueNoise(x: number, y: number, seed: number): number {
   const ix = Math.floor(x);
   const iy = Math.floor(y);
   const fx = smooth(x - ix);
   const fy = smooth(y - iy);
-  const a = hash2(ix + seed, iy);
-  const b = hash2(ix + 1 + seed, iy);
-  const c = hash2(ix + seed, iy + 1);
-  const d = hash2(ix + 1 + seed, iy + 1);
+  const a = ih(ix, iy, seed);
+  const b = ih(ix + 1, iy, seed);
+  const c = ih(ix, iy + 1, seed);
+  const d = ih(ix + 1, iy + 1, seed);
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
 }
 
@@ -188,7 +202,7 @@ function drawRoadMarks(c: CanvasRenderingContext2D, camX: number, camY: number, 
   c.lineCap = "round"; c.lineJoin = "round";
   for (const line of ruts) {
     let open = false;
-    for (const [col, w, dy] of [["rgba(120,86,46,0.42)", 3.2, 0], ["rgba(236,206,150,0.35)", 1.2, 2]] as const) {
+    for (const [col, w, dy] of [["rgba(48,32,16,0.5)", 3.4, 0], ["rgba(150,122,84,0.32)", 1.2, 2.2]] as const) {
       c.strokeStyle = col; c.lineWidth = w;
       c.beginPath(); open = false;
       for (const pt of line) {
@@ -207,7 +221,7 @@ function drawRoadMarks(c: CanvasRenderingContext2D, camX: number, camY: number, 
     c.save(); c.translate(x, y); c.rotate(m.a);
     if (m.kind === "mud") {
       // wet, dark earth with a lumpy edge
-      c.fillStyle = "rgba(110,78,42,0.42)";
+      c.fillStyle = "rgba(56,40,22,0.42)";
       c.beginPath();
       for (let k = 0; k <= 12; k++) {
         const ang = (k / 12) * Math.PI * 2;
@@ -217,21 +231,21 @@ function drawRoadMarks(c: CanvasRenderingContext2D, camX: number, camY: number, 
         if (k === 0) c.moveTo(px, py); else c.lineTo(px, py);
       }
       c.closePath(); c.fill();
-      c.fillStyle = "rgba(80,56,30,0.35)";
+      c.fillStyle = "rgba(40,28,14,0.35)";
       c.beginPath(); c.ellipse(m.w * 0.1, 0, m.w * 0.22, m.h * 0.22, 0, 0, Math.PI * 2); c.fill();
     } else if (m.kind === "hole") {
       // a pothole: a dark hollow with the sunlit far lip
-      c.fillStyle = "rgba(70,48,24,0.55)";
+      c.fillStyle = "rgba(36,24,12,0.6)";
       c.beginPath(); c.ellipse(0, 0, m.w * 0.5, m.h * 0.5, 0, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = "rgba(236,210,160,0.55)"; c.lineWidth = 1.2;
+      c.strokeStyle = "rgba(164,136,96,0.5)"; c.lineWidth = 1.2;
       c.beginPath(); c.ellipse(0, 0.6, m.w * 0.5, m.h * 0.5, 0, 0.1 * Math.PI, 0.9 * Math.PI); c.stroke();
     } else if (m.kind === "puddle") {
       // a puddle: a muddy rim, brown water, the sky glinting on it
-      c.fillStyle = "rgba(96,70,40,0.55)";
+      c.fillStyle = "rgba(56,40,22,0.6)";
       c.beginPath(); c.ellipse(0, 0, m.w * 0.55, m.h * 0.6, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "rgba(124,140,140,0.85)";
+      c.fillStyle = "rgba(84,96,98,0.9)";
       c.beginPath(); c.ellipse(0, 0, m.w * 0.46, m.h * 0.45, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "rgba(200,220,228,0.6)";
+      c.fillStyle = "rgba(180,200,210,0.5)";
       const sh = Math.sin(t * 0.0012 + m.seed) * m.w * 0.08;
       c.beginPath(); c.ellipse(-m.w * 0.12 + sh, -m.h * 0.12, m.w * 0.18, m.h * 0.1, 0, 0, Math.PI * 2); c.fill();
     } else {
@@ -246,71 +260,133 @@ function drawRoadMarks(c: CanvasRenderingContext2D, camX: number, camY: number, 
   c.lineCap = "butt"; c.lineJoin = "miter";
 }
 
-function bakeGround(): HTMLCanvasElement {
-  const w = Math.ceil(WORLD_W / GROUND_TEXEL);
-  const h = Math.ceil(WORLD_H / GROUND_TEXEL);
+// The coarse mask of where the earth is worn (0 grass … 1 road).
+function buildRoadMask(): void {
+  maskW = Math.ceil(WORLD_W / MASK_TEXEL);
+  maskH = Math.ceil(WORLD_H / MASK_TEXEL);
   const cv = document.createElement("canvas");
-  cv.width = w; cv.height = h;
+  cv.width = maskW; cv.height = maskH;
+  const g = cv.getContext("2d");
+  roadMask = new Float32Array(maskW * maskH);
+  if (!g) return;
+  g.scale(1 / MASK_TEXEL, 1 / MASK_TEXEL);
+  g.fillStyle = "#fff";
+  paintPaths(g, 0);
+  const d = g.getImageData(0, 0, maskW, maskH).data;
+  for (let i = 0; i < maskW * maskH; i++) roadMask[i] = (d[i * 4 + 3] ?? 0) / 255;
+}
+function maskAt(x: number, y: number): number {
+  if (!roadMask) return 0;
+  const fx = x / MASK_TEXEL - 0.5;
+  const fy = y / MASK_TEXEL - 0.5;
+  const ix = Math.max(0, Math.min(maskW - 2, Math.floor(fx)));
+  const iy = Math.max(0, Math.min(maskH - 2, Math.floor(fy)));
+  const tx = Math.max(0, Math.min(1, fx - ix));
+  const ty = Math.max(0, Math.min(1, fy - iy));
+  const i = iy * maskW + ix;
+  const a = roadMask[i] ?? 0, b = roadMask[i + 1] ?? 0, c = roadMask[i + maskW] ?? 0, d = roadMask[i + maskW + 1] ?? 0;
+  return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+}
+// How worn the ground is at a point, edge noise included (0 grass … 1 road).
+function wearAt(x: number, y: number): number {
+  const m = maskAt(x, y);
+  if (m <= 0.02) return 0;
+  const e = m + (valueNoise(x / 22, y / 22, 83) - 0.5) * 0.55 + (valueNoise(x / 7, y / 7, 89) - 0.5) * 0.22;
+  return Math.max(0, Math.min(1, (e - 0.4) / 0.14));
+}
+
+// palettes
+const GRASS_D = [52, 88, 36], GRASS_L = [104, 142, 58], GRASS_SUN = [148, 158, 72];
+const STEPPE_D = [128, 128, 70], STEPPE_L = [178, 168, 100];
+const DIRT_D = [92, 66, 42], DIRT_L = [134, 102, 66], DIRT_WET = [66, 48, 32], GRIT = [168, 150, 120];
+
+function bakeTile(tx: number, ty: number): HTMLCanvasElement {
+  const n = TILE / GROUND_TEXEL;
+  const cv = document.createElement("canvas");
+  cv.width = n; cv.height = n;
   const g = cv.getContext("2d");
   if (!g) return cv;
-  // grass: two layers of soft patches, drying into steppe eastward
-  const img = g.createImageData(w, h);
-  const lushDark = [86, 140, 54], lushLight = [132, 180, 84];
-  const dryDark = [150, 156, 86], dryLight = [192, 186, 112];
-  for (let ty = 0; ty < h; ty++) {
-    for (let tx = 0; tx < w; tx++) {
-      const wx = tx * GROUND_TEXEL;
-      const wy = ty * GROUND_TEXEL;
-      const n = 0.55 * valueNoise(wx / 280, wy / 280, 3) + 0.3 * valueNoise(wx / 95, wy / 95, 17) + 0.15 * valueNoise(wx / 28, wy / 28, 41);
-      const dry = clamp((wx - VILLAGE_W + 160 + (valueNoise(wx / 220, wy / 220, 59) - 0.5) * 300) / 620, 0, 1);
-      const i = (ty * w + tx) * 4;
-      for (let k = 0; k < 3; k++) {
-        const lush = (lushDark[k] ?? 0) + ((lushLight[k] ?? 0) - (lushDark[k] ?? 0)) * n;
-        const st = (dryDark[k] ?? 0) + ((dryLight[k] ?? 0) - (dryDark[k] ?? 0)) * n;
-        img.data[i + k] = lush + (st - lush) * dry;
+  const img = g.createImageData(n, n);
+  const px = img.data;
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const wx = tx * TILE + i * GROUND_TEXEL;
+      const wy = ty * TILE + j * GROUND_TEXEL;
+      // grass: big soft patches, smaller clumps, fine grain; sunny spots
+      const g1 = valueNoise(wx / 320, wy / 320, 3);
+      const g2 = valueNoise(wx / 70, wy / 70, 17);
+      const g3 = valueNoise(wx / 12, wy / 12, 41);
+      const gv = 0.5 * g1 + 0.3 * g2 + 0.2 * g3;
+      const sun = Math.max(0, (g2 - 0.62) / 0.38) * (0.6 + 0.4 * g1);
+      const dry = Math.max(0, Math.min(1, (wx - VILLAGE_W + 160 + (g1 - 0.5) * 300) / 620));
+      const grain = ih(wx, wy, 7);
+      const k = (grain > 0.93 ? -0.25 : grain < 0.05 ? 0.2 : 0);
+      // the ground under foot
+      const w = wearAt(wx, wy);
+      const o = (j * n + i) * 4;
+      for (let ch = 0; ch < 3; ch++) {
+        const lush = (GRASS_D[ch] ?? 0) + ((GRASS_L[ch] ?? 0) - (GRASS_D[ch] ?? 0)) * (gv + k);
+        const sunny = lush + ((GRASS_SUN[ch] ?? 0) - lush) * sun * 0.6;
+        const st = (STEPPE_D[ch] ?? 0) + ((STEPPE_L[ch] ?? 0) - (STEPPE_D[ch] ?? 0)) * (gv + k);
+        let col = sunny + (st - sunny) * dry;
+        if (w > 0) {
+          const d1 = valueNoise(wx / 46, wy / 46, 61);
+          const d2 = valueNoise(wx / 9, wy / 9, 67);
+          const dv = 0.6 * d1 + 0.4 * d2;
+          let dirt = (DIRT_D[ch] ?? 0) + ((DIRT_L[ch] ?? 0) - (DIRT_D[ch] ?? 0)) * dv;
+          // damp hollows, darker
+          const wet = Math.max(0, (valueNoise(wx / 110, wy / 110, 71) - 0.66) / 0.34);
+          dirt += ((DIRT_WET[ch] ?? 0) - dirt) * wet * 0.8;
+          // grit and little stones
+          const gr = ih(wx >> 1, wy >> 1, 13);
+          if (gr > 0.975) dirt = GRIT[ch] ?? dirt;
+          else if (gr < 0.03) dirt *= 0.8;
+          // the very edge of the grass casts a little shade on the earth
+          const shade = w < 0.6 ? 0.82 + 0.3 * w : 1;
+          col = col + (dirt * shade - col) * w;
+        }
+        px[o + ch] = col;
       }
-      img.data[i + 3] = 255;
+      px[o + 3] = 255;
     }
   }
   g.putImageData(img, 0, 0);
-  // the paths, on their own layer first so their shape can be read back
-  // (no grass blades are drawn on dirt)
-  const pc = document.createElement("canvas");
-  pc.width = w; pc.height = h;
-  const p = pc.getContext("2d");
-  if (!p) return cv;
-  p.scale(1 / GROUND_TEXEL, 1 / GROUND_TEXEL);
-  // a worn, half-bare fringe, then the trodden earth itself
-  p.fillStyle = p.strokeStyle = "rgba(168,140,84,0.45)";
-  paintPaths(p, 18);
-  p.fillStyle = p.strokeStyle = "rgb(190,150,92)";
-  paintPaths(p, 0);
-  // dust lighter in the middle of the maidan, where everyone stands
-  const mg = p.createRadialGradient(840, 600, 20, 840, 600, 200);
-  mg.addColorStop(0, "rgba(214,180,120,0.7)");
-  mg.addColorStop(1, "rgba(222,192,132,0)");
-  p.fillStyle = mg;
-  p.globalCompositeOperation = "source-atop"; // only where it is already dirt
-  p.fillRect(600, 400, 480, 360);
-  p.globalCompositeOperation = "source-over";
-  const pd = p.getImageData(0, 0, w, h).data;
-  dirtMask = new Uint8ClampedArray(w * h);
-  for (let i = 0; i < w * h; i++) dirtMask[i] = pd[i * 4 + 3] ?? 0;
-  maskW = w;
-  g.drawImage(pc, 0, 0);
   return cv;
 }
 
-// How bare the earth is at a world point (0 grass … 255 trodden dirt).
+// Grass blades stay off the road (the edge is decided per point, the same
+// way the tiles were painted).
 function dirtAt(x: number, y: number): number {
-  if (!dirtMask) return 0;
-  return dirtMask[Math.floor(y / GROUND_TEXEL) * maskW + Math.floor(x / GROUND_TEXEL)] ?? 0;
+  return wearAt(x, y) * 255;
 }
 
 export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number) {
-  if (!groundTex) groundTex = bakeGround();
+  if (!roadMask) buildRoadMask();
+  const tx0 = Math.max(0, Math.floor(camX / TILE));
+  const ty0 = Math.max(0, Math.floor(camY / TILE));
+  const tx1 = Math.min(Math.ceil(WORLD_W / TILE) - 1, Math.floor((camX + vw) / TILE));
+  const ty1 = Math.min(Math.ceil(WORLD_H / TILE) - 1, Math.floor((camY + vh) / TILE));
+  // on the first frame paint everything in view; after that, a few tiles a
+  // frame as the camera moves (a plain green stands in until they are done)
+  let budget = tiles.size === 0 ? 999 : 2;
   c.imageSmoothingEnabled = true;
-  c.drawImage(groundTex, camX / GROUND_TEXEL, camY / GROUND_TEXEL, vw / GROUND_TEXEL, vh / GROUND_TEXEL, 0, 0, vw, vh);
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const key = ty * 1000 + tx;
+      let tile = tiles.get(key);
+      if (!tile && budget > 0) { tile = bakeTile(tx, ty); tiles.set(key, tile); budget--; }
+      if (tile) c.drawImage(tile, tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5);
+      else { c.fillStyle = "#5e8a3c"; c.fillRect(tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5); }
+    }
+  }
+  // tiles just beyond the edge of the screen, ahead of the walk
+  for (let ty = ty0 - 1; ty <= ty1 + 1 && budget > 0; ty++) {
+    for (let tx = tx0 - 1; tx <= tx1 + 1 && budget > 0; tx++) {
+      if (tx < 0 || ty < 0 || tx * TILE >= WORLD_W || ty * TILE >= WORLD_H) continue;
+      const key = ty * 1000 + tx;
+      if (!tiles.has(key)) { tiles.set(key, bakeTile(tx, ty)); budget--; }
+    }
+  }
 
   // grass detail at full resolution: tufts of blades, clover, wildflowers,
   // scattered on a jittered grid so no tiling shows; none on the dirt
@@ -335,7 +411,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
         const a = (b / (blades - 1) - 0.5) * 1.1;
         const len = (steppe ? 8 : 6) + hash2(b, gx + gy) * 5;
         const sway = Math.sin(t * 0.0016 + wx * 0.05 + wy * 0.03) * 1.6;
-        c.strokeStyle = b % 2 ? (steppe ? "rgba(120,110,50,0.55)" : "rgba(52,96,30,0.5)") : (steppe ? "rgba(200,190,120,0.55)" : "rgba(150,196,96,0.55)");
+        c.strokeStyle = b % 2 ? (steppe ? "rgba(120,110,50,0.55)" : "rgba(34,64,20,0.55)") : (steppe ? "rgba(200,190,120,0.55)" : "rgba(122,164,72,0.5)");
         c.lineWidth = 1.3;
         c.beginPath();
         c.moveTo(px + b - blades / 2, py);
