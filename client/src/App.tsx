@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
-import { JOYSTICK_ALLOWED, loadControlPref, SafeAreaTopScrim, storeControlPref } from "./platform/target";
+import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, DOMOVYK_IN, LYSA_CHARS, LYSA_DANCERS, type Npc, VESNA_IN } from "./data/characters";
 import { hutSolids } from "./data/huts";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, PICH_IN_SPOT, WISH_LINES } from "./data/items";
@@ -124,7 +124,8 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [padPressed, setPadPressed] = useState<ReadonlySet<string>>(new Set());
   // "pad" everywhere; "stick" only where the platform allows a joystick.
-  const [controls, setControls] = useState<"pad" | "stick">(() => (JOYSTICK_ALLOWED ? loadControlPref() : "pad"));
+  // Pages: floating joystick only. Muse: the D-pad (no drags there).
+  const controls: "pad" | "stick" = JOYSTICK_ALLOWED ? "stick" : "pad";
   const [confirmReset, setConfirmReset] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
@@ -1598,14 +1599,6 @@ export function App() {
     return () => window.removeEventListener("blur", clear);
   }, []);
 
-  const switchControls = (next: "pad" | "stick") => {
-    padRef.current.clear();
-    setPadPressed(new Set());
-    stickRef.current = { x: 0, y: 0 };
-    setControls(next);
-    storeControlPref(next);
-  };
-
   // Switching language saves the game first, then reloads: every module
   // resolves its text once, at startup (see i18n/index.ts).
   const switchLanguage = async (l: Lang) => {
@@ -1890,26 +1883,8 @@ export function App() {
               thumb landing between arrows walks diagonally instead of
               hitting dead space. No dragging anywhere: a downward drag
               is what the phone's pull-to-refresh steals. */}
-          {/* Pad / Stick toggle — only where a joystick is allowed (the
-              GitHub Pages build). Muse never shows it. */}
-          {JOYSTICK_ALLOWED && !dialogue && !panelOpen && !hudFight && (
-            <div data-touch-controls className="absolute bottom-[212px] left-4 z-10 flex overflow-hidden rounded-lg border border-[#f3e9d2]/40 shadow" role="group" aria-label={t("ui.misc.22")}>
-              {(["pad", "stick"] as const).map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-pressed={controls === c}
-                  aria-label={c === "pad" ? t("ui.misc.23") : t("ui.misc.24")}
-                  onClick={() => switchControls(c)}
-                  className={`px-3 py-2 text-xs font-bold backdrop-blur-[2px] ${controls === c ? "bg-[#d99a2b] text-[#33241a]" : "bg-[#1c1409]/55 text-[#f3e9d2]"}`}
-                >
-                  {c === "pad" ? t("ui.pad") : t("ui.stick")}
-                </button>
-              ))}
-            </div>
-          )}
           {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && !hudFight && (
-            <div data-touch-controls className="absolute bottom-5 left-4 z-10">
+            <div data-touch-controls>
               <Joystick stickRef={stickRef} />
             </div>
           )}

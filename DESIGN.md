@@ -85,3 +85,14 @@ With native mobile and Steam Deck ports in mind (`PORTING.md`), controllers now 
 - in dialogues and sheets the d-pad moves a visible focus.
 
 The touch controls hide while a pad is in use.
+
+## Feedback round 1
+
+- **Controls:** on the web (Pages) build the cross pad is gone. A floating joystick appears wherever the thumb lands and follows the drag. Muse keeps its D-pad, because Muse's pull-to-refresh steals drags.
+- **Ukrainian proofreading:**
+  - villagers are «селяни», not «хатні»;
+  - the Domovyk says «господарику», and the Bolotianyk's "dry one" is «сухоногий»;
+  - Vesna addresses the player as «знахарю»;
+  - the sheet is «Персонаж», with «Характеристики» for the stats;
+  - Nerve is «Мужність»;
+  - Viy roars Gogol's own words: «Підніміть мені повіки: не бачу!»

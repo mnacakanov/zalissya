@@ -9,7 +9,7 @@ Zalissya is a 2D top-down pixel-art RPG set in a Ukrainian folklore village. Eve
 | Target | Where it runs | Save layer | Movement controls |
 |---|---|---|---|
 | **Muse** (the original) | Muse fullstack web app (`space.json`, built by the Muse SDK) | `client/src/save/muse.ts` → server actions in `server/src/actions.ts` → Muse-hosted SQLite through drizzle | Hold-to-move D-pad, plus WASD/arrows |
-| **GitHub Pages** | Static site, built by `pages/build.ts`; on every push to `main`, `.github/workflows/pages.yml` commits the build to `docs/index.html`, which Pages serves | `client/src/save/local.ts` → `localStorage` key `zalissya-save-v1` | D-pad, or a floating joystick (Pad/Stick toggle, remembered under `zalissya-controls`) |
+| **GitHub Pages** | Static site, built by `pages/build.ts`; on every push to `main`, `.github/workflows/pages.yml` commits the build to `docs/index.html`, which Pages serves | `client/src/save/local.ts` → `localStorage` key `zalissya-save-v1` | Floating virtual joystick: touch anywhere, drag to walk. No D-pad. |
 
 The two builds differ in **one module**: `client/src/platform/target.ts` is the Muse version and `target.pages.ts` is the Pages version. `pages/build.ts` swaps one for the other at bundle time. Both must export the same names.
 
@@ -29,7 +29,7 @@ client/src/
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), viyNight.ts (Viy's night storyline)
   systems/           flags, skills, stats, carry, time (day/night), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: village, spirits, lysa, huts, viyFight (vigil and night), shapes
-  input/             PadButton (D-pad cell), Joystick (Pages only), gamepad.ts (controllers, Steam Deck)
+  input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx
 server/src/          Muse server actions and drizzle schema (one save slot)
 drizzle/             migrations (numbered; never edit an old one)
@@ -94,7 +94,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
    - Use English for **skill names** (Herbalism, Fishing, Cooking, Smithing, Alchemy), **common buildings** ("huts", never "khaty"), and everyday items (chalk, wreath).
    - **Radek stays Polish.** He is a Polish smith visiting from afar.
    - The mapping: г→h, х→kh, ч→ch, ш→sh, щ→shch, ц→ts, ж→zh, ю→yu, я→ya, є→ye, ї→yi, и→y, й→y. The healer is a **znakharka** (one word).
-2. **Controls.** Every action must work by keyboard, by touch buttons, and by gamepad (`input/gamepad.ts`: A interact, B back, LB/RB look away, Start/Back for the sheets). The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
+2. **Controls.** Every action must work by keyboard, by touch buttons, and by gamepad (`input/gamepad.ts`: A interact, B back, LB/RB look away, Start/Back for the sheets). The Muse version gets **no drag or joystick controls**: Muse's pull-to-refresh steals downward drags. Muse uses press-and-hold buttons and the keyboard only. The floating joystick exists only behind `JOYSTICK_ALLOWED` (true only in `target.pages.ts`), and there it replaces the D-pad entirely (owner decision). New controls, such as the vigil's Look away and Ward, must be press or hold buttons.
 3. **Never commit `app.db` or any save data.** That includes exported saves, localStorage dumps, `.db` and `.sqlite` files. `.gitignore` covers them, so don't weaken it.
 4. **Keep the save backward compatible.** Old saves must keep loading. Prefer new flags over schema changes. A server schema change needs a new numbered migration in `drizzle/` plus a `_journal.json` entry. Never edit an existing migration.
 5. **Fighting is folkloric and rare.** Viy's vigil (`systems/viyFight.ts`) is the game's one fight: warding, not weapons. Losing costs the night, never items or progress. Add further combat only as a deliberate, owner-approved feature.

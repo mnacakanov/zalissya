@@ -10,9 +10,3 @@ export { museSave as save } from "../save/muse";
 
 export const PLATFORM: "muse" | "pages" = "muse";
 export const JOYSTICK_ALLOWED: boolean = false;
-
-// Remembered control scheme. Muse only ever uses the pad.
-export function loadControlPref(): "pad" | "stick" {
-  return "pad";
-}
-export function storeControlPref(_pref: "pad" | "stick"): void {}
