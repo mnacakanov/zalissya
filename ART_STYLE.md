@@ -51,7 +51,7 @@ camera:
   view: top-down three-quarter, about 45 degrees from above
   projection: orthographic, no perspective distortion, no vanishing points
   uprights: rise straight up the image from their base point
-  buildings: front (south) wall straight on; a good part of the roof's top surface visible; side walls not shown in perspective
+  buildings: front (south) wall straight on, the big roof rising above it; the front wall is about one third of the building's drawn height, and the whole building is about 0.8 as tall as it is wide (matches how the game draws huts); side walls not shown
   ground: seen from above
 output:
   background: fully transparent PNG with alpha
@@ -82,7 +82,7 @@ scale:                       # game world px; generate at 4x
 |---|---|---|
 | `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Composition is fine, but as a game asset it needs re-exporting without the sage background and the oval shadow. |
 | `art/reference/prokip-hut.webp` | **Style for buildings** (thatch, moss, damp whitewash, wood, ink). Attach to building requests. | Composition **not** approved: white background, horned skull (must be a horse skull), door off-centre, eye-level camera with the side wall in perspective. Use it for the look, never for the layout. |
-| `art/reference/prokip-hut-v2.png` | **Best building so far**: style, centred door, symmetrical windows, nearly straight-on front wall. | Still to fix: white background, horned skull, camera near eye level (needs about 45° from above, more roof top, the footprint reading 22 wide by 17 deep). |
+| `art/reference/prokip-hut-v2.png` | **Building style AND composition approved**: centred door, symmetrical windows, front wall straight on, wall about a third of the height, proportions as the game draws huts. Use it as the layout reference for every building. | Still to fix in this asset: white background, horned skull (must be a horse skull), a thin sliver of side wall at the right edge. |
 
 New approved assets go in `art/reference/` too, with a row here saying what each is approved for.
 
@@ -99,7 +99,7 @@ Hand-drawn game illustration in a vintage storybook ink-and-watercolour style, m
 Colour: a desaturated, earthy palette. Sage and moss greens for foliage (deep #3E5A38, mid #5F7D4A, pale olive #8E9A68), olive-taupe for wood and bark (#8A7F5C to #5E5640). Sunlight is the only warm accent: dappled honey-gold highlights (#E8B85C) where the light hits. Whitewash is an aged cream (#EFE6D2), never pure white; thatch is dusty straw (#B39A62 to #7D6A40); reds (Cossack red #A8362C) and blues (#2E4A7E) are muted, like old dyed cloth. Nothing saturated or neon; everything looks painted on the same paper.
 Light: one soft sun from the upper left, golden dapples on the lit side; the shaded right side cools into deeper colour and denser hatching. No time-of-day tint.
 Setting: a Cossack khutir in 18th-century Left-Bank Ukraine (the Hetmanate), the world of Gogol's "Evenings on a Farm near Dikanka" and "Viy". Strictly Ukrainian material culture: whitewashed clay khaty with thatched roofs, wattle fences, embroidered linen, Cossack dress.
-Camera: top-down three-quarter view, about 45° from above, orthographic, no perspective distortion; upright objects rise straight up from their base. Buildings show their front wall straight on and much of the roof's top surface; side walls are not shown in perspective.
+Camera: top-down three-quarter view, orthographic, no perspective distortion; upright objects rise straight up from their base. Buildings show their front wall straight on with the big roof rising above it (the wall about one third of the building's height); side walls are not shown.
 Output: exactly one isolated subject, centred, nothing cropped, on a fully transparent background (if transparency is impossible: flat pure #00FF00, never white). No ground, no grass under it, no cast or oval shadow, no text, no watermark, no frame.
 ```
 
@@ -148,7 +148,7 @@ A seamless tileable texture of [ground type] seen from directly above, in the sa
 ### 3.3 Negative prompt (always)
 
 ```
-background, white background, scenery, ground, grass under the object, oval shadow, cast shadow, side wall in perspective, vanishing point, text, lettering, watermark, signature, frame, border, pixel art, 3D render, photo, photorealistic, glossy digital painting, anime, chibi, cartoon flat colour, cel shading, saturated colours, neon, Russian onion domes, tsarist, medieval European castle, knight armour, Viking, generic fantasy
+background, white background, scenery, ground, grass under the object, oval shadow, cast shadow, side wall, vanishing point, horns on a horse skull, text, lettering, watermark, signature, frame, border, pixel art, 3D render, photo, photorealistic, glossy digital painting, anime, chibi, cartoon flat colour, cel shading, saturated colours, neon, Russian onion domes, tsarist, medieval European castle, knight armour, Viking, generic fantasy
 ```
 
 ---
@@ -188,7 +188,7 @@ art/
 - [ ] Ink linework with hatching, watercolour washes, paper grain: matches `art/reference/oak.webp` side by side.
 - [ ] Palette: muted and earthy; gold only as sunlight; nothing saturated; whitewash cream, not white.
 - [ ] Light from the upper left; no time-of-day tint.
-- [ ] Camera: about 45° from above, orthographic; buildings' front wall straight on, no side wall in perspective.
+- [ ] Camera: orthographic three-quarter; buildings like `prokip-hut-v2.png` (front wall straight on, roof rising above, wall about a third of the height), no side wall.
 - [ ] Transparent background (or clean #00FF00), no ground, no shadow, no text, no frame, nothing cropped.
 - [ ] Anchor point where the spec says (trees and props: base at the bottom centre; buildings: door exactly centred in the front wall).
 - [ ] Proportions match the scale table (footprint W:D for buildings; about 5 heads for people).
@@ -205,4 +205,4 @@ art/
 - Front walls straight on; no two-point perspective, no visible side wall.
 - Muse adds a background and an oval ground shadow unless told twice; keep both "no background" in the style block and "background, oval shadow" in the negative prompt.
 - Muse kept the white background and the horned skull through a correction round: put such fixes FIRST in the correction list and repeat them in the negative prompt ("white background, horns").
-- Muse drifts to eye level for buildings: say "camera about 45° from above, we look down onto the roof; the roof's top surface fills most of the image" explicitly.
+- Building camera: the view of `prokip-hut-v2.png` is right (front wall straight on, roof rising above it). Don't push Muse to look further down onto the roof; that breaks the match with how the game draws huts.
