@@ -367,7 +367,13 @@ export function questLog(v: QuestView): QuestLog {
           ? active.objective(d)
           : d.sealed
             ? t("quest.objective.2")
-            : t("quest.objective.3");
+            // a newcomer on the road, then in the khutir looking for whoever
+            // is in charge here
+            : !flagHas(d.f, "arrived")
+              ? t("quest.objective.road")
+              : !v.talked.includes("myroslav")
+                ? t("quest.objective.arrived")
+                : t("quest.objective.3");
 
   const visible = QUESTS.filter(shown);
   const sections = (Object.keys(SECTION_TITLES) as SectionId[])

@@ -6,8 +6,8 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./
 import { BED_SPOT_WORLD, doorOf, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, KABYTSIA, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, FIRE, FIRE_SEAT, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
-import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
+import { DECOR, FENCES, FIRE, FIRE_SEAT, HOUSES, SIGNPOSTS, WAYSIDE_CROSS, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
+import { drawSignpost, drawWaysideCross, drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -73,7 +73,7 @@ import { askedIds, markAsked } from "./systems/askedTopics";
 import { advance, canNapToNightfall, type Clock, DAWN, DAY_MINUTES, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W } from "./world/areas";
+import { type AreaId, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, ROAD_START, SPAWN, WORLD_H, WORLD_W } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
@@ -136,7 +136,8 @@ export function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const playerRef = useRef({ x: SPAWN.x, y: SPAWN.y, face: 0, moving: false, phase: 0 });
+  // a new game begins on the road south of the khutir (world/areas.ts)
+  const playerRef = useRef({ x: ROAD_START.x, y: ROAD_START.y, face: 0, moving: false, phase: 0 });
   // Which area the player is in — mirrored into hudArea for the HUD and
   // carried in the save, so a reload restores the right side of the trail.
   const areaRef = useRef<AreaId>("village");
@@ -487,6 +488,11 @@ export function App() {
       }
       if (!hasCounter(loadedFlags, "fishTotal")) {
         loadedFlags.add(`fishTotal=${flagCount(loadedFlags, "fish")}`);
+        migrated = true;
+      }
+      // saves from before the road start have long since found the khutir
+      if (!loadedFlags.has("arrived")) {
+        loadedFlags.add("arrived");
         migrated = true;
       }
       if (migrated) dirtyRef.current = true;
@@ -1875,6 +1881,11 @@ export function App() {
         const cur = roofAlphaRef.current[id];
         roofAlphaRef.current[id] = cur + (want - cur) * Math.min(1, dt * 8);
       }
+      // the newcomer comes up out of the fields into the khutir itself
+      if (area === "village" && p.y < 1250 && !flagsRef.current.has("arrived")) {
+        setFlag("arrived");
+        showToast(t("road.arrived"));
+      }
       if (insideNow !== insideRef.current) {
         insideRef.current = insideNow;
         setHudInside(insideNow);
@@ -2436,6 +2447,12 @@ export function App() {
           drawables.push({ y: b.y - 6, draw: () => drawBench(ctx2d, b.x - camX, b.y - camY) });
         }
         drawables.push({ y: STRAW_BED.y - 8, draw: () => drawStrawBed(ctx2d, STRAW_BED.x - camX, STRAW_BED.y - camY) });
+        for (const sp of SIGNPOSTS) {
+          if (sp.x - camX < -120 || sp.x - camX > vw + 120 || sp.y - camY < -40 || sp.y - camY > vh + 80) continue;
+          const boards = sp.boards.map((b) => ({ label: t(`sign.${b.text}` as TextKey), dir: b.dir }));
+          drawables.push({ y: sp.y, draw: () => drawSignpost(ctx2d, sp.x - camX, sp.y - camY, boards) });
+        }
+        drawables.push({ y: WAYSIDE_CROSS.y, draw: () => drawWaysideCross(ctx2d, WAYSIDE_CROSS.x - camX, WAYSIDE_CROSS.y - camY, now) });
         for (const pr of YARD_PROPS) {
           const sx = pr.x - camX;
           const sy = pr.y - camY;
@@ -2608,7 +2625,7 @@ export function App() {
         smithReadyRef.current = 0;
         panelRef.current = false;
         setPanelOpen(false);
-        playerRef.current = { x: SPAWN.x, y: SPAWN.y, face: 0, moving: false, phase: 0 };
+        playerRef.current = { x: ROAD_START.x, y: ROAD_START.y, face: 0, moving: false, phase: 0 };
         patchesRef.current.forEach((pt) => { pt.available = true; });
         setHudTalked([]);
         setHudHerbs(0);
@@ -2661,6 +2678,10 @@ export function App() {
     strong: { label: t("ui.satchel.act.drink"), aria: t("ui.misc.113"), bg: "bg-[#5a3a6e]", run: drinkStrongTonic },
   };
   const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute), evening: isEvening(hudClock.minute) });
+  // a new game: a word about the road, as the kobzar sets out
+  useEffect(() => {
+    if (started && !flagsRef.current.has("arrived")) showToast(t("road.start"));
+  }, [started]);
   // a secret quest done just now: "found", once (not for what the save
   // already held when the game started)
   const foundKey = quests.found.map((q) => q.id).join(",");

@@ -126,7 +126,9 @@ export const FOREST_TREES: ForestTree[] = [];
         const x = gx + (hash2(gx, gy) - 0.5) * 40;
         const y = gy + (hash2(gy, gx) - 0.5) * 40;
         // keep the bridges' roads open
-        if (BRIDGES.some((b) => Math.abs(x - b.x) < 90) && y < 2000) continue;
+        // (the khutir's road runs on through the forest to the world's
+        // edge: the way a newcomer arrives)
+        if (BRIDGES.some((b) => Math.abs(x - b.x) < 90)) continue;
         // nor in the bog, nor on the path to it (a few dead birches stand
         // in it, drawn with the bog)
         if (((x - BOLOTO.x) / (BOLOTO.rx + 30)) ** 2 + ((y - BOLOTO.y) / (BOLOTO.ry + 30)) ** 2 < 1 || nearBolotoPath(x, y) || nearProkipPath(x, y)) continue;

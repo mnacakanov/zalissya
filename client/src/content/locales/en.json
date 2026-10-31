@@ -1619,5 +1619,12 @@
   "ui.satchel.empty": "Nothing in the satchel yet. Herbs, fish and kulish will turn up here.",
   "ui.satchel.songsBtn": "Songs · {n}",
   "ui.satchel.keepsBtn": "Keepsakes · {n}",
-  "ui.satchel.keepsEmpty": "No keepsakes yet."
+  "ui.satchel.keepsEmpty": "No keepsakes yet.",
+  "sign.zalissya": "Zalissya",
+  "sign.boloto": "Boloto",
+  "sign.khutir": "Khutir Zalissya",
+  "road.start": "A forest road, the kobza on your back. They say that north, past the forest and the river, there is a khutir where a singer isn't chased away.",
+  "road.arrived": "Zalissya. Smoke over the huts, a fire burning on the maidan, and somebody swearing loudly by the chapel. There must be an otaman here.",
+  "quest.objective.road": "The road leads north, to Zalissya",
+  "quest.objective.arrived": "Look for the otaman on the maidan, by the chapel"
 }

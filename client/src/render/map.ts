@@ -98,7 +98,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.strokeStyle = "#b38f58"; c.lineCap = "round";
   c.lineWidth = Math.max(2, 60 * s);
   c.beginPath(); c.moveTo(X(0), Y(646)); c.lineTo(X(VILLAGE_W), Y(646)); c.stroke();
-  c.beginPath(); c.moveTo(X(840), Y(330)); c.lineTo(X(840), Y(1680)); c.stroke();
+  c.beginPath(); c.moveTo(X(840), Y(330)); c.lineTo(X(840), Y(WORLD_H)); c.stroke();
   c.beginPath(); c.moveTo(X(1500), Y(646)); c.lineTo(X(1500), Y(456)); c.lineTo(X(VILLAGE_W), Y(456)); c.stroke();
   c.lineWidth = Math.max(1.6, 40 * s);
   c.beginPath(); c.moveTo(X(VILLAGE_W - 80), Y(456));

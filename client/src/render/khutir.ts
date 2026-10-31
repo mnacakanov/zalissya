@@ -1054,3 +1054,81 @@ export function drawProkipKhatka(c: CanvasRenderingContext2D, x: number, y: numb
   }
   c.restore();
 }
+
+// A signpost by the road: a weathered post, and a board for each way —
+// pointed at its end for east or west, with a little painted arrow for
+// the way ahead (north) — lettered in whitewash. `labels` are the
+// boards' words, already translated (content/locales: sign.*).
+export function drawSignpost(c: CanvasRenderingContext2D, x: number, y: number, boards: Array<{ label: string; dir: "n" | "w" | "e" }>): void {
+  const INK = "rgba(34,22,14,0.85)";
+  c.save();
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + 5, y + 1, 14, 4, 0, 0, Math.PI * 2); c.fill();
+  const top = y - 66;
+  c.fillStyle = "#6e4e30";
+  c.fillRect(x - 3, top, 6, 66);
+  c.strokeStyle = INK; c.lineWidth = 0.9; c.strokeRect(x - 3, top, 6, 66);
+  c.font = "bold 11px Georgia, serif";
+  c.textAlign = "left";
+  c.textBaseline = "middle";
+  const BH = 15;
+  boards.forEach((b, i) => {
+    const by = top + 4 + i * (BH + 4);
+    const tw = Math.ceil(c.measureText(b.label).width);
+    // a board for the way ahead hangs to the right of the post with an
+    // arrow pointing up the road; east and west boards point their way
+    const w = tw + (b.dir === "n" ? 24 : 14);
+    const x0 = b.dir === "w" ? x - w + 4 : x - 4;
+    c.fillStyle = "rgba(30,20,10,0.25)";
+    c.fillRect(x0 + 2, by + 3, w, BH);
+    c.fillStyle = "#9a7448";
+    c.beginPath();
+    if (b.dir === "w") { c.moveTo(x0 - 8, by + BH / 2); c.lineTo(x0, by); c.lineTo(x0 + w, by); c.lineTo(x0 + w, by + BH); c.lineTo(x0, by + BH); }
+    else if (b.dir === "e") { c.moveTo(x0, by); c.lineTo(x0 + w, by); c.lineTo(x0 + w + 8, by + BH / 2); c.lineTo(x0 + w, by + BH); c.lineTo(x0, by + BH); }
+    else c.rect(x0, by, w, BH);
+    c.closePath(); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+    // the grain of the board
+    c.strokeStyle = "rgba(60,40,20,0.3)"; c.lineWidth = 0.6;
+    c.beginPath(); c.moveTo(x0 + 2, by + BH * 0.3); c.lineTo(x0 + w - 2, by + BH * 0.3); c.stroke();
+    c.fillStyle = "#f2ead6";
+    if (b.dir === "n") {
+      c.beginPath(); c.moveTo(x0 + 9, by + 2.5); c.lineTo(x0 + 14, by + BH - 3); c.lineTo(x0 + 4, by + BH - 3); c.closePath(); c.fill();
+      c.fillText(b.label, x0 + 18, by + BH / 2 + 0.5);
+    } else c.fillText(b.label, x0 + 6, by + BH / 2 + 0.5);
+  });
+  c.restore();
+}
+
+// A wayside cross where the khutir begins: an oak cross under a little
+// gable roof, a rushnyk tied on it, and somebody's field flowers at its foot.
+export function drawWaysideCross(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const INK = "rgba(34,22,14,0.85)";
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x + 5, y + 1, 14, 4, 0, 0, Math.PI * 2); c.fill();
+  const top = y - 64;
+  c.fillStyle = "#5e4228";
+  c.fillRect(x - 3, top, 6, 64);
+  c.fillRect(x - 17, top + 16, 34, 5);
+  c.strokeStyle = INK; c.lineWidth = 0.8;
+  c.strokeRect(x - 3, top, 6, 64); c.strokeRect(x - 17, top + 16, 34, 5);
+  // the little roof over it
+  c.fillStyle = "#4e4036";
+  c.beginPath(); c.moveTo(x - 12, top + 6); c.lineTo(x, top - 6); c.lineTo(x + 12, top + 6); c.closePath(); c.fill(); c.stroke();
+  // the rushnyk, white with red ends, stirring a little
+  const sway = Math.sin(t * 0.0018 + x) * 1.5;
+  c.fillStyle = "#faf6ec";
+  c.beginPath();
+  c.moveTo(x - 14, top + 21); c.quadraticCurveTo(x, top + 27, x + 14, top + 21);
+  c.lineTo(x + 15 + sway, top + 40); c.lineTo(x + 10 + sway, top + 40); c.lineTo(x + 10, top + 25);
+  c.quadraticCurveTo(x, top + 29, x - 10, top + 25); c.lineTo(x - 10 + sway, top + 40); c.lineTo(x - 15 + sway, top + 40);
+  c.closePath(); c.fill();
+  c.fillStyle = "#c8402e";
+  c.fillRect(x - 15 + sway, top + 35, 5, 3); c.fillRect(x + 10 + sway, top + 35, 5, 3);
+  // flowers at its foot
+  for (const [dx, col] of [[-7, "#e8c23a"], [-2, "#c8402e"], [4, "#f4f0e4"], [8, "#8a6ac8"]] as const) {
+    c.strokeStyle = "#4e7a2e"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(x + dx, y); c.lineTo(x + dx + 1, y - 6); c.stroke();
+    c.fillStyle = col; c.beginPath(); c.arc(x + dx + 1, y - 7, 1.8, 0, Math.PI * 2); c.fill();
+  }
+}

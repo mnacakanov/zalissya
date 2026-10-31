@@ -96,7 +96,7 @@ function roads(): Road[] {
   const r: Road[] = [
     // the khutir's road west–east, and south to the bridge and beyond
     { pts: linePts([[-40, 646], [VILLAGE_W - 40, 646]], 6), w: 80, seed: 1, ruts: true },
-    { pts: linePts([[840, 300], [840, 1700]], 6), w: 96, seed: 2, ruts: true },
+    { pts: linePts([[840, 300], [840, WORLD_H + 40]], 6), w: 96, seed: 2, ruts: true },
     // the steppe roads: the trail to Lysa Hora and the chumak road south
     { pts: bezierPts([VILLAGE_W - 80, 456], [2000, 330], [2350, 760], [LYSA_TRAILHEAD.x, LYSA_TRAILHEAD.y], 6), w: 34, seed: 3, ruts: false },
     { pts: [...bezierPts([VILLAGE_W - 60, 646], [1950, 660], [2250, 900], [2250, 1300], 6), ...linePts([[2250, 1300], [2250, WORLD_H + 40]], 6)], w: 50, seed: 4, ruts: true },

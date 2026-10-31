@@ -12,6 +12,10 @@ export const LYSA_BORDER_Y = 1150;
 export const PLAYER_SPEED = 175;
 export const PLAYER_R = 13;
 export const SPAWN = { x: 840, y: 760 };
+// Where a new game begins: on the forest road at the south edge of the
+// world, walking north toward the khutir the kobzar has only heard of
+// (signposts and the road itself lead him there: data/village.ts SIGNPOSTS).
+export const ROAD_START = { x: 840, y: 2236 };
 
 export type AreaId = "village" | "lysa";
 export const LYSA_W = 1280;

@@ -173,6 +173,19 @@ const PROP_SOLID: Record<YardProp["kind"], { w: number; h: number }> = {
   shed: { w: 6, h: 6 }, henHouse: { w: 28, h: 8 },
 };
 
+// The way in, for a kobzar who has never been here: the south road runs
+// up out of the forest, over the bridge and between the fields to the
+// maidan. Signposts stand where he might doubt it — where it leaves the
+// forest edge, where the bog path forks off west — and a wayside cross
+// with a rushnyk stands where the khutir begins.
+export type Signpost = { x: number; y: number; boards: Array<{ text: "zalissya" | "boloto" | "khutir"; dir: "n" | "w" | "e" }> };
+export const SIGNPOSTS: Signpost[] = [
+  { x: 884, y: 2150, boards: [{ text: "zalissya", dir: "n" }] },
+  { x: 790, y: 1834, boards: [{ text: "zalissya", dir: "n" }, { text: "boloto", dir: "w" }] },
+  { x: 892, y: 1236, boards: [{ text: "khutir", dir: "n" }] },
+];
+export const WAYSIDE_CROSS = { x: 786, y: 1232 };
+
 // the otaman's korohva (banner) on its pole by his porch
 export const OTAMAN_FLAGPOLE: Rect = { x: 628, y: 300, w: 8, h: 8 };
 
@@ -187,6 +200,8 @@ export const SOLID: Rect[] = [
   // the khaty you walk into: walls with a door, and their furniture
   ...HOUSE_IDS.flatMap((id) => houseSolids(id)),
   OTAMAN_FLAGPOLE,
+  ...SIGNPOSTS.map((sp) => ({ x: sp.x - 3, y: sp.y - 5, w: 6, h: 6 })),
+  { x: WAYSIDE_CROSS.x - 4, y: WAYSIDE_CROSS.y - 5, w: 8, h: 6 },
   ...YARD_PROPS.flatMap((pr) => {
     const sz = PROP_SOLID[pr.kind];
     const one = { x: pr.x - sz.w / 2, y: pr.y - sz.h, w: sz.w, h: sz.h };

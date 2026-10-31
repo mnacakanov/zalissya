@@ -11,8 +11,10 @@ describe("quest log", () => {
   test("a new game writes nothing down: the khutir tells you the rest", () => {
     const q = questLog(view());
     expect(q.activeId).toBeNull();
-    expect(q.objective).toBe(t("quest.objective.3"));
+    expect(q.objective).toBe(t("quest.objective.road"));
     expect(q.sections.map((s) => s.id)).toEqual([]);
+    // in the khutir, before anyone has spoken to him: find the otaman
+    expect(questLog(view({ flags: new Set(["arrived"]) })).objective).toBe(t("quest.objective.arrived"));
   });
 
   test("the otaman tells of Viy: then the story has its objective", () => {

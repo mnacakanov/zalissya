@@ -148,4 +148,5 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
   - day/night with sleeping, Viy's vigil
   - swimming in the pond (the shore is `pondR`/`inPondShape` in `data/village.ts`; flag `bathed`, CHA +1 until dawn)
   - data-driven quest log, autosave every 2.5 s when anything changed
+- **The start**: a new game begins on the forest road at the south edge of the world (`ROAD_START`), and signposts, a wayside cross and the road itself lead to the khutir (flag `arrived`; `SIGNPOSTS`, `WAYSIDE_CROSS` in `data/village.ts`).
 - **Story spine**: meet the village → herbs → spirits → the dark ones → Lysa Hora → look upon Viy → Viy's night. Myroslav's chalk is required. Vesna's wreath and Radek's iron ward are optional. Then the vigil until cockcrow.
