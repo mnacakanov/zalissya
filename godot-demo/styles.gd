@@ -424,6 +424,7 @@ func _label(text := "") -> Label:
 
 
 func _build_ui() -> void:
+	var top_m := _fit_screen()
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	stick_ui = Control.new()
@@ -432,9 +433,12 @@ func _build_ui() -> void:
 	stick_ui.draw.connect(_draw_stick)
 	layer.add_child(stick_ui)
 	var top := VBoxContainer.new()
-	top.position = Vector2(12, 10)
+	top.position = Vector2(12, top_m)
 	layer.add_child(top)
-	var row := HBoxContainer.new()
+	# (the buttons wrap onto a second row on a narrow phone screen)
+	var width := get_viewport().get_visible_rect().size.x - 24
+	var row := HFlowContainer.new()
+	row.custom_minimum_size = Vector2(width, 0)
 	top.add_child(row)
 	for s in STYLES:
 		var b := Button.new()
@@ -456,6 +460,8 @@ func _build_ui() -> void:
 	b_old.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
 	row.add_child(b_old)
 	hud_info = _label()
+	hud_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hud_info.custom_minimum_size = Vector2(width, 0)
 	top.add_child(hud_info)
 	talk_btn = Button.new()
 	talk_btn.text = "Говорити"
@@ -475,8 +481,10 @@ func _build_ui() -> void:
 	dialog.add_child(dialog_text)
 	layer.add_child(dialog)
 	var hint := _label("WASD / стрілки / стік / тягни пальцем · E або A: говорити · N або Y: день/ніч · 1–3 або LB/RB: стиль · F3: контури")
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size = Vector2(width, 0)
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	hint.position = Vector2(12, -30)
+	hint.position = Vector2(12, -30 - (40 if width < 700 else 0))
 	layer.add_child(hint)
 
 
@@ -528,7 +536,7 @@ func _talk() -> void:
 # --- input --------------------------------------------------------------------------
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		if event.pressed and stick_touch < 0 and event.position.y > 90:
+		if event.pressed and stick_touch < 0 and event.position.y > 150:
 			stick_touch = event.index
 			stick_origin = event.position
 			stick = Vector2.ZERO
@@ -621,3 +629,15 @@ func _front_y(x: float) -> float:
 		for p in footprint:
 			best = maxf(best, p.y)
 	return best
+
+
+## On a phone the canvas is in device pixels (2–3 per CSS pixel), which
+## leaves the HUD tiny, and a full-screen PWA puts the status bar and the
+## camera notch over its top: scale the content to CSS pixels, and keep the
+## HUD below the notch.
+func _fit_screen() -> float:
+	var sc := DisplayServer.screen_get_scale()
+	if sc > 1.0:
+		get_window().content_scale_factor = sc
+	var mobile := OS.has_feature("web_ios") or OS.has_feature("web_android") or OS.has_feature("mobile")
+	return 52.0 if mobile else 10.0

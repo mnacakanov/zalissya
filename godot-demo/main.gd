@@ -248,6 +248,7 @@ func _set_hour(i: int) -> void:
 
 # --- the HUD: what the demo is measuring, and the buttons ---------------------------
 func _build_ui() -> void:
+	var top_m := _fit_screen()
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	stick_ui = Control.new()
@@ -256,7 +257,7 @@ func _build_ui() -> void:
 	stick_ui.draw.connect(_draw_stick)
 	layer.add_child(stick_ui)
 	info = Label.new()
-	info.position = Vector2(12, 10)
+	info.position = Vector2(12, top_m)
 	info.add_theme_color_override("font_color", Color(1, 0.97, 0.88))
 	info.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.04))
 	info.add_theme_constant_override("outline_size", 5)
@@ -271,7 +272,7 @@ func _build_ui() -> void:
 	layer.add_child(hint)
 	var box := HBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	box.position = Vector2(-330, 10)
+	box.position = Vector2(-330, top_m)
 	layer.add_child(box)
 	var b_time := Button.new()
 	b_time.text = "Time >"
@@ -320,7 +321,7 @@ func _read_old_save() -> void:
 # --- input: keyboard, gamepad, and a floating stick for touch ----------------------
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		if event.pressed and stick_touch < 0 and event.position.y > 60:
+		if event.pressed and stick_touch < 0 and event.position.y > 150:
 			stick_touch = event.index
 			stick_origin = event.position
 			stick = Vector2.ZERO
@@ -411,3 +412,15 @@ func _process(delta: float) -> void:
 		Engine.get_version_info().string, str(OS.has_feature("web")), Engine.get_frames_per_second(), int(lo),
 		HOURS[hour_i][1], ("%.1f s" % (load_ms / 1000.0)) if load_ms > 0 else "—",
 		RenderingServer.get_video_adapter_name(), save_note]
+
+
+## On a phone the canvas is in device pixels (2–3 per CSS pixel), which
+## leaves the HUD tiny, and a full-screen PWA puts the status bar and the
+## camera notch over its top: scale the content to CSS pixels, and keep the
+## HUD below the notch.
+func _fit_screen() -> float:
+	var sc := DisplayServer.screen_get_scale()
+	if sc > 1.0:
+		get_window().content_scale_factor = sc
+	var mobile := OS.has_feature("web_ios") or OS.has_feature("web_android") or OS.has_feature("mobile")
+	return 52.0 if mobile else 10.0
