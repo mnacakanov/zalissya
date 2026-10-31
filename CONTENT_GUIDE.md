@@ -96,6 +96,7 @@ Transliteration rules and the English/Ukrainian split are in `CLAUDE.md` (Rule 1
   - **The Bolotianyk:** slow and cold, speaks in «…», calls the kobzar "dry-foot" («сухоногий»).
   - **The Domovyk:** grumbling, small, house-proud.
   - **Beelzebub:** CAPITALS, ceremonious, keeps his word.
+  - **Did Prokip, the vorozhbyt:** grumbling, insults with love, calls the kobzar «шмаркачу» (snot-nose), never admits he is glad you came.
   - **Witches and warlocks:** playful menace.
 - **Narration** (italic-feel lines between quotes) is in the present tense, second person: «Очерет розступається.»
 - **Whole sentences with placeholders.** Write `"Улов: {caught}!"`, never fragments glued together in code. Avoid phrasings that need a case or plural to agree with a number (`client/src/content/README.md` explains why).

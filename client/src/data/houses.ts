@@ -25,7 +25,9 @@ import { type Rect } from "../world/geometry";
 //     (data/hideouts.ts): the hollow of the old oak, the chamber dug into the
 //     steppe kurhan, and Beelzebub's cave on Lysa Hora
 //   kaplytsia — the log chapel at the head of the maidan (KAPLYTSIA_ROOM)
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia";
+//   prokip — Did Prokip's khatka, alone in the south-east forest past the
+//     chumak bridge (PROKIP_ROOM; systems/vorozhbyt.ts)
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia" | "prokip";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -42,6 +44,9 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   pechera: { x: 3660, y: 240, w: 180, h: 136 },
   // between the otaman's porch and the fire, its door facing the fire
   kaplytsia: { x: 770, y: 380, w: 140, h: 124 },
+  // far out: over the chumak bridge and east through the forest, where
+  // "decent people don't walk" (Vesna)
+  prokip: { x: 3200, y: 1880, w: 220, h: 170 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -160,7 +165,20 @@ export const KAPLYTSIA_ROOM = {
   lavaE: { x: 116, y: 82, w: 10, h: 26 },
 } as const satisfies Record<string, Rect>;
 
+// Did Prokip's khatka: one low, smoky room. His pich in the corner, a
+// shelf of jars and pots along the back wall, the table where he reads
+// water in a bowl, a lava by the pich where the cat sleeps when the
+// pich is too hot even for a cat. Footprint 220×170, the door at
+// x 87…133.
+export const PROKIP_ROOM = {
+  pich: { x: 14, y: BACK_WALL, w: 64, h: 60 },
+  shelf: { x: 120, y: BACK_WALL, w: 86, h: 12 },
+  table: { x: 136, y: 80, w: 52, h: 30 },
+  lava: { x: 14, y: 116, w: 40, h: 12 },
+} as const satisfies Record<string, Rect>;
+
 function furniture(id: HouseId): Rect[] {
+  if (id === "prokip") return Object.values(PROKIP_ROOM);
   if (id === "kaplytsia") return Object.values(KAPLYTSIA_ROOM);
   if (id === "duplo") return Object.values(DUPLO_ROOM);
   if (id === "kurhan") return Object.values(KURHAN_ROOM);

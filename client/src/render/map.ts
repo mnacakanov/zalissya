@@ -1,9 +1,9 @@
 import { CART, GRAVE } from "../data/chumaky";
-import { DOMOVYK_HOME, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
+import { DOMOVYK_HOME, doorOf, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
 import { BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
 import { BREW_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
-import { HOUSES, KURHAN, KURHAN_STEPPE, POND, TREES, WINDMILL } from "../data/village";
+import { HOUSES, KURHAN, KURHAN_STEPPE, POND, TREES, WELL, WINDMILL } from "../data/village";
 import { t, type TextKey } from "../i18n";
 import { chumakyPresent } from "../systems/chumaky";
 import { flagCount, flagHas } from "../systems/flags";
@@ -17,6 +17,15 @@ import { LYSA_H, LYSA_W, VILLAGE_W, WORLD_H, WORLD_W } from "../world/areas";
 // quest wants him. Drawn on demand into the map overlay's canvas.
 
 export type MapView = { zoom: "world" | "near"; player: { x: number; y: number } };
+
+// Did Prokip's thread (systems/vorozhbyt.ts): from the flags alone.
+function prokipTarget(flags: ReadonlySet<string>): { x: number; y: number } | null {
+  if (flagHas(flags, "zviryna")) return null;
+  if (flagHas(flags, "perelesnykQuest") && !flagHas(flags, "perelesnykGone")) return doorOf("korchma");
+  if (flagHas(flags, "prokipMessage") && !flagHas(flags, "vesnaAnswer")) return doorOf("hut1");
+  if (flagHas(flags, "resheto") && !flagHas(flags, "reshetoTried")) return { x: WELL.x + WELL.w / 2, y: WELL.y + WELL.h / 2 };
+  return doorOf("prokip");
+}
 
 // Where the active quest (systems/quests.ts) points, if anywhere on the map.
 export function questTarget(activeId: string | null, flags: ReadonlySet<string>): { x: number; y: number } | null {
@@ -33,6 +42,7 @@ export function questTarget(activeId: string | null, flags: ReadonlySet<string>)
     case "smithing": return FORGE_SPOT;
     case "alchemy": return BREW_SPOT;
     case "lysa-visit": case "lysa-sabbath": return LYSA_WORLD.summit;
+    case "prokip": return prokipTarget(flags);
     case "tobacco": {
       const st = tobaccoStage(flags);
       if (st === "gather") return flagHas(flags, "hempFibre") || flagCount(flags, "tobaccoLeaves") < 3 ? TOBACCO_SPOTS[1] ?? null : HEMP_SPOT;
@@ -142,7 +152,8 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   label("map.lysa", LYSA_ORIGIN.x + LYSA_W / 2, LYSA_ORIGIN.y + 120, 14, "#f0ecff");
   label("map.river", 3300, riverY(3300), 12, "#24485a");
   label("map.forest", 800, 2050, 13, "#e9f2dc");
-  label("map.forest", 3300, 2050, 13, "#e9f2dc");
+  label("map.forest", 3640, 2200, 13, "#e9f2dc");
+  label("map.prokip", HOUSE_RECTS.prokip.x + HOUSE_RECTS.prokip.w / 2, HOUSE_RECTS.prokip.y - 18, 11, "#f2f6e8");
   label("map.fields", 700, 1462, 11);
   label("map.hemp", 1460, 1462, 11, "#f2f6e8");
   label("map.tobacco", 2080, 1930, 11);

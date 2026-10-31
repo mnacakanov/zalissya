@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KAPLYTSIA_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KAPLYTSIA_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, PROKIP_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -24,6 +24,7 @@ export function drawKhataInterior(
   if (id === "kurhan") { drawKurhanInterior(c, x, y, t); return; }
   if (id === "pechera") { drawPecheraInterior(c, x, y, t); return; }
   if (id === "kaplytsia") { drawKaplytsiaInterior(c, x, y, t); return; }
+  if (id === "prokip") { drawProkipInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -1500,5 +1501,120 @@ function drawKaplytsiaInterior(c: CanvasRenderingContext2D, x: number, y: number
       c.fillStyle = `rgba(230,226,216,${0.35 * (1 - ph)})`;
       c.beginPath(); c.arc(kx + Math.sin(ph * 7 + i) * 3, ky - 6 - ph * 26, 1.6 + ph * 4, 0, Math.PI * 2); c.fill();
     }
+  }
+}
+
+// --- Did Prokip's khatka ------------------------------------------------------
+// One low room, smoked brown: herbs hanging from every beam, his pich
+// burning (it always is), a shelf of jars and pots with things in them
+// nobody asks about, the table with a bowl of water he reads, a candle
+// stub, a bone and a feather; his black cat asleep on the lava, one eye
+// open. The floor is clay, strewn with dry wormwood against the nechyst.
+function drawProkipInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.prokip;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const room = PROKIP_ROOM;
+  const shadow = (r: Box) => { c.fillStyle = "rgba(40,24,10,0.28)"; rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill(); };
+  // the clay floor, darker than a housewife's, with wormwood strewn on it
+  c.fillStyle = "#a8865c";
+  c.fillRect(x, y, w, h);
+  for (let i = 0; i < 46; i++) {
+    c.fillStyle = i % 2 ? "rgba(110,80,46,0.22)" : "rgba(200,170,120,0.2)";
+    c.beginPath(); c.ellipse(x + hash2(i, 81) * w, y + hash2(i, 83) * h, 5 + hash2(i, 85) * 8, 2.6 + hash2(i, 87) * 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.strokeStyle = "rgba(140,150,110,0.7)"; c.lineWidth = 1;
+  for (let i = 0; i < 18; i++) {
+    const px = x + 20 + hash2(i, 91) * (w - 40);
+    const py = y + BACK_WALL + 30 + hash2(i, 93) * (h - BACK_WALL - 50);
+    const a = hash2(i, 95) * 3;
+    c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(a) * 9, py + Math.sin(a) * 9); c.stroke();
+  }
+  // walls: smoked whitewash, a soot band under the ceiling
+  c.fillStyle = "#d8ccb0";
+  c.fillRect(x, y + WALL, w, BACK_WALL - WALL);
+  c.fillStyle = "rgba(60,44,30,0.35)";
+  c.fillRect(x, y + WALL, w, 6);
+  c.fillStyle = "#9a8a6a";
+  c.fillRect(x, y, w, WALL);
+  c.fillRect(x, y, WALL, h);
+  c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL);
+  c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "#6e5a40";
+  c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+  // daylight in at the door, green from the forest
+  c.fillStyle = "rgba(210,236,170,0.18)";
+  c.beginPath(); c.moveTo(x + half, y + h - WALL); c.lineTo(x + half + DOOR_GAP, y + h - WALL); c.lineTo(x + half + DOOR_GAP + 6, y + h - 60); c.lineTo(x + half - 6, y + h - 60); c.closePath(); c.fill();
+  // the pich, alight
+  const p = R(room.pich);
+  drawPich(c, p, t);
+  // a black cat asleep on the lava, one eye open for you
+  {
+    const l = R(room.lava);
+    shadow(l);
+    c.fillStyle = "#7a5a36";
+    rr(c, l.x, l.y, l.w, l.h, 2); c.fill();
+    const breathe = Math.sin(t * 0.003) * 0.8;
+    c.fillStyle = "#1c1a1e";
+    c.beginPath(); c.ellipse(l.x + 20, l.y + 3, 11 + breathe * 0.4, 6 + breathe * 0.3, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(l.x + 30, l.y + 1, 4.6, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(l.x + 27, l.y - 2); c.lineTo(l.x + 28, l.y - 7); c.lineTo(l.x + 30, l.y - 3); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(l.x + 31, l.y - 3); c.lineTo(l.x + 33, l.y - 7); c.lineTo(l.x + 34, l.y - 2); c.closePath(); c.fill();
+    const open = (t % 7000) < 4200;
+    c.fillStyle = open ? "#e8d050" : "#1c1a1e";
+    c.beginPath(); c.arc(l.x + 32, l.y + 0.6, 1, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#1c1a1e"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(l.x + 9, l.y + 4); c.quadraticCurveTo(l.x + 2, l.y + 10, l.x + 8, l.y + 12); c.stroke();
+  }
+  // the shelf: jars and pots and a skull of something small
+  {
+    const s = R(room.shelf);
+    shadow(s);
+    c.fillStyle = "#6a4a2a";
+    c.fillRect(s.x, s.y, s.w, s.h);
+    const cols = ["#5a7a4a", "#8a5a3a", "#3a5a6a", "#a08a5a", "#6a3a4a", "#4a6a3a"];
+    for (let i = 0; i < 6; i++) {
+      const jx = s.x + 6 + i * 13;
+      c.fillStyle = cols[i] ?? "#5a7a4a";
+      rr(c, jx, s.y - 7, 9, 12, 3); c.fill();
+      c.fillStyle = "rgba(255,255,255,0.25)";
+      c.fillRect(jx + 2, s.y - 5, 1.6, 6);
+    }
+  }
+  // the table: a bowl of water he reads, a candle stub, a bone, a feather
+  {
+    const tb = R(room.table);
+    shadow(tb);
+    c.fillStyle = "#7a5432";
+    rr(c, tb.x, tb.y, tb.w, tb.h, 2); c.fill();
+    c.strokeStyle = "rgba(40,24,10,0.5)"; c.lineWidth = 0.8;
+    for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(tb.x, tb.y + k * 7.5); c.lineTo(tb.x + tb.w, tb.y + k * 7.5); c.stroke(); }
+    c.fillStyle = "#c8b89a";
+    c.beginPath(); c.ellipse(tb.x + 18, tb.y + 14, 10, 7, 0, 0, Math.PI * 2); c.fill();
+    const ripple = 0.5 + Math.sin(t * 0.004) * 0.3;
+    c.fillStyle = `rgba(80,120,150,${0.75 + ripple * 0.1})`;
+    c.beginPath(); c.ellipse(tb.x + 18, tb.y + 14, 7.4, 5, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = `rgba(220,240,250,${ripple * 0.6})`; c.lineWidth = 0.7;
+    c.beginPath(); c.ellipse(tb.x + 18, tb.y + 14, 3 + ripple * 3, 2 + ripple * 2, 0, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "#efe6cc";
+    c.fillRect(tb.x + 38, tb.y + 6, 4, 8);
+    const fl = 1 + Math.sin(t * 0.02) * 0.3;
+    c.fillStyle = "#ffcf5a";
+    c.beginPath(); c.ellipse(tb.x + 40, tb.y + 3, 1.6 * fl, 3 * fl, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#e8e0cc";
+    c.fillRect(tb.x + 30, tb.y + 22, 14, 2.4);
+    c.strokeStyle = "#3a3a44"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(tb.x + 6, tb.y + 26); c.quadraticCurveTo(tb.x + 12, tb.y + 22, tb.x + 20, tb.y + 24); c.stroke();
+  }
+  // herbs hanging from the beams across the whole room
+  for (let i = 0; i < 12; i++) {
+    const hx = x + 22 + i * ((w - 44) / 11);
+    const hy = y + BACK_WALL + 6 + (i % 3) * 30;
+    const sway = Math.sin(t * 0.001 + i) * 1.2;
+    c.strokeStyle = "#4a3820"; c.lineWidth = 0.8;
+    c.beginPath(); c.moveTo(hx, hy - 6); c.lineTo(hx + sway, hy); c.stroke();
+    c.fillStyle = ["#6a8a3a", "#9a9a50", "#7a5a7a", "#b07a3a"][i % 4] ?? "#6a8a3a";
+    c.beginPath(); c.ellipse(hx + sway, hy + 5, 3, 6, 0, 0, Math.PI * 2); c.fill();
   }
 }

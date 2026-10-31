@@ -13,7 +13,7 @@ export type Npc = {
   y: number;
   tunic: string;
   hair: string;
-  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock";
+  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock" | "vorozhbyt";
 };
 
 export const NPCS: Npc[] = [

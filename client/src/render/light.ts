@@ -75,7 +75,7 @@ export function drawFog(c: CanvasRenderingContext2D, minute: number, camX: numbe
   c.restore();
 }
 
-type Light = { x: number; y: number; r: number; col: string; k: number };
+export type Light = { x: number; y: number; r: number; col: string; k: number };
 
 // Where the lit windows are on each walk-in house's front wall (they
 // match the drawings in render/khutir.ts), in world coordinates.
@@ -89,6 +89,8 @@ function windowLights(id: HouseId): Light[] {
     ]);
   switch (id) {
     case "hut0": case "hut1": return at([34, r.w - 70], base - 64 + 26, 36);
+    // Prokip's pich is always lit, and he doesn't sleep
+    case "prokip": return at([34, r.w - 70], base - 64 + 26, 36);
     case "otaman": return at([30, 92, 250, 316], base - 70 + 35, 32);
     case "korchma": return [
       ...at([34, 96, r.w - 126, r.w - 64], base - 72 + 28, 26),
@@ -110,6 +112,7 @@ let darkLayer: HTMLCanvasElement | null = null;
 export function drawDark(
   c: CanvasRenderingContext2D, dark: number, camX: number, camY: number, vw: number, vh: number, dpr: number, t: number,
   inside: HouseId | null,
+  extra: readonly Light[] = [],
 ): void {
   if (dark <= 0.001) return;
   const fl = 1 + Math.sin(t * 0.011) * 0.05 + Math.sin(t * 0.027) * 0.03;
@@ -120,6 +123,7 @@ export function drawDark(
     { x: LYSA_WORLD.summit.x, y: LYSA_WORLD.summit.y, r: 260 * fl, col: "255,140,90", k: 1 },
     { x: LYSA_WORLD.summit.x + 120, y: LYSA_WORLD.summit.y - 160, r: 420, col: "170,180,255", k: 0.45 },
     { x: LYSA_WORLD.offer.x, y: LYSA_WORLD.offer.y, r: 50, col: "200,210,255", k: 0.5 },
+    ...extra,
   ];
   for (const id of Object.keys(HOUSE_RECTS) as HouseId[]) {
     if (id === inside) {

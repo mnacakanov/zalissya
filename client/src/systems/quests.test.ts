@@ -40,3 +40,18 @@ describe("quest log", () => {
     expect(questLog(view({ area: "hut1" })).objective).toBe(t("quest.objective.1"));
   });
 });
+
+describe("Did Prokip in the quest log", () => {
+  test("hidden until Vesna mentions him, then a side thread that never jumps the story", () => {
+    expect(questLog(view()).sections.flatMap((s) => s.quests.map((q) => q.id))).not.toContain("prokip");
+    const q = questLog(view({ talked: ["vesna"] }));
+    expect(q.sections.find((s) => s.id === "life")?.quests.map((x) => x.id)).toContain("prokip");
+    expect(q.activeId).toBe("meet");
+  });
+  test("its line follows the errand", () => {
+    const life = (flags: string[]) => questLog(view({ talked: ["vesna", "prokip"], flags: new Set(flags) })).sections.find((s) => s.id === "life")?.quests.find((x) => x.id === "prokip");
+    expect(life(["resheto"])?.detail).toBe(t("quest.prokip.sieve"));
+    expect(life(["resheto", "reshetoTried", "reshetoDone", "prokipMessage"])?.detail).toBe(t("quest.prokip.message"));
+    expect(life(["zviryna"])?.done).toBe(true);
+  });
+});

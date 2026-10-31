@@ -117,6 +117,12 @@ function roads(): Road[] {
   // the pustka's path down to the maidan past the well, and the forge's yard
   r.push({ pts: bezierPts([1189, 312], [1160, 380], [1080, 430], [1000, 470], 5), w: 18, seed: seed++, ruts: false });
   r.push({ pts: linePts([[328, 556], [328, 616]], 5), w: 40, seed: seed++, ruts: false });
+  // the path nobody keeps: off the chumak road past the bridge, east through
+  // the forest to Did Prokip's door (data/houses.ts HOUSE_RECTS.prokip)
+  r.push({ pts: [
+    ...bezierPts([2262, 1960], [2480, 2010], [2700, 2120], [2950, 2080], 5),
+    ...bezierPts([2950, 2080], [3120, 2050], [3240, 2090], [3310, 2052], 5),
+  ], w: 20, seed: seed++, ruts: false });
   roadsCache = r;
   return r;
 }

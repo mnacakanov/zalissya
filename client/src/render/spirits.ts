@@ -364,3 +364,61 @@ export function drawViy(c: CanvasRenderingContext2D, x: number, y: number, t: nu
     c.beginPath(); c.moveTo(hx, hy - 58); c.lineTo(hx + (hash2(i, 611) - 0.5) * 7, hy - 70 - hash2(i, 613) * 6); c.stroke();
   }
 }
+
+// The perelesnyk (systems/vorozhbyt.ts): a fiery serpent that comes down
+// out of the night sky like a falling star and hangs over the korchma's
+// door. x, y is the threshold it hangs over. It coils slowly in the air,
+// head down toward the door, sparks dripping off its tail; its eyes are
+// two coals. Light itself comes from render/light.ts (an extra light).
+// `shape` 0…1 fades in a man's outline under it, the Stepan Odarka sees.
+export function drawPerelesnyk(c: CanvasRenderingContext2D, x: number, y: number, t: number, shape = 0): void {
+  const hy = y - 120;
+  const SEG = 16;
+  const pts: Array<[number, number]> = [];
+  for (let i = 0; i < SEG; i++) {
+    const k = i / (SEG - 1);
+    const a = t * 0.0024 - k * 5.2;
+    pts.push([x + Math.sin(a) * (34 - k * 10) + (k - 0.5) * 30, hy - k * 46 + Math.cos(a * 0.7) * 10]);
+  }
+  c.save();
+  c.globalCompositeOperation = "lighter";
+  // the glow along the body
+  for (let i = SEG - 1; i >= 0; i--) {
+    const [px, py] = pts[i] ?? [x, hy];
+    const k = i / (SEG - 1);
+    const r = 13 - k * 8;
+    const g = c.createRadialGradient(px, py, 0, px, py, r * 2.4);
+    g.addColorStop(0, "rgba(255,230,140,0.9)");
+    g.addColorStop(0.4, "rgba(255,130,40,0.55)");
+    g.addColorStop(1, "rgba(200,40,10,0)");
+    c.fillStyle = g;
+    c.beginPath(); c.arc(px, py, r * 2.4, 0, Math.PI * 2); c.fill();
+  }
+  // sparks dripping off the tail
+  const [tx, ty] = pts[SEG - 1] ?? [x, hy];
+  for (let i = 0; i < 8; i++) {
+    const ph = (t * 0.0009 + i / 8) % 1;
+    c.fillStyle = `rgba(255,${180 - ph * 120},60,${0.9 * (1 - ph)})`;
+    c.beginPath(); c.arc(tx + Math.sin(i * 2.3 + t * 0.002) * 10 * ph, ty + ph * 70, 1.8 * (1 - ph) + 0.6, 0, Math.PI * 2); c.fill();
+  }
+  c.globalCompositeOperation = "source-over";
+  // the head: two coals for eyes
+  const [hx, hy2] = pts[0] ?? [x, hy];
+  c.fillStyle = "#fff4c0";
+  c.beginPath(); c.ellipse(hx, hy2, 9, 7, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#7a1a08";
+  for (const s of [-1, 1] as const) { c.beginPath(); c.arc(hx + s * 3.6, hy2 + 1, 1.8, 0, Math.PI * 2); c.fill(); }
+  // the man it pretends to be, standing at the door
+  if (shape > 0.01) {
+    c.globalAlpha = shape * (0.5 + Math.sin(t * 0.006) * 0.12);
+    const g = c.createLinearGradient(0, y - 66, 0, y);
+    g.addColorStop(0, "rgba(255,200,110,0.8)");
+    g.addColorStop(1, "rgba(255,110,40,0.05)");
+    c.fillStyle = g;
+    c.beginPath();
+    c.ellipse(x, y - 58, 7, 8, 0, 0, Math.PI * 2);
+    c.moveTo(x - 12, y - 48); c.lineTo(x + 12, y - 48); c.lineTo(x + 9, y); c.lineTo(x - 9, y); c.closePath();
+    c.fill();
+  }
+  c.restore();
+}

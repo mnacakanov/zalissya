@@ -969,3 +969,71 @@ export function drawPechera(c: CanvasRenderingContext2D, x: number, y: number, w
   }
   c.restore();
 }
+
+// Did Prokip's khatka in the south-east forest (data/houses.ts PROKIP_ROOM):
+// a khata like any other, only older, smaller and left to the forest. The
+// whitewash gone grey-green, moss on the thatch, bundles of herbs hung
+// under the eave to dry, a horse's skull on a stake by the door (to keep
+// off what should be kept off), and his raven on the ridge, watching you
+// come down the path and saying nothing, loudly.
+export function drawProkipKhatka(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  drawKhataBig(c, x, y, w, h, t, 41, alpha, true);
+  c.save();
+  c.globalAlpha = alpha;
+  const wallTop = y + h - 64;
+  const eave = wallTop + 6;
+  const ridge = y + (eave - y) * 0.42;
+  // the walls gone grey-green with damp
+  c.fillStyle = "rgba(96,110,80,0.28)";
+  c.fillRect(x, wallTop + 4, w, 50);
+  // moss on the thatch, thickest on the north (back) slope
+  for (let i = 0; i < 16; i++) {
+    const mx = x - 8 + hash2(i, 71) * (w + 16);
+    const my = y - 8 + hash2(i, 73) * (eave - y);
+    c.fillStyle = i % 3 ? "rgba(70,96,40,0.55)" : "rgba(110,130,60,0.5)";
+    c.beginPath(); c.ellipse(mx, my, 8 + hash2(i, 75) * 12, 4 + hash2(i, 77) * 5, 0, 0, Math.PI * 2); c.fill();
+  }
+  // herbs drying under the eave, swaying a little
+  for (let i = 0; i < 9; i++) {
+    const hx = x + 10 + i * ((w - 20) / 8);
+    if (Math.abs(hx - (x + w / 2)) < 26) continue;
+    const sway = Math.sin(t * 0.0012 + hx * 0.07) * 1.6;
+    c.strokeStyle = "#6a5030"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(hx, eave + 6); c.lineTo(hx + sway, eave + 14); c.stroke();
+    c.fillStyle = ["#6a8a3a", "#a8a050", "#8a6a8a", "#c88a3a"][i % 4] ?? "#6a8a3a";
+    c.beginPath(); c.ellipse(hx + sway, eave + 20, 4, 8, 0, 0, Math.PI * 2); c.fill();
+  }
+  // the horse's skull on its stake, left of the door
+  {
+    const sx = x + w / 2 - 44;
+    const sy = y + h + 2;
+    c.strokeStyle = "rgba(24,18,10,0.85)"; c.lineWidth = 4.4;
+    c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx, sy - 46); c.stroke();
+    c.strokeStyle = "#6a4a2a"; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx, sy - 46); c.stroke();
+    c.fillStyle = "#ece4d0";
+    c.beginPath(); c.ellipse(sx, sy - 54, 7, 11, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "rgba(24,18,10,0.85)"; c.lineWidth = 0.9; c.stroke();
+    c.fillStyle = "#3a3026";
+    for (const s of [-1, 1] as const) { c.beginPath(); c.arc(sx + s * 3, sy - 58, 1.8, 0, Math.PI * 2); c.fill(); }
+    c.fillRect(sx - 2, sy - 48, 4, 1.4);
+  }
+  // the raven on the ridge: it turns its head now and then
+  {
+    const rx = x + w * 0.3;
+    const ry = ridge - 6;
+    const look = Math.sin(t * 0.0007) > 0.6 ? -1 : 1;
+    c.fillStyle = "#16141c";
+    c.beginPath(); c.ellipse(rx, ry - 6, 7, 9, 0.2 * look, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(rx + look * 5, ry - 15, 4.6, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#2a2834";
+    c.beginPath(); c.moveTo(rx + look * 9, ry - 16); c.lineTo(rx + look * 15, ry - 14); c.lineTo(rx + look * 9, ry - 13); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(rx - look * 5, ry - 4); c.lineTo(rx - look * 14, ry + 2); c.lineTo(rx - look * 4, ry); c.closePath(); c.fill();
+    c.fillStyle = "#e8d070";
+    c.beginPath(); c.arc(rx + look * 6.4, ry - 16, 0.9, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#2a2620"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(rx - 2, ry + 2); c.lineTo(rx - 2, ry + 6); c.moveTo(rx + 2, ry + 2); c.lineTo(rx + 2, ry + 6); c.stroke();
+  }
+  c.restore();
+}

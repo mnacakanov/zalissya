@@ -7,7 +7,7 @@ import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type Hou
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
-import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawSunflower } from "./render/khutir";
+import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -22,6 +22,10 @@ import { korchmaTopicSet } from "./dialogue/korchma";
 import { KORCHMA_PLAY, ODARKA, OKHRIM } from "./data/korchma";
 import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
 import { makeCritters, stepCritter } from "./systems/critters";
+import { perelesnykFlies, perelesnykMeetable, prokipNext, prokipStage } from "./systems/vorozhbyt";
+import { PERELESNYK_AT, PERELESNYK_NPC, PROKIP } from "./data/vorozhbyt";
+import { odarkaProkipTopics, PERELESNYK_DRIVEN, PERELESNYK_SCENE, PERELESNYK_SPARED, prokipTopicSet, vesnaProkipTopics } from "./dialogue/vorozhbyt";
+import { animalLine, animalSpeaker } from "./dialogue/animals";
 import { BENCHES, RESIDENTS, type ResidentId, STRAW_BED } from "./data/schedules";
 import { planFor, type Pose, walkToward, type Walker } from "./systems/schedules";
 import { isSabbath } from "./systems/sabbath";
@@ -46,7 +50,7 @@ import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawL
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
 import { drawDark, drawFog, drawVignette, gradeDay } from "./render/light";
-import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
+import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawPerelesnyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
@@ -104,8 +108,8 @@ const BENCH_SOLIDS = [
   ...BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 })),
 ];
 // What each walk-in house says when you step in, and its HUD label.
-const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera", kaplytsia: "ui.enterHut.kaplytsia" };
-const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera", kaplytsia: "ui.hut.kaplytsia" };
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera", kaplytsia: "ui.enterHut.kaplytsia", prokip: "ui.enterHut.prokip" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera", kaplytsia: "ui.hut.kaplytsia", prokip: "ui.hut.prokip" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -204,7 +208,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1, kaplytsia: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1, kaplytsia: 1, prokip: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -376,6 +380,15 @@ export function App() {
     }
     if (topic.grant) applyGrant(topic.grant);
     if (markAsked(flagsRef.current, dlg.npc.id, topic)) syncFlags();
+    // Prokip's errand moves on as you ask it: his menu is rebuilt so the
+    // next step is there when the answer ends, without saying goodbye first
+    if (dlg.npc.id === "prokip" && topic.grant) {
+      const topics = prokipTopicSet(prokipStage({ flags: flagsRef.current, met: true, heard: true }), flagsRef.current, false).topics;
+      const next: Dialogue = { ...dlg, topics, view: "topic", topic, topicLine: 0, asked: askedIds(flagsRef.current, dlg.npc.id, topics) };
+      dialogueRef.current = next;
+      setDialogue(next);
+      return;
+    }
     const asked = dlg.asked?.includes(topic.id) ? dlg.asked : [...(dlg.asked ?? []), topic.id];
     const next: Dialogue = { ...dlg, view: "topic", topic, topicLine: 0, asked };
     dialogueRef.current = next;
@@ -564,12 +577,12 @@ export function App() {
     showToast(expired ? t("ui.sleepUntil.0", { msg }) : msg);
   };
   // A dialogue whose last page is a row of option buttons.
-  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play" | "playKorchma", options: DialogueOption[]) => {
+  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play" | "playKorchma" | "perelesnyk", options: DialogueOption[]) => {
     const d: Dialogue = { npc, lines, line: 0, choiceAt: lines.length - 1, choiceKind: "options", options, optionsTag: tag };
     dialogueRef.current = d;
     setDialogue(d);
   };
-  const pickOption = (tag: "sleep" | "play" | "playKorchma", id: string) => {
+  const pickOption = (tag: "sleep" | "play" | "playKorchma" | "perelesnyk", id: string) => {
     endDialogue();
     if (id === "cancel") return;
     if (tag === "sleep") {
@@ -585,6 +598,17 @@ export function App() {
       performAtFire(id as SongId);
     } else if (tag === "playKorchma") {
       performAtKorchma(id as SongId);
+    } else if (tag === "perelesnyk") {
+      // Prokip's poppy and a song, or Odarka keeps her night (systems/vorozhbyt.ts)
+      if (id === "drive") {
+        setFlag("perelesnykGone");
+        openDialogue(PERELESNYK_NPC, PERELESNYK_DRIVEN());
+        showToast(t("perelesnyk.toast.driven"));
+      } else if (id === "spare") {
+        setFlag("perelesnykSpared");
+        openDialogue(PERELESNYK_NPC, PERELESNYK_SPARED());
+        showToast(t("perelesnyk.toast.spared"));
+      }
     }
   };
 
@@ -694,6 +718,13 @@ export function App() {
         setFlag("mapChort");
         showToast(t("map.toast.chort"));
       }
+      return;
+    }
+    // Did Prokip's errands (systems/vorozhbyt.ts): each ask hands over the next step
+    if (g === "prokipNext" || g === "vesnaAnswer") {
+      const stage = prokipStage({ flags: f, met: talkedRef.current.has("prokip"), heard: talkedRef.current.has("vesna") });
+      const next = g === "vesnaAnswer" ? (stage === "message" ? "vesnaAnswer" : null) : prokipNext(stage);
+      if (next) setFlag(next);
       return;
     }
     // Radek buys horseshoes for chervintsi (systems/trade.ts)
@@ -1019,10 +1050,14 @@ export function App() {
             openDialogue(p.npc, n);
             return;
           }
+        } else if (p.npc.id === "prokip") {
+          const pset = prokipTopicSet(prokipStage({ flags, met: true, heard: true }), flags, firstMeeting);
+          openTopicDialogue(p.npc, pset.intro, pset.topics);
+          return;
         } else if (p.npc.id === "odarka" || p.npc.id === "okhrim") {
           const kset = korchmaTopicSet(p.npc.id, flags, fish, firstMeeting);
           if (kset) {
-            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...(p.npc.id === "odarka" ? odarkaProkipTopics(flags) : []), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         } else if (p.npc.id === "gnat" || p.npc.id === "ostap") {
@@ -1034,7 +1069,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...(p.npc.id === "vesna" ? vesnaProkipTopics(prokipStage({ flags, met: talkedRef.current.has("prokip"), heard: true })) : []), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -1137,6 +1172,28 @@ export function App() {
               ? t("ui.iron.3", { n })
               : t("ui.iron.4", { n }),
         );
+        return;
+      }
+      case "sieve": {
+        // Prokip's sieve at the well: it comes up full, for one moment
+        setFlag("reshetoTried");
+        openDialogue(WELL_NPC, [t("prokip.well.0"), t("prokip.well.1")]);
+        showToast(t("prokip.well.toast"));
+        return;
+      }
+      case "perelesnyk": {
+        openOptions(PERELESNYK_NPC, PERELESNYK_SCENE(), "perelesnyk", [
+          { id: "drive", label: t("perelesnyk.opt.drive"), aria: t("perelesnyk.opt.drive") },
+          { id: "spare", label: t("perelesnyk.opt.spare"), aria: t("perelesnyk.opt.spare") },
+        ]);
+        return;
+      }
+      case "animal": {
+        // Prokip's gift: the animals talk (dialogue/animals.ts)
+        const cr = crittersRef.current[p.idx];
+        if (!cr) return;
+        const fire = perelesnykFlies(flagsRef.current, clockRef.current.minute);
+        openDialogue(animalSpeaker(cr.kind), [animalLine(cr.kind, flagsRef.current, cr.asleep || (cr.kind === "dog" && isNight(clockRef.current.minute)), fire, Math.random())]);
         return;
       }
       case "wish": {
@@ -1755,6 +1812,7 @@ export function App() {
         ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && sabbath) && !RESIDENT_IDS.has(c.id)),
         ...hiders.filter((h) => !onLysa(h.x, h.y)),
         ...residents.filter((r) => !onLysa(r.x, r.y)),
+        PROKIP,
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
@@ -1820,7 +1878,11 @@ export function App() {
         spot(inHut0, BED_SPOT.x, BED_SPOT.y, 30, () => ({ kind: "sleep" }));
         spot(inHut0 && flagHas(flagsNow, "bread"), PICH_SPOT.x, PICH_SPOT.y, 50, () => ({ kind: "offer" }));
         spot(inHut0 && flagHas(flagsNow, "offering") && !flagHas(flagsNow, "stone"), PICH_SPOT.x, PICH_SPOT.y + 8, 50, () => ({ kind: "gift" }));
-        spot(true, WELL.x + WELL.w / 2, WELL.y + WELL.h / 2, 66, () => ({ kind: "wish" }));
+        // Prokip's sieve takes the well's place while you carry it
+        const sieving = flagHas(flagsNow, "resheto") && !flagHas(flagsNow, "reshetoTried");
+        spot(!sieving, WELL.x + WELL.w / 2, WELL.y + WELL.h / 2, 66, () => ({ kind: "wish" }));
+        spot(sieving, WELL.x + WELL.w / 2, WELL.y + WELL.h / 2, 66, () => ({ kind: "sieve" }));
+        spot(perelesnykMeetable(flagsNow, clockRef.current.minute), PERELESNYK_AT.x, PERELESNYK_AT.y, 56, () => ({ kind: "perelesnyk" }));
         spot(true, COOK_SPOT.x, COOK_SPOT.y, 60, () => ({ kind: "cook" }));
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
@@ -1829,7 +1891,10 @@ export function App() {
         spot(houseAt(p.x, p.y) === "pustka", PUSTKA_CHEST.x, PUSTKA_CHEST.y, 34, () => ({ kind: "pustkaChest" }));
         {
           const dog = crittersRef.current.find((c) => c.kind === "dog");
-          if (dog) spot(true, dog.x, dog.y, 38, () => ({ kind: "petDog" }));
+          // with Prokip's gift the animals talk; without, the dog is petted
+          const hears = flagHas(flagsNow, "zviryna");
+          if (dog && !hears) spot(true, dog.x, dog.y, 38, () => ({ kind: "petDog" }));
+          if (hears) crittersRef.current.forEach((cr, idx) => spot(true, cr.x, cr.y, cr.kind === "cow" || cr.kind === "horse" ? 50 : 38, () => ({ kind: "animal", idx })));
         }
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         const tStage = tobaccoStage(flagsNow);
@@ -1949,6 +2014,8 @@ export function App() {
                 ? drawPechera(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, !isSabbath(clockRef.current.minute))
               : id === "kaplytsia"
                 ? drawKaplytsia(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              : id === "prokip"
+                ? drawProkipKhatka(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
             : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
@@ -1970,6 +2037,12 @@ export function App() {
         for (const o of OXEN) drawables.push({ y: o.y + 8, draw: () => drawOx(ctx2d, o.x, o.y, o.face, camX, camY, now) });
       }
       if (ostapNow === "dead") drawables.push({ y: GRAVE.y, draw: () => drawGrave(ctx2d, camX, camY) });
+      // the perelesnyk over the korchma door at night (systems/vorozhbyt.ts);
+      // come close and the shape of Stepan shows under it
+      if (perelesnykFlies(flagsNow, clockRef.current.minute) && Math.abs(PERELESNYK_AT.x - camX - vw / 2) < vw && Math.abs(PERELESNYK_AT.y - camY - vh / 2) < vh) {
+        const near = Math.max(0, Math.min(1, 1 - (Math.hypot(p.x - PERELESNYK_AT.x, p.y - PERELESNYK_AT.y) - 60) / 200));
+        drawables.push({ y: PERELESNYK_AT.y + 2, draw: () => drawPerelesnyk(ctx2d, PERELESNYK_AT.x - camX, PERELESNYK_AT.y - camY, now, near) });
+      }
       for (const tr of TREES) {
         if (tr.x < camX - 90 || tr.x > camX + vw + 90 || tr.y < camY - 130 || tr.y > camY + vh + 40) continue;
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
@@ -2130,7 +2203,8 @@ export function App() {
       // room the kobzar is in — then the vigil on top so the chalk stays
       // bright
       if (!isHutArea(area)) {
-        drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current);
+        drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
+          perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []);
       }
       if (fight) {
         drawVigil(ctx2d, fight, VIGIL_CENTER.x, VIGIL_CENTER.y, camX, camY, now);
@@ -2328,6 +2402,12 @@ export function App() {
                                     ? t("tobacco.prompt.hang")
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
+                                  : prompt.kind === "sieve"
+                                    ? t("ui.promptLabel.sieve")
+                                  : prompt.kind === "perelesnyk"
+                                    ? t("ui.promptLabel.perelesnyk")
+                                  : prompt.kind === "animal"
+                                    ? t("ui.promptLabel.animal")
                                     : t("ui.promptLabel.20");
   const promptAria = !prompt
     ? ""
@@ -2335,11 +2415,12 @@ export function App() {
       ? prompt.npc.id === "viy" ? t("ui.promptAria.0") : t("ui.promptAria.1", { name: prompt.npc.name })
       : prompt.kind === "vigil"
         ? t("ui.promptAria.2")
-        : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯]\s*/g, " ").trim();
+        : promptLabel.replace(/\s*[🎣🍞✨🍲🔨⚗🌙💃🚪🛏◯🔥👂]\s*/gu, " ").trim();
   const sealed = flagHas(hudFlags, "viySealed");
   const keepsakes: string[] = [
     ...(flagHas(hudFlags, "map") ? [t(flagHas(hudFlags, "mapChort") ? "map.keepsake.chort" : "map.keepsake.chumak")] : []),
     ...(flagHas(hudFlags, "lyulka") ? [t("tobacco.keepsake")] : []),
+    ...(flagHas(hudFlags, "zviryna") ? [t("prokip.keepsake")] : []),
     ...(sealed ? [t("ui.keepsakes.0")] : []),
     ...(flagHas(hudFlags, "chalk") && !sealed ? [t("ui.keepsakes.1")] : []),
     ...(flagHas(hudFlags, "wreath") && !sealed ? [t("ui.keepsakes.2")] : []),

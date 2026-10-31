@@ -17,8 +17,10 @@ import { CAM, rr } from "./shapes";
 //               with ribbons, a braid
 //   shynkarka — Odarka: a married woman's kerchief, a white apron
 //   kozak     — Okhrim: a red zhupan, the oseledets, moustaches to the chest
+//   vorozhbyt — Did Prokip: a long patched svyta, wild white hair, a beard
+//               to the belt, a crooked staff
 
-export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch" | "warlock";
+export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch" | "warlock" | "vorozhbyt";
 
 export type FolkOpts = {
   tunic: string; hair: string; style: FolkStyle;
@@ -42,6 +44,7 @@ type Costume = {
   sash?: string; leather?: string;
   kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch" | "kuchma";
   goatee?: boolean;
+  beard?: boolean; staff?: boolean;
   loose?: boolean;
   oseledets?: boolean; moust?: string; longMoust?: boolean; pipe?: boolean;
   vinok?: boolean; braid?: boolean;
@@ -76,6 +79,11 @@ function costumeFor(o: FolkOpts): Costume {
       // black sheepskin kuchma with a red top, and a goat's beard
       return { kind: "m", skin: "#d6b08a", hair: o.hair, shirt: "#cfc6b4", emb: "#5a2a5a", coat: o.tunic, trim: "#7a2a5a", coatLen: 0.14,
         pants: "#241f2c", boots: "#1a1418", sash: "#5a2a5a", hat: "kuchma", moust: o.hair, goatee: true };
+    case "vorozhbyt":
+      // the vorozhbyt: a svyta down to the boots, patched; no hat, because
+      // the hair would not fit under one
+      return { kind: "m", skin: "#d8ae88", hair: o.hair, shirt: "#e4dccb", emb: "#3a6a3a", coat: o.tunic, trim: "#3a3226", coatLen: 0.08,
+        pants: "#4a4438", boots: "#3a2a1c", sash: "#7a3a24", moust: o.hair, beard: true, staff: true };
     case "kozak":
       return { kind: "m", skin: "#dcae86", hair: o.hair, shirt: "#efe6d4", emb: "#b0302a", coat: o.tunic, trim: "#c9a040", coatLen: 0.24,
         pants: "#2c4a8a", boots: "#4a2a14", sash: "#3a5a8a", oseledets: true, moust: o.hair, longMoust: true };
@@ -385,6 +393,37 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
   if (C.goatee) {
     c.fillStyle = C.hair;
     c.beginPath(); c.moveTo(x - hh * 0.1 + fx, headCy + hh * 0.36); c.lineTo(x + hh * 0.1 + fx, headCy + hh * 0.36); c.lineTo(x + fx, headCy + hh * 0.8); c.closePath(); c.fill();
+  }
+  // a beard to the belt, never combed (Vesna's opinion: "crooked")
+  if (C.beard) {
+    const sway = Math.sin(o.t * 0.0017 + (x + CAM.x) * 0.05) * hh * 0.04;
+    c.fillStyle = paint(C.hair, x - hh * 0.4, hh * 0.8);
+    c.beginPath();
+    c.moveTo(x - hh * 0.36 + fx, headCy + hh * 0.18);
+    c.quadraticCurveTo(x - hh * 0.46 + fx, headCy + hh * 0.9, x - hh * 0.12 + fx + sway, headCy + hh * 1.7);
+    c.lineTo(x + hh * 0.06 + fx + sway, headCy + hh * 1.56);
+    c.lineTo(x + hh * 0.16 + fx + sway, headCy + hh * 1.74);
+    c.quadraticCurveTo(x + hh * 0.48 + fx, headCy + hh * 0.9, x + hh * 0.36 + fx, headCy + hh * 0.18);
+    c.quadraticCurveTo(x + fx, headCy + hh * 0.36, x - hh * 0.36 + fx, headCy + hh * 0.18);
+    c.closePath(); c.fill(); ink();
+    c.strokeStyle = "rgba(160,150,136,0.5)"; c.lineWidth = hh * 0.03;
+    for (const k of [-0.18, 0, 0.18]) { c.beginPath(); c.moveTo(x + hh * k + fx, headCy + hh * 0.5); c.lineTo(x + hh * k * 0.6 + fx + sway, headCy + hh * 1.4); c.stroke(); }
+    // and the wild hair standing out round the head
+    c.fillStyle = C.hair;
+    for (const s2 of [-1, 1] as const) {
+      c.beginPath(); c.ellipse(x + s2 * hh * 0.46, headCy - hh * 0.06, hh * 0.16, hh * 0.3, s2 * 0.3, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // a crooked staff of blackthorn, taller than he is
+  if (C.staff) {
+    const sx = x + hh * 0.78;
+    c.strokeStyle = INK; c.lineWidth = hh * 0.16; c.lineCap = "round";
+    c.beginPath(); c.moveTo(sx, y); c.quadraticCurveTo(sx + hh * 0.2, top + hh * 2, sx - hh * 0.05, top - hh * 0.2); c.stroke();
+    c.strokeStyle = "#5a3e26"; c.lineWidth = hh * 0.11;
+    c.beginPath(); c.moveTo(sx, y); c.quadraticCurveTo(sx + hh * 0.2, top + hh * 2, sx - hh * 0.05, top - hh * 0.2); c.stroke();
+    c.lineCap = "butt";
+    c.fillStyle = "#4a3220";
+    c.beginPath(); c.arc(sx - hh * 0.05, top - hh * 0.26, hh * 0.14, 0, Math.PI * 2); c.fill(); ink();
   }
   // the otaman's lyulka, smoking
   if (C.pipe) {

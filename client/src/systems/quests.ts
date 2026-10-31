@@ -2,6 +2,7 @@ import { flagCount, flagHas } from "./flags";
 import { knowsSong } from "./songs";
 import { ostapState } from "./chumaky";
 import { tobaccoStage } from "./tobacco";
+import { prokipStage, type ProkipStage } from "./vorozhbyt";
 import { t, type TextKey } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
@@ -41,6 +42,16 @@ export const SECTION_TITLES: Record<SectionId, string> = {
 };
 
 type Derived = ReturnType<typeof derive>;
+
+const prokipOf = (d: Derived): ProkipStage =>
+  prokipStage({ flags: d.f, met: d.v.talked.includes("prokip"), heard: d.v.talked.includes("vesna") });
+const PROKIP_TEXT: Record<ProkipStage, TextKey> = {
+  unheard: "quest.prokip.find", find: "quest.prokip.find",
+  offerSieve: "quest.prokip.talk", sieve: "quest.prokip.sieve", sieveBack: "quest.prokip.sieveBack",
+  offerMessage: "quest.prokip.talk", message: "quest.prokip.message", answer: "quest.prokip.answer",
+  offerPerelesnyk: "quest.prokip.talk", perelesnyk: "quest.prokip.perelesnyk", reward: "quest.prokip.reward",
+  done: "quest.prokip.done",
+};
 
 type QuestDef = {
   id: string;
@@ -115,6 +126,14 @@ const QUESTS: QuestDef[] = [
     done: (d) => tobaccoStage(d.f) === "done",
     detail: (d) => t(`quest.tobacco.${tobaccoStage(d.f)}` as TextKey, { leaves: Math.min(3, flagCount(d.f, "tobaccoLeaves")) }),
     objective: (d) => t(`quest.tobacco.${tobaccoStage(d.f)}` as TextKey, { leaves: Math.min(3, flagCount(d.f, "tobaccoLeaves")) }),
+  },
+  {
+    // Did Prokip, the vorozhbyt (systems/vorozhbyt.ts): heard of from Vesna
+    id: "prokip", section: "life", title: t("quest.prokip.title"),
+    visible: (d) => prokipOf(d) !== "unheard",
+    done: (d) => prokipOf(d) === "done",
+    detail: (d) => t(PROKIP_TEXT[prokipOf(d)]),
+    objective: (d) => t(PROKIP_TEXT[prokipOf(d)]),
   },
   {
     id: "evening", section: "story", title: t("quest.evening.title"),
@@ -272,7 +291,7 @@ const QUESTS: QuestDef[] = [
 // iron ward) are listed in the log but never become the objective.
 const PRIORITY = [
   "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "tobacco",
-  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "vigil", "lysa-sabbath",
+  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vigil", "lysa-sabbath",
 ];
 
 export function questLog(v: QuestView): QuestLog {

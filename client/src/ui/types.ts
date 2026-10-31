@@ -32,6 +32,9 @@ export type Prompt =
   | { kind: "hemp" }
   | { kind: "hangTobacco" }
   | { kind: "vigil" }
+  | { kind: "sieve" }
+  | { kind: "perelesnyk" }
+  | { kind: "animal"; idx: number }
   | null;
 
 export function promptKeyOf(p: Prompt): string {
@@ -44,6 +47,7 @@ export function promptKeyOf(p: Prompt): string {
     case "iron": return `i:${p.idx}`;
     case "bloom": return `b:${p.idx}`;
     case "tobacco": return `tb:${p.idx}`;
+    case "animal": return `an:${p.idx}`;
     default: return p.kind;
   }
 }
@@ -70,7 +74,7 @@ export type Dialogue = {
   // choiceKind "options": a list of buttons at the choice page, answered
   // by App's pickOption(optionsTag, option id).
   options?: DialogueOption[];
-  optionsTag?: "sleep" | "play" | "playKorchma";
+  optionsTag?: "sleep" | "play" | "playKorchma" | "perelesnyk";
   topics?: DialogueTopic[];
   asked?: string[];
   view?: "lines" | "menu" | "topic";
