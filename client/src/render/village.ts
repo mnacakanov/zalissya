@@ -2,11 +2,12 @@ import { HOUSE_RECTS } from "../data/houses";
 import { LYSA_WORLD } from "../data/lysa";
 const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
 import { VILLAGE_W } from "../world/areas";
-import { drawCherry, drawCraneWell, drawKhata, drawTyn, drawWillow } from "./khutir";
+import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
 import { rr } from "./shapes";
 import { drawFolk, type FolkOpts } from "./people";
+import { drawTreeStorybook } from "./trees";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { hash2, type Rect } from "../world/geometry";
 
@@ -588,7 +589,7 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
 // stands), and they follow the sun: long to the west in the morning, short
 // at noon, long to the east in the evening, faint under the moon.
 const CANOPY: Record<TreeKind, { r: number; h: number }> = {
-  oak: { r: 60, h: 72 }, birch: { r: 42, h: 56 }, pine: { r: 44, h: 62 }, cherry: { r: 32, h: 42 }, willow: { r: 40, h: 54 },
+  oak: { r: 60, h: 72 }, apple: { r: 36, h: 50 }, birch: { r: 42, h: 56 }, pine: { r: 44, h: 62 }, cherry: { r: 32, h: 42 }, willow: { r: 40, h: 54 },
 };
 export function drawTreeShadows(
   c: CanvasRenderingContext2D, trees: ReadonlyArray<{ x: number; y: number; kind: TreeKind; s: number }>,
@@ -638,95 +639,9 @@ export function drawTreeShadows(
 }
 
 export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number; kind: TreeKind; s: number }, camX: number, camY: number, t: number) {
-  const x = tr.x - camX;
-  const y = tr.y - camY;
-  const s = tr.s;
-  const sway = Math.sin(t * 0.0012 + tr.x * 0.11) * 1.4;
-  // (its shadow is cast on the ground beforehand: drawTreeShadows)
-  if (tr.kind === "cherry") {
-    drawCherry(c, x, y, s, t);
-    return;
-  }
-  if (tr.kind === "willow") {
-    drawWillow(c, x, y, s, t);
-    return;
-  }
-  if (tr.kind === "pine") {
-    c.fillStyle = "#6e4a26";
-    c.fillRect(x - 3.4 * s, y - 20 * s, 6.8 * s, 22 * s);
-    const layers: Array<[number, number, string]> = [
-      [46, 30, "#2c5a30"], [38, 52, "#336636"], [29, 74, "#3d733c"],
-    ];
-    layers.forEach(([w, top, col], i) => {
-      c.fillStyle = col;
-      c.beginPath();
-      c.moveTo(x + sway * (i + 1) * 0.4, y - (top + 26) * s);
-      c.lineTo(x - w * s, y - top * s + 14 * s);
-      c.lineTo(x + w * s, y - top * s + 14 * s);
-      c.closePath(); c.fill();
-      c.fillStyle = "rgba(120,180,90,0.35)";
-      c.beginPath();
-      c.moveTo(x + sway * (i + 1) * 0.4, y - (top + 26) * s);
-      c.lineTo(x + 2 * s, y - top * s + 12 * s);
-      c.lineTo(x + w * 0.55 * s, y - top * s + 13 * s);
-      c.closePath(); c.fill();
-    });
-  } else if (tr.kind === "birch") {
-    c.fillStyle = "#e9e4d6";
-    c.fillRect(x - 3 * s, y - 34 * s, 6 * s, 36 * s);
-    c.fillStyle = "#3a3a3a";
-    c.fillRect(x - 3 * s, y - 26 * s, 6 * s, 2.2);
-    c.fillRect(x - 1 * s, y - 15 * s, 4 * s, 2);
-    const blobs: Array<[number, number, number, string]> = [
-      [0, -62, 27, "#79ac49"], [-20, -48, 19, "#6da344"], [20, -50, 20, "#86ba57"], [0, -44, 22, "#71a846"],
-    ];
-    // the crown: a darker underside first, then the leaves, then a soft
-    // ink edge so it sits with the storybook people
-    c.fillStyle = "rgba(28,52,22,0.85)";
-    for (const [bx, by, br] of blobs) {
-      c.beginPath(); c.arc(x + bx * s + sway + 2 * s, y + by * s + 5 * s, br * s, 0, Math.PI * 2); c.fill();
-    }
-    c.strokeStyle = "rgba(24,36,14,0.55)"; c.lineWidth = 1;
-    for (const [bx, by, br] of blobs) {
-      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.stroke();
-    }
-    for (const [bx, by, br, col] of blobs) {
-      c.fillStyle = col;
-      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.fill();
-    }
-    c.fillStyle = "rgba(190,225,140,0.5)";
-    c.beginPath(); c.arc(x - 8 * s + sway, y - 62 * s, 9 * s, 0, Math.PI * 2); c.fill();
-  } else {
-    c.fillStyle = "#5d3d20";
-    c.fillRect(x - 5 * s, y - 30 * s, 10 * s, 32 * s);
-    c.fillRect(x - 14 * s, y - 44 * s, 6 * s, 18 * s);
-    c.fillRect(x + 9 * s, y - 46 * s, 6 * s, 20 * s);
-    const blobs: Array<[number, number, number, string]> = [
-      [0, -78, 34, "#4f7d33"], [-30, -58, 25, "#598a39"], [30, -60, 26, "#679c3e"],
-      [-12, -44, 24, "#5f943a"], [16, -42, 22, "#74ab4b"], [0, -96, 22, "#5f943a"],
-    ];
-    // the crown: a darker underside first, then the leaves, then a soft
-    // ink edge so it sits with the storybook people
-    c.fillStyle = "rgba(28,52,22,0.85)";
-    for (const [bx, by, br] of blobs) {
-      c.beginPath(); c.arc(x + bx * s + sway + 2 * s, y + by * s + 5 * s, br * s, 0, Math.PI * 2); c.fill();
-    }
-    c.strokeStyle = "rgba(24,36,14,0.55)"; c.lineWidth = 1;
-    for (const [bx, by, br] of blobs) {
-      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.stroke();
-    }
-    for (const [bx, by, br, col] of blobs) {
-      c.fillStyle = col;
-      c.beginPath(); c.arc(x + bx * s + sway, y + by * s, br * s, 0, Math.PI * 2); c.fill();
-    }
-    c.fillStyle = "rgba(200,230,150,0.4)";
-    c.beginPath(); c.arc(x - 14 * s + sway, y - 82 * s, 11 * s, 0, Math.PI * 2); c.fill();
-    // apples
-    c.fillStyle = "#c8452c";
-    for (const [ax, ay] of [[-22, -52], [14, -70], [26, -44]] as const) {
-      c.beginPath(); c.arc(x + ax * s + sway, y + ay * s, 2.6 * s, 0, Math.PI * 2); c.fill();
-    }
-  }
+  // (its shadow is cast on the ground beforehand: drawTreeShadows; the tree
+  // itself is drawn in the storybook hand: render/trees.ts)
+  drawTreeStorybook(c, tr, tr.x - camX, tr.y - camY, t);
 }
 
 export function drawHouse(c: CanvasRenderingContext2D, h: Rect & { kind: string }, camX: number, camY: number, t: number) {

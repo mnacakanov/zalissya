@@ -327,3 +327,17 @@ The spirits and the animals now match the people: painted side light, a thin ink
 - **Animation fix:** the owner noticed the trees swayed slowly while the kobzar was far and far too fast as he came near.
   - The cause: several animations (willow fronds, cherry sway and even the cherries' positions, spirits' bobbing, people's idle sway, the Lysa dancers, crops) took their phase from the screen position, so the camera scrolling changed their speed.
   - The fix: the frame sets `CAM` (`render/shapes.ts`), and those drawings now take their phase from the world position, `x + CAM.x`.
+
+## Trees in the storybook style
+
+The owner asked to fix the trees and to bring them into the style of the rest of the game. Every tree is now drawn in `render/trees.ts`.
+
+- **Crowns:** each crown is a mass of lobes, painted by one light from the upper left. It has a soft ink outline round the whole shape, leaf clusters picked out in darker strokes, and sunlit dabs on the lit side.
+- **Trunks:** tapered, with bark lines and a root flare.
+- **Oak vs apple:** the "oaks" were apple trees with red apples, all through the forest. They are real oaks now: a gnarled trunk with crooked limbs and a broad lobed crown of deep green. Apple trees are a kind of their own, planted only in the khaty's orchards.
+- **The other kinds:**
+  - birch: a slim, slightly leaning white trunk with black marks, a light crown and drooping twigs;
+  - spruce: ragged tiers, outlined, with needles along the edges;
+  - cherry: small and dense with red berries;
+  - willow: a leaning trunk and a curtain of fronds.
+- **No shifting:** shapes and sway are seeded by the tree's world position, so nothing shifts as the camera moves.

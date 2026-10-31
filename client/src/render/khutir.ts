@@ -1,5 +1,5 @@
 import { hash2 } from "../world/geometry";
-import { CAM, rr } from "./shapes";
+import { rr } from "./shapes";
 
 // --- The khutir look --------------------------------------------------------
 // A Cossack khutir, not a northern forest village: whitewashed clay khaty
@@ -230,51 +230,7 @@ export function drawKovyla(c: CanvasRenderingContext2D, x: number, y: number, t:
   }
 }
 
-export function drawCherry(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number): void {
-  const wx = Math.round(x + CAM.x);
-  const wy = Math.round(y + CAM.y);
-  const sway = Math.sin(t * 0.0012 + wx * 0.11) * 1.2;
-  c.fillStyle = "rgba(30,50,20,0.25)";
-  c.beginPath(); c.ellipse(x, y + 3, 22 * s, 7 * s, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#5a3a26";
-  c.fillRect(x - 3 * s, y - 22 * s, 6 * s, 24 * s);
-  c.strokeStyle = "#5a3a26";
-  c.lineWidth = 2.4 * s;
-  c.beginPath(); c.moveTo(x, y - 18 * s); c.lineTo(x - 10 * s, y - 30 * s); c.moveTo(x, y - 20 * s); c.lineTo(x + 9 * s, y - 32 * s); c.stroke();
-  for (const [dx, dy, r, col] of [[-12, -38, 15, "#3f7a32"], [10, -40, 14, "#467f36"], [0, -50, 15, "#4c8a3a"]] as const) {
-    c.fillStyle = col;
-    c.beginPath(); c.arc(x + (dx + sway) * s, y + dy * s, r * s, 0, Math.PI * 2); c.fill();
-  }
-  // cherries
-  c.fillStyle = "#b3122a";
-  for (let i = 0; i < 9; i++) {
-    const a = hash2(wx + i, wy) * Math.PI * 2;
-    const r = 6 + hash2(i, wx) * 10;
-    c.beginPath(); c.arc(x + (Math.cos(a) * r + sway) * s, y + (-42 + Math.sin(a) * r * 0.8) * s, 2 * s, 0, Math.PI * 2); c.fill();
-  }
-}
-
-export function drawWillow(c: CanvasRenderingContext2D, x: number, y: number, s: number, t: number): void {
-  c.fillStyle = "rgba(30,50,20,0.25)";
-  c.beginPath(); c.ellipse(x, y + 4, 30 * s, 8 * s, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#6a5a44";
-  c.beginPath();
-  c.moveTo(x - 6 * s, y + 2); c.lineTo(x - 3 * s, y - 40 * s); c.lineTo(x + 4 * s, y - 40 * s); c.lineTo(x + 7 * s, y + 2);
-  c.closePath(); c.fill();
-  c.fillStyle = "#7d9a4a";
-  c.beginPath(); c.ellipse(x, y - 52 * s, 30 * s, 20 * s, 0, 0, Math.PI * 2); c.fill();
-  // weeping fronds
-  for (let i = 0; i < 16; i++) {
-    const fx = x + (i - 7.5) * 4 * s;
-    const sway = Math.sin(t * 0.0014 + i * 0.7 + (x + CAM.x) * 0.05) * 3;
-    c.strokeStyle = i % 2 ? "#8fae58" : "#6f8f40";
-    c.lineWidth = 2.2;
-    c.beginPath();
-    c.moveTo(fx, y - 56 * s);
-    c.quadraticCurveTo(fx + sway * 0.5, y - 34 * s, fx + sway, y - (12 + (i % 4) * 4) * s);
-    c.stroke();
-  }
-}
+// (cherries and willows are trees now: render/trees.ts)
 
 // Вітряк — the windmill on the rise by the old millstone, sails turning.
 export function drawWindmill(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {

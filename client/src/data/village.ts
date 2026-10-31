@@ -20,7 +20,7 @@ export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
 export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
 export const GARDEN: Rect = { x: 960, y: 860, w: 150, h: 96 };
 
-export type TreeKind = "pine" | "birch" | "oak" | "cherry" | "willow";
+export type TreeKind = "pine" | "birch" | "oak" | "apple" | "cherry" | "willow";
 export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> = [];
 {
   // Forest ring around the clearing plus a few shade trees inside.
@@ -47,6 +47,10 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // cherry trees by the khaty — «садок вишневий коло хати»
   for (const [x, y] of [[214, 400], [610, 400], [1080, 600], [1480, 560], [1060, 300]] as const) {
     TREES.push({ x, y, kind: "cherry", s: 0.95 + hash2(x, y) * 0.2 });
+  }
+  // apple trees in the khaty's orchards — the oaks are oaks now
+  for (const [x, y] of [[205, 520], [70, 380], [1100, 770], [1530, 300], [600, 470]] as const) {
+    TREES.push({ x, y, kind: "apple", s: 0.95 + hash2(x, y) * 0.2 });
   }
   TREES.push({ x: 1532, y: 968, kind: "willow", s: 1.05 });
   // the forests beyond the fields and the river (data/land.ts)
