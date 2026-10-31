@@ -78,7 +78,7 @@ scale:                       # real-world sizes; keep them consistent across ass
 
 | File | Approved for | Notes |
 |---|---|---|
-| `art/reference/prokip-hut-iso.png` | **Approved for camera, scale, orientation and layout only.** Attach to every request, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. **Colour NOT approved:** the roof is far too green; thatch must read as weathered straw with only patches of moss. A recoloured version replaces this file when approved. |
+| `art/reference/prokip-hut-iso.png` | **APPROVED: the scene's reference for camera, scale, orientation, buildings and colour.** Attach to every request, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. Thatch reads as weathered straw (warm gold in the sun, grey-brown in shade) with only a few moss patches: the model for every thatched roof. |
 | `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Approved for the look only. Its view is side-on and it has a background and an oval shadow; the game version must follow §1 (camera, transparent). |
 | `art/reference/prokip-hut-v2.png` | **Building materials and details**: thatch, moss, damp whitewash, timber, herbs, raven, ink. Attach to building requests. | **Wrong camera** (front-on, near eye level): never use it for the view. Also a white background and a horned skull (must be a horse skull). |
 | `art/reference/prokip-hut.webp` | Earlier draft of the same; same materials. | Same problems as v2, plus an off-centre door. |
