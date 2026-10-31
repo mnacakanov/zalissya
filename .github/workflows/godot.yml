@@ -64,6 +64,8 @@ jobs:
           ~/godot/godot --headless --path . --import
           mkdir -p build
           ~/godot/godot --headless --path . --export-release "Web" build/index.html
+          # a new build must not be filled from the browser's HTTP cache
+          python3 tools/patch_sw.py build/index.service.worker.js
           test -s build/index.wasm && test -s build/index.pck && test -s build/index.manifest.json
           ls -la build
 

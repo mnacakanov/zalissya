@@ -77,7 +77,11 @@ a gamepad.
   on a phone and choose "Add to Home Screen" (Android: "Install app").
   The game then opens full screen with one tap. The engine is cached
   after the first run, and every new export updates itself (the service
-  worker's cache name changes with each build).
+  worker's cache name changes with each build). CI runs
+  `tools/patch_sw.py` over Godot's worker so it fills a new build's cache
+  past the browser's HTTP cache: Pages lets that keep a file 10 minutes,
+  and without the patch a build opened soon after the previous one kept
+  the old `index.pck` for good.
 - **HUD.** fps (with the low of the last 2 s), the load time, the GPU, and
   the save it found.
 
