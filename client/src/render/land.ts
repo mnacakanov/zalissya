@@ -160,37 +160,52 @@ export function drawRiver(c: CanvasRenderingContext2D, camX: number, camY: numbe
   for (let x = xa; x <= xb; x += 20) c.lineTo(x - camX, top(x) - 8 - camY);
   for (let x = xb; x >= xa; x -= 20) c.lineTo(x - camX, bot(x) + 8 - camY);
   c.closePath(); c.fill();
-  // water
-  const g = c.createLinearGradient(0, riverY(camX + vw / 2) - RIVER_HALF - camY, 0, riverY(camX + vw / 2) + RIVER_HALF - camY);
-  g.addColorStop(0, "#5f95ab");
-  g.addColorStop(0.5, "#3f7089");
-  g.addColorStop(1, "#5f95ab");
-  c.fillStyle = g;
+  // water: a deep middle, lighter shallows along both banks (drawn along
+  // the banks themselves, so nothing slides about as the camera moves)
+  c.fillStyle = "#4a7f98";
   c.beginPath();
   c.moveTo(xa - camX, top(xa) - camY);
   for (let x = xa; x <= xb; x += 20) c.lineTo(x - camX, top(x) - camY);
   for (let x = xb; x >= xa; x -= 20) c.lineTo(x - camX, bot(x) - camY);
   c.closePath(); c.fill();
-  // current: drifting light streaks
-  c.strokeStyle = "rgba(255,255,255,0.35)";
-  c.lineWidth = 1.4;
-  for (let i = 0; i < 40; i++) {
-    const x = xa + ((hash2(i, 5) * (xb - xa) + t * 0.03) % (xb - xa));
-    const y = riverY(x) + (hash2(i, 9) - 0.5) * RIVER_HALF * 1.4;
-    c.beginPath(); c.moveTo(x - camX, y - camY); c.lineTo(x + 12 - camX, y - camY); c.stroke();
+  c.lineJoin = "round";
+  for (const [edge, w, col] of [[top, 26, "rgba(120,170,186,0.45)"], [bot, 26, "rgba(120,170,186,0.45)"], [top, 6, "rgba(200,226,232,0.5)"], [bot, 4, "rgba(60,90,70,0.5)"]] as const) {
+    c.strokeStyle = col; c.lineWidth = w;
+    c.beginPath();
+    for (let x = xa; x <= xb; x += 20) {
+      if (x === xa) c.moveTo(x - camX, edge(x) - camY); else c.lineTo(x - camX, edge(x) - camY);
+    }
+    c.stroke();
   }
-  // reeds on both banks
+  // the current: little ripples born on the water, drifting downstream
+  // (east) a few dozen px while they fade in and out — anchored to the
+  // river, not the screen
+  const P = 64;
+  c.lineCap = "round";
+  for (let cx = Math.floor((camX - 60) / P) * P; cx < xb; cx += P) {
+    for (let k = 0; k < 3; k++) {
+      const life = (t * 0.00022 + hash2(cx, k * 7 + 1)) % 1;
+      const x = cx + hash2(k, cx * 3 + 1) * P + life * 36;
+      const y = riverY(x) + (hash2(cx + k, 11) - 0.5) * RIVER_HALF * 1.5;
+      const a = Math.sin(life * Math.PI) * 0.45;
+      const len = 6 + hash2(cx, k + 21) * 10;
+      c.strokeStyle = `rgba(230,244,248,${a})`; c.lineWidth = 1.4;
+      c.beginPath(); c.moveTo(x - camX, y - camY); c.quadraticCurveTo(x + len / 2 - camX, y - 1.6 - camY, x + len - camX, y - camY); c.stroke();
+    }
+  }
+  c.lineCap = "butt";
+  // reeds on both banks, on a grid of the world (not of the screen)
   c.strokeStyle = "#5e6e34";
   c.lineWidth = 1.6;
-  for (let x = xa; x <= xb; x += 13) {
+  for (let x = Math.floor((camX - 40) / 13) * 13; x <= xb; x += 13) {
     if (hash2(x, 3) < 0.45) continue;
     for (const side of [-1, 1]) {
       const by = riverY(x) + side * (RIVER_HALF + 2);
-      const sway = Math.sin(t * 0.002 + x) * 1.6;
-      c.beginPath(); c.moveTo(x - camX, by - camY); c.lineTo(x + sway - camX, by - 14 - camY); c.stroke();
+      const sway = Math.sin(t * 0.0018 + x * 0.07) * 1.4;
+      c.beginPath(); c.moveTo(x - camX, by - camY); c.quadraticCurveTo(x + sway * 0.4 - camX, by - 8 - camY, x + sway - camX, by - 15 - camY); c.stroke();
       if (hash2(x, side) > 0.7) {
         c.fillStyle = "#6a4a2a";
-        c.fillRect(x + sway - 1.4 - camX, by - 18 - camY, 2.8, 6);
+        c.beginPath(); c.ellipse(x + sway - camX, by - 17 - camY, 1.6, 3.4, sway * 0.05, 0, Math.PI * 2); c.fill();
       }
     }
   }

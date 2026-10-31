@@ -354,3 +354,13 @@ The owner noticed the game slowed down by the river and in the forest. Profiling
 **Result:** in a software-rendered test browser, walking through the forest by the river went from about 12 to about 22 frames a second, and the worst hitch from about 145 ms to about 65 ms.
 
 **Cost:** the grass and crops no longer sway (the trees still do).
+
+## The river, anchored
+
+The owner saw the river's reeds move as the kobzar walked beside them, and the waves move unnaturally. Both were tied to the camera, not the river:
+
+- the reeds stood on a grid that started at the camera's edge, so they jumped as it scrolled;
+- the current's streaks were placed within the camera's window;
+- the water's colour bands took their height from the middle of the screen.
+
+Now the reeds stand on a grid of the world and sway slowly. The current is small ripples born on the water, drifting downstream a few dozen pixels while they fade in and out. The shallows are lighter bands drawn along the banks themselves, with a glint on the far bank.
