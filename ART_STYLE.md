@@ -157,6 +157,7 @@ background, white background, scenery, cast shadow, oval shadow, front view, sid
 2. **Give the canvas size** in the request.
 3. **Iterate with numbered corrections**, the most important first: "Same image, keep everything else, fix: 1) … 2) …". Muse tends to keep a white background and a horned skull through a round; put those first and repeat them in the negative prompt.
 4. **Transparency:** if Muse can't, flat pure #00FF00; never accept white.
+   - Muse removes the outer background but often leaves **holes inside the subject** (gaps between branches, between a stake and a wall) as opaque white. Don't fight it in the prompt: run `python3 tools/art_clear_white.py IN.png OUT.png` (clears pure-white patches of 400+ px and un-mixes the white from their edges). For trees, where nothing is legitimately white, add `--min-area 40`. Check the result on a dark background before accepting it.
 5. **The hut is approved** (`art/reference/prokip-hut-iso.png`): attach it to every request as the camera and scale reference, together with the oak for style.
 6. **Characters:** turnaround first, then a parts sheet from the approved turnaround (head, torso, upper arms, forearms, hands, thighs, lower legs, feet, held items, each separate with rounded joint ends).
 7. **Record lessons** in §7.
