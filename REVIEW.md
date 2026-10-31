@@ -17,7 +17,7 @@ These are real defects the owner has chosen to leave for now. Keep them in every
 - **`as TextKey` casts** (about 30) remain. `keys.test.ts` now fails CI if a literal key is missing or dead, which replaces the compiler's check for literal keys; dynamic keys still need a look when added.
 - **Opaque key names.** About 80 `ui.misc.N` keys and about 500 keys ending `.0` sit beside named keys. Renaming touches every file; do it per area, not in one commit.
 - **Template-era names.** The `space.json` slug, root `package.json` name and `client/index.html` were renamed to `zalissya` (the Muse project was told in the same step; it is a separate copy and only picks this up when you sync it). Still open: unused root dependencies (`recharts`, `zod` outside the server) and `packageManager` (bun 1.3.10 vs 1.4.4 in CI) need the owner's word, since the Muse platform may rely on them.
-- **Timeline echoes to confirm with the owner.** Okhrim's kurin fell "at Khotyn" (1621, 1673 and 1739 give very different eras). "Seven years" is shared by Taras, Stepan and the empty hut; "a hundred winters" by Domovyk, Lisovyk, Zmiy and Omelko. Decide whether these are echoes or copy-paste.
+- **Timeline echoes to confirm with the owner.** Okhrim's kurin no longer names Khotyn ("in the old wars"; owner decision, so the game fixes no year: do not add named battles or dates). Still to confirm: "Seven years" is shared by Taras, Stepan and the empty hut; "a hundred winters" by Domovyk, Lisovyk, Zmiy and Omelko. Decide whether these are echoes or copy-paste.
 - **Sunflowers** stay as yard decoration (owner decision, 2026-10-31), though they are a little late for the Hetmanate era. Solokha's seeds were changed to pumpkin seeds. Do not re-report the plants.
 
 ## 0. Ground rules
