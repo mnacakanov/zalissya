@@ -3,179 +3,259 @@
 <title>Zalissya icon</title>
 <body style="margin:0;background:#222">
 <script>
-// The app icon, painted with canvas in the game's storybook style. Drawn at
-// 1024 px; tools/icon.cjs saves each variant and the sizes the PWA needs.
-// Full-bleed and opaque (iOS adds its own rounded corners), with the motif
+// The app icon: a Cossack, painted with canvas in the new art direction
+// (ART_STYLE.md): dark sepia ink with hatching over soft, blotchy
+// watercolour washes on aged paper, a muted earthy palette, one soft light
+// from the upper left. Drawn at 1024 px; tools/icon.cjs saves the sizes the
+// PWA needs. Full-bleed and opaque (iOS rounds the corners itself), the face
 // inside the central 80% so Android's maskable crops never cut it.
-const INK = "rgba(34,22,14,0.9)";
 
-function sky(c, S, top, bottom) {
-  const g = c.createLinearGradient(0, 0, 0, S);
-  g.addColorStop(0, top); g.addColorStop(1, bottom);
-  c.fillStyle = g; c.fillRect(0, 0, S, S);
-}
-function stars(c, S, n, seed) {
-  let r = seed;
-  const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < n; i++) {
-    const x = rnd() * S, y = rnd() * S * 0.5, s = 1.5 + rnd() * 3.5;
-    c.fillStyle = `rgba(255,244,214,${0.35 + rnd() * 0.5})`;
-    c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
-  }
-}
-function moon(c, x, y, r) {
-  const glow = c.createRadialGradient(x, y, r * 0.6, x, y, r * 2.6);
-  glow.addColorStop(0, "rgba(255,240,200,0.35)"); glow.addColorStop(1, "rgba(255,240,200,0)");
-  c.fillStyle = glow; c.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
-  c.fillStyle = "#f6ecc8";
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "rgba(200,184,140,0.35)";
-  c.beginPath(); c.arc(x - r * 0.3, y + r * 0.2, r * 0.18, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.25, y - r * 0.3, r * 0.12, 0, Math.PI * 2); c.fill();
-}
+const P = {
+  ink: "#2A2218", paper: "#EFE6D2", sage: "#8E9A68", sageMid: "#5F7D4A", sageDeep: "#3E5A38",
+  gold: "#E8B85C", red: "#A8362C", blue: "#2E4A7E", skin: "#D8AE86", skinShade: "#B4865E",
+  hair: "#3B2C1E", moust: "#4A3826", linen: "#EFE6D2", bark: "#5E5640",
+};
 
-// the kobza: a deep round bowl of pale wood, the rose, a short neck with its
-// head and pegs, the strings catching the light
-function kobza(c, cx, cy, s, rot) {
-  c.save(); c.translate(cx, cy); c.rotate(rot); c.scale(s, s);
-  // neck
-  c.fillStyle = "#6e4525";
-  c.beginPath(); c.moveTo(-22, -150); c.lineTo(22, -150); c.lineTo(26, -470); c.lineTo(-26, -470); c.closePath(); c.fill();
-  c.strokeStyle = INK; c.lineWidth = 8; c.stroke();
-  // frets
-  c.strokeStyle = "rgba(240,210,150,0.6)"; c.lineWidth = 5;
-  for (let k = 0; k < 5; k++) { const y = -200 - k * 50; c.beginPath(); c.moveTo(-22, y); c.lineTo(22, y); c.stroke(); }
-  // head, bent back, with pegs
-  c.fillStyle = "#4a2c16";
-  c.beginPath(); c.moveTo(-34, -470); c.lineTo(34, -470); c.lineTo(28, -580); c.lineTo(-28, -580); c.closePath(); c.fill();
-  c.strokeStyle = INK; c.lineWidth = 8; c.stroke();
-  c.fillStyle = "#e8c48a";
-  for (let k = 0; k < 3; k++) for (const sd of [-1, 1]) {
-    c.beginPath(); c.ellipse(sd * 48, -495 - k * 32, 16, 10, 0, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = INK; c.lineWidth = 5; c.stroke();
+// a seeded random, so the icon is the same every time it is drawn
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const jit = (a) => (rnd() - 0.5) * a;
+
+// --- watercolour: a shape filled in several thin, slightly shifted layers,
+// darker where the pigment pools at the edge
+function wash(c, path, color, alpha = 0.22, layers = 6, spread = 6) {
+  c.save();
+  for (let i = 0; i < layers; i++) {
+    c.save();
+    c.translate(jit(spread), jit(spread));
+    c.globalAlpha = alpha * (0.7 + rnd() * 0.6);
+    c.fillStyle = color;
+    path(c); c.fill();
+    c.restore();
   }
-  // body
-  const g = c.createRadialGradient(-80, -60, 20, 0, 0, 260);
-  g.addColorStop(0, "#f0c27a"); g.addColorStop(0.55, "#c98a46"); g.addColorStop(1, "#7a4a22");
-  c.fillStyle = g;
-  c.beginPath(); c.ellipse(0, 40, 210, 240, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = INK; c.lineWidth = 10; c.stroke();
-  // the soundboard's painted rim (red and gold, as kobzars liked)
-  c.strokeStyle = "#b0302a"; c.lineWidth = 14;
-  c.beginPath(); c.ellipse(0, 40, 180, 210, 0, 0, Math.PI * 2); c.stroke();
-  c.strokeStyle = "#d9a441"; c.lineWidth = 5;
-  c.beginPath(); c.ellipse(0, 40, 164, 194, 0, 0, Math.PI * 2); c.stroke();
-  // rose
-  c.fillStyle = "#2a1a0e";
-  c.beginPath(); c.arc(0, -10, 58, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#d9a441"; c.lineWidth = 6;
-  c.beginPath(); c.arc(0, -10, 70, 0, Math.PI * 2); c.stroke();
-  for (let k = 0; k < 12; k++) {
-    const a = (k / 12) * Math.PI * 2;
-    c.fillStyle = "#d9a441";
-    c.beginPath(); c.arc(Math.cos(a) * 84, -10 + Math.sin(a) * 84, 6, 0, Math.PI * 2); c.fill();
-  }
-  // bridge
-  c.fillStyle = "#3a2414"; c.fillRect(-60, 150, 120, 18);
-  // strings
-  c.strokeStyle = "rgba(255,246,222,0.95)"; c.lineWidth = 3.2;
-  for (let k = -3; k <= 3; k++) { c.beginPath(); c.moveTo(k * 7, 159); c.lineTo(k * 4.5, -470); c.stroke(); }
-  // a highlight on the bowl
-  c.strokeStyle = "rgba(255,240,210,0.45)"; c.lineWidth = 12; c.lineCap = "round";
-  c.beginPath(); c.ellipse(0, 40, 190, 220, 0, Math.PI * 1.05, Math.PI * 1.35); c.stroke();
+  // the pooled edge
+  c.globalAlpha = alpha * 0.9;
+  c.strokeStyle = color; c.lineWidth = 5;
+  path(c); c.stroke();
   c.restore();
 }
+// blotches inside a shape: watercolour never lies flat
+function blotches(c, path, color, n, r, alpha = 0.12) {
+  c.save();
+  path(c); c.clip();
+  const b = c.__bounds;
+  for (let i = 0; i < n; i++) {
+    const x = b[0] + rnd() * (b[2] - b[0]), y = b[1] + rnd() * (b[3] - b[1]);
+    const g = c.createRadialGradient(x, y, 0, x, y, r * (0.5 + rnd()));
+    g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)");
+    c.globalAlpha = alpha;
+    c.fillStyle = g; c.fillRect(x - r * 2, y - r * 2, r * 4, r * 4);
+  }
+  c.restore();
+}
+// --- ink: a line drawn by hand, a little uneven in path and weight
+function inkLine(c, pts, w = 4, color = P.ink, alpha = 0.92) {
+  c.save();
+  c.globalAlpha = alpha; c.strokeStyle = color; c.lineCap = "round"; c.lineJoin = "round";
+  for (let pass = 0; pass < 2; pass++) {
+    c.lineWidth = w * (pass ? 0.55 : 1);
+    c.beginPath();
+    pts.forEach(([x, y], i) => {
+      const jx = x + jit(pass ? 2.2 : 1.2), jy = y + jit(pass ? 2.2 : 1.2);
+      if (i === 0) c.moveTo(jx, jy);
+      else {
+        const [px, py] = pts[i - 1];
+        c.quadraticCurveTo(px + jit(3), py + jit(3), (px + jx) / 2, (py + jy) / 2);
+        if (i === pts.length - 1) c.lineTo(jx, jy);
+      }
+    });
+    c.stroke();
+  }
+  c.restore();
+}
+function inkPath(c, path, w = 4, alpha = 0.9) {
+  c.save(); c.globalAlpha = alpha; c.strokeStyle = P.ink; c.lineWidth = w; c.lineJoin = "round"; c.lineCap = "round";
+  path(c); c.stroke(); c.restore();
+}
+// --- hatching: parallel strokes on the shaded side, clipped to the shape
+function hatch(c, path, x0, y0, x1, y1, step, angle, w = 2, alpha = 0.5, cross = false) {
+  c.save();
+  path(c); c.clip();
+  c.beginPath(); c.rect(x0, y0, x1 - x0, y1 - y0); c.clip();
+  c.strokeStyle = P.ink; c.lineWidth = w; c.lineCap = "round";
+  const dirs = cross ? [angle, angle + Math.PI / 2.4] : [angle];
+  for (const a of dirs) {
+    const dx = Math.cos(a), dy = Math.sin(a);
+    const L = Math.hypot(x1 - x0, y1 - y0);
+    for (let t = -L; t < L; t += step) {
+      const cx = (x0 + x1) / 2 - dy * t, cy = (y0 + y1) / 2 + dx * t;
+      c.globalAlpha = alpha * (0.6 + rnd() * 0.5);
+      c.beginPath();
+      c.moveTo(cx - dx * L + jit(4), cy - dy * L + jit(4));
+      c.lineTo(cx + dx * L + jit(4), cy + dy * L + jit(4));
+      c.stroke();
+    }
+  }
+  c.restore();
+}
+const shape = (fn, bounds) => (c) => { c.__bounds = bounds; c.beginPath(); fn(c); };
 
-// a thatched khata under the night, a lit window
-function khata(c, x, y, w, h) {
-  const wallTop = y - h * 0.5;
-  c.fillStyle = "rgba(0,0,0,0.25)";
-  c.beginPath(); c.ellipse(x, y + 10, w * 0.62, 26, 0, 0, Math.PI * 2); c.fill();
-  // walls
-  const g = c.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
-  g.addColorStop(0, "#e8e0cc"); g.addColorStop(1, "#a9a08c");
-  c.fillStyle = g; c.fillRect(x - w / 2, wallTop, w, h * 0.5);
-  c.strokeStyle = INK; c.lineWidth = 8; c.strokeRect(x - w / 2, wallTop, w, h * 0.5);
-  c.fillStyle = "#b0302a"; c.fillRect(x - w / 2, y - 18, w, 18);
-  // window, lit
-  const wx = x - w * 0.28, wy = wallTop + h * 0.12, ww = w * 0.2, wh = h * 0.2;
-  const lg = c.createRadialGradient(wx + ww / 2, wy + wh / 2, 4, wx + ww / 2, wy + wh / 2, w * 0.4);
-  lg.addColorStop(0, "rgba(255,200,110,0.55)"); lg.addColorStop(1, "rgba(255,200,110,0)");
-  c.fillStyle = lg; c.fillRect(wx - w * 0.4, wy - w * 0.4, ww + w * 0.8, wh + w * 0.8);
-  c.fillStyle = "#ffd27a"; c.fillRect(wx, wy, ww, wh);
-  c.strokeStyle = "#3a5a8a"; c.lineWidth = 8; c.strokeRect(wx, wy, ww, wh);
-  c.beginPath(); c.moveTo(wx + ww / 2, wy); c.lineTo(wx + ww / 2, wy + wh); c.moveTo(wx, wy + wh / 2); c.lineTo(wx + ww, wy + wh / 2); c.stroke();
-  // door
-  c.fillStyle = "#5a3a22"; c.fillRect(x + w * 0.12, wallTop + h * 0.1, w * 0.16, h * 0.4 - 18);
-  // thatch: a heavy rounded roof
-  const rg = c.createLinearGradient(0, y - h * 1.15, 0, wallTop + 20);
-  rg.addColorStop(0, "#b08a4a"); rg.addColorStop(1, "#7a5a2a");
-  c.fillStyle = rg;
-  c.beginPath();
-  c.moveTo(x - w * 0.62, wallTop + 26);
-  c.quadraticCurveTo(x - w * 0.6, y - h * 1.1, x, y - h * 1.12);
-  c.quadraticCurveTo(x + w * 0.6, y - h * 1.1, x + w * 0.62, wallTop + 26);
-  c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 8; c.stroke();
-  c.strokeStyle = "rgba(60,40,16,0.4)"; c.lineWidth = 4;
-  for (let k = -5; k <= 5; k++) { c.beginPath(); c.moveTo(x + k * w * 0.1, wallTop + 22); c.lineTo(x + k * w * 0.07, y - h * 0.95); c.stroke(); }
-  // chimney smoke
-  c.fillStyle = "#cfc8b8"; c.fillRect(x + w * 0.22, y - h * 1.18, w * 0.08, h * 0.2);
-  for (let k = 0; k < 4; k++) {
-    c.fillStyle = `rgba(220,220,230,${0.35 - k * 0.07})`;
-    c.beginPath(); c.arc(x + w * 0.26 + k * 22, y - h * 1.25 - k * 46, 22 + k * 10, 0, Math.PI * 2); c.fill();
+function kozak(c, S) {
+  seed = 7;
+  // aged paper, a little uneven, with grain
+  c.fillStyle = P.paper; c.fillRect(0, 0, S, S);
+  for (let i = 0; i < 14; i++) {
+    const x = rnd() * S, y = rnd() * S, r = 120 + rnd() * 260;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rnd() < 0.5 ? "rgba(180,160,110,0.10)" : "rgba(140,150,110,0.08)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // the backdrop: a loose sage-green wash behind the head, the sun's gold upper left
+  // (an irregular splash, never a circle: a circle behind a head reads as a halo)
+  const splashPts = [];
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const r = 360 + Math.sin(a * 3 + 1.1) * 50 + Math.sin(a * 5 + 0.4) * 30 + jit(40);
+    splashPts.push([560 + Math.cos(a) * r * 1.1, 470 + Math.sin(a) * r * 0.85]);
+  }
+  const backdrop = shape((c) => { splashPts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); }, [80, 60, 960, 880]);
+  wash(c, backdrop, P.sage, 0.16, 7, 26);
+  blotches(c, backdrop, P.sageMid, 18, 90, 0.10);
+  const sun = c.createRadialGradient(270, 230, 10, 270, 230, 330);
+  sun.addColorStop(0, "rgba(232,184,92,0.42)"); sun.addColorStop(1, "rgba(232,184,92,0)");
+  c.fillStyle = sun; c.fillRect(0, 0, S, S);
+
+  // --- the zhupan: shoulders in muted red, open at the neck
+  const zhupan = shape((c) => {
+    c.moveTo(60, 1024); c.bezierCurveTo(70, 860, 180, 780, 330, 752);
+    c.lineTo(694, 752); c.bezierCurveTo(844, 780, 954, 860, 964, 1024); c.closePath();
+  }, [60, 740, 964, 1024]);
+  wash(c, zhupan, P.red, 0.3, 6, 5);
+  blotches(c, zhupan, "#6E2018", 14, 70, 0.16);
+  hatch(c, zhupan, 600, 740, 980, 1024, 13, -0.9, 2.2, 0.5, true);
+  inkPath(c, zhupan, 5);
+  // the gold braid along its edges
+  inkLine(c, [[330, 752], [395, 860], [430, 1024]], 9, "#B8903C", 0.85);
+  inkLine(c, [[694, 752], [629, 860], [594, 1024]], 9, "#B8903C", 0.85);
+  // the linen shirt between, its collar embroidered in red and black
+  const shirt = shape((c) => { c.moveTo(338, 752); c.lineTo(686, 752); c.lineTo(620, 1024); c.lineTo(404, 1024); c.closePath(); }, [330, 740, 690, 1024]);
+  wash(c, shirt, "#F4EEDF", 0.55, 4, 3);
+  hatch(c, shirt, 560, 740, 700, 1024, 14, -0.9, 1.6, 0.35);
+  inkPath(c, shirt, 3.5);
+  for (let i = 0; i < 9; i++) {
+    const x = 405 + i * 27, y = 790 + Math.sin(i) * 3;
+    c.fillStyle = i % 2 ? P.ink : P.red; c.globalAlpha = 0.85;
+    c.beginPath(); c.moveTo(x, y - 9); c.lineTo(x + 9, y); c.lineTo(x, y + 9); c.lineTo(x - 9, y); c.closePath(); c.fill();
+  }
+  c.globalAlpha = 1;
+  inkLine(c, [[392, 770], [512, 812], [632, 770]], 4);
+
+  // --- the neck and head (three-quarter, turned a little to our left)
+  const neck = shape((c) => { c.moveTo(440, 640); c.lineTo(584, 640); c.lineTo(596, 770); c.quadraticCurveTo(512, 812, 428, 770); c.closePath(); }, [420, 630, 600, 800]);
+  wash(c, neck, P.skin, 0.4, 4, 3);
+  hatch(c, neck, 520, 630, 610, 800, 11, -0.95, 1.8, 0.55);
+  inkPath(c, neck, 3.5);
+
+  const head = shape((c) => {
+    c.moveTo(512, 210);
+    c.bezierCurveTo(640, 208, 702, 300, 700, 420);
+    c.bezierCurveTo(698, 540, 650, 650, 540, 690);
+    c.bezierCurveTo(470, 708, 382, 660, 352, 560);
+    c.bezierCurveTo(322, 470, 330, 330, 382, 262);
+    c.bezierCurveTo(414, 226, 460, 211, 512, 210);
+  }, [320, 200, 710, 710]);
+  wash(c, head, P.skin, 0.36, 6, 4);
+  blotches(c, head, P.skinShade, 10, 60, 0.18);
+  // the shaved scalp catches the light, a little paler and greyer
+  {
+    c.save(); head(c); c.clip();
+    const hl = c.createRadialGradient(450, 280, 10, 450, 280, 200);
+    hl.addColorStop(0, "rgba(255,236,190,0.45)"); hl.addColorStop(1, "rgba(255,236,190,0)");
+    c.fillStyle = hl; c.fillRect(300, 180, 400, 320);
+    c.restore();
+  }
+  // shade on the right of the face
+  hatch(c, head, 590, 300, 720, 700, 12, -0.95, 2, 0.5);
+  hatch(c, head, 620, 420, 720, 700, 12, 0.6, 1.6, 0.35);
+  inkPath(c, head, 5);
+
+  // the oseledets: a long dark lock from the crown, swept down the left
+  // side of the head and behind the ear, its end curling by the jaw
+  const lock = shape((c) => {
+    c.moveTo(500, 214);
+    c.bezierCurveTo(440, 214, 380, 246, 352, 300);
+    c.bezierCurveTo(328, 350, 322, 420, 318, 480);
+    c.bezierCurveTo(314, 540, 300, 580, 318, 600);
+    c.bezierCurveTo(330, 612, 346, 600, 340, 586);
+    c.bezierCurveTo(334, 560, 344, 520, 348, 470);
+    c.bezierCurveTo(354, 400, 366, 330, 400, 284);
+    c.bezierCurveTo(432, 246, 476, 232, 528, 232);
+    c.bezierCurveTo(528, 222, 516, 214, 500, 214);
+  }, [290, 200, 540, 620]);
+  wash(c, lock, P.hair, 0.65, 5, 2);
+  inkPath(c, lock, 4);
+  for (let i = 0; i < 5; i++) inkLine(c, [[504 - i * 6, 220 + i * 2], [430 - i * 4, 250 + i * 5], [372 - i * 3, 330 + i * 8], [338 - i * 2, 470 + i * 6]], 1.5, P.ink, 0.45);
+  // the ear
+  const ear = shape((c) => c.ellipse(352, 470, 28, 50, -0.2, 0, Math.PI * 2), [320, 410, 385, 525]);
+  wash(c, ear, P.skinShade, 0.35, 3, 2);
+  inkPath(c, ear, 3.5);
+  // brows, eyes (calm, a little narrowed), the nose
+  inkLine(c, [[408, 404], [446, 392], [482, 400]], 7);
+  inkLine(c, [[560, 398], [600, 388], [640, 398]], 7);
+  inkLine(c, [[418, 438], [446, 432], [474, 438]], 4);
+  inkLine(c, [[566, 434], [596, 428], [624, 434]], 4);
+  c.fillStyle = P.ink; c.globalAlpha = 0.9;
+  c.beginPath(); c.ellipse(447, 441, 8, 6, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(596, 437, 8, 6, 0, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1;
+  inkLine(c, [[520, 420], [508, 500], [490, 530], [516, 544], [548, 534]], 4);
+  // cheeks warmed by the sun and the horilka
+  const cheek = (x, y) => { const g = c.createRadialGradient(x, y, 0, x, y, 46); g.addColorStop(0, "rgba(168,54,44,0.22)"); g.addColorStop(1, "rgba(168,54,44,0)"); c.fillStyle = g; c.fillRect(x - 50, y - 50, 100, 100); };
+  cheek(428, 520); cheek(618, 512);
+
+  // the moustache: long, drooping well below the chin
+  const moust = shape((c) => {
+    c.moveTo(516, 556);
+    c.bezierCurveTo(470, 548, 420, 570, 400, 620);
+    c.bezierCurveTo(386, 660, 384, 720, 362, 770);
+    c.bezierCurveTo(400, 740, 418, 690, 444, 640);
+    c.bezierCurveTo(470, 600, 500, 590, 520, 600);
+    c.bezierCurveTo(540, 590, 576, 598, 600, 638);
+    c.bezierCurveTo(622, 680, 636, 730, 668, 762);
+    c.bezierCurveTo(652, 712, 648, 660, 632, 616);
+    c.bezierCurveTo(612, 566, 562, 548, 516, 556);
+  }, [360, 540, 670, 775]);
+  wash(c, moust, P.moust, 0.55, 5, 3);
+  hatch(c, moust, 540, 540, 680, 780, 9, -1.1, 1.6, 0.5);
+  inkPath(c, moust, 4);
+  // the mouth under it, and the chin
+  inkLine(c, [[490, 622], [520, 628], [552, 620]], 3);
+  inkLine(c, [[486, 668], [520, 684], [560, 668]], 3, P.ink, 0.6);
+
+  // the lyulka: a curved pipe from the corner of his mouth, its bowl smoking
+  inkLine(c, [[552, 620], [640, 650], [720, 662]], 9, "#5E4228", 0.95);
+  const bowl = shape((c) => { c.moveTo(704, 600); c.lineTo(752, 600); c.lineTo(746, 672); c.quadraticCurveTo(728, 690, 710, 672); c.closePath(); }, [700, 590, 760, 695]);
+  wash(c, bowl, "#6E4A2A", 0.6, 4, 2);
+  hatch(c, bowl, 728, 590, 760, 700, 7, -1, 1.4, 0.5);
+  inkPath(c, bowl, 4);
+  c.fillStyle = "rgba(232,140,60,0.8)";
+  c.beginPath(); c.ellipse(728, 602, 20, 6, 0, 0, Math.PI * 2); c.fill();
+  for (let k = 0; k < 2; k++) {
+    const pts = [];
+    for (let i = 0; i <= 10; i++) pts.push([730 + k * 14 + Math.sin(i * 0.9 + k) * (10 + i * 4) + i * 6, 596 - i * 40]);
+    inkLine(c, pts, 5 - k * 2, "#8A8474", 0.35 - k * 0.1);
+  }
+  c.globalAlpha = 1;
+
+  // the paper's grain over everything
+  for (let i = 0; i < 9000; i++) {
+    const x = rnd() * S, y = rnd() * S;
+    c.fillStyle = rnd() < 0.5 ? "rgba(255,250,235,0.10)" : "rgba(60,48,30,0.06)";
+    c.fillRect(x, y, 2, 2);
   }
 }
 
-function variantKobza(c, S) {
-  sky(c, S, "#1e2a52", "#5a2a3a");
-  stars(c, S, 40, 7);
-  moon(c, S * 0.76, S * 0.22, S * 0.075);
-  // a fire glow from below
-  const fg = c.createRadialGradient(S / 2, S * 0.95, 20, S / 2, S * 0.95, S * 0.7);
-  fg.addColorStop(0, "rgba(255,150,60,0.7)"); fg.addColorStop(1, "rgba(255,150,60,0)");
-  c.fillStyle = fg; c.fillRect(0, 0, S, S);
-  kobza(c, S * 0.57, S * 0.6, S / 1024 * 0.8, -0.42);
-}
-function variantKhata(c, S) {
-  sky(c, S, "#16204a", "#3a3a6a");
-  stars(c, S, 50, 11);
-  moon(c, S * 0.72, S * 0.24, S * 0.09);
-  // the land
-  c.fillStyle = "#2a3a24";
-  c.beginPath(); c.moveTo(0, S * 0.74); c.quadraticCurveTo(S * 0.5, S * 0.66, S, S * 0.76); c.lineTo(S, S); c.lineTo(0, S); c.fill();
-  khata(c, S * 0.5, S * 0.74, S * 0.5, S * 0.4);
-  // a kobza leaning against the wall
-  kobza(c, S * 0.2, S * 0.8, S / 1024 * 0.3, -0.2);
-}
-function variantDome(c, S) {
-  sky(c, S, "#e8a250", "#7a2a3a");
-  // the sun going down behind the chapel
-  const sg = c.createRadialGradient(S / 2, S * 0.62, 10, S / 2, S * 0.62, S * 0.45);
-  sg.addColorStop(0, "rgba(255,236,170,1)"); sg.addColorStop(0.4, "rgba(255,200,110,0.6)"); sg.addColorStop(1, "rgba(255,200,110,0)");
-  c.fillStyle = sg; c.fillRect(0, 0, S, S);
-  // silhouette: the chapel with its onion dome and cross, the khutir either side
-  c.fillStyle = "#2a1a22";
-  const cx = S / 2;
-  c.beginPath();
-  c.moveTo(0, S * 0.8); c.lineTo(S * 0.16, S * 0.8); c.quadraticCurveTo(S * 0.22, S * 0.66, S * 0.3, S * 0.8);
-  c.lineTo(cx - S * 0.12, S * 0.8); c.lineTo(cx - S * 0.12, S * 0.6); c.lineTo(cx, S * 0.5); c.lineTo(cx + S * 0.12, S * 0.6); c.lineTo(cx + S * 0.12, S * 0.8);
-  c.lineTo(S * 0.7, S * 0.8); c.quadraticCurveTo(S * 0.78, S * 0.68, S * 0.86, S * 0.8); c.lineTo(S, S * 0.8); c.lineTo(S, S); c.lineTo(0, S); c.closePath(); c.fill();
-  // drum and dome
-  c.fillRect(cx - S * 0.04, S * 0.43, S * 0.08, S * 0.09);
-  c.beginPath();
-  c.moveTo(cx - S * 0.06, S * 0.44);
-  c.bezierCurveTo(cx - S * 0.09, S * 0.36, cx - S * 0.01, S * 0.33, cx, S * 0.28);
-  c.bezierCurveTo(cx + S * 0.01, S * 0.33, cx + S * 0.09, S * 0.36, cx + S * 0.06, S * 0.44);
-  c.closePath(); c.fill();
-  c.fillStyle = "#f0c860";
-  c.fillRect(cx - S * 0.006, S * 0.16, S * 0.012, S * 0.12);
-  c.fillRect(cx - S * 0.035, S * 0.19, S * 0.07, S * 0.012);
-  c.fillRect(cx - S * 0.025, S * 0.235, S * 0.05, S * 0.01);
-  // a lit window
-  c.fillStyle = "#ffd27a"; c.fillRect(cx - S * 0.02, S * 0.66, S * 0.04, S * 0.07);
-}
-
-window.VARIANTS = { kobza: variantKobza, khata: variantKhata, dome: variantDome };
+window.VARIANTS = { kozak };
 window.render = (name, S) => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 1024;
