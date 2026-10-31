@@ -1794,8 +1794,12 @@ export function App() {
     let last = performance.now();
     let promptKey = "";
     let fightHudKey = "";
+    // True once the world has been painted for an open sheet or map; see
+    // the top of frame(). A resize clears the canvas, so it paints again.
+    let rested = false;
 
     const resize = () => {
+      rested = false;
       const rect = wrap.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(rect.width * dpr);
@@ -1809,6 +1813,19 @@ export function App() {
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
+      // The Character sheet and the map cover the world and stop its
+      // clock, so repainting it every frame behind them only starves
+      // their buttons (on a phone a tap on Eat or Drink landed late, or
+      // seemed not to land). Paint it once, then rest until they close.
+      if ((panelRef.current || mapOpenRef.current) && !fightRef.current) {
+        if (rested) {
+          last = now;
+          return;
+        }
+        rested = true;
+      } else {
+        rested = false;
+      }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const rect = wrap.getBoundingClientRect();

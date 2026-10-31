@@ -500,3 +500,5 @@ The Character sheet's satchel used to be a paragraph of emoji and three buttons 
 - **Songs and keepsakes** are two folds under the list («Пісні · 4», «Пам'ятки · 5»), each opening as a list, one song or keepsake to a row.
 - **One source for weights.** `UNIT_WEIGHT` in `systems/carry.ts` feeds both the carry limit and the list; `systems/satchel.ts` decides which rows exist (tested: the rows add up to `carriedWeight`), `ui/SatchelIcon.tsx` draws the icons, and App.tsx only lays them out. The tab row now wraps and its buttons are 44 px tall.
 
+**The world rests behind the sheet.** With the Character sheet or the map open, the world is covered and its clock is stopped, but the frame loop kept repainting it every frame. On a phone that left the main thread so busy that taps on the sheet (Eat, Drink) landed late or seemed not to land: under a 4× CPU slowdown a frame took about 110 ms, and now takes 17. The loop paints the world once when a sheet or the map opens, then idles until it closes (and paints again if the screen is resized). The vigil is exempt.
+
