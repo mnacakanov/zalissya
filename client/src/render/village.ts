@@ -5,9 +5,10 @@ import { VILLAGE_W } from "../world/areas";
 import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
+import { drawLand } from "./land";
 import { rr } from "./shapes";
 import { drawFolk, type FolkOpts } from "./people";
-import { drawTreeStorybook } from "./trees";
+import { drawTreeSprite } from "./trees";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { hash2, type Rect } from "../world/geometry";
 
@@ -361,34 +362,28 @@ function dirtAt(x: number, y: number): number {
   return wearAt(x, y) * 255;
 }
 
-export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number) {
-  if (!roadMask) buildRoadMask();
-  const tx0 = Math.max(0, Math.floor(camX / TILE));
-  const ty0 = Math.max(0, Math.floor(camY / TILE));
-  const tx1 = Math.min(Math.ceil(WORLD_W / TILE) - 1, Math.floor((camX + vw) / TILE));
-  const ty1 = Math.min(Math.ceil(WORLD_H / TILE) - 1, Math.floor((camY + vh) / TILE));
-  // on the first frame paint everything in view; after that, a few tiles a
-  // frame as the camera moves (a plain green stands in until they are done)
-  let budget = tiles.size === 0 ? 999 : 2;
-  c.imageSmoothingEnabled = true;
-  for (let ty = ty0; ty <= ty1; ty++) {
-    for (let tx = tx0; tx <= tx1; tx++) {
-      const key = ty * 1000 + tx;
-      let tile = tiles.get(key);
-      if (!tile && budget > 0) { tile = bakeTile(tx, ty); tiles.set(key, tile); budget--; }
-      if (tile) c.drawImage(tile, tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5);
-      else { c.fillStyle = "#5e8a3c"; c.fillRect(tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5); }
-    }
-  }
-  // tiles just beyond the edge of the screen, ahead of the walk
-  for (let ty = ty0 - 1; ty <= ty1 + 1 && budget > 0; ty++) {
-    for (let tx = tx0 - 1; tx <= tx1 + 1 && budget > 0; tx++) {
-      if (tx < 0 || ty < 0 || tx * TILE >= WORLD_W || ty * TILE >= WORLD_H) continue;
-      const key = ty * 1000 + tx;
-      if (!tiles.has(key)) { tiles.set(key, bakeTile(tx, ty)); budget--; }
-    }
-  }
+// --- Grass detail and crops, baked ------------------------------------------------
+// Tufts of blades, clover, wildflowers and the crops in the fields were
+// thousands of strokes a frame — the slowdown by the river and the fields.
+// They are painted once per 256 px tile, at the screen's pixel density, into
+// transparent tiles laid over the ground; the most recent DETAIL_KEEP stay.
+const DETAIL_KEEP = 40;
+const detailTiles = new Map<number, HTMLCanvasElement>();
 
+function bakeDetail(tx: number, ty: number, px: number): HTMLCanvasElement {
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = TILE * px;
+  const g = cv.getContext("2d");
+  if (!g) return cv;
+  g.scale(px, px);
+  drawGrassDetail(g, tx * TILE, ty * TILE, TILE, TILE);
+  drawLand(g, tx * TILE, ty * TILE, TILE, TILE, 0);
+  detailTiles.set(ty * 1000 + tx, cv);
+  return cv;
+}
+
+function drawGrassDetail(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number): void {
+  const t = 0;
   // grass detail at full resolution: tufts of blades, clover, wildflowers,
   // scattered on a jittered grid so no tiling shows; none on the dirt
   const cell = 30;
@@ -443,6 +438,67 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
     }
   }
   c.lineCap = "butt";
+
+}
+
+export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number) {
+  if (!roadMask) buildRoadMask();
+  const tx0 = Math.max(0, Math.floor(camX / TILE));
+  const ty0 = Math.max(0, Math.floor(camY / TILE));
+  const tx1 = Math.min(Math.ceil(WORLD_W / TILE) - 1, Math.floor((camX + vw) / TILE));
+  const ty1 = Math.min(Math.ceil(WORLD_H / TILE) - 1, Math.floor((camY + vh) / TILE));
+  // on the first frame paint everything in view; after that, a few tiles a
+  // frame as the camera moves (a plain green stands in until they are done)
+  let budget = tiles.size === 0 ? 999 : 2;
+  c.imageSmoothingEnabled = true;
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const key = ty * 1000 + tx;
+      let tile = tiles.get(key);
+      if (!tile && budget > 0) { tile = bakeTile(tx, ty); tiles.set(key, tile); budget--; }
+      if (tile) c.drawImage(tile, tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5);
+      else { c.fillStyle = "#5e8a3c"; c.fillRect(tx * TILE - camX, ty * TILE - camY, TILE + 0.5, TILE + 0.5); }
+    }
+  }
+  // tiles just beyond the edge of the screen, ahead of the walk
+  for (let ty = ty0 - 1; ty <= ty1 + 1 && budget > 0; ty++) {
+    for (let tx = tx0 - 1; tx <= tx1 + 1 && budget > 0; tx++) {
+      if (tx < 0 || ty < 0 || tx * TILE >= WORLD_W || ty * TILE >= WORLD_H) continue;
+      const key = ty * 1000 + tx;
+      if (!tiles.has(key)) { tiles.set(key, bakeTile(tx, ty)); budget--; }
+    }
+  }
+
+  // the grass, flowers and crops, baked into tiles of their own that lie
+  // over the ground (an LRU of DETAIL_KEEP), then the road marks crisp
+  const detailPx = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+  let detailBudget = detailTiles.size === 0 ? 999 : 2;
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const key = ty * 1000 + tx;
+      let tile = detailTiles.get(key);
+      if (!tile && detailBudget > 0) { tile = bakeDetail(tx, ty, detailPx); detailBudget--; }
+      if (tile) {
+        // keep the most recently seen at the end of the LRU
+        detailTiles.delete(key); detailTiles.set(key, tile);
+        c.drawImage(tile, tx * TILE - camX, ty * TILE - camY, TILE, TILE);
+      }
+    }
+  }
+  // and one tile ahead of the walk, if this frame had none to paint
+  if (detailBudget === 2) {
+    outer: for (let ty = ty0 - 1; ty <= ty1 + 1; ty++) {
+      for (let tx = tx0 - 1; tx <= tx1 + 1; tx++) {
+        if (tx < 0 || ty < 0 || tx * TILE >= WORLD_W || ty * TILE >= WORLD_H) continue;
+        if (!detailTiles.has(ty * 1000 + tx)) { bakeDetail(tx, ty, detailPx); break outer; }
+      }
+    }
+  }
+  while (detailTiles.size > DETAIL_KEEP) {
+    const oldest = detailTiles.keys().next().value;
+    if (oldest === undefined) break;
+    detailTiles.delete(oldest);
+  }
 
   // puddles, potholes, mud, pebbles and cart ruts on the roads
   drawRoadMarks(c, camX, camY, vw, vh, t);
@@ -591,6 +647,25 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
 const CANOPY: Record<TreeKind, { r: number; h: number }> = {
   oak: { r: 60, h: 72 }, apple: { r: 36, h: 50 }, birch: { r: 42, h: 56 }, pine: { r: 44, h: 62 }, cherry: { r: 32, h: 42 }, willow: { r: 40, h: 54 },
 };
+// one soft dark blob, stamped for every shadow
+let blobCv: HTMLCanvasElement | null = null;
+function shadowBlob(): HTMLCanvasElement {
+  if (blobCv) return blobCv;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 64;
+  const g = cv.getContext("2d");
+  if (g) {
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, "rgba(16,28,10,1)");
+    gr.addColorStop(0.6, "rgba(16,28,10,0.7)");
+    gr.addColorStop(1, "rgba(16,28,10,0)");
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+  }
+  blobCv = cv;
+  return cv;
+}
+
 export function drawTreeShadows(
   c: CanvasRenderingContext2D, trees: ReadonlyArray<{ x: number; y: number; kind: TreeKind; s: number }>,
   camX: number, camY: number, vw: number, vh: number, minute: number, dark: number,
@@ -612,36 +687,27 @@ export function drawTreeShadows(
     const cy = tr.y + dy - camY;
     if (cx + R * 2 < 0 || cx - R * 2 > vw || cy + R < 0 || cy - R > vh) continue;
     // three overlapping blobs make the shadow lumpy, like a real crown
+    // (each one a stamp of the same soft blob — no gradient per frame)
+    const blob = shadowBlob();
+    c.globalAlpha = strength;
     for (let k = 0; k < 3; k++) {
       const ox = (hash2(tr.x, k) - 0.5) * R * 0.6;
       const oy = (hash2(k, tr.y) - 0.5) * R * 0.25;
       const rx = R * (0.75 + 0.2 * hash2(tr.x + k, tr.y)) * (1 + len * 0.3);
       const ry = R * 0.42;
-      const g = c.createRadialGradient(cx + ox, cy + oy, 0, cx + ox, cy + oy, rx);
-      g.addColorStop(0, `rgba(16,28,10,${strength})`);
-      g.addColorStop(0.6, `rgba(16,28,10,${strength * 0.7})`);
-      g.addColorStop(1, "rgba(16,28,10,0)");
-      c.fillStyle = g;
-      c.save();
-      c.translate(cx + ox, cy + oy);
-      c.scale(1, ry / rx);
-      c.translate(-(cx + ox), -(cy + oy));
-      c.beginPath(); c.arc(cx + ox, cy + oy, rx, 0, Math.PI * 2); c.fill();
-      c.restore();
+      c.drawImage(blob, cx + ox - rx, cy + oy - ry, rx * 2, ry * 2);
     }
     // the dark where the trunk meets the ground
-    const ao = c.createRadialGradient(tr.x - camX, tr.y + 2 - camY, 0, tr.x - camX, tr.y + 2 - camY, 16 * tr.s);
-    ao.addColorStop(0, `rgba(12,20,8,${0.35 * (0.5 + 0.5 * day)})`);
-    ao.addColorStop(1, "rgba(12,20,8,0)");
-    c.fillStyle = ao;
-    c.beginPath(); c.ellipse(tr.x - camX, tr.y + 2 - camY, 18 * tr.s, 7 * tr.s, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.5 * (0.5 + 0.5 * day);
+    c.drawImage(blob, tr.x - camX - 18 * tr.s, tr.y + 2 - camY - 7 * tr.s, 36 * tr.s, 14 * tr.s);
+    c.globalAlpha = 1;
   }
 }
 
 export function drawTree(c: CanvasRenderingContext2D, tr: { x: number; y: number; kind: TreeKind; s: number }, camX: number, camY: number, t: number) {
   // (its shadow is cast on the ground beforehand: drawTreeShadows; the tree
   // itself is drawn in the storybook hand: render/trees.ts)
-  drawTreeStorybook(c, tr, tr.x - camX, tr.y - camY, t);
+  drawTreeSprite(c, tr, tr.x - camX, tr.y - camY, t);
 }
 
 export function drawHouse(c: CanvasRenderingContext2D, h: Rect & { kind: string }, camX: number, camY: number, t: number) {

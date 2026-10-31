@@ -341,3 +341,16 @@ The owner asked to fix the trees and to bring them into the style of the rest of
   - cherry: small and dense with red berries;
   - willow: a leaning trunk and a curtain of fronds.
 - **No shifting:** shapes and sway are seeded by the tree's world position, so nothing shifts as the camera moves.
+
+## Keeping the frame cheap
+
+The owner noticed the game slowed down by the river and in the forest. Profiling showed almost all of the time went to painting the canvas, not to game logic. Thousands of grass strokes, crop plants in the fields, and dozens of paths and gradients per tree were drawn again every frame.
+
+- **Trees:** each kind is painted once in five variants into sprites at the screen's density, then stamped, scaled and skewed from the foot for the sway.
+- **Shadows:** every shadow is a stamp of one soft blob.
+- **Grass and fields:** the grass tufts, clover, flowers, fields and gardens are baked into transparent 256 px detail tiles over the ground. The most recent 40 are kept, and one tile ahead of the walk is painted on a quiet frame.
+- **Vignette:** painted once per screen size.
+
+**Result:** in a software-rendered test browser, walking through the forest by the river went from about 12 to about 22 frames a second, and the worst hitch from about 145 ms to about 65 ms.
+
+**Cost:** the grass and crops no longer sway (the trees still do).

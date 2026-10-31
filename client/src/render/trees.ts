@@ -75,10 +75,11 @@ function trunk(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: 
 
 export function drawTreeStorybook(
   c: CanvasRenderingContext2D, tr: { x: number; y: number; kind: TreeKind; s: number }, x: number, y: number, t: number,
+  still = false,
 ): void {
   const s = tr.s;
   const seed = Math.round(tr.x * 7 + tr.y * 13);
-  const sway = Math.sin(t * 0.0012 + tr.x * 0.11) * 1.4;
+  const sway = still ? 0 : Math.sin(t * 0.0012 + tr.x * 0.11) * 1.4;
   const R = (k: number) => hash2(seed, k);
   switch (tr.kind) {
     case "oak": {
@@ -220,7 +221,7 @@ export function drawTreeStorybook(
       crown(c, lobes, "#a2bc62", "#4e6a30", cx, cy, 34 * s);
       for (let i = 0; i < 18; i++) {
         const fx = cx + (i - 8.5) * 3.8 * s;
-        const fs = Math.sin(t * 0.0014 + i * 0.7 + tr.x * 0.05) * 3;
+        const fs = still ? (i % 3 - 1) * 1.5 : Math.sin(t * 0.0014 + i * 0.7 + tr.x * 0.05) * 3;
         c.strokeStyle = i % 3 === 0 ? "#5a7a34" : i % 2 ? "#9cb860" : "#7c9a48";
         c.lineWidth = 2;
         c.beginPath();
@@ -231,4 +232,51 @@ export function drawTreeStorybook(
       break;
     }
   }
+}
+
+// --- Sprites ---------------------------------------------------------------------
+// Painting a tree is a few dozen paths and gradients; the forest has
+// hundreds, and redrawing them every frame was what slowed the game by the
+// river and the woods. So each kind is painted once, in a few variants, into
+// a sprite at twice the world resolution, and the frame only stamps it:
+// scaled to the tree's size, and skewed from the foot for the sway (the
+// foot stays put, the crown moves).
+// sprites at the screen's density (twice the world on phones, once on plain screens)
+const SPRITE_PX = typeof window === "undefined" ? 2 : Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+const SPRITE_W = 170;
+const SPRITE_H = 160;
+const SPRITE_FOOT = 150;
+const VARIANTS = 5;
+const sprites = new Map<string, HTMLCanvasElement>();
+
+function treeSprite(kind: TreeKind, v: number): HTMLCanvasElement {
+  const key = `${kind}${v}`;
+  const have = sprites.get(key);
+  if (have) return have;
+  const cv = document.createElement("canvas");
+  cv.width = SPRITE_W * SPRITE_PX;
+  cv.height = SPRITE_H * SPRITE_PX;
+  const g = cv.getContext("2d");
+  if (g) {
+    g.scale(SPRITE_PX, SPRITE_PX);
+    drawTreeStorybook(g, { x: 97 * v + 11, y: 53 * v + 7, kind, s: 1 }, SPRITE_W / 2, SPRITE_FOOT, 0, true);
+  }
+  sprites.set(key, cv);
+  return cv;
+}
+
+export function drawTreeSprite(
+  c: CanvasRenderingContext2D, tr: { x: number; y: number; kind: TreeKind; s: number }, x: number, y: number, t: number,
+): void {
+  const v = Math.floor(hash2(tr.x, tr.y) * VARIANTS);
+  const sp = treeSprite(tr.kind, v);
+  const sway = Math.sin(t * 0.0012 + tr.x * 0.11) * (tr.kind === "willow" ? 2.4 : 1.6);
+  const k = tr.s / SPRITE_PX;
+  c.save();
+  c.translate(x, y);
+  // skew from the foot: a point h px up moves sway·h/80 px sideways
+  c.transform(1, 0, -sway / 80, 1, 0, 0);
+  c.scale(k, k);
+  c.drawImage(sp, -(SPRITE_W / 2) * SPRITE_PX, -SPRITE_FOOT * SPRITE_PX);
+  c.restore();
 }

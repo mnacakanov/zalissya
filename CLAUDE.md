@@ -67,6 +67,7 @@ bun run dev
 - `bun run test` runs the `client/src/**/*.test.ts` files.
 - `bun run build` writes `pages/dist/index.html`: one self-contained file.
 - `bun run dev` rebuilds on change and serves on http://localhost:5173.
+- `NO_MINIFY=1 bun run build` keeps function names, for profiling in a browser.
 
 Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
@@ -119,6 +120,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 - Before you open a PR, smoke-test the Pages build in a browser: walk, talk, gather, save, reload. When you touch time or the vigil, try a night as well.
 - Match the surrounding code style: TypeScript strict, `noUncheckedIndexedAccess`, flavour-text comments that explain *why*, and Ukrainian names with a pronunciation guide (`pron`).
 - Add a paragraph to `DESIGN.md` when a change alters how the game plays.
+- **Keep the frame cheap.** Anything static is painted once and stamped: the ground and the grass/crops are baked into tiles (`render/village.ts`), trees into sprites (`render/trees.ts`), shadows from one blob, the vignette once per screen size. Don't add per-frame loops of hundreds of strokes or gradients. Anything that animates by place takes its phase from the world position (`x + CAM.x`), never the screen position.
 
 ## Game at a glance
 

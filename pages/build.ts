@@ -63,7 +63,8 @@ async function buildJs(): Promise<string> {
     plugins: [pagesPlatform],
     target: "browser",
     format: "esm",
-    minify: true,
+    // NO_MINIFY=1 keeps function names, for profiling in a browser
+    minify: !process.env.NO_MINIFY,
     define: { "process.env.NODE_ENV": JSON.stringify("production") },
   });
   if (!res.success) {

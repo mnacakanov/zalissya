@@ -155,3 +155,28 @@ export function drawDark(
   }
   c.restore();
 }
+
+// The vignette that warms the edges of the screen (cool on Lysa Hora): a
+// full-screen gradient is costly to fill every frame, so it is painted once
+// per screen size and stamped.
+let vignette: { cv: HTMLCanvasElement; key: string } | null = null;
+export function drawVignette(c: CanvasRenderingContext2D, vw: number, vh: number, lysa: boolean): void {
+  const key = `${vw}x${vh}${lysa ? "L" : ""}`;
+  if (!vignette || vignette.key !== key) {
+    const cv = document.createElement("canvas");
+    // half resolution is plenty for a gradient this soft
+    cv.width = Math.max(1, Math.ceil(vw / 2));
+    cv.height = Math.max(1, Math.ceil(vh / 2));
+    const g = cv.getContext("2d");
+    if (g) {
+      g.scale(0.5, 0.5);
+      const vg = g.createRadialGradient(vw / 2, vh * 0.42, Math.min(vw, vh) * 0.36, vw / 2, vh * 0.5, Math.max(vw, vh) * 0.78);
+      vg.addColorStop(0, "rgba(60,30,0,0)");
+      vg.addColorStop(1, lysa ? "rgba(6,6,24,0.42)" : "rgba(43,26,4,0.28)");
+      g.fillStyle = vg;
+      g.fillRect(0, 0, vw, vh);
+    }
+    vignette = { cv, key };
+  }
+  c.drawImage(vignette.cv, 0, 0, vw, vh);
+}

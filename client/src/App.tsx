@@ -13,7 +13,7 @@ import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
 import { tobaccoTopics } from "./dialogue/tobacco";
 import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
-import { drawLand, drawRiver } from "./render/land";
+import { drawRiver } from "./render/land";
 import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
 import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
 import { korchmaTopicSet } from "./dialogue/korchma";
@@ -36,7 +36,7 @@ import { drawKhataInterior } from "./render/khataInterior";
 import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
-import { drawDark, drawFog, gradeDay } from "./render/light";
+import { drawDark, drawFog, drawVignette, gradeDay } from "./render/light";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
@@ -1704,7 +1704,7 @@ export function App() {
         // (no separate rooms any more — the khaty stand in the world)
       } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
-      drawLand(ctx2d, camX, camY, vw, vh, now);
+      // (the fields and gardens are baked into the ground's detail tiles)
       // the trees' shadows lie on the ground, under everything that stands
       drawTreeShadows(ctx2d, TREES, camX, camY, vw, vh, clockRef.current.minute, darkness(clockRef.current.minute));
       // the rooms of the khaty you can walk into; their roofs (below, as
@@ -1915,11 +1915,7 @@ export function App() {
         drawFog(ctx2d, clockRef.current.minute, camX, camY, vw, vh, now);
         gradeDay(ctx2d, clockRef.current.minute, vw, vh);
       }
-      const vg = ctx2d.createRadialGradient(vw / 2, vh * 0.42, Math.min(vw, vh) * 0.36, vw / 2, vh * 0.5, Math.max(vw, vh) * 0.78);
-      vg.addColorStop(0, "rgba(60,30,0,0)");
-      vg.addColorStop(1, area === "lysa" ? "rgba(6,6,24,0.42)" : "rgba(43,26,4,0.28)");
-      ctx2d.fillStyle = vg;
-      ctx2d.fillRect(0, 0, vw, vh);
+      drawVignette(ctx2d, vw, vh, area === "lysa");
 
       // night over the open world (render/light.ts): darkness with holes
       // where light falls — the fire, lit windows, the korchma door, the
