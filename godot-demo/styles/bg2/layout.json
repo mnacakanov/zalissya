@@ -1,0 +1,30 @@
+{
+  "_note": "Sprite-local pixels, measured from each PNG's bottom-centre anchor. 'scale' turns them into scene pixels. Tune with the F3 debug overlay.",
+  "camera": "iso",
+  "hut": {
+    "scale": 0.62,
+    "footprint": [
+      [
+        -372,
+        -185
+      ],
+      [
+        223,
+        -50
+      ],
+      [
+        444,
+        -208
+      ],
+      [
+        -151,
+        -343
+      ]
+    ],
+    "door": [
+      0.41,
+      0.61
+    ],
+    "placeholder": "res://styles/bg2/placeholder_hut_exterior.png"
+  }
+}

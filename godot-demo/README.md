@@ -4,7 +4,41 @@ A technical demo, not the game. It checks whether Zalissya can move its
 rendering to Godot and still run from GitHub Pages, with BG2-style
 graphics. Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 
-## What it shows
+## The style test (issue #2), the main scene
+
+`styles.tscn` / `styles.gd`: one small scene, Did Prokip's walkable hut,
+the kobzar, Prokip, a cow, a bench and a horod. It is built in three render
+styles, switchable at runtime: the buttons at the top, keys 1–3, or LB/RB on
+a gamepad.
+
+| Style | Camera | Rendering |
+|---|---|---|
+| **Drova** | top-down ¾ | `NEAREST` texture filter and pixel-snapped transforms, a coarse dark ground |
+| **Pillars-lite** | isometric | colour plates with normal maps (`<name>_n.png`, from `tools/normals.py`), a `DirectionalLight2D` sun by day, lamps that rake the relief at night |
+| **BG2 / IWD** | isometric | painted plates, the light baked in, a tint and lamp glows at night |
+
+- **The walkable hut.** The hut's footprint (`styles/<style>/layout.json`,
+  in sprite pixels from the PNG's bottom-centre anchor, times `scale`)
+  makes the walls, with a gap at the door.
+  - Step inside and the exterior fades out over the interior plate, in
+    place. Prokip, inside by his pich, is only seen from inside.
+  - The lamps in the hut light only while you are in it.
+  - The hut sorts against the kobzar at the front edge of its footprint
+    under his feet: BG2's wall polygons, done in code.
+- **Talking.** Talk to Prokip with E, A or the "Говорити" button.
+- **Day and night.** N, Y or the button.
+- **Debug.** F3 or "Контури" shows the footprint, the walls and the solids.
+- **The art.** Drop it into `styles/<style>/` under the names in `FILES`
+  (`hut_exterior.png`, `hut_interior.png`, `kobzar.png`, `npc_prokip.png`,
+  `cow.png`, `bench.png`, `horod.png`, …).
+  - Anything missing falls back to a placeholder. The BG2 and
+    Pillars-lite hut borrows `art/reference/prokip-hut-iso.png`; the Drova
+    hut is the baked khata from the old demo; the people use the old
+    frames.
+  - Run `tools/normals.py` over the Pillars-lite PNGs whenever they change.
+- **The old khutir demo** is one button away ("Старе демо" / "Стилі").
+
+## The khutir demo: what it shows
 
 - **Painted background in tiles.** For the demo the "painting" is baked
   from the current procedural khutir.

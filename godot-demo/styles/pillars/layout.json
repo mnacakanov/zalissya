@@ -1,0 +1,30 @@
+{
+  "_note": "Estimated until the Pillars-lite set lands; same isometric camera as BG2.",
+  "camera": "iso",
+  "hut": {
+    "scale": 0.62,
+    "footprint": [
+      [
+        -372,
+        -185
+      ],
+      [
+        223,
+        -50
+      ],
+      [
+        444,
+        -208
+      ],
+      [
+        -151,
+        -343
+      ]
+    ],
+    "door": [
+      0.41,
+      0.61
+    ],
+    "placeholder": "res://styles/bg2/placeholder_hut_exterior.png"
+  }
+}

@@ -1,0 +1,684 @@
+extends Node2D
+## The render-style test (issue #2): one little scene, Did Prokip's walkable
+## hut with the kobzar, Prokip, a cow, a bench and a horod, built three times
+## and switchable at runtime: Drova-like (pixel art, top-down three-quarter),
+## Pillars-lite (painted plates relit through normal maps) and BG2 / Icewind
+## Dale (painted plates, light baked in). The same logic drives all three;
+## only the art, its layout (styles/<style>/layout.json) and the rendering
+## settings change.
+##
+## Art goes in styles/<style>/ under the names in FILES. Until a file is
+## there, a placeholder stands in (a borrowed sprite or a simple shape), so
+## every style is always playable.
+
+const STYLES := ["drova", "pillars", "bg2"]
+const STYLE_NAMES := {"drova": "Drova", "pillars": "Pillars-lite", "bg2": "BG2 / IWD"}
+const FILES := ["hut_exterior", "hut_interior", "kobzar", "npc_prokip", "cow", "bench", "horod", "skull_stake",
+	"hut_interior_and_horod_TOUCHING", "hut_interior_bed"]
+const SPEED := 150.0
+const PLAYER_R := 12.0
+# target heights on screen, in scene px (the hut's scale sets the metre)
+const MAN_H := 118.0
+const COW_H := 92.0
+const PROKIP_LINES := [
+	"Знову співак. Ну заходь, коли вже прийшов. Тільки кобзу не чіпай.",
+	"Ворон є, кіт є, мухомори є. Співака не було. Тепер є. Халепа.",
+	"Іди вже. Корову не дражни — вона в мене розумніша за пів хутора.",
+]
+
+var style := "bg2"
+var layout: Dictionary
+var world: Node2D           # everything that sorts by its feet
+var ground: Node2D          # the floor of the scene, under everything
+var player: CharacterBody2D
+var player_sprite: Node2D
+var walls: StaticBody2D
+var hut_ext: Node2D         # the hut's exterior, faded away while you are inside
+var hut_ext_sprite: CanvasItem
+var hut_int: Node2D
+var footprint := PackedVector2Array()
+var prokip: Node2D
+var shade: CanvasModulate
+var sun: DirectionalLight2D
+var lamps: Array[PointLight2D] = []
+var night := false
+var inside := false
+var debug := false
+var debug_layer: Node2D
+var hud_info: Label
+var talk_btn: Button
+var dialog: PanelContainer
+var dialog_text: Label
+var dialog_i := -1
+var stick := Vector2.ZERO
+var stick_touch := -1
+var stick_origin := Vector2.ZERO
+var stick_ui: Control
+var fps_hist: Array[float] = []
+var load_ms := -1.0
+var built_ms := 0.0
+var style_bytes := 0
+var style_buttons := {}
+
+
+func _ready() -> void:
+	_build_ui()
+	_set_style("bg2")
+	if OS.has_feature("web"):
+		load_ms = float(JavaScriptBridge.eval("performance.now()", true))
+
+
+# --- loading art: the style's file if it is there, a placeholder if not -------
+func _tex(name: String) -> Texture2D:
+	var path := "res://styles/%s/%s.png" % [style, name]
+	if ResourceLoader.exists(path):
+		var t: Texture2D = load(path)
+		style_bytes += t.get_width() * t.get_height() * 4
+		return t
+	return null
+
+
+func _normal_for(name: String) -> Texture2D:
+	var path := "res://styles/%s/%s_n.png" % [style, name]
+	return load(path) if ResourceLoader.exists(path) else null
+
+
+## A sprite with its anchor at the bottom centre (feet, or a building's
+## front edge), and in Pillars-lite its normal map, so lamps rake across it.
+func _sprite(tex: Texture2D, scale_k: float, normal: Texture2D = null) -> Sprite2D:
+	var s := Sprite2D.new()
+	if normal != null:
+		var ct := CanvasTexture.new()
+		ct.diffuse_texture = tex
+		ct.normal_texture = normal
+		s.texture = ct
+	else:
+		s.texture = tex
+	s.centered = false
+	s.offset = Vector2(-tex.get_width() / 2.0, -tex.get_height())
+	s.scale = Vector2(scale_k, scale_k)
+	return s
+
+
+# --- the style switch: tear the scene down and build it again ------------------
+func _set_style(name: String) -> void:
+	var t0 := Time.get_ticks_usec()
+	var keep_inside := inside
+	var keep_offset := Vector2.ZERO
+	if player != null:
+		keep_offset = player.position
+	for n in [ground, world, walls, debug_layer, shade, sun]:
+		if n != null:
+			n.queue_free()
+	sun = null
+	for l in lamps:
+		l.queue_free()
+	lamps.clear()
+	style = name
+	style_bytes = 0
+	layout = JSON.parse_string(FileAccess.get_file_as_string("res://styles/%s/layout.json" % style))
+	# Drova is pixel art: sharp texels, snapped to whole pixels
+	var pixel := style == "drova"
+	get_viewport().snap_2d_transforms_to_pixel = pixel
+	get_viewport().canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST if pixel else Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+
+	ground = Node2D.new()
+	ground.z_index = -10
+	add_child(ground)
+	world = Node2D.new()
+	world.y_sort_enabled = true
+	add_child(world)
+	walls = StaticBody2D.new()
+	add_child(walls)
+	_build_ground()
+	_build_hut()
+	_build_props()
+	_build_people()
+	_build_light()
+	debug_layer = Node2D.new()
+	debug_layer.z_index = 50
+	debug_layer.visible = debug
+	debug_layer.draw.connect(_draw_debug)
+	add_child(debug_layer)
+	# the kobzar stays where he was (inside the hut if he was in it)
+	if keep_inside:
+		player.position = _centroid(footprint)
+	elif keep_offset != Vector2.ZERO:
+		player.position = keep_offset
+	_set_night(night)
+	for k in style_buttons:
+		style_buttons[k].button_pressed = k == style
+	built_ms = (Time.get_ticks_usec() - t0) / 1000.0
+
+
+func _iso() -> bool:
+	return layout.camera == "iso"
+
+
+func _build_ground() -> void:
+	# a painted-looking ground from noise, tinted per style; Drova's is
+	# coarse and dark, the painted styles' soft and warm
+	var noise := FastNoiseLite.new()
+	noise.seed = 7
+	noise.frequency = 0.012 if style != "drova" else 0.05
+	var nt := NoiseTexture2D.new()
+	nt.width = 256 if style != "drova" else 96
+	nt.height = nt.width
+	nt.seamless = true
+	nt.noise = noise
+	var g := Gradient.new()
+	match style:
+		"drova":
+			g.set_color(0, Color("2f3f24")); g.set_color(1, Color("4d5a32"))
+		"pillars":
+			g.set_color(0, Color("55683f")); g.set_color(1, Color("8e9a68"))
+		_:
+			g.set_color(0, Color("6f7d4e")); g.set_color(1, Color("a7a77a"))
+	nt.color_ramp = g
+	var spr := Sprite2D.new()
+	spr.texture = nt
+	spr.centered = true
+	spr.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	spr.region_enabled = true
+	var tile := 4.0 if style != "drova" else 2.0
+	spr.region_rect = Rect2(0, 0, 2400 / tile, 1800 / tile)
+	spr.scale = Vector2(tile, tile)
+	ground.add_child(spr)
+	# a worn path up to the door
+	var path := Polygon2D.new()
+	path.color = Color("8a7552") if style != "drova" else Color("5a4a32")
+	path.color.a = 0.55
+	ground.add_child(path)
+	path.set_meta("is_path", true)
+
+
+func _build_hut() -> void:
+	var h: Dictionary = layout.hut
+	var k: float = h.scale
+	var tex := _tex("hut_exterior")
+	if tex == null and h.has("placeholder"):
+		tex = load(h.placeholder)
+		style_bytes += tex.get_width() * tex.get_height() * 4
+	footprint = PackedVector2Array()
+	for p in h.footprint:
+		footprint.append(Vector2(p[0], p[1]) * k)
+	# the exterior, sorted at its front edge (moved with the player, below)
+	hut_ext = Node2D.new()
+	world.add_child(hut_ext)
+	if tex != null:
+		var s := _sprite(tex, k, _normal_for("hut_exterior"))
+		hut_ext.add_child(s)
+		hut_ext_sprite = s
+	else:
+		var poly := Polygon2D.new()
+		poly.polygon = footprint
+		poly.color = Color("b39a62")
+		hut_ext.add_child(poly)
+		hut_ext_sprite = poly
+	# the interior, on the ground under everything, the same footprint
+	hut_int = Node2D.new()
+	ground.add_child(hut_int)
+	var itex := _tex("hut_interior")
+	if itex != null:
+		hut_int.add_child(_sprite(itex, k, _normal_for("hut_interior")))
+	elif style == "drova" and _tex("hut_interior_and_horod_TOUCHING") != null:
+		# Drova's interior came in two halves; they are placed by their wall stubs
+		var a := _sprite(_tex("hut_interior_and_horod_TOUCHING"), k)
+		var b := _sprite(_tex("hut_interior_bed"), k)
+		var ip: Array = h.get("interior_halves", [[0, 0], [0, 0]])
+		a.position = Vector2(ip[0][0], ip[0][1]) * k
+		b.position = Vector2(ip[1][0], ip[1][1]) * k
+		hut_int.add_child(a)
+		hut_int.add_child(b)
+	else:
+		_placeholder_interior()
+	# the walls: the footprint's edges, with a gap for the door
+	var door_edge: int = h.get("door_edge", 0)
+	var d0: float = h.door[0]
+	var d1: float = h.door[1]
+	for i in footprint.size():
+		var a := footprint[i]
+		var b := footprint[(i + 1) % footprint.size()]
+		if i == door_edge:
+			_wall(a, a.lerp(b, d0))
+			_wall(a.lerp(b, d1), b)
+		else:
+			_wall(a, b)
+	# the pich inside: solid, in the far corner from the door
+	var pich := _centroid(footprint).lerp(footprint[(door_edge + 2) % 4], 0.55)
+	var cs := CollisionShape2D.new()
+	var sh := CircleShape2D.new()
+	sh.radius = 22
+	cs.shape = sh
+	cs.position = pich
+	walls.add_child(cs)
+	hut_int.set_meta("pich", pich)
+	# the path to the door
+	var door := footprint[door_edge].lerp(footprint[(door_edge + 1) % 4], (d0 + d1) / 2)
+	var out := (door - _centroid(footprint)).normalized()
+	var side := Vector2(-out.y, out.x) * 26
+	for c in ground.get_children():
+		if c.has_meta("is_path"):
+			c.polygon = PackedVector2Array([door + side, door - side, door - side * 1.6 + out * 260, door + side * 1.6 + out * 260])
+	hut_int.set_meta("door", door)
+	hut_int.set_meta("out", out)
+
+
+func _placeholder_interior() -> void:
+	var floor := Polygon2D.new()
+	floor.polygon = footprint
+	floor.color = Color("8a6a44") if style != "drova" else Color("5e4630")
+	hut_int.add_child(floor)
+	var line := Line2D.new()
+	line.points = footprint
+	line.closed = true
+	line.width = 10
+	line.default_color = Color("efe6d2")
+	hut_int.add_child(line)
+
+
+func _wall(a: Vector2, b: Vector2) -> void:
+	var cs := CollisionShape2D.new()
+	var seg := SegmentShape2D.new()
+	seg.a = a
+	seg.b = b
+	cs.shape = seg
+	walls.add_child(cs)
+
+
+func _centroid(poly: PackedVector2Array) -> Vector2:
+	var c := Vector2.ZERO
+	for p in poly:
+		c += p
+	return c / poly.size()
+
+
+func _build_props() -> void:
+	var door: Vector2 = hut_int.get_meta("door")
+	var out: Vector2 = hut_int.get_meta("out")
+	var iso := _iso()
+	var right := Vector2(1, 0)
+	# the bench along the door wall, to one side of the door
+	var bench_pos := door + (Vector2(-120, 40) if iso else Vector2(-110, 30))
+	var btex := _tex("bench")
+	var bench := Node2D.new()
+	bench.position = bench_pos
+	world.add_child(bench)
+	if btex != null:
+		bench.add_child(_sprite(btex, (MAN_H * 0.3) / btex.get_height(), _normal_for("bench")))
+	else:
+		var p := Polygon2D.new()
+		p.polygon = PackedVector2Array([Vector2(-36, -16), Vector2(36, -16), Vector2(36, 0), Vector2(-36, 0)])
+		p.color = Color("7a5a38")
+		bench.add_child(p)
+	_solid_box(bench_pos + Vector2(0, -6), Vector2(70, 12))
+	# the horod: flat on the ground, east of the hut
+	var hpos := _centroid(footprint) + (Vector2(340, 120) if iso else Vector2(330, 60))
+	var htex := _tex("horod")
+	var horod := Node2D.new()
+	horod.position = hpos
+	ground.add_child(horod)
+	if htex != null:
+		horod.add_child(_sprite(htex, 260.0 / htex.get_width(), _normal_for("horod")))
+	else:
+		for r in 4:
+			var row := Polygon2D.new()
+			row.polygon = PackedVector2Array([Vector2(-110, -150 + r * 34), Vector2(110, -150 + r * 34), Vector2(110, -130 + r * 34), Vector2(-110, -130 + r * 34)])
+			row.color = Color("5e4630")
+			horod.add_child(row)
+			for c in 6:
+				var cab := Polygon2D.new()
+				var cc := Vector2(-90 + c * 36, -140 + r * 34)
+				cab.polygon = PackedVector2Array([cc + Vector2(-9, 0), cc + Vector2(0, -9), cc + Vector2(9, 0), cc + Vector2(0, 9)])
+				cab.color = Color("6f9a4a")
+				horod.add_child(cab)
+	# the skull on its stake by the door (Pillars-lite sliced it apart)
+	var stex := _tex("skull_stake")
+	if stex != null:
+		var sk := Node2D.new()
+		sk.position = door + (Vector2(-70, 6) if iso else Vector2(-60, 10))
+		sk.add_child(_sprite(stex, (MAN_H * 0.9) / stex.get_height(), _normal_for("skull_stake")))
+		world.add_child(sk)
+
+
+func _solid_box(center: Vector2, size: Vector2) -> void:
+	var cs := CollisionShape2D.new()
+	var sh := RectangleShape2D.new()
+	sh.size = size
+	cs.shape = sh
+	cs.position = center
+	walls.add_child(cs)
+
+
+func _person_sprite(name: String, fallback: String, h: float) -> Node2D:
+	var holder := Node2D.new()
+	var tex := _tex(name)
+	if tex == null:
+		tex = load(fallback)
+		style_bytes += tex.get_width() * tex.get_height() * 4
+	var s := _sprite(tex, h / tex.get_height(), _normal_for(name))
+	s.name = "Sprite"
+	holder.add_child(s)
+	return holder
+
+
+func _build_people() -> void:
+	player = CharacterBody2D.new()
+	player.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	var door: Vector2 = hut_int.get_meta("door")
+	var out: Vector2 = hut_int.get_meta("out")
+	player.position = door + (Vector2(0, 170) if _iso() else out * 170)
+	var cs := CollisionShape2D.new()
+	var sh := CircleShape2D.new()
+	sh.radius = PLAYER_R
+	cs.shape = sh
+	cs.position = Vector2(0, -5)
+	player.add_child(cs)
+	player_sprite = _person_sprite("kobzar", "res://art/kobzar_idle.png", MAN_H)
+	player.add_child(player_sprite)
+	var cam := Camera2D.new()
+	cam.position_smoothing_enabled = true
+	cam.position_smoothing_speed = 6.0
+	player.add_child(cam)
+	world.add_child(player)
+	# Prokip, by his pich inside
+	prokip = _person_sprite("npc_prokip", "res://art/myroslav_idle.png", MAN_H * 0.95)
+	var pich: Vector2 = hut_int.get_meta("pich")
+	prokip.position = pich.lerp(door, 0.35)
+	world.add_child(prokip)
+	# the cow, grazing south-west of the hut
+	var cow := Node2D.new()
+	cow.position = door + (Vector2(-330, 170) if _iso() else Vector2(-300, 220))
+	var ctex := _tex("cow")
+	if ctex != null:
+		cow.add_child(_sprite(ctex, COW_H / ctex.get_height(), _normal_for("cow")))
+	else:
+		var body := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for i in 16:
+			var a := i / 16.0 * TAU
+			pts.append(Vector2(cos(a) * 48, -38 + sin(a) * 24))
+		body.polygon = pts
+		body.color = Color("a8562c")
+		cow.add_child(body)
+		var head := Polygon2D.new()
+		head.polygon = PackedVector2Array([Vector2(40, -50), Vector2(66, -46), Vector2(64, -26), Vector2(42, -28)])
+		head.color = Color("efe6d2")
+		cow.add_child(head)
+	cow.name = "Cow"
+	world.add_child(cow)
+	var ccs := CollisionShape2D.new()
+	var csh := CapsuleShape2D.new()
+	csh.radius = 16
+	csh.height = 90
+	ccs.shape = csh
+	ccs.rotation = PI / 2
+	ccs.position = cow.position + Vector2(0, -6)
+	walls.add_child(ccs)
+
+
+# --- light: the hour's colour over everything, lamps that show at night; in
+# Pillars-lite also a sun that rakes the normal-mapped art --------------------
+func _light_tex() -> GradientTexture2D:
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 1, 1))
+	g.set_color(1, Color(1, 1, 1, 0))
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	t.width = 256
+	t.height = 256
+	return t
+
+
+func _build_light() -> void:
+	shade = CanvasModulate.new()
+	add_child(shade)
+	if style == "pillars":
+		sun = DirectionalLight2D.new()
+		sun.rotation = deg_to_rad(45)   # from the upper left
+		sun.height = 0.6
+		sun.energy = 0.35
+		sun.color = Color(1.0, 0.92, 0.75)
+		add_child(sun)
+	var tex := _light_tex()
+	var door: Vector2 = hut_int.get_meta("door")
+	var out: Vector2 = hut_int.get_meta("out")
+	var pich: Vector2 = hut_int.get_meta("pich")
+	# [where, size, colour, indoors?]
+	for spot in [[pich, 1.0, Color(1.0, 0.6, 0.3), true], [_centroid(footprint), 1.3, Color(1.0, 0.7, 0.4), true], [door + out * 30 + Vector2(0, -40), 0.7, Color(1.0, 0.78, 0.45), false]]:
+		var l := PointLight2D.new()
+		l.set_meta("indoors", spot[3])
+		l.texture = tex
+		l.position = spot[0]
+		l.texture_scale = spot[1] * 1.6
+		l.color = spot[2]
+		l.height = 40.0
+		add_child(l)
+		lamps.append(l)
+
+
+func _update_lamps() -> void:
+	for l in lamps:
+		var lit: bool = night and (inside or not l.get_meta("indoors"))
+		l.enabled = lit
+		l.energy = (1.1 if l.get_meta("indoors") else 0.8) if lit else 0.0
+
+
+func _set_night(on: bool) -> void:
+	night = on
+	shade.color = Color(0.3, 0.33, 0.52) if on else Color(1, 1, 1)
+	_update_lamps()
+	if sun != null:
+		sun.enabled = not on
+
+
+# --- the HUD -------------------------------------------------------------------
+func _label(text := "") -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_color_override("font_color", Color(1, 0.97, 0.88))
+	l.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.04))
+	l.add_theme_constant_override("outline_size", 5)
+	return l
+
+
+func _build_ui() -> void:
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	stick_ui = Control.new()
+	stick_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stick_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stick_ui.draw.connect(_draw_stick)
+	layer.add_child(stick_ui)
+	var top := VBoxContainer.new()
+	top.position = Vector2(12, 10)
+	layer.add_child(top)
+	var row := HBoxContainer.new()
+	top.add_child(row)
+	for s in STYLES:
+		var b := Button.new()
+		b.text = STYLE_NAMES[s]
+		b.toggle_mode = true
+		b.pressed.connect(func(): _set_style(s))
+		row.add_child(b)
+		style_buttons[s] = b
+	var b_night := Button.new()
+	b_night.text = "День / ніч"
+	b_night.pressed.connect(func(): _set_night(not night))
+	row.add_child(b_night)
+	var b_dbg := Button.new()
+	b_dbg.text = "Контури"
+	b_dbg.pressed.connect(_toggle_debug)
+	row.add_child(b_dbg)
+	var b_old := Button.new()
+	b_old.text = "Старе демо"
+	b_old.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))
+	row.add_child(b_old)
+	hud_info = _label()
+	top.add_child(hud_info)
+	talk_btn = Button.new()
+	talk_btn.text = "Говорити"
+	talk_btn.visible = false
+	talk_btn.pressed.connect(_talk)
+	talk_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	talk_btn.position = Vector2(-150, -70)
+	layer.add_child(talk_btn)
+	dialog = PanelContainer.new()
+	dialog.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	dialog.position = Vector2(-280, -160)
+	dialog.custom_minimum_size = Vector2(560, 90)
+	dialog.visible = false
+	dialog_text = Label.new()
+	dialog_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialog_text.custom_minimum_size = Vector2(540, 70)
+	dialog.add_child(dialog_text)
+	layer.add_child(dialog)
+	var hint := _label("WASD / стрілки / стік / тягни пальцем · E або A: говорити · N або Y: день/ніч · 1–3: стиль · F3: контури")
+	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	hint.position = Vector2(12, -30)
+	layer.add_child(hint)
+
+
+func _draw_stick() -> void:
+	if stick_touch < 0:
+		return
+	stick_ui.draw_circle(stick_origin, 46, Color(1, 1, 1, 0.18))
+	stick_ui.draw_circle(stick_origin + stick * 40, 20, Color(1, 1, 1, 0.45))
+
+
+func _toggle_debug() -> void:
+	debug = not debug
+	debug_layer.visible = debug
+	debug_layer.queue_redraw()
+
+
+func _draw_debug() -> void:
+	debug_layer.draw_polyline(footprint + PackedVector2Array([footprint[0]]), Color(1, 0.2, 0.2), 2)
+	for c in walls.get_children():
+		if c is CollisionShape2D:
+			var s: Shape2D = c.shape
+			if s is SegmentShape2D:
+				debug_layer.draw_line(s.a, s.b, Color(0, 1, 1), 3)
+			elif s is RectangleShape2D:
+				debug_layer.draw_rect(Rect2(c.position - s.size / 2, s.size), Color(0, 1, 1, 0.5), false, 2)
+			elif s is CircleShape2D:
+				debug_layer.draw_circle(c.position, s.radius, Color(0, 1, 1, 0.3))
+
+
+# --- talking to Prokip ------------------------------------------------------------
+func _near_prokip() -> bool:
+	return player.position.distance_to(prokip.position) < 80
+
+
+func _talk() -> void:
+	if not _near_prokip() and dialog_i < 0:
+		return
+	dialog_i += 1
+	if dialog_i >= PROKIP_LINES.size():
+		dialog_i = -1
+		dialog.visible = false
+		return
+	dialog_text.text = "Дід Прокіп: " + PROKIP_LINES[dialog_i]
+	dialog.visible = true
+
+
+# --- input -------------------------------------------------------------------------
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed and stick_touch < 0 and event.position.y > 90:
+			stick_touch = event.index
+			stick_origin = event.position
+			stick = Vector2.ZERO
+		elif not event.pressed and event.index == stick_touch:
+			stick_touch = -1
+			stick = Vector2.ZERO
+		stick_ui.queue_redraw()
+	elif event is InputEventScreenDrag and event.index == stick_touch:
+		stick = ((event.position - stick_origin) / 40.0).limit_length(1.0)
+		stick_ui.queue_redraw()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		match event.physical_keycode:
+			KEY_1: _set_style("drova")
+			KEY_2: _set_style("pillars")
+			KEY_3: _set_style("bg2")
+			KEY_N: _set_night(not night)
+			KEY_F3: _toggle_debug()
+			KEY_E, KEY_SPACE: _talk()
+	elif event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_A: _talk()
+			JOY_BUTTON_Y: _set_night(not night)
+			JOY_BUTTON_LEFT_SHOULDER: _set_style(STYLES[(STYLES.find(style) + 2) % 3])
+			JOY_BUTTON_RIGHT_SHOULDER: _set_style(STYLES[(STYLES.find(style) + 1) % 3])
+
+
+func _physics_process(_delta: float) -> void:
+	if player == null:
+		return
+	var v := Vector2.ZERO
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): v.y -= 1
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): v.y += 1
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT): v.x -= 1
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): v.x += 1
+	var joy := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
+	if joy.length() > 0.2:
+		v += joy
+	v += stick
+	v = v.limit_length(1.0)
+	if dialog.visible and v.length() > 0.05:
+		dialog_i = -1
+		dialog.visible = false
+	player.velocity = v * SPEED
+	player.move_and_slide()
+	# walking: a little bob, and he faces the way he goes
+	var spr: Node2D = player_sprite.get_node("Sprite")
+	if v.length() > 0.05:
+		spr.position.y = -absf(sin(Time.get_ticks_msec() * 0.018)) * 4.0
+		if absf(v.x) > 0.05:
+			spr.scale.x = absf(spr.scale.x) * (-1.0 if v.x < 0 else 1.0)
+	else:
+		spr.position.y = 0
+
+
+func _process(delta: float) -> void:
+	if player == null:
+		return
+	# inside the hut? the exterior fades away and shows the room
+	var now_inside := Geometry2D.is_point_in_polygon(player.position, footprint)
+	if now_inside != inside:
+		inside = now_inside
+		_update_lamps()
+	hut_ext_sprite.modulate.a = move_toward(hut_ext_sprite.modulate.a, 0.0 if inside else 1.0, delta * 4.0)
+	# whoever is in the hut is seen only from inside it
+	prokip.modulate.a = 1.0 - hut_ext_sprite.modulate.a
+	# BG2's answer to sorting a building against people: the hut sorts at
+	# the front edge of its footprint right where the kobzar stands
+	# (the sprite is counter-moved, so only its place in the order changes)
+	var fy := _front_y(player.position.x)
+	hut_ext.position.y = fy
+	hut_ext_sprite.position.y = -fy
+	talk_btn.visible = _near_prokip()
+	fps_hist.append(Engine.get_frames_per_second())
+	if fps_hist.size() > 120:
+		fps_hist.pop_front()
+	hud_info.text = "%s · %d fps (low %d) · %s · завантаження %s · стиль зібрано за %.0f мс · текстури %.1f МБ%s" % [
+		STYLE_NAMES[style], Engine.get_frames_per_second(), int(fps_hist.min()), "ніч" if night else "день",
+		("%.1f с" % (load_ms / 1000.0)) if load_ms > 0 else "—", built_ms, style_bytes / 1048576.0,
+		" · у хаті" if inside else ""]
+
+
+## The lowest y of the footprint's outline at x: where its front edge is.
+func _front_y(x: float) -> float:
+	var best := -INF
+	for i in footprint.size():
+		var a := footprint[i]
+		var b := footprint[(i + 1) % footprint.size()]
+		if (x >= minf(a.x, b.x)) and (x <= maxf(a.x, b.x)) and absf(b.x - a.x) > 0.01:
+			best = maxf(best, lerpf(a.y, b.y, (x - a.x) / (b.x - a.x)))
+	if best == -INF:
+		for p in footprint:
+			best = maxf(best, p.y)
+	return best

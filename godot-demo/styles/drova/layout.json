@@ -1,0 +1,31 @@
+{
+  "_note": "Top-down three-quarter: the footprint is a rectangle, the door in the middle of the front (south) wall. Estimated until the Drova set lands.",
+  "camera": "topdown",
+  "hut": {
+    "scale": 0.5,
+    "footprint": [
+      [
+        -320,
+        -460
+      ],
+      [
+        320,
+        -460
+      ],
+      [
+        320,
+        -40
+      ],
+      [
+        -320,
+        -40
+      ]
+    ],
+    "door": [
+      0.42,
+      0.58
+    ],
+    "door_edge": 2,
+    "placeholder": "res://art/ov_hut0.png"
+  }
+}

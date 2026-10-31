@@ -271,12 +271,16 @@ func _build_ui() -> void:
 	layer.add_child(hint)
 	var box := HBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	box.position = Vector2(-250, 10)
+	box.position = Vector2(-330, 10)
 	layer.add_child(box)
 	var b_time := Button.new()
 	b_time.text = "Time >"
 	b_time.pressed.connect(func(): _set_hour(hour_i + 1))
 	box.add_child(b_time)
+	var b_styles := Button.new()
+	b_styles.text = "Стилі"
+	b_styles.pressed.connect(func(): get_tree().change_scene_to_file("res://styles.tscn"))
+	box.add_child(b_styles)
 	var b_play := Button.new()
 	b_play.text = "Play kobza"
 	b_play.pressed.connect(_toggle_play)
