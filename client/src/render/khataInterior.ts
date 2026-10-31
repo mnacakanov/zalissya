@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KAPLYTSIA_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -23,6 +23,7 @@ export function drawKhataInterior(
   if (id === "duplo") { drawDuploInterior(c, x, y, t); return; }
   if (id === "kurhan") { drawKurhanInterior(c, x, y, t); return; }
   if (id === "pechera") { drawPecheraInterior(c, x, y, t); return; }
+  if (id === "kaplytsia") { drawKaplytsiaInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -1350,4 +1351,154 @@ function drawPecheraInterior(c: CanvasRenderingContext2D, x: number, y: number, 
   c.fillStyle = bg; rr(c, b.x, b.y, b.w, b.h, 6); c.fill();
   c.strokeStyle = "rgba(14,10,18,0.85)"; c.lineWidth = 1; c.stroke();
   c.fillStyle = "#1e1820"; rr(c, b.x + 6, b.y + 6, b.w - 12, b.h - 12, 5); c.fill();
+}
+
+// --- The kaplytsia -------------------------------------------------------------
+// Inside it is small and close and smells of wax: the iconostas across
+// the back, gold and red, the holy doors shut in its middle; the lampadka
+// burning before them; the analoy with the book left open at the psalm
+// somebody was reading; the kanun of thin candles for the dead, and the
+// benches by the walls where the old women sit out the long services.
+function drawKaplytsiaInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.kaplytsia;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: Box) => { c.fillStyle = "rgba(30,20,10,0.28)"; rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill(); };
+  const INK = "rgba(30,20,10,0.8)";
+  const room = KAPLYTSIA_ROOM;
+  // a scrubbed pine floor, and a woven runner from the door to the analoy
+  c.fillStyle = "#c9a472";
+  c.fillRect(x, y, w, h);
+  c.strokeStyle = "rgba(90,60,30,0.3)"; c.lineWidth = 1;
+  for (let py = y + BACK_WALL + 12; py < y + h; py += 11) { c.beginPath(); c.moveTo(x, py); c.lineTo(x + w, py); c.stroke(); }
+  {
+    const rx = x + w / 2 - 11;
+    const ry = y + 74;
+    c.fillStyle = "#a83a2a";
+    c.fillRect(rx, ry, 22, h - WALL - 74);
+    c.fillStyle = "#e8d6b0";
+    for (let py = ry + 4; py < y + h - WALL - 4; py += 10) c.fillRect(rx + 3, py, 16, 2.4);
+    c.fillStyle = "#2e3a5a";
+    for (let py = ry + 8; py < y + h - WALL - 4; py += 10) { c.fillRect(rx + 9, py, 4, 2); }
+  }
+  // log walls
+  c.fillStyle = "#9a6c3c";
+  c.fillRect(x, y, w, WALL); c.fillRect(x, y, WALL, h); c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL); c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "rgba(60,36,16,0.4)";
+  for (let k = 3; k < WALL; k += 5) {
+    c.fillRect(x, y + k, w, 1); c.fillRect(x + k, y, 1, h); c.fillRect(x + w - k, y, 1, h);
+  }
+  c.fillStyle = "#b8874c"; c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL); // the threshold
+  // the iconostas: a carved screen, red and gold, two tiers of icons
+  {
+    const ix = x + WALL;
+    const iy = y + WALL;
+    const iw = w - WALL * 2;
+    const ih = BACK_WALL + room.iconostas.h - WALL;
+    c.fillStyle = "#7a2a1e";
+    c.fillRect(ix, iy, iw, ih);
+    c.fillStyle = "#c89a3a";
+    c.fillRect(ix, iy, iw, 2.4); c.fillRect(ix, iy + 13, iw, 1.6); c.fillRect(ix, iy + ih - 2.4, iw, 2.4);
+    // the upper tier: small saints in a row
+    for (let k = 0; k < 9; k++) {
+      const sx = ix + 5 + k * 11.6;
+      c.fillStyle = "#c89a3a"; c.fillRect(sx, iy + 3.5, 8.4, 8.4);
+      c.fillStyle = "#4a2a1a"; c.fillRect(sx + 1.4, iy + 5, 5.6, 6);
+      c.fillStyle = "#f0c860"; c.beginPath(); c.arc(sx + 4.2, iy + 6.6, 1.6, 0, Math.PI * 2); c.fill();
+    }
+    // the holy doors in the middle, arched and gilt, shut
+    const dx = x + w / 2;
+    c.fillStyle = "#d8aa44";
+    c.beginPath(); c.moveTo(dx - 11, iy + ih); c.lineTo(dx - 11, iy + 22); c.quadraticCurveTo(dx, iy + 12, dx + 11, iy + 22); c.lineTo(dx + 11, iy + ih); c.closePath(); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    c.strokeStyle = "#8a5a1a";
+    c.beginPath(); c.moveTo(dx, iy + 16); c.lineTo(dx, iy + ih); c.stroke();
+    for (const ox of [-6, 6]) {
+      c.beginPath(); c.arc(dx + ox, iy + 26, 3, 0, Math.PI * 2); c.stroke();
+    }
+    // the big icons either side: the Mother of God and the Saviour, under rushnyky
+    for (const ox of [-34, 16]) drawIcon(c, dx + ox, iy + 16, t);
+    // and the patron saints at the ends
+    for (const ex of [ix + 6, ix + iw - 18]) {
+      c.fillStyle = "#c89a3a"; c.fillRect(ex, iy + 17, 12, 16);
+      c.fillStyle = "#3e4a5a"; c.fillRect(ex + 2, iy + 19, 8, 12);
+      c.fillStyle = "#f0c860"; c.beginPath(); c.arc(ex + 6, iy + 22, 2.2, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // the lampadka hanging before the holy doors on its chains
+  {
+    const lx = x + w / 2;
+    const ly = y + BACK_WALL + 22;
+    c.strokeStyle = "rgba(120,90,40,0.7)"; c.lineWidth = 0.7;
+    c.beginPath(); c.moveTo(lx - 4, ly - 6); c.lineTo(lx, ly - 18); c.lineTo(lx + 4, ly - 6); c.stroke();
+    c.fillStyle = "#a83226";
+    c.beginPath(); c.arc(lx, ly - 4, 4, 0, Math.PI); c.fill();
+    const fl = 2 + Math.sin(t * 0.012) * 0.5;
+    c.fillStyle = "#ffd36a";
+    c.beginPath(); c.ellipse(lx, ly - 6, 1.3, fl, 0, 0, Math.PI * 2); c.fill();
+  }
+  // a warm glow round the candles, wax light
+  {
+    const k = R(room.kanun);
+    const g = c.createRadialGradient(k.x + k.w / 2, k.y, 2, k.x + k.w / 2, k.y, 46);
+    g.addColorStop(0, "rgba(255,210,120,0.4)"); g.addColorStop(1, "rgba(255,210,120,0)");
+    c.fillStyle = g;
+    c.fillRect(k.x - 40, k.y - 40, k.w + 80, 90);
+  }
+  // the kanun: a brass tray of sand on a stand, thin candles stuck in it
+  {
+    const k = R(room.kanun);
+    shadow(k);
+    c.fillStyle = "#6e4a2a"; c.fillRect(k.x + k.w / 2 - 2, k.y + 4, 4, k.h - 2);
+    c.fillStyle = "#b8862a";
+    c.beginPath(); c.ellipse(k.x + k.w / 2, k.y + 4, k.w / 2 + 2, 4, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    for (let i = 0; i < 6; i++) {
+      const cx2 = k.x + 2 + i * 2.2;
+      const ch = 5 + hash2(i, 1771) * 4;
+      c.fillStyle = "#f2e2b0";
+      c.fillRect(cx2, k.y + 3 - ch, 1.4, ch);
+      const fl = 1.4 + Math.sin(t * 0.014 + i * 1.7) * 0.4;
+      c.fillStyle = "#ffcf5a";
+      c.beginPath(); c.ellipse(cx2 + 0.7, k.y + 1 - ch, 0.9, fl, 0, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // the analoy, under its embroidered cloth, the book open on it
+  {
+    const a = R(room.analoy);
+    shadow(a);
+    c.fillStyle = "#6e4a2a"; rr(c, a.x, a.y, a.w, a.h, 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+    c.fillStyle = "#faf6ec";
+    c.beginPath(); c.moveTo(a.x - 2, a.y); c.lineTo(a.x + a.w + 2, a.y); c.lineTo(a.x + a.w + 3, a.y + a.h + 3); c.lineTo(a.x - 3, a.y + a.h + 3); c.closePath(); c.fill();
+    c.fillStyle = "#c8402e"; c.fillRect(a.x - 3, a.y + a.h, a.w + 6, 2);
+    c.fillStyle = "#e8dcbc";
+    c.fillRect(a.x + 1, a.y - 3, a.w / 2 - 1, 9); c.fillRect(a.x + a.w / 2, a.y - 3, a.w / 2 - 1, 9);
+    c.strokeStyle = "rgba(60,40,20,0.6)"; c.lineWidth = 0.6;
+    for (let ly = a.y - 1; ly < a.y + 5; ly += 1.6) {
+      c.beginPath(); c.moveTo(a.x + 2.5, ly); c.lineTo(a.x + a.w / 2 - 1.5, ly); c.moveTo(a.x + a.w / 2 + 1.5, ly); c.lineTo(a.x + a.w - 2.5, ly); c.stroke();
+    }
+    c.fillStyle = "#b03a2e"; c.fillRect(a.x + a.w / 2 - 0.6, a.y - 3, 1.2, 12); // the ribbon
+  }
+  // the benches by the walls
+  for (const b of [R(room.lavaW), R(room.lavaE)]) {
+    shadow(b);
+    c.fillStyle = "#8a6440"; rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
+  }
+  // a censer hung on its hook by the east wall, a thread of smoke going up
+  {
+    const kx = x + w - WALL - 14;
+    const ky = y + 62;
+    c.strokeStyle = "rgba(120,90,40,0.7)"; c.lineWidth = 0.7;
+    c.beginPath(); c.moveTo(kx, ky - 12); c.lineTo(kx, ky - 3); c.stroke();
+    c.fillStyle = "#a0782c";
+    c.beginPath(); c.arc(kx, ky, 3.4, 0, Math.PI * 2); c.fill();
+    for (let i = 0; i < 3; i++) {
+      const ph = (t * 0.00025 + i / 3) % 1;
+      c.fillStyle = `rgba(230,226,216,${0.35 * (1 - ph)})`;
+      c.beginPath(); c.arc(kx + Math.sin(ph * 7 + i) * 3, ky - 6 - ph * 26, 1.6 + ph * 4, 0, Math.PI * 2); c.fill();
+    }
+  }
 }

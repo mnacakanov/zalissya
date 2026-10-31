@@ -14,8 +14,9 @@ export const HOUSES: Array<Rect & { kind: "hut" | "forge" }> = [
 
 export const WELL: Rect = { x: 916, y: 470, w: 68, h: 52 };
 // The kaplytsia: a small wooden chapel at the head of the maidan, where the
-// fire is, with the otaman's khata behind it (render/khutir.ts drawKaplytsia).
-export const KAPLYTSIA: Rect = { x: 800, y: 404, w: 80, h: 56 };
+// fire is, with the otaman's khata behind it. Walk-in now (data/houses.ts
+// HOUSE_RECTS.kaplytsia; render/khutir.ts drawKaplytsia).
+export const KAPLYTSIA: Rect = HOUSE_RECTS.kaplytsia;
 export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
 export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
 export const GARDEN: Rect = { x: 960, y: 860, w: 150, h: 96 };
@@ -59,7 +60,7 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // (and a clearing round the old hollow oak in the south forest, where
   // Motrya sleeps by day: data/hideouts.ts)
   const builtOn = (x: number, y: number) =>
-    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA, { x: 880, y: 1760, w: 200, h: 150 }].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
+    [...Object.values(HOUSE_RECTS), ...HOUSES, { x: 880, y: 1760, w: 200, h: 150 }].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
   for (let i = TREES.length - 1; i >= 0; i--) {
     const tr = TREES[i];
     if (tr && builtOn(tr.x, tr.y)) TREES.splice(i, 1);
@@ -143,7 +144,6 @@ export const SOLID: Rect[] = [
   }),
   WELL,
   FIRE,
-  KAPLYTSIA,
   // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk
   // through him (and you would not want to).
   { x: 1352, y: 196, w: 136, h: 84 },

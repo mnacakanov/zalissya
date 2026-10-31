@@ -137,7 +137,9 @@ export function nextWaypoint(from: Spot, to: Spot): Spot {
     // to the step outside; once in line with the door, straight in
     const outD = outsideDoor(th);
     const lined = Math.abs(from.x - outD.x) < 8 && from.y <= outD.y + 3;
-    return lined ? insideDoor(th) : outD;
+    // (round any other house that stands between, such as the chapel
+    // before the otaman's door)
+    return lined ? insideDoor(th) : aroundHouses(from, outD);
   }
   // out of doors: if a khata stands in the way, go round by its corners
   return aroundHouses(from, to);
@@ -167,7 +169,9 @@ function aroundHouses(from: Spot, to: Spot): Spot {
     for (const k of corners) {
       if (Math.hypot(k.x - from.x, k.y - from.y) < 3) continue;
       if (segHitsRect(from, k, r)) continue;
-      const cost = Math.hypot(k.x - from.x, k.y - from.y) + Math.hypot(to.x - k.x, to.y - k.y);
+      // a corner from which the house still blocks the way costs a detour
+      // (or a walker dithers between two corners, each looking nearer)
+      const cost = Math.hypot(k.x - from.x, k.y - from.y) + Math.hypot(to.x - k.x, to.y - k.y) + (segHitsRect(k, to, r) ? r.w + r.h : 0);
       if (cost < bestCost) { bestCost = cost; best = k; }
     }
     return best;

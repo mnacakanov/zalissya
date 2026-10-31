@@ -6,7 +6,7 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, HOUSES, KAPLYTSIA, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
+import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -100,8 +100,8 @@ const BENCH_SOLIDS = [
   ...BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 })),
 ];
 // What each walk-in house says when you step in, and its HUD label.
-const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera" };
-const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera" };
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera", kaplytsia: "ui.enterHut.kaplytsia" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera", kaplytsia: "ui.hut.kaplytsia" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -200,7 +200,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1, kaplytsia: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -1889,12 +1889,13 @@ export function App() {
                 ? drawKurhanMound(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "pechera"
                 ? drawPechera(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, !isSabbath(clockRef.current.minute))
+              : id === "kaplytsia"
+                ? drawKaplytsia(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
             : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
-      drawables.push({ y: KAPLYTSIA.y + KAPLYTSIA.h, draw: () => drawKaplytsia(ctx2d, KAPLYTSIA.x - camX, KAPLYTSIA.y - camY, KAPLYTSIA.w, KAPLYTSIA.h, now) });
       drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now, -1) });
       for (const k of [KURHAN]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {

@@ -97,6 +97,8 @@ function windowLights(id: HouseId): Light[] {
     case "pustka": return [];
     case "mlyn": return []; // nobody grinds by night (that anyone admits to)
     case "duplo": case "kurhan": case "pechera": return [];
+    // the lampadka before the icons, through the two narrow windows
+    case "kaplytsia": return at([16, r.w - 30], base - 60 + 24, 14);
   }
 }
 

@@ -24,7 +24,8 @@ import { type Rect } from "../world/geometry";
 //   duplo, kurhan, pechera — the sabbath's day hiding places, walk-in too
 //     (data/hideouts.ts): the hollow of the old oak, the chamber dug into the
 //     steppe kurhan, and Beelzebub's cave on Lysa Hora
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera";
+//   kaplytsia — the log chapel at the head of the maidan (KAPLYTSIA_ROOM)
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -39,6 +40,8 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   duplo: { x: 925, y: 1790, w: 110, h: 100 },
   kurhan: { x: 2080, y: 300, w: 170, h: 120 },
   pechera: { x: 3660, y: 240, w: 180, h: 136 },
+  // between the otaman's porch and the fire, its door facing the fire
+  kaplytsia: { x: 770, y: 380, w: 140, h: 124 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -143,7 +146,22 @@ export const PECHERA_ROOM = {
   hoard: { x: 16, y: 84, w: 26, h: 18 },
 } as const satisfies Record<string, Rect>;
 
+// The kaplytsia: one small room of pine logs. The iconostas (a carved,
+// painted screen of icons) closes the back with the holy doors in its
+// middle; before it the analoy (a lectern) with the book open, and the
+// kanun, the stand of candles people light for their dead; a bench
+// along each side wall for the old. Footprint 140×124, the door at
+// x 47…93.
+export const KAPLYTSIA_ROOM = {
+  iconostas: { x: 14, y: BACK_WALL, w: 112, h: 10 },
+  analoy: { x: 62, y: 60, w: 16, h: 12 },
+  kanun: { x: 22, y: 58, w: 14, h: 12 },
+  lavaW: { x: 14, y: 82, w: 10, h: 26 },
+  lavaE: { x: 116, y: 82, w: 10, h: 26 },
+} as const satisfies Record<string, Rect>;
+
 function furniture(id: HouseId): Rect[] {
+  if (id === "kaplytsia") return Object.values(KAPLYTSIA_ROOM);
   if (id === "duplo") return Object.values(DUPLO_ROOM);
   if (id === "kurhan") return Object.values(KURHAN_ROOM);
   if (id === "pechera") return Object.values(PECHERA_ROOM);
