@@ -77,11 +77,12 @@ scale:                       # real-world sizes; keep them consistent across ass
 
 | File | Approved for | Notes |
 |---|---|---|
+| `art/reference/prokip-hut-iso.png` | **APPROVED: the scene's reference for camera, scale, orientation and buildings.** Attach to every request from now on, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. Its greens run a little warmer and yellower than the oak's sage; keep later assets nearer the oak. |
 | `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Approved for the look only. Its view is side-on and it has a background and an oval shadow; the game version must follow §1 (camera, transparent). |
 | `art/reference/prokip-hut-v2.png` | **Building materials and details**: thatch, moss, damp whitewash, timber, herbs, raven, ink. Attach to building requests. | **Wrong camera** (front-on, near eye level): never use it for the view. Also a white background and a horned skull (must be a horse skull). |
 | `art/reference/prokip-hut.webp` | Earlier draft of the same; same materials. | Same problems as v2, plus an off-centre door. |
 
-When the isometric Prokip hut is approved, it goes here as `art/reference/prokip-hut-iso.png` and becomes **the** reference for camera, scale and every building.
+`prokip-hut-iso.png` is **the** reference for camera, scale and every building; every new asset is checked against it side by side.
 
 ---
 
@@ -155,7 +156,7 @@ background, white background, scenery, cast shadow, oval shadow, front view, sid
 2. **Give the canvas size** in the request.
 3. **Iterate with numbered corrections**, the most important first: "Same image, keep everything else, fix: 1) … 2) …". Muse tends to keep a white background and a horned skull through a round; put those first and repeat them in the negative prompt.
 4. **Transparency:** if Muse can't, flat pure #00FF00; never accept white.
-5. **The hut first.** Don't generate the rest of the scene until the isometric hut is approved; then attach it to every later request as the camera and scale reference.
+5. **The hut is approved** (`art/reference/prokip-hut-iso.png`): attach it to every request as the camera and scale reference, together with the oak for style.
 6. **Characters:** turnaround first, then a parts sheet from the approved turnaround (head, torso, upper arms, forearms, hands, thighs, lower legs, feet, held items, each separate with rounded joint ends).
 7. **Record lessons** in §7.
 
@@ -196,3 +197,5 @@ PNG with alpha, sRGB, at the generated size. A short `<id>.md` beside an asset i
 - Never a white background: whitewash can't be separated from it.
 - Muse defaults to a front-on, near-eye-level view of buildings; spell out the isometric camera (corner toward the viewer, roof top visible, two faces) every time.
 - Muse adds an oval ground shadow unless told not to.
+- The horned skull survived two correction rounds and was fixed only when it was correction no. 1, worded "NO horns at all, nothing on top of the head". Lead with the most stubborn fix.
+- When asked to match the oak's colour, Muse swung warmer and yellower than the oak; ask for "cool sage green like the oak" rather than just "greener".
