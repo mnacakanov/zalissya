@@ -62,8 +62,21 @@ Each building has an `id`, a `name` (Ukrainian, shown with F3) and a `kind`.
 - the hut and room art from `styles/pillars/`;
 - the door, the pich and the furniture from `styles/pillars/layout.json`.
 
-Only `at` is needed. Every khata faces south, with its door in the south
-wall.
+Only `at` is needed. **`facing`** says which way its door looks:
+- the head of the horseshoe faces south, toward the maidan;
+- the west arm faces east;
+- the east arm faces west.
+
+The art has to be drawn that way, because a picture can't be turned: the
+door goes on the matching wall in the picture, and in the hut's `hut.json`
+it is `"door": {"wall": "east", "t": [t0, t1]}` (a plain `[t0, t1]` means
+the south wall).
+
+A west-facing door is on the side turned away from the camera. You see that
+house from behind, and when the kobzar walks round it to its door, it turns
+see-through, as in BG2. Any building does that when it hides him.
+
+Until a hut has its own art, it is the style's south-facing hut.
 
 **Each khata can have its own art.** Put it in
 `styles/pillars/huts/<id>/` (or name the folder with `"art"`):

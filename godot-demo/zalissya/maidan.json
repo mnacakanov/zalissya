@@ -10,17 +10,17 @@
     {"kind": "road", "width": 3.2, "points": [[0, 3], [0.8, 9], [-0.6, 15], [0.4, 21], [0, 26]]}
   ],
   "paths": [
-    {"width": 1.1, "points": [[8, -9], [10.5, -11.5], [11.9, -13.3]]}
+    {"width": 1.1, "points": [[8, -9], [11, -11.5], [12.9, -13.3]]}
   ],
   "buildings": [
-    {"id": "otaman", "name": "Хата отамана", "kind": "khata", "at": [0, -15]},
-    {"id": "domovyk", "name": "Хата Домовика", "kind": "khata", "at": [-13, -10]},
-    {"id": "vesna", "name": "Хата Весни", "kind": "khata", "at": [13, -5]},
-    {"id": "pustka", "name": "Пустка", "kind": "khata", "at": [12, -16]},
-    {"id": "kaplytsia", "name": "Каплиця", "kind": "placeholder", "at": [0, -6.5], "size": [3.5, 3], "height": 4.5},
-    {"id": "krynytsia", "name": "Криниця", "kind": "placeholder", "at": [5, -3.5], "size": [1.6, 1.6], "height": 1.0},
+    {"id": "otaman", "name": "Хата отамана", "kind": "khata", "at": [0, -16], "facing": "south"},
+    {"id": "domovyk", "name": "Хата Домовика", "kind": "khata", "at": [-15, -9], "facing": "east"},
+    {"id": "vesna", "name": "Хата Весни", "kind": "khata", "at": [15, -5], "facing": "west"},
+    {"id": "pustka", "name": "Пустка", "kind": "khata", "at": [13, -16], "facing": "south"},
+    {"id": "kaplytsia", "name": "Каплиця", "kind": "placeholder", "at": [0, -7.5], "size": [3.5, 3], "height": 4.5},
+    {"id": "krynytsia", "name": "Криниця", "kind": "placeholder", "at": [5, -4.5], "size": [1.6, 1.6], "height": 1.0},
     {"id": "vatra", "name": "Ватра", "kind": "placeholder", "at": [0, 0], "size": [1.8, 1.2], "height": 0.4},
-    {"id": "kuznia", "name": "Кузня Радека", "kind": "placeholder", "at": [-16, -1.5], "size": [4.5, 3], "height": 3.0}
+    {"id": "kuznia", "name": "Кузня Радека", "kind": "placeholder", "at": [-15.5, 0], "size": [3, 4.5], "height": 3.0, "facing": "east"}
   ],
   "props": []
 }

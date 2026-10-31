@@ -273,21 +273,34 @@ func _build_khata(b: Dictionary) -> void:
 	cs.shape = sh
 	cs.position = room.transform * Vector2(inn.pich[0], inn.pich[1])
 	walls.add_child(cs)
-	# the walls along the footprint, with a gap for the door in the south wall
-	var d0: float = h.door[0]
-	var d1: float = h.door[1]
-	_wall(foot[0], foot[0].lerp(foot[1], d0))
-	_wall(foot[0].lerp(foot[1], d1), foot[1])
-	_wall(foot[1], foot[2])
-	_wall(foot[2], foot[3])
-	_wall(foot[3], foot[0])
+	# the walls along the footprint, with a gap for the door. The door is
+	# [t0, t1] along the south wall, or {"wall": "east", "t": [t0, t1]}: in a
+	# horseshoe the huts on its arms face the maidan, east or west. The
+	# footprint's edges run SW→SE (south), SE→NE (east), NE→NW (north),
+	# NW→SW (west).
+	var dw := 0
+	var dt: Array = h.door
+	if h.door is Dictionary:
+		dw = ["south", "east", "north", "west"].find(h.door.get("wall", "south"))
+		dt = h.door.t
+	var d0: float = dt[0]
+	var d1: float = dt[1]
+	for i in 4:
+		var a := foot[i]
+		var c := foot[(i + 1) % 4]
+		if i == dw:
+			_wall(a, a.lerp(c, d0))
+			_wall(a.lerp(c, d1), c)
+		else:
+			_wall(a, c)
 	var name_l := _label(b.get("name", b.id))
 	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
 	name_l.visible = false
 	inner.add_child(name_l)
-	var door := foot[0].lerp(foot[1], (d0 + d1) / 2.0)
-	var outward := (foot[0] - foot[3]).normalized()   # out of the south wall
+	var door := foot[dw].lerp(foot[(dw + 1) % 4], (d0 + d1) / 2.0)
+	var outward := (door - _centroid(foot)).normalized()
 	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
+		"rect": _sprite_rect(ext),
 		"pich": cs.position, "door": door + outward * 0.6 * metre})
 
 
@@ -313,7 +326,8 @@ func _build_sprite(b: Dictionary) -> void:
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
 		walls.add_child(cp)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l})
+	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l,
+		"fade": spr, "rect": _sprite_rect(spr)})
 
 
 ## a thing with no art yet: a plain block of its real size, with its name
@@ -346,7 +360,20 @@ func _build_placeholder(b: Dictionary) -> void:
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
 		walls.add_child(cp)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "id": b.id})
+	var r := Rect2(foot[0], Vector2.ZERO)
+	for p in foot:
+		r = r.expand(p)
+		r = r.expand(p + up)
+	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "id": b.id,
+		"fade": inner, "rect": r})
+
+
+## where a sprite covers the scene, to tell when it hides the kobzar
+func _sprite_rect(spr: Sprite2D) -> Rect2:
+	if spr.texture == null:
+		return Rect2()
+	var sz := spr.texture.get_size() * spr.scale
+	return Rect2(spr.position + spr.offset * spr.scale, sz)
 
 
 func _wall(a: Vector2, b: Vector2) -> void:
@@ -633,7 +660,12 @@ func _process(delta: float) -> void:
 		b.node.position.y = fy
 		b.inner.position.y = -fy
 		if b.has("fade"):
-			var target := 0.0 if now_in == i else 1.0
+			# inside it, it lifts away; behind it (its picture over him and
+			# its front edge below his feet), it turns see-through, the way
+			# isometric games let you walk behind a house to its far door
+			var r: Rect2 = b.rect
+			var behind := player.position.y < fy and r.grow(-4).has_point(player.position + Vector2(0, -0.8 * metre))
+			var target := 0.0 if now_in == i else (0.35 if behind else 1.0)
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
 	if now_in != inside_of:
 		inside_of = now_in
