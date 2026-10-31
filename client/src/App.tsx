@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./data/characters";
-import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
+import { BED_SPOT_WORLD, doorOf, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
@@ -22,9 +22,9 @@ import { korchmaTopicSet } from "./dialogue/korchma";
 import { KORCHMA_PLAY, ODARKA, OKHRIM } from "./data/korchma";
 import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
 import { makeCritters, stepCritter } from "./systems/critters";
-import { perelesnykFlies, perelesnykMeetable, prokipNext, prokipStage } from "./systems/vorozhbyt";
+import { perelesnykFlies, perelesnykMeetable, prokipNext, prokipStage, vesnaAngry, vesnaCanForgive } from "./systems/vorozhbyt";
 import { PERELESNYK_AT, PERELESNYK_NPC, PROKIP } from "./data/vorozhbyt";
-import { odarkaProkipTopics, PERELESNYK_DRIVEN, PERELESNYK_SCENE, PERELESNYK_SPARED, prokipTopicSet, vesnaProkipTopics } from "./dialogue/vorozhbyt";
+import { odarkaProkipTopics, vesnaAngryLine, vesnaSorryTopic, PERELESNYK_DRIVEN, PERELESNYK_SCENE, PERELESNYK_SPARED, prokipTopicSet, vesnaProkipTopics } from "./dialogue/vorozhbyt";
 import { animalLine, animalSpeaker } from "./dialogue/animals";
 import { BENCHES, RESIDENTS, type ResidentId, STRAW_BED } from "./data/schedules";
 import { planFor, type Pose, walkToward, type Walker } from "./systems/schedules";
@@ -802,8 +802,17 @@ export function App() {
     // Did Prokip's errands (systems/vorozhbyt.ts): each ask hands over the next step
     if (g === "prokipNext" || g === "vesnaAnswer") {
       const stage = prokipStage({ flags: f, met: talkedRef.current.has("prokip"), heard: talkedRef.current.has("vesna") });
-      const next = g === "vesnaAnswer" ? (stage === "message" ? "vesnaAnswer" : null) : prokipNext(stage);
+      // asking Vesna about the rain makes her cross: she chases you out
+      if (g === "vesnaAnswer") {
+        if (stage === "message") { setFlag("vesnaTold"); chaseFromVesna(); }
+        return;
+      }
+      const next = prokipNext(stage);
       if (next) setFlag(next);
+      return;
+    }
+    if (g === "vesnaSorry") {
+      if (vesnaCanForgive(f)) { setFlag("vesnaForgiven"); showToast(t("prokip.vesna.toast.forgiven")); }
       return;
     }
     // Radek buys horseshoes for chervintsi (systems/trade.ts)
@@ -950,6 +959,29 @@ export function App() {
     dialogueRef.current = null;
     setDialogue(null);
     if (recipe != null) performBrew(recipe);
+  };
+
+  // Vesna sees the kobzar off with her broom: out of her khata if he is in
+  // it, else a good few steps away from her, wherever there is ground.
+  const chaseFromVesna = () => {
+    const pl = playerRef.current;
+    showToast(t("prokip.vesna.toast.chased"));
+    dirtyRef.current = true;
+    if (houseAt(pl.x, pl.y) === "hut1") {
+      const d = doorOf("hut1");
+      pl.x = d.x; pl.y = d.y + 46;
+      return;
+    }
+    const v = residentsRef.current.vesna;
+    if (!v) return;
+    const dx = pl.x - v.x;
+    const dy = pl.y - v.y;
+    const len = Math.hypot(dx, dy) || 1;
+    for (let k = 110; k >= 30; k -= 20) {
+      const nx = pl.x + (dx / len) * k;
+      const ny = pl.y + (dy / len) * k;
+      if (!SOLID.some((b) => circleRectCollide(nx, ny - 6, PLAYER_R, b))) { pl.x = nx; pl.y = ny; return; }
+    }
   };
 
   const doInteract = () => {
@@ -1129,6 +1161,12 @@ export function App() {
             openDialogue(p.npc, n);
             return;
           }
+        } else if (p.npc.id === "vesna" && vesnaAngry(flags)) {
+          // cross with you (systems/vorozhbyt.ts): until Prokip has told
+          // you why, she just chases you off; after, you may apologize
+          if (vesnaCanForgive(flags)) openTopicDialogue(p.npc, [vesnaAngryLine(Math.random())], [vesnaSorryTopic()]);
+          else { openDialogue(p.npc, [vesnaAngryLine(Math.random())]); chaseFromVesna(); }
+          return;
         } else if (p.npc.id === "prokip") {
           const pset = prokipTopicSet(prokipStage({ flags, met: true, heard: true }), flags, firstMeeting);
           openTopicDialogue(p.npc, pset.intro, pset.topics);

@@ -53,6 +53,15 @@ export function vesnaProkipTopics(stage: ProkipStage): DialogueTopic[] {
   ];
 }
 
+// Vesna while she is cross (systems/vorozhbyt.ts vesnaAngry): one sharp
+// line, and, once Prokip has told you why, the chance to apologize.
+export function vesnaAngryLine(pick: number): string {
+  return t(`prokip.vesna.angry.${Math.min(2, Math.floor(pick * 3))}` as TextKey);
+}
+export function vesnaSorryTopic(): DialogueTopic {
+  return topic("sorry", "prokip.vesna.t.sorry", seq("prokip.vesna.sorry", 3), "vesnaSorry");
+}
+
 // Odarka: pale while the perelesnyk still comes, and after it is gone,
 // grieving like a person again.
 export function odarkaProkipTopics(flags: ReadonlySet<string>): DialogueTopic[] {

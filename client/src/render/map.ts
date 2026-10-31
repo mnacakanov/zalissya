@@ -22,7 +22,7 @@ export type MapView = { zoom: "world" | "near"; player: { x: number; y: number }
 function prokipTarget(flags: ReadonlySet<string>): { x: number; y: number } | null {
   if (flagHas(flags, "zviryna")) return null;
   if (flagHas(flags, "perelesnykQuest") && !flagHas(flags, "perelesnykGone")) return doorOf("korchma");
-  if (flagHas(flags, "prokipMessage") && !flagHas(flags, "vesnaAnswer")) return doorOf("hut1");
+  if (flagHas(flags, "prokipMessage") && !flagHas(flags, "vesnaAnswer") && !flagHas(flags, "vesnaTold")) return doorOf("hut1");
   if (flagHas(flags, "resheto") && !flagHas(flags, "reshetoTried")) return { x: WELL.x + WELL.w / 2, y: WELL.y + WELL.h / 2 };
   return doorOf("prokip");
 }

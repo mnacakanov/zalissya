@@ -9,9 +9,12 @@ import { isNight } from "./time";
 //   1. «Вода в решеті» — he sends you to fetch water from the khutir's well
 //      in a sieve. You go. It runs out. He laughs: forty years he has
 //      handed that sieve to everyone, and you are the first who went.
-//   2. «Привіт від Прокопа» — carry a message to Vesna: "Prokip says you
-//      were wrong." Her answer, and what it was about (fifty years ago, a
-//      Kupala night, rain), is the joke and the heart of him.
+//   2. «Привіт від Прокопа» — carry his regards to Vesna and ask, politely,
+//      whether it will rain on Kupala. It sounds like nothing. It is the
+//      sore spot of fifty years (a Kupala night, rain, a man who never
+//      admitted he was wrong): she chases you out with a broom and stays
+//      cross with you. Prokip laughs till he cries, tells you why, and
+//      sends you to apologize; until you do, Vesna won't talk to you.
 //   3. «Перелесник» — the serious one. A fiery serpent flies to the
 //      korchma at night in the shape of Odarka's Stepan, who rode to the
 //      Sich seven years ago. He gives you blessed poppy seed: scatter it on
@@ -42,7 +45,9 @@ export function prokipStage(v: ProkipView): ProkipStage {
   if (flagHas(f, "perelesnykGone")) return "reward";
   if (flagHas(f, "perelesnykQuest")) return "perelesnyk";
   if (flagHas(f, "vesnaDone")) return "offerPerelesnyk";
-  if (flagHas(f, "vesnaAnswer")) return "answer";
+  // (older saves carried her answer back as "vesnaAnswer"; now telling her
+  // is "vesnaTold", and it makes her cross)
+  if (flagHas(f, "vesnaAnswer") || flagHas(f, "vesnaTold")) return "answer";
   if (flagHas(f, "prokipMessage")) return "message";
   if (flagHas(f, "reshetoDone")) return "offerMessage";
   if (flagHas(f, "reshetoTried")) return "sieveBack";
@@ -62,6 +67,15 @@ export function prokipNext(stage: ProkipStage): string | null {
     case "reward": return "zviryna";
     default: return null;
   }
+}
+
+// Vesna is cross with the kobzar from the moment he asks about the rain
+// until he apologizes (which he can do once Prokip has told him why).
+export function vesnaAngry(flags: ReadonlySet<string>): boolean {
+  return flagHas(flags, "vesnaTold") && !flagHas(flags, "vesnaForgiven");
+}
+export function vesnaCanForgive(flags: ReadonlySet<string>): boolean {
+  return vesnaAngry(flags) && flagHas(flags, "vesnaDone");
 }
 
 // The perelesnyk flies to the korchma every night until it is driven off,

@@ -2,7 +2,7 @@ import { flagCount, flagHas } from "./flags";
 import { knowsSong } from "./songs";
 import { ostapState } from "./chumaky";
 import { tobaccoStage } from "./tobacco";
-import { prokipStage, type ProkipStage } from "./vorozhbyt";
+import { prokipStage, type ProkipStage, vesnaCanForgive } from "./vorozhbyt";
 import { t, type TextKey } from "../i18n";
 
 // --- Quests ------------------------------------------------------------------
@@ -134,6 +134,14 @@ const QUESTS: QuestDef[] = [
     done: (d) => prokipOf(d) === "done",
     detail: (d) => t(PROKIP_TEXT[prokipOf(d)]),
     objective: (d) => t(PROKIP_TEXT[prokipOf(d)]),
+  },
+  {
+    // Vesna, cross after the question about the rain (systems/vorozhbyt.ts)
+    id: "vesna-sorry", section: "life", title: t("quest.vesnaSorry.title"),
+    visible: (d) => flagHas(d.f, "vesnaTold"),
+    done: (d) => flagHas(d.f, "vesnaForgiven"),
+    detail: (d) => t(flagHas(d.f, "vesnaForgiven") ? "quest.vesnaSorry.done" : vesnaCanForgive(d.f) ? "quest.vesnaSorry.sorry" : "quest.vesnaSorry.why"),
+    objective: (d) => t(vesnaCanForgive(d.f) ? "quest.vesnaSorry.sorry" : "quest.vesnaSorry.why"),
   },
   {
     id: "evening", section: "story", title: t("quest.evening.title"),
@@ -291,7 +299,7 @@ const QUESTS: QuestDef[] = [
 // iron ward) are listed in the log but never become the objective.
 const PRIORITY = [
   "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "tobacco",
-  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vigil", "lysa-sabbath",
+  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vesna-sorry", "vigil", "lysa-sabbath",
 ];
 
 export function questLog(v: QuestView): QuestLog {
