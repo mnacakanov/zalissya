@@ -46,10 +46,10 @@ a gamepad.
     pixel-art way;
   - `kobzar_walk_front_0..7.png` and `kobzar_walk_back_0..7.png`, mirrored
     for the left-hand directions;
-  - with neither, the standing `kobzar.png` bobs along.
-
-  A parts rig (`kobzar_parts/`) comes when Harry's parts land (requests
-  in #4).
+  - `kobzar_parts/front|back/` (head, torso, upper and lower arms and legs,
+    near and far, kobza, optional pelvis): a cut-out rig (`_build_rig`), the
+    limbs swinging from joints found by proportion, mirrored for the left;
+  - with none of these, the standing `kobzar.png` bobs along.
 - **Pixel art.** `"pixel": true` in a layout draws every sprite at one whole
   density (`scale`), so texels stay square.
 - **Pillars-lite normals.** Run `tools/normals.py` over the Pillars-lite

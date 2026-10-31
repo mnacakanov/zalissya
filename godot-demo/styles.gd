@@ -26,7 +26,10 @@ var ground: Node2D          # the floor of the scene, under everything
 var player: CharacterBody2D
 var player_sprite: Sprite2D
 var player_anim: AnimatedSprite2D   # the walk, when the style has one
-var anim_kind := ""                 # "sheet4" (Drova's 4 directions) or "frontback"
+var anim_kind := ""                 # "sheet4" (Drova's 4 directions), "frontback" or "rig"
+var rigs := {}                      # "front" / "back" → the cut-out puppet's root
+var rig_joints := {}                # facing → {joint name: Node2D}
+var walk_phase := 0.0
 var walls: StaticBody2D
 var hut_ext: Node2D         # the hut's exterior, faded away while you are inside
 var hut_ext_sprite: Node2D
@@ -398,6 +401,8 @@ func _build_people() -> void:
 	player_sprite = _sprite_m("kobzar", heights.kobzar)
 	player.add_child(player_sprite)
 	_build_walk(heights.kobzar)
+	if anim_kind == "":
+		_build_rig(heights.kobzar)
 	var cam := Camera2D.new()
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 6.0
@@ -461,8 +466,153 @@ func _build_walk(metres: float) -> void:
 	player.add_child(player_anim)
 
 
+# --- the cut-out kobzar (Harry's parts, kobzar_parts/<facing>/*.png) -------------
+# Each limb hangs from a joint near the top of its own picture (the centre of
+# its rounded end) and carries the next one at its bottom. The joints on the
+# torso are found from its proportions. Near = the viewer's side: on the left
+# of the picture facing front (lower right), on the right facing back.
+const PART_DIR := "res://styles/%s/kobzar_parts/%s/%s.png"
+
+
+func _part(facing: String, name: String) -> Texture2D:
+	var path := PART_DIR % [style, facing, name]
+	return load(path) if ResourceLoader.exists(path) else null
+
+
+## a part as a Sprite2D whose origin is its joint (fx, fy as fractions of
+## its size, or px from its top when py_px >= 0)
+func _limb(tex: Texture2D, pivot: Vector2) -> Sprite2D:
+	var sp := Sprite2D.new()
+	sp.texture = tex
+	sp.centered = false
+	sp.offset = -pivot
+	return sp
+
+
+func _limb_chain(facing: String, upper: String, lower: String, at: Vector2, behind: bool, parent: Node2D, joints: Dictionary, key: String) -> void:
+	var tu := _part(facing, upper)
+	var tl := _part(facing, lower)
+	if tu == null or tl == null:
+		return
+	var ru := minf(tu.get_width(), tu.get_height()) * 0.3
+	var rl := minf(tl.get_width(), tl.get_height()) * 0.25
+	var up := _limb(tu, Vector2(tu.get_width() / 2.0, ru))
+	up.position = at
+	up.show_behind_parent = behind
+	parent.add_child(up)
+	var lo := _limb(tl, Vector2(tl.get_width() / 2.0, rl))
+	lo.position = Vector2(0, tu.get_height() - 2.0 * ru)
+	up.add_child(lo)
+	joints[key + "_upper"] = up
+	joints[key + "_lower"] = lo
+
+
+func _build_rig(metres: float) -> void:
+	rigs = {}
+	rig_joints = {}
+	for facing in ["front", "back"]:
+		var torso_t := _part(facing, "torso")
+		if torso_t == null:
+			return
+		var s := 1.0 if facing == "front" else -1.0   # which side of the picture is near
+		var tw := float(torso_t.get_width())
+		var th := float(torso_t.get_height())
+		var root := Node2D.new()
+		var torso := _limb(torso_t, Vector2(tw / 2.0, th * 0.86))   # its origin is the middle of the hips
+		root.add_child(torso)
+		var j := {"torso": torso}
+		var loc := func(px: float, py: float) -> Vector2: return Vector2(px - tw / 2.0, py - th * 0.86)
+		# legs, under the svyta (behind the torso), the far one first
+		_limb_chain(facing, "leg_upper_far", "leg_lower_far", loc.call(tw / 2.0 + s * tw * 0.16, th * 0.84), true, torso, j, "leg_far")
+		_limb_chain(facing, "leg_upper_near", "leg_lower_near", loc.call(tw / 2.0 - s * tw * 0.16, th * 0.84), true, torso, j, "leg_near")
+		var pelvis_t := _part(facing, "pelvis")
+		if pelvis_t != null:
+			var pel := _limb(pelvis_t, Vector2(pelvis_t.get_width() / 2.0, pelvis_t.get_height() * 0.25))
+			pel.position = loc.call(tw / 2.0, th * 0.8)
+			pel.show_behind_parent = true
+			torso.add_child(pel)
+		# the kobza: on his back, so behind him from the front, over him from behind
+		var kob_t := _part(facing, "kobza")
+		if kob_t != null:
+			var kob := _limb(kob_t, Vector2(kob_t.get_width() / 2.0, kob_t.get_height() / 2.0))
+			if facing == "front":
+				kob.position = loc.call(tw / 2.0 + tw * 0.28, th * 0.32)
+				kob.rotation = 0.45
+				kob.show_behind_parent = true
+			else:
+				kob.position = loc.call(tw / 2.0, th * 0.42)
+				kob.rotation = -0.2
+			torso.add_child(kob)
+		# arms: the far one behind the torso, the near one over it
+		_limb_chain(facing, "arm_upper_far", "arm_lower_far", loc.call(tw / 2.0 + s * tw * 0.33, th * 0.13), true, torso, j, "arm_far")
+		_limb_chain(facing, "arm_upper_near", "arm_lower_near", loc.call(tw / 2.0 - s * tw * 0.33, th * 0.13), false, torso, j, "arm_near")
+		# the head on the neck
+		var head_t := _part(facing, "head")
+		var head_h := 0.0
+		if head_t != null:
+			head_h = head_t.get_height()
+			var head := _limb(head_t, Vector2(head_t.get_width() / 2.0, head_h * 0.9))
+			head.position = loc.call(tw / 2.0, th * 0.05)
+			torso.add_child(head)
+			j["head"] = head
+		# stand him on his feet: the hips as high as the straight legs are long
+		var leg_len := 0.0
+		if j.has("leg_near_upper"):
+			var u: Sprite2D = j["leg_near_upper"]
+			var l: Sprite2D = j["leg_near_lower"]
+			leg_len = (u.texture.get_height() + u.offset.y * 2.0) + (l.texture.get_height() + l.offset.y)
+		torso.position = Vector2(0, -leg_len)
+		# and scale him to his real height
+		var height := leg_len + th * 0.81 + head_h * 0.9
+		var sc := metres * metre / height
+		root.scale = Vector2(sc, sc)
+		root.visible = false
+		player.add_child(root)
+		rigs[facing] = root
+		rig_joints[facing] = j
+	anim_kind = "rig"
+	player_sprite.visible = false
+	rigs["front"].visible = true
+
+
+## one frame of the cut-out walk: legs and arms swing against each other,
+## the knee bends as the leg goes back, the body bobs
+func _pose_rig(facing: String, phase: float, moving: bool) -> void:
+	var j: Dictionary = rig_joints[facing]
+	var sw := sin(phase) if moving else 0.0
+	var leg_a := 0.42 * sw
+	var arm_a := 0.32 * sw
+	for side in [["near", 1.0], ["far", -1.0]]:
+		var k: String = side[0]
+		var sign: float = side[1]
+		if j.has("leg_%s_upper" % k):
+			j["leg_%s_upper" % k].rotation = leg_a * sign
+			j["leg_%s_lower" % k].rotation = maxf(0.0, -sign * sw) * 0.55 if moving else 0.0
+		if j.has("arm_%s_upper" % k):
+			j["arm_%s_upper" % k].rotation = -arm_a * sign
+			j["arm_%s_lower" % k].rotation = -0.18 - (0.12 * sign * sw if moving else 0.0)
+	var torso: Sprite2D = j["torso"]
+	torso.rotation = 0.03 * sw
+	rigs[facing].position.y = -absf(sin(phase)) * 3.0 if moving else 0.0
+
+
 func _animate_walk(v: Vector2) -> void:
 	var moving := v.length() > 0.05
+	if anim_kind == "rig":
+		var moving_r := v.length() > 0.05
+		var facing := "back" if v.y < -0.1 else "front"
+		if not moving_r:
+			facing = "front" if rigs["front"].visible else "back"
+		for f in rigs:
+			rigs[f].visible = f == facing
+		if absf(v.x) > 0.05:
+			var sx := absf(rigs[facing].scale.x) * (-1.0 if v.x < 0 else 1.0)
+			for f in rigs:
+				rigs[f].scale.x = sx
+		if moving_r:
+			walk_phase += get_physics_process_delta_time() * 9.0
+		_pose_rig(facing, walk_phase, moving_r)
+		return
 	if player_anim == null:
 		# no walk in this style's art: the standing figure bobs along
 		if moving:
