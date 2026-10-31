@@ -79,7 +79,7 @@ scale:                       # real-world sizes; keep them consistent across ass
 | File | Approved for | Notes |
 |---|---|---|
 | `art/reference/prokip-hut-iso.png` | **APPROVED: the scene's reference for camera, scale, orientation, buildings and colour.** Attach to every request, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. Thatch reads as weathered straw (warm gold in the sun, grey-brown in shade) with only a few moss patches: the model for every thatched roof. |
-| `art/accepted/trees/oak.png` | **ACCEPTED game asset: the oak** (owner decision), with transparent background and cleared crown holes. | Drawn side-on rather than from above: the owner prefers it to the isometric redraw. Trees may keep this near side-on view; later trees (birch, spruce) match this oak's view and scale. |
+| `art/accepted/trees/oak.png` | **ACCEPTED game asset: the oak** (owner decision), with transparent background and cleared crown holes. | Drawn side-on, an exception: the owner prefers it to Muse's isometric redraw. Use it for style and scale only; new trees (birch, spruce) use the isometric camera like the hut. |
 | `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Approved for the look only. Its view is side-on and it has a background and an oval shadow; the game version must follow §1 (camera, transparent). |
 | `art/reference/prokip-hut-v2.png` | **Building materials and details**: thatch, moss, damp whitewash, timber, herbs, raven, ink. Attach to building requests. | **Wrong camera** (front-on, near eye level): never use it for the view. Also a white background and a horned skull (must be a horse skull). |
 | `art/reference/prokip-hut.webp` | Earlier draft of the same; same materials. | Same problems as v2, plus an off-centre door. |
@@ -130,10 +130,9 @@ Interior of [building] at the same isometric camera, roof and the two near walls
 ```
 Traditional khata layout: the pich in a corner by the door; the pokut (holy corner with icon and rushnyk) diagonal from it, with the table under it; lavy (benches) along the walls; the pil (sleeping platform) between the pich and the back wall; the skrynia (painted chest) by the pil; the mysnyk (dish shelf) by the door.
 
-**Tree** (1024×1024; trunk foot at the bottom centre). Trees are drawn **side-on like the accepted oak** (owner decision), not from the isometric camera. Replace the style block's "Camera:" sentence with the one below, and remove "side view" from the negative prompt:
+**Tree** (1024×1024; trunk foot at the bottom centre). New trees use the scene's **isometric camera** (owner decision), like the hut; the style block stays as it is:
 ```
-Camera: near side-on, as in the attached accepted oak: seen from a little above eye level, so the crown is mostly seen from the side with only a hint of its top; the trunk upright. Same scale and view as the accepted oak.
-A single [species, age] tree: [trunk and roots], [crown: shape, density, colours], golden dapples on the upper-left of the crown. Real size: [height, crown width]. The trunk's foot is at the bottom centre of the image.
+A single [species, age] tree seen from the same isometric camera as the attached hut (looking down at about 40 degrees): the top of the crown is clearly visible as well as its side, and the trunk shows below the crown, foreshortened, upright. [trunk and roots], [crown: shape, density, colours], golden dapples on the upper-left of the crown, the lower-right of the crown cooler and darker. Real size: [height, crown width]. The trunk's foot is at the bottom centre of the image.
 ```
 
 **Prop** (1024×1024; base at the bottom centre): `A single [object] as used on a Cossack khutir, seen from the isometric camera with a corner toward the viewer: [material, condition, details], real size [ ].`
@@ -186,7 +185,7 @@ PNG with alpha, sRGB, at the generated size. A short `<id>.md` beside an asset i
 - [ ] Style matches `art/reference/oak.webp`: ink with hatching, watercolour washes, paper grain.
 - [ ] Palette muted and earthy; gold only as sunlight; whitewash cream, not white; thatch reads as straw, moss only in patches.
 - [ ] Camera: isometric, about 40° down, corner toward the viewer, top and two sides visible, orthographic, verticals vertical.
-- [ ] Trees: the same near side-on view as `art/accepted/trees/oak.png` (owner decision), not the isometric top-down crown.
+- [ ] Trees: the isometric camera like the hut (crown top visible, trunk foreshortened); the side-on oak is the one exception.
 - [ ] Buildings: the door wall is the left face.
 - [ ] Light from the upper left; no time-of-day tint.
 - [ ] Transparent background (or clean #00FF00); no cast shadow; no text; nothing cropped.
