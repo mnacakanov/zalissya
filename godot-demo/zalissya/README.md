@@ -90,6 +90,15 @@ Until a hut has its own art, it is the style's south-facing hut.
 
 Until a hut has its own folder, it uses the style's one hut.
 
+**Other cases:**
+- **No `interior` yet:** the hut stands closed and solid.
+- **Rooms as separate pictures:** for a long house, the interior can come
+  as `"interior": {"parts": [...]}`. Each part has:
+  - its own `file`, `footprint`, `pich`, `solids` and `walls`;
+  - a `"span": [t0, t1]` along the door wall.
+
+  Each part is laid onto its stretch of the house.
+
 **`"kind": "placeholder"`** is a plain labelled block for something with no
 art yet. It takes:
 - `size` `[x, y]` in metres;

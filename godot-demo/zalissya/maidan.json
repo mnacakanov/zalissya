@@ -1,7 +1,7 @@
 {
   "_note": "The maidan of Zalissya, laid out in metres on the ground: x runs east, y runs south, (0, 0) is the fire in the middle of the maidan. Everything is drawn in the chosen style (Pillars-lite: styles/pillars/). 'at' is the centre of a thing's footprint. See zalissya/README.md.",
   "style": "pillars",
-  "hut_size": [7, 5],
+  "hut_size": [4.7, 4.2],
   "bounds": [-40, -34, 40, 36],
   "start": [0, 13],
   "zoom": 0.6,

@@ -240,9 +240,14 @@ func _build_khata(b: Dictionary) -> void:
 	if ResourceLoader.exists(own) or FileAccess.file_exists(own):
 		h = JSON.parse_string(FileAccess.get_file_as_string(own))
 		dir = "huts/%s/" % b.get("art", b.id)
-	var hs: Array = h.get("size", data.get("hut_size", [7, 5]))
-	var foot := _rect(b.at, hs)
+	# the walls follow the picture's own footprint, set down with its middle
+	# at 'at' (a picture's camera can drift a little from the style's; the
+	# house must stand where it is drawn)
 	var src := _pts(h.exterior.footprint)
+	var foot := PackedVector2Array()
+	var shift := P(b.at[0], b.at[1]) - _centroid(src) * k
+	for p in src:
+		foot.append(p * k + shift)
 	var node := Node2D.new()
 	world.add_child(node)
 	var inner := Node2D.new()   # counter-moved against node (see _process)
@@ -250,29 +255,35 @@ func _build_khata(b: Dictionary) -> void:
 	var ext := _sprite(dir + h.exterior.file, k)
 	ext.position = foot[0] - src[0] * k
 	inner.add_child(ext)
-	# the room, on the ground under everything, laid onto the same footprint
+	# No room yet (its picture still to come): a closed house, solid.
+	if not h.has("interior"):
+		var cp := CollisionPolygon2D.new()
+		cp.polygon = foot
+		walls.add_child(cp)
+		var nl := _label(b.get("name", b.id))
+		nl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
+		nl.visible = false
+		inner.add_child(nl)
+		buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "fade": ext, "label": nl,
+			"rect": _sprite_rect(ext)})
+		return
+	# The room, on the ground under everything, laid onto the same
+	# footprint. A long house can come as several rooms side by side
+	# ("parts"), each a picture of its own laid onto its stretch of the door
+	# wall ("span": [t0, t1]): a picture generator keeps one room at the
+	# style's tilt, but not a long plan of three.
+	var pich := Vector2.INF
 	var inn: Dictionary = h.interior
-	var room := Node2D.new()
-	room.transform = _fit(_pts(inn.footprint), foot)
-	ground.add_child(room)
-	room.add_child(_sprite(dir + inn.file, 1.0))
-	# walls inside (the otaman's siny between its two rooms), in the room's
-	# own pixels: [x1, y1, x2, y2]
-	for w in inn.get("walls", []):
-		_wall(room.transform * Vector2(w[0], w[1]), room.transform * Vector2(w[2], w[3]))
-	for r in inn.get("solids", []):
-		var c := Vector2(r[0], r[1])
-		var hw := Vector2(r[2] / 2.0, 0)
-		var hh := Vector2(0, r[3] / 2.0)
-		var poly := CollisionPolygon2D.new()
-		poly.polygon = PackedVector2Array([room.transform * (c - hw - hh), room.transform * (c + hw - hh), room.transform * (c + hw + hh), room.transform * (c - hw + hh)])
-		walls.add_child(poly)
-	var cs := CollisionShape2D.new()
-	var sh := CircleShape2D.new()
-	sh.radius = 0.45 * metre
-	cs.shape = sh
-	cs.position = room.transform * Vector2(inn.pich[0], inn.pich[1])
-	walls.add_child(cs)
+	if inn.has("parts"):
+		for part in inn.parts:
+			var sp: Array = part.get("span", [0, 1])
+			var l := foot[0].lerp(foot[1], sp[0])
+			var f := foot[0].lerp(foot[1], sp[1])
+			var p := _lay_room(part, dir, PackedVector2Array([l, f, f + foot[2] - foot[1], l + foot[2] - foot[1]]))
+			if pich == Vector2.INF:
+				pich = p
+	else:
+		pich = _lay_room(inn, dir, foot)
 	# the walls along the footprint, with a gap for the door. The door is
 	# [t0, t1] along the south wall, or {"wall": "east", "t": [t0, t1]}: in a
 	# horseshoe the huts on its arms face the maidan, east or west. The
@@ -301,7 +312,36 @@ func _build_khata(b: Dictionary) -> void:
 	var outward := (door - _centroid(foot)).normalized()
 	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
 		"rect": _sprite_rect(ext),
-		"pich": cs.position, "door": door + outward * 0.6 * metre})
+		"pich": pich if pich != Vector2.INF else _centroid(foot), "door": door + outward * 0.6 * metre})
+
+
+## One room picture laid onto its stretch of the house: its walls inside
+## ([x1, y1, x2, y2], e.g. the siny's partitions), its furniture and its
+## pich, all in the picture's own pixels. Returns where the pich is (INF:
+## none).
+func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array) -> Vector2:
+	var room := Node2D.new()
+	room.transform = _fit(_pts(inn.footprint), dst)
+	ground.add_child(room)
+	room.add_child(_sprite(dir + inn.file, 1.0))
+	for w in inn.get("walls", []):
+		_wall(room.transform * Vector2(w[0], w[1]), room.transform * Vector2(w[2], w[3]))
+	for r in inn.get("solids", []):
+		var c := Vector2(r[0], r[1])
+		var hw := Vector2(r[2] / 2.0, 0)
+		var hh := Vector2(0, r[3] / 2.0)
+		var poly := CollisionPolygon2D.new()
+		poly.polygon = PackedVector2Array([room.transform * (c - hw - hh), room.transform * (c + hw - hh), room.transform * (c + hw + hh), room.transform * (c - hw + hh)])
+		walls.add_child(poly)
+	if not inn.has("pich"):
+		return Vector2.INF
+	var cs := CollisionShape2D.new()
+	var sh := CircleShape2D.new()
+	sh.radius = 0.45 * metre
+	cs.shape = sh
+	cs.position = room.transform * Vector2(inn.pich[0], inn.pich[1])
+	walls.add_child(cs)
+	return cs.position
 
 
 ## a building with its own art (not walk-in): the PNG's footprint

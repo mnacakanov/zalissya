@@ -1,0 +1,123 @@
+{
+ "_note": "Request 5 (2c2d334). The exterior is Harry's measure. The one-picture interior came out near-frontal and flattens to a strip when laid on the house, so it is parked under 'interior_frontal' (unused) and the house is closed until the three rooms come as pictures of their own ('interior': {'parts': [...]}).",
+ "size": [
+  11,
+  5.5
+ ],
+ "exterior": {
+  "file": "hut_exterior",
+  "footprint": [
+   [
+    -684,
+    -146
+   ],
+   [
+    90,
+    -14
+   ],
+   [
+    683,
+    -157
+   ]
+  ]
+ },
+ "door": [
+  0.36,
+  0.56
+ ],
+ "interior_frontal": {
+  "file": "hut_interior",
+  "footprint": [
+   [
+    -705,
+    -30
+   ],
+   [
+    705,
+    -30
+   ],
+   [
+    660,
+    -330
+   ]
+  ],
+  "pich": [
+   -505,
+   -280
+  ],
+  "prokip": [
+   -300,
+   -150
+  ],
+  "walls": [
+   [
+    -200,
+    -45,
+    -200,
+    -140
+   ],
+   [
+    -200,
+    -220,
+    -200,
+    -320
+   ],
+   [
+    195,
+    -45,
+    195,
+    -140
+   ],
+   [
+    195,
+    -220,
+    195,
+    -320
+   ]
+  ],
+  "solids": [
+   [
+    -320,
+    -330,
+    190,
+    100
+   ],
+   [
+    -490,
+    -195,
+    190,
+    90
+   ],
+   [
+    -255,
+    -215,
+    80,
+    110
+   ],
+   [
+    60,
+    -330,
+    70,
+    90
+   ],
+   [
+    480,
+    -195,
+    210,
+    110
+   ],
+   [
+    470,
+    -350,
+    170,
+    60
+   ],
+   [
+    590,
+    -240,
+    70,
+    110
+   ]
+  ]
+ }
+}
