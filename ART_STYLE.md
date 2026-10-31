@@ -37,7 +37,8 @@ palette:                     # hexes are targets; keep everything in this family
   whitewash_damp: grey-green and blue-grey washes over cream
   thatch_light: "#B39A62"
   thatch_dark: "#7D6A40"
-  moss_on_thatch: sage green with gold patches
+  thatch_weathered: grey-gold and grey-brown straw; darker in the deep layers, greyer on the shaded side
+  moss_on_thatch: only scattered patches, at most about one fifth of a roof, mainly on the shaded slope, the lower eaves and by the ridge; a thatched roof reads as STRAW, never as a green roof
   timber_weathered: grey-olive to brown
   cossack_red_muted: "#A8362C"
   sharovary_blue_muted: "#2E4A7E"
@@ -77,7 +78,7 @@ scale:                       # real-world sizes; keep them consistent across ass
 
 | File | Approved for | Notes |
 |---|---|---|
-| `art/reference/prokip-hut-iso.png` | **APPROVED: the scene's reference for camera, scale, orientation and buildings.** Attach to every request from now on, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. Its greens run a little warmer and yellower than the oak's sage; keep later assets nearer the oak. |
+| `art/reference/prokip-hut-iso.png` | **Approved for camera, scale, orientation and layout only.** Attach to every request, together with the oak. | Isometric camera, corner toward the viewer, door wall on the left with the door centred, end-wall window, horse skull, transparent. **Colour NOT approved:** the roof is far too green; thatch must read as weathered straw with only patches of moss. A recoloured version replaces this file when approved. |
 | `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Approved for the look only. Its view is side-on and it has a background and an oval shadow; the game version must follow §1 (camera, transparent). |
 | `art/reference/prokip-hut-v2.png` | **Building materials and details**: thatch, moss, damp whitewash, timber, herbs, raven, ink. Attach to building requests. | **Wrong camera** (front-on, near eye level): never use it for the view. Also a white background and a horned skull (must be a horse skull). |
 | `art/reference/prokip-hut.webp` | Earlier draft of the same; same materials. | Same problems as v2, plus an off-centre door. |
@@ -109,7 +110,7 @@ Shape: a single-storey rectangular house about 7 m long and 5 m deep, walls abou
 Walls: clay walls whitewashed long ago, now aged cream gone grey-green and blue-grey with damp, cracked and flaking at the corners, a darker damp band along the bottom. A low clay ledge (pryzba) runs along the foot of both visible walls.
 Door wall (left face): a low, weathered plank door with iron hinges in the middle of the wall, a little taller than a man; one small four-pane window with a thick wooden frame on each side of the door, placed symmetrically. Bundles of drying herbs (green, olive, faded yellow) hang from the eave along this wall.
 End wall (right face): one small four-pane window in the middle.
-Roof: sagging old thatch in layered tiers, dusty straw with thick patches of green moss, sunlit honey-gold moss on the upper-left slopes; ragged eaves with a few rafter ends showing. A small square clay chimney near the ridge with a thin curl of smoke. A black raven sits on the ridge, looking toward the viewer.
+Roof: sagging old thatch of weathered rye straw in layered tiers: dusty straw-gold and grey-brown (#B39A62 to #7D6A40), warm golden straw on the sunlit upper-left slopes, greyer and darker on the shaded right slope. Moss only in a few scattered patches (about one fifth of the roof at most), on the shaded slope, along the lower eaves and by the ridge. It must read as a straw roof, not a green one. Ragged eaves with a few rafter ends showing. A small square clay chimney near the ridge with a thin curl of smoke. A black raven sits on the ridge, looking toward the viewer.
 Beside the door, at the left end of the door wall: a horse skull (long, narrow, hornless, a horse's not a cow's) on a weathered wooden stake, a folk charm against evil.
 Scale: a man standing by the door would reach just below the top of the door frame.
 Mood: cosy and a little spooky; old, neglected, lived in.
@@ -180,7 +181,7 @@ PNG with alpha, sRGB, at the generated size. A short `<id>.md` beside an asset i
 ## 6. Acceptance checklist
 
 - [ ] Style matches `art/reference/oak.webp`: ink with hatching, watercolour washes, paper grain.
-- [ ] Palette muted and earthy; gold only as sunlight; whitewash cream, not white.
+- [ ] Palette muted and earthy; gold only as sunlight; whitewash cream, not white; thatch reads as straw, moss only in patches.
 - [ ] Camera: isometric, about 40° down, corner toward the viewer, top and two sides visible, orthographic, verticals vertical.
 - [ ] Buildings: the door wall is the left face.
 - [ ] Light from the upper left; no time-of-day tint.
@@ -199,3 +200,4 @@ PNG with alpha, sRGB, at the generated size. A short `<id>.md` beside an asset i
 - Muse adds an oval ground shadow unless told not to.
 - The horned skull survived two correction rounds and was fixed only when it was correction no. 1, worded "NO horns at all, nothing on top of the head". Lead with the most stubborn fix.
 - When asked to match the oak's colour, Muse swung warmer and yellower than the oak; ask for "cool sage green like the oak" rather than just "greener".
+- Never ask to make a whole asset "greener": Muse turned the thatched roof into a green roof. Green belongs to foliage and moss patches; thatch is straw (grey-gold, grey-brown).
