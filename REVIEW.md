@@ -18,7 +18,7 @@ These are real defects the owner has chosen to leave for now. Keep them in every
 - **Opaque key names.** About 80 `ui.misc.N` keys and about 500 keys ending `.0` sit beside named keys. Renaming touches every file; do it per area, not in one commit.
 - **Template-era names.** The `space.json` slug, root `package.json` name and `client/index.html` were renamed to `zalissya` (the Muse project was told in the same step; it is a separate copy and only picks this up when you sync it). Still open: unused root dependencies (`recharts`, `zod` outside the server) and `packageManager` (bun 1.3.10 vs 1.4.4 in CI) need the owner's word, since the Muse platform may rely on them.
 - **Timeline echoes to confirm with the owner.** Okhrim's kurin fell "at Khotyn" (1621, 1673 and 1739 give very different eras). "Seven years" is shared by Taras, Stepan and the empty hut; "a hundred winters" by Domovyk, Lisovyk, Zmiy and Omelko. Decide whether these are echoes or copy-paste.
-- **Sunflowers** are still yard decoration (`data/village.ts`); Solokha's seeds were changed to pumpkin seeds. Decide whether the plants stay.
+- **Sunflowers** stay as yard decoration (owner decision, 2026-10-31), though they are a little late for the Hetmanate era. Solokha's seeds were changed to pumpkin seeds. Do not re-report the plants.
 
 ## 0. Ground rules
 
