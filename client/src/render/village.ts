@@ -1114,7 +1114,11 @@ export function drawChicken(c: CanvasRenderingContext2D, x: number, y: number, p
 // The kabytsia: a low clay summer hearth, whitewashed and painted with a
 // red-and-ochre zigzag, its mouth to the south with embers in it, and a
 // clay pot (horshchyk) of soup on top, steaming.
-export function drawKabytsia(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
+// `wx` is the hearth's WORLD x: the steam and the embers take their phase from
+// it, never from the screen x, which is hugely negative when the hearth is far
+// off screen (on Lysa Hora). A negative phase once made the steam radius
+// negative, and the throw aborted the whole y-sorted draw list every frame.
+export function drawKabytsia(c: CanvasRenderingContext2D, x: number, y: number, t: number, wx: number) {
   const INK = "rgba(34,22,14,0.85)";
   c.fillStyle = "rgba(30,50,20,0.28)";
   c.beginPath(); c.ellipse(x, y + 4, 24, 7, 0, 0, Math.PI * 2); c.fill();
@@ -1134,7 +1138,7 @@ export function drawKabytsia(c: CanvasRenderingContext2D, x: number, y: number, 
   // the mouth, embers glowing in it
   c.fillStyle = "#2a1c12";
   c.beginPath(); c.moveTo(x - 7, y + 2); c.lineTo(x - 7, y - 6); c.quadraticCurveTo(x, y - 13, x + 7, y - 6); c.lineTo(x + 7, y + 2); c.closePath(); c.fill();
-  const fl = 0.6 + Math.sin(t * 0.011 + x) * 0.2 + Math.sin(t * 0.029) * 0.1;
+  const fl = 0.6 + Math.sin(t * 0.011 + wx) * 0.2 + Math.sin(t * 0.029) * 0.1;
   c.fillStyle = `rgba(255,140,40,${fl})`;
   c.beginPath(); c.ellipse(x, y - 1, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = `rgba(255,220,120,${fl * 0.8})`;
@@ -1148,7 +1152,7 @@ export function drawKabytsia(c: CanvasRenderingContext2D, x: number, y: number, 
   c.beginPath(); c.ellipse(x, y - 37, 6, 2, 0, 0, Math.PI * 2); c.fill();
   // steam, its phase from the world (x) so it never slides
   for (let i = 0; i < 2; i++) {
-    const st = (t * 0.0004 + i * 0.5 + x * 0.001) % 1;
+    const st = (t * 0.0004 + i * 0.5 + wx * 0.001) % 1;
     c.fillStyle = `rgba(240,238,232,${0.4 * (1 - st)})`;
     c.beginPath(); c.arc(x + Math.sin(st * 5 + i) * 3, y - 42 - st * 18, 2.4 + st * 3.6, 0, Math.PI * 2); c.fill();
   }

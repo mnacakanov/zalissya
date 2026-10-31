@@ -50,7 +50,7 @@ Look for these, in this order. The script covers the first three partly.
 5. **Docs claim vs code.** `CLAUDE.md` names helpers/files/constants: grep each exists where stated (e.g. it once named `bumpCount` as a shared helper when it was only a closure in `App.tsx`).
 6. **Mutation after sync.** In `App.tsx`, flags changed *after* `syncFlags()`/`bumpCount()` leave `hudFlags` stale. Check new code that edits `flagsRef.current` directly.
 7. **Save safety (rule 4).** New state uses new flags only; no renamed/removed flags without a load-time migration; flag count headroom against `SAVE_LIMITS.flags` (250: Pages `slice`s silently, Muse rejects the save); never save data committed.
-8. **Frame cost** (CLAUDE.md "keep the frame cheap"): new per-frame loops of strokes/gradients; animation phase from screen position.
+8. **Frame cost** (CLAUDE.md "keep the frame cheap"): new per-frame loops of strokes/gradients; animation phase from screen position. A draw function that takes a screen x must not derive a phase from it: off screen it is hugely negative, `(… + x*k) % 1` goes negative, and a radius or alpha built from it can throw (the kabytsia did, on every frame on Lysa Hora; guarded by `render/offscreen.test.ts`). Pass the world x instead.
 9. **Both targets:** `target.ts` and `target.pages.ts` export the same names; controls work by keyboard, touch and gamepad (rule 2).
 10. **Tests:** new pure logic in `systems/` has a test; list logic added to `App.tsx` that should have been in `systems/`.
 11. **Look at what changed:** `git log --stat <last-sweep-sha>..HEAD`. Spend the most time on the newest code; it has had the least review.
@@ -81,6 +81,10 @@ Check:
 | Clock: start 08:00, dawn 06:00, dusk 20:00, night 21:00-04:00, sabbath 20:30-04:00, evening songs 18:00-23:30 | systems/time.ts, sabbath.ts, songs.ts | code |
 | Years of road/work: Hnat 30, Sydir 40, Omelko 40, Prokip's sieve 40 | chumak.gnat.*, cave.*, prokip.* | n/a (check for contradictions) |
 | "A hundred winters/years": Domovyk, Lisovyk, Zmiy, Omelko | line.domovyk.0, viy.lisovyk.*, cave.zmiy.* | n/a |
+
+### Browser pass (do not skip: the typecheck cannot see render errors)
+
+Build with `cd pages && bun run build`, then drive `pages/dist/index.html` with Playwright (preinstalled in the Claude Code workspace) and fail on any `pageerror` or console error. Seed `localStorage["zalissya-save-v1"]` with `{exists:true,x,y,area,talked:[],herbs:0,flags:[...]}` to start in each place, press the Continue button, hold `d` for half a second, and take a screenshot. Cover at least: the maidan by day, the maidan at night (`"day=2","clock=1320"`), Lysa Hora in the sabbath (`area:"lysa"`, `x:3500,y:1000`, `"clock=1290"`), and an old `hut0` / `hut1` save. The first sweep missed a crash on Lysa Hora until this pass ran.
 
 ## 4. Design and economy interactions
 

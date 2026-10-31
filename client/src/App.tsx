@@ -2293,7 +2293,7 @@ export function App() {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
-      drawables.push({ y: KABYTSIA.y + 2, draw: () => drawKabytsia(ctx2d, KABYTSIA.x - camX, KABYTSIA.y - camY, now) });
+      drawables.push({ y: KABYTSIA.y + 2, draw: () => drawKabytsia(ctx2d, KABYTSIA.x - camX, KABYTSIA.y - camY, now, KABYTSIA.x) });
       drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now, -1) });
       for (const k of [KURHAN]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {
