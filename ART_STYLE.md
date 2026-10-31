@@ -1,11 +1,12 @@
-# ART_STYLE.md: how Zalissya's art looks, and how to generate it
+# ART_STYLE.md: Zalissya's new art direction, and how to generate it
 
-This is the single source of truth for the game's **AI-generated art**. Our image agent is **Muse**. Any developer, on any device, should be able to produce an asset that matches the rest by following this file.
+This is the single source of truth for Zalissya's **new, AI-generated art**. Our image agent is **Muse**. Any developer, on any device, should be able to produce an asset that matches the rest by following this file.
 
-- **Agents:** read §1 (the machine-readable spec) and §3 (the prompt templates). Build every prompt as `STYLE BLOCK + ASSET BLOCK`, attach the reference images in §2, and check the result against §6 before accepting it.
-- **Humans:** read it top to bottom once. Add what you learn to §7.
-- **Status:** this is the new art direction. The game is still drawn procedurally (`render/`, described in `CONTENT_GUIDE.md` §4). Generated assets will replace those drawings piece by piece once the image pipeline exists (§5). Until then, accepted art is collected in `art/`.
-- **Who is who:** every character must match `CHARACTERS.md` (age, look, voice). The world's rules are in `CLAUDE.md` and `CONTENT_GUIDE.md`.
+- **Goal:** a hand-drawn look in the spirit of **Baldur's Gate 2** and **Pillars of Eternity**: a fixed, high, angled RPG camera over a painted world. It is a **new direction**, built from scratch; it does **not** follow the current game's procedural drawing, its camera or its sizes.
+- **First milestone: the demo scene.** Did Prokip's khatka and its forest clearing (who he is: `CHARACTERS.md`). **The hut is the first reference**: once it is right, everything else is matched to it.
+- **Agents:** read §1 (the machine-readable spec) and §3 (the prompts). Build every prompt as `STYLE BLOCK + ASSET BLOCK`, attach the references in §2, and check the result against §6 before accepting it.
+- **Humans:** read it once top to bottom. Add what you learn to §7.
+- **Characters** must match `CHARACTERS.md` (age, look, voice). The world's rules (Ukrainian, Cossack, Gogol, no Russian elements) are in `CLAUDE.md` and `CONTENT_GUIDE.md`.
 
 ---
 
@@ -15,11 +16,11 @@ This is the single source of truth for the game's **AI-generated art**. Our imag
 style:
   name: ink-and-watercolour storybook
   medium: dark sepia-brown ink linework with fine hatching and cross-hatching, over soft, slightly blotchy transparent watercolour washes, subtle paper grain on the subject
-  feels_like: a 19th-century folk-tale book plate or an old field-guide illustration brought to life
-  mood: calm, aged, a little melancholic, warm but muted; Gogol's village comedy by day, folk-tale dread at night (the game adds the night)
+  feels_like: a 19th-century folk-tale book plate or an old field-guide illustration, seen through the camera of Baldur's Gate 2 / Pillars of Eternity
+  mood: calm, aged, a little melancholic, warm but muted; Gogol's village comedy by day, folk-tale dread at night (night is added later as lighting)
   not: [pixel art, 3D render, photo, glossy digital painting, anime, chibi, cartoon flat colour, cel shading, neon or saturated colour]
 setting:
-  place: a Cossack khutir (farmstead settlement) on the edge of the steppe
+  place: a Cossack khutir (farmstead settlement) and its forests, on the edge of the steppe
   era: 18th-century Left-Bank Ukraine, the Hetmanate
   source_world: Gogol, "Evenings on a Farm near Dikanka" and "Viy"
   culture: strictly Ukrainian (whitewashed clay khaty, thatch, wattle fences, embroidered linen, Cossack dress, Ukrainian folk belief)
@@ -42,36 +43,32 @@ palette:                     # hexes are targets; keep everything in this family
   sharovary_blue_muted: "#2E4A7E"
   rule: desaturated and earthy; bright colour only where people put it (embroidery, rushnyky, painted chests, flowers, icons), and even that like old dyed cloth
 light:
-  source: one soft sun from the upper left
+  source: one soft sun from the upper left of the image
   lit_side: golden dapples, warmer
-  shaded_side: right side, cooler and deeper, denser hatching
-  time_of_day: none baked in (the game grades dusk and night itself)
-  cast_shadow: never painted (the game draws a soft shadow under each object)
-camera:
-  view: top-down three-quarter, about 45 degrees from above
-  projection: orthographic, no perspective distortion, no vanishing points
-  uprights: rise straight up the image from their base point
-  buildings: front (south) wall straight on, the big roof rising above it; the front wall is about one third of the building's drawn height, and the whole building is about 0.8 as tall as it is wide (matches how the game draws huts); side walls not shown
-  ground: seen from above
+  shaded_side: lower right, cooler and deeper, denser hatching
+  time_of_day: none baked in (night and dusk are added as lighting later)
+  cast_shadow: none painted on the ground (shadows are added in the scene)
+camera:                      # the Baldur's Gate 2 / Pillars of Eternity camera
+  type: classic isometric RPG view, fixed for every asset
+  pitch: looking down at about 40 degrees from horizontal
+  yaw: turned 45 degrees, so buildings and furniture show a CORNER toward the viewer
+  visible: the top (roof, table tops, ground) AND two vertical faces, one facing lower left and one facing lower right
+  projection: orthographic; parallel edges stay parallel, no vanishing points, no foreshortening of far parts
+  verticals: stay exactly vertical
+  orientation_rule: for every building, the DOOR wall is the LEFT face (facing lower left); the right face is the side (end) wall
 output:
   background: fully transparent PNG with alpha
   background_fallback: flat pure "#00FF00" (chroma green), to be keyed out
-  background_never: white (it cannot be separated from whitewash), any scenery, any ground under the subject
-  subject: exactly one, centred, nothing cropped, small margin all round
-  forbidden: [text, lettering, watermark, signature, border, frame, oval shadow, ground plane]
-  resolution: 4x game scale (see scale table)
-scale:                       # game world px; generate at 4x
-  person_height: 50           # feet to crown, about 5.2 heads tall
-  tree_sprite: [170, 160]     # width, height; trunk foot at y=150
-  huts:
-    standard_khata: [320, 210]
-    otaman_khata: [380, 200]
-    korchma: [350, 210]
-    pustka: [210, 176]
-    prokip_khatka: [220, 170]
-    kaplytsia: [140, 124]
-    windmill: [150, 130]
-  door_rule: walk-in buildings have their door exactly centred in the front wall
+  background_never: white (it can't be separated from whitewash), any scenery, any ground beyond the object's own footing
+  subject: exactly one, nothing cropped, small margin all round
+  forbidden: [text, lettering, watermark, signature, border, frame, oval shadow]
+  canvas: 2048x2048 for buildings, 1024x1024 for trees and props, 2048x1024 for character sheets
+scale:                       # real-world sizes; keep them consistent across assets
+  adult_man: 1.75 m tall; a door is a little taller than him (about 1.9 m)
+  prokip_khatka: about 7 m long (door wall) by 5 m deep; walls about 2.2 m high; steep hipped thatch adds about 3 m
+  oak_old: crown about 14 m across, about 16 m tall
+  birch: about 14 m tall, crown about 6 m across
+  spruce: about 20 m tall, about 6 m across at the base
 ```
 
 ---
@@ -80,88 +77,87 @@ scale:                       # game world px; generate at 4x
 
 | File | Approved for | Notes |
 |---|---|---|
-| `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Composition is fine, but as a game asset it needs re-exporting without the sage background and the oval shadow. |
-| `art/reference/prokip-hut.webp` | **Style for buildings** (thatch, moss, damp whitewash, wood, ink). Attach to building requests. | Composition **not** approved: white background, horned skull (must be a horse skull), door off-centre, eye-level camera with the side wall in perspective. Use it for the look, never for the layout. |
-| `art/reference/prokip-hut-v2.png` | **Building style AND composition approved**: centred door, symmetrical windows, front wall straight on, wall about a third of the height, proportions as the game draws huts. Use it as the layout reference for every building. | Still to fix in this asset: white background, horned skull (must be a horse skull), a thin sliver of side wall at the right edge. |
+| `art/reference/oak.webp` | **Style, colour, mood: the master reference.** Attach to every request. | Approved for the look only. Its view is side-on and it has a background and an oval shadow; the game version must follow §1 (camera, transparent). |
+| `art/reference/prokip-hut-v2.png` | **Building materials and details**: thatch, moss, damp whitewash, timber, herbs, raven, ink. Attach to building requests. | **Wrong camera** (front-on, near eye level): never use it for the view. Also a white background and a horned skull (must be a horse skull). |
+| `art/reference/prokip-hut.webp` | Earlier draft of the same; same materials. | Same problems as v2, plus an off-centre door. |
 
-New approved assets go in `art/reference/` too, with a row here saying what each is approved for.
+When the isometric Prokip hut is approved, it goes here as `art/reference/prokip-hut-iso.png` and becomes **the** reference for camera, scale and every building.
 
 ---
 
-## 3. Prompt templates
+## 3. Prompts
 
-Every prompt is the **style block** (identical every time) followed by **one asset block**. In Muse, attach the reference images from §2 to the same request. If Muse has a negative-prompt field, paste §3.3 there; if not, append it as "Avoid: …".
+Every prompt is the **style block** (identical every time) followed by **one asset block**. Attach the references from §2. Paste §3.4 into Muse's negative prompt, or append it as "Avoid: …".
 
 ### 3.1 Style block (copy exactly)
 
 ```
-Hand-drawn game illustration in a vintage storybook ink-and-watercolour style, matching the attached reference oak: confident dark sepia-brown ink linework (near #2A2218) with fine hatching and cross-hatching in the shadows, laid over soft, slightly blotchy transparent watercolour washes, with a subtle paper-grain texture on the subject itself. It feels like a 19th-century folk-tale book plate or an old field-guide illustration brought to life: calm, aged, a little melancholic, warm but muted.
-Colour: a desaturated, earthy palette. Sage and moss greens for foliage (deep #3E5A38, mid #5F7D4A, pale olive #8E9A68), olive-taupe for wood and bark (#8A7F5C to #5E5640). Sunlight is the only warm accent: dappled honey-gold highlights (#E8B85C) where the light hits. Whitewash is an aged cream (#EFE6D2), never pure white; thatch is dusty straw (#B39A62 to #7D6A40); reds (Cossack red #A8362C) and blues (#2E4A7E) are muted, like old dyed cloth. Nothing saturated or neon; everything looks painted on the same paper.
-Light: one soft sun from the upper left, golden dapples on the lit side; the shaded right side cools into deeper colour and denser hatching. No time-of-day tint.
-Setting: a Cossack khutir in 18th-century Left-Bank Ukraine (the Hetmanate), the world of Gogol's "Evenings on a Farm near Dikanka" and "Viy". Strictly Ukrainian material culture: whitewashed clay khaty with thatched roofs, wattle fences, embroidered linen, Cossack dress.
-Camera: top-down three-quarter view, orthographic, no perspective distortion; upright objects rise straight up from their base. Buildings show their front wall straight on with the big roof rising above it (the wall about one third of the building's height); side walls are not shown.
-Output: exactly one isolated subject, centred, nothing cropped, on a fully transparent background (if transparency is impossible: flat pure #00FF00, never white). No ground, no grass under it, no cast or oval shadow, no text, no watermark, no frame.
+Hand-drawn game art for a classic isometric RPG in the spirit of Baldur's Gate 2 and Pillars of Eternity, drawn in a vintage storybook ink-and-watercolour style matching the attached reference oak: confident dark sepia-brown ink linework (near #2A2218) with fine hatching and cross-hatching in the shadows, over soft, slightly blotchy transparent watercolour washes, with a subtle paper-grain texture on the subject. Calm, aged, a little melancholic, warm but muted, like a 19th-century folk-tale book plate.
+Colour: desaturated and earthy. Sage and moss greens (#3E5A38, #5F7D4A, #8E9A68), olive-taupe wood and bark (#8A7F5C to #5E5640). Sunlight is the only warm accent: dappled honey-gold highlights (#E8B85C). Whitewash is an aged cream (#EFE6D2), never pure white; thatch is dusty straw (#B39A62 to #7D6A40); reds (#A8362C) and blues (#2E4A7E) muted like old dyed cloth. Nothing saturated or neon.
+Camera: the fixed isometric camera of Baldur's Gate 2 and Pillars of Eternity: looking down at about 40 degrees and turned 45 degrees, so the object shows a corner toward the viewer, its top, and two sides (one facing lower left, one facing lower right). Orthographic: parallel edges stay parallel, verticals stay vertical, no vanishing points.
+Light: one soft sun from the upper left; golden dapples on the lit surfaces, the lower-right faces cooler and darker with denser hatching. No time-of-day tint.
+Setting: a Cossack khutir in 18th-century Left-Bank Ukraine (the Hetmanate), the world of Gogol's "Evenings on a Farm near Dikanka" and "Viy". Strictly Ukrainian material culture.
+Output: exactly one isolated subject, nothing cropped, on a fully transparent background (if transparency is impossible: flat pure #00FF00, never white). No ground around it, no cast shadow, no text, no watermark, no frame.
 ```
 
-### 3.2 Asset blocks
-
-Write the asset block in plain sentences: **what it is**, **its parts from base to top**, **where each detail sits** (left/right/centre, front/back), **size and proportion**, and the **anchor point** (where it touches the ground). Templates by category:
-
-**Building, exterior** (canvas 1024×1024; building ≈85% of the width):
-```
-[Name]: a [size, age, condition] Ukrainian [khata / building type], [who lives there and their character in a few words]. Footprint proportion [W] wide by [D] deep. Front (south) wall facing the viewer straight on: [door: material, EXACTLY centred], [windows: how many, placed symmetrically either side of the door], [wall: whitewash state]. Roof: [thatch / shingle, shape, condition, moss], [chimney]. Details: [left of door …], [right of door …], [on the roof …], [under the eaves …]. A low clay ledge (pryzba) along the foot of the front wall.
-```
-
-**Building, interior** (canvas 1024 wide, height = 1024 × D/W; the same footprint as the exterior):
-```
-Interior of [name] seen from above at the same three-quarter angle, roof removed: a [one-room / two-room] plan inside the walls of the exterior. Wall tops around the edge, with a gap for the door in the middle of the bottom (south) wall. Floor: [material]. Top-left corner: [usually the pich, the clay stove, with its mouth facing the room]. Back (top) wall: [furniture]. [Left / right / centre]: [furniture, objects on it]. Mood: [few words]. The room's own floor is part of the asset; nothing outside the walls.
-```
-The traditional khata layout (`data/houses.ts`): the pich in a corner by the door, the pokut (holy corner with icon and rushnyk) diagonal from it, the table under the pokut, lavy (benches) along the walls, the pil (sleeping platform) between the pich and the back wall, the skrynia (painted chest) by the pil, the mysnyk (dish shelf) by the door.
-
-**Tree** (canvas 1024×1024; trunk foot at the bottom centre, about 60 px above the bottom edge; crown 600–700 px wide):
-```
-A single [species, age] tree: [trunk: shape, bark], [crown: shape, density, leaf colour from the palette], sunlit golden dapples on the upper-left of the crown. The trunk's foot is at the bottom centre of the image.
-```
-
-**Prop** (canvas 512×512 or 1024×1024; foot at the bottom centre):
-```
-A single [object] as used on a Cossack khutir: [material], [condition], [details]. Seen at the three-quarter angle, its base at the bottom centre of the image.
-```
-
-**Character turnaround** (canvas 2048×1024; four figures ≈800 px tall each, so about 4× of 50 px × 4 head room; same scale):
-```
-Character turnaround sheet of one character, four views in a row, evenly spaced: front, three-quarter front, side (profile facing right), back. Same character, same scale, same neutral standing pose with arms slightly away from the body (A-pose), so the parts can be rigged for 2D skeletal animation. [Name, age, role from CHARACTERS.md]. Face: [features]. Hair: [ …]. Clothing, top to bottom: [ …]. Carries: [ …]. Proportions about five heads tall, storybook-realistic, not chibi.
-```
-
-**Character parts sheet** (canvas 2048×2048; for skeletal animation, after the turnaround is approved):
-```
-Parts sheet of [name] from the approved turnaround, front three-quarter view, each body part drawn separately and spread out with space between them on a transparent background: head (with hair and beard), torso with clothing, upper arm left, upper arm right, forearm left, forearm right, hand left, hand right, thigh left, thigh right, lower leg left, lower leg right, foot left, foot right, [held item]. Each part complete and slightly overlapping at the joints (rounded ends), same scale as the turnaround, same lighting.
-```
-
-**Ground tile** (canvas 1024×1024; the only asset that IS a surface):
-```
-A seamless tileable texture of [ground type] seen from directly above, in the same ink-and-watercolour style: [materials, small details]. Even lighting, no objects, no shadows, no strong features that would repeat visibly; it must tile seamlessly on all four sides.
-```
-
-**Spirit or creature**: as a character or prop, plus one line on how it is uncanny ("eyes like two coals", "bark for skin"). Keep it in the same palette; glows (fire, lamplight, will-o'-the-wisps) are painted as soft warm washes, and the game adds the night lighting.
-
-### 3.3 Negative prompt (always)
+### 3.2 The first reference: Did Prokip's khatka (canvas 2048×2048)
 
 ```
-background, white background, scenery, ground, grass under the object, oval shadow, cast shadow, side wall, vanishing point, horns on a horse skull, text, lettering, watermark, signature, frame, border, pixel art, 3D render, photo, photorealistic, glossy digital painting, anime, chibi, cartoon flat colour, cel shading, saturated colours, neon, Russian onion domes, tsarist, medieval European castle, knight armour, Viking, generic fantasy
+A small, old, lonely Ukrainian khata deep in a forest, home of a grumpy old village sorcerer (vorozhbyt), seen from the isometric camera described above with its south-west corner toward the viewer.
+Shape: a single-storey rectangular house about 7 m long and 5 m deep, walls about 2.2 m high, under a thick, steep, hipped thatched roof about 3 m high that overhangs the walls all round. The LONG wall with the door is the left face (facing lower left); the SHORT end wall is the right face (facing lower right). The roof's top surface is clearly visible from above and takes up about half of the drawing.
+Walls: clay walls whitewashed long ago, now aged cream gone grey-green and blue-grey with damp, cracked and flaking at the corners, a darker damp band along the bottom. A low clay ledge (pryzba) runs along the foot of both visible walls.
+Door wall (left face): a low, weathered plank door with iron hinges in the middle of the wall, a little taller than a man; one small four-pane window with a thick wooden frame on each side of the door, placed symmetrically. Bundles of drying herbs (green, olive, faded yellow) hang from the eave along this wall.
+End wall (right face): one small four-pane window in the middle.
+Roof: sagging old thatch in layered tiers, dusty straw with thick patches of green moss, sunlit honey-gold moss on the upper-left slopes; ragged eaves with a few rafter ends showing. A small square clay chimney near the ridge with a thin curl of smoke. A black raven sits on the ridge, looking toward the viewer.
+Beside the door, at the left end of the door wall: a horse skull (long, narrow, hornless, a horse's not a cow's) on a weathered wooden stake, a folk charm against evil.
+Scale: a man standing by the door would reach just below the top of the door frame.
+Mood: cosy and a little spooky; old, neglected, lived in.
+Output: transparent background, no ground around the house beyond the pryzba, no cast shadow.
+```
+
+### 3.3 Templates for the rest of the scene
+
+Write each asset block in plain sentences: **what it is**, **its parts from base to top**, **where each detail sits** (left face, right face, top), **real size**, and **orientation** (door wall = left face).
+
+**Building, exterior** (2048×2048): use §3.2 as the model: shape and real size, which face has the door (the left face), each face's details, the roof, extra details, scale, mood.
+
+**Building, interior** (2048×2048; same camera, same footprint as the exterior):
+```
+Interior of [building] at the same isometric camera, roof and the two near walls removed (only their low stubs remain), so we look into the room from above: the two far walls standing, with their inner faces visible. Floor: [material]. [Corner by the door]: the pich (clay stove) with its mouth facing the room. Along the far walls: [furniture]. In the middle: [objects]. Mood: [few words]. Nothing outside the walls.
+```
+Traditional khata layout: the pich in a corner by the door; the pokut (holy corner with icon and rushnyk) diagonal from it, with the table under it; lavy (benches) along the walls; the pil (sleeping platform) between the pich and the back wall; the skrynia (painted chest) by the pil; the mysnyk (dish shelf) by the door.
+
+**Tree** (1024×1024; trunk foot at the bottom centre):
+```
+A single [species, age] tree seen from the same isometric camera (from above at about 40 degrees, so the top of the crown is visible as well as its side): [trunk and roots], [crown: shape, density, colours], golden dapples on the upper-left of the crown. Real size: [height, crown width]. The trunk's foot is at the bottom centre of the image.
+```
+
+**Prop** (1024×1024; base at the bottom centre): `A single [object] as used on a Cossack khutir, seen from the isometric camera with a corner toward the viewer: [material, condition, details], real size [ ].`
+
+**Character turnaround** (2048×1024):
+```
+Character turnaround sheet for an isometric RPG, one character, five views in a row seen from the same camera height (looking down at about 40 degrees): facing down-left, down, down-right, right, up-right (the remaining three directions are mirrored later). Same scale, same neutral standing pose with arms slightly away from the body, for 2D skeletal animation. [Name, age, role from CHARACTERS.md]. Face: [ ]. Hair: [ ]. Clothing top to bottom: [ ]. Carries: [ ]. About 7 heads tall, storybook-realistic, not chibi. Transparent background.
+```
+
+**Ground** (2048×2048, seamless): `A seamless tileable texture of [ground] seen from the same isometric camera, in the same ink-and-watercolour style: [materials, small details]. Even lighting, no objects, no shadows, tiles seamlessly on all four sides.`
+
+### 3.4 Negative prompt (always)
+
+```
+background, white background, scenery, cast shadow, oval shadow, front view, side view, eye-level view, top-down flat plan, vanishing point, perspective distortion, horns on a horse skull, text, lettering, watermark, signature, frame, border, pixel art, 3D render, photo, photorealistic, glossy digital painting, anime, chibi, cartoon flat colour, cel shading, saturated colours, neon, Russian onion domes, tsarist, medieval European castle, knight armour, Viking, generic fantasy
 ```
 
 ---
 
 ## 4. Working with Muse
 
-1. **One asset per request.** Paste the style block, then the asset block, attach the references from §2, add the negative prompt.
-2. **Ask for the exact canvas size** in the asset block ("1024×1024 canvas"). If Muse picks its own size, the aspect ratio must still match.
-3. **Iterate with corrections, not new prompts.** Send the image back with a short list: "Same image, same style, with these corrections: …". Name each fix concretely (what, where, how). Keep everything else ("same details").
-4. **Transparency:** if the result has a background, ask again for transparent; if Muse can't, ask for flat pure #00FF00 and we key it out. Never accept white.
-5. **Consistency across a set:** once one asset in a category is approved, attach it as an extra reference for the rest of that category (all huts, all trees, all residents).
-6. **Characters:** turnaround first, then the parts sheet from the approved turnaround. Never generate a character's parts without an approved turnaround.
-7. **Record what you learn** in §7 (a rule per mistake), so the next request avoids it.
+1. **One asset per request.** Style block + asset block, references attached, negative prompt.
+2. **Give the canvas size** in the request.
+3. **Iterate with numbered corrections**, the most important first: "Same image, keep everything else, fix: 1) … 2) …". Muse tends to keep a white background and a horned skull through a round; put those first and repeat them in the negative prompt.
+4. **Transparency:** if Muse can't, flat pure #00FF00; never accept white.
+5. **The hut first.** Don't generate the rest of the scene until the isometric hut is approved; then attach it to every later request as the camera and scale reference.
+6. **Characters:** turnaround first, then a parts sheet from the approved turnaround (head, torso, upper arms, forearms, hands, thighs, lower legs, feet, held items, each separate with rounded joint ends).
+7. **Record lessons** in §7.
 
 ---
 
@@ -170,39 +166,33 @@ background, white background, scenery, ground, grass under the object, oval shad
 ```
 art/
   reference/   approved references (listed in §2), committed
-  accepted/    accepted game assets, committed, one PNG per asset:
-               art/accepted/<category>/<id>.png
+  accepted/    accepted assets: art/accepted/<category>/<id>.png
                categories: buildings, interiors, trees, props, characters, parts, ground, spirits
-               id: the game's own id where one exists (e.g. prokip, hut0, korchma, oak, birch, pine, myroslav)
-  source/      optional: raw generations and alternatives, not used by the game
+               id: the name used in the game where one exists (prokip, oak, birch, pine, ...)
+  source/      optional: raw generations and alternatives
 ```
 
-- PNG with alpha, sRGB, at the generated 4× size; the build will downscale.
-- A short `art/accepted/<category>/<id>.md` beside an asset is welcome when it has an anchor point or quirks (for example "trunk foot at 512, 964").
-- **The runtime pipeline does not exist yet.** The game ships with no image files today: the Pages build is one self-contained HTML file, and the Muse build has not been checked for image hosting. Wiring images in (loading, atlases, anchor points, a WebGL renderer such as PixiJS for many large sprites, skeletal animation for characters) is separate work; until then, assets wait in `art/accepted/`.
+PNG with alpha, sRGB, at the generated size. A short `<id>.md` beside an asset is welcome for its anchor point (where it touches the ground) and quirks. Wiring the art into the game is a separate step, not covered here.
 
 ---
 
-## 6. Acceptance checklist (check every asset before committing it)
+## 6. Acceptance checklist
 
-- [ ] Ink linework with hatching, watercolour washes, paper grain: matches `art/reference/oak.webp` side by side.
-- [ ] Palette: muted and earthy; gold only as sunlight; nothing saturated; whitewash cream, not white.
+- [ ] Style matches `art/reference/oak.webp`: ink with hatching, watercolour washes, paper grain.
+- [ ] Palette muted and earthy; gold only as sunlight; whitewash cream, not white.
+- [ ] Camera: isometric, about 40° down, corner toward the viewer, top and two sides visible, orthographic, verticals vertical.
+- [ ] Buildings: the door wall is the left face.
 - [ ] Light from the upper left; no time-of-day tint.
-- [ ] Camera: orthographic three-quarter; buildings like `prokip-hut-v2.png` (front wall straight on, roof rising above, wall about a third of the height), no side wall.
-- [ ] Transparent background (or clean #00FF00), no ground, no shadow, no text, no frame, nothing cropped.
-- [ ] Anchor point where the spec says (trees and props: base at the bottom centre; buildings: door exactly centred in the front wall).
-- [ ] Proportions match the scale table (footprint W:D for buildings; about 5 heads for people).
-- [ ] Culture: Ukrainian and Cossack, nothing Russian, Western-European or generic fantasy.
-- [ ] Characters: age, look and clothing as in `CHARACTERS.md`.
+- [ ] Transparent background (or clean #00FF00); no cast shadow; no text; nothing cropped.
+- [ ] Real-world scale consistent with §1 and with the approved hut.
+- [ ] Ukrainian and Cossack; nothing Russian, Western-European or generic fantasy.
+- [ ] Characters match `CHARACTERS.md`.
 
 ---
 
-## 7. Rules learned from review (add one line per mistake)
+## 7. Rules learned from review (one line per mistake)
 
-- Doors of walk-in buildings are always exactly centred in the front wall: the game's door gap is in the middle.
-- A horse skull is long, narrow and hornless (the folk charm on a stake is a horse's, not a cow's or goat's).
+- A horse skull is long, narrow and hornless; Muse draws horns unless told twice.
 - Never a white background: whitewash can't be separated from it.
-- Front walls straight on; no two-point perspective, no visible side wall.
-- Muse adds a background and an oval ground shadow unless told twice; keep both "no background" in the style block and "background, oval shadow" in the negative prompt.
-- Muse kept the white background and the horned skull through a correction round: put such fixes FIRST in the correction list and repeat them in the negative prompt ("white background, horns").
-- Building camera: the view of `prokip-hut-v2.png` is right (front wall straight on, roof rising above it). Don't push Muse to look further down onto the roof; that breaks the match with how the game draws huts.
+- Muse defaults to a front-on, near-eye-level view of buildings; spell out the isometric camera (corner toward the viewer, roof top visible, two faces) every time.
+- Muse adds an oval ground shadow unless told not to.
