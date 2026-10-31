@@ -497,6 +497,6 @@ The Character sheet's satchel used to be a paragraph of emoji and three buttons 
 - **The load is a stitched bar** (red and black cross-stitch, like a rushnyk) with «Несеш 9 / 10» beside it; it turns red at the limit, and the old "over the limit" note stays.
 - **Four groups, only for what is in hand:** food and tonics, gathered things, iron, and the purse. A row you have none of is left out, so the list never spoils what you have not met yet; the last kulish eaten takes its row with it, and an empty satchel says so. Each row has an ink-line icon, what it weighs ("weight 1 · 2 in all", or "weighs nothing" for nichnyky, chervintsi, kulish and tonics) and its count.
 - **Kulish and the two tonics have an Eat / Drink button** on the row (44 px tall, for thumbs). Bog iron says it is hauled in the arms for Radek, and drops out once he has it, the same way `carriedWeight` counts it.
-- **Songs and keepsakes** are two folds under the list («Пісні · 4», «Пам'ятки · 5»), each opening a line of text.
+- **Songs and keepsakes** are two folds under the list («Пісні · 4», «Пам'ятки · 5»), each opening as a list, one song or keepsake to a row.
 - **One source for weights.** `UNIT_WEIGHT` in `systems/carry.ts` feeds both the carry limit and the list; `systems/satchel.ts` decides which rows exist (tested: the rows add up to `carriedWeight`), `ui/SatchelIcon.tsx` draws the icons, and App.tsx only lays them out. The tab row now wraps and its buttons are 44 px tall.
 

@@ -3504,11 +3504,18 @@ export function App() {
                         {t("ui.satchel.keepsBtn", { n: keepsakes.length })}
                       </button>
                     </div>
-                    {satchelMore === "songs" && (
-                      <p className="mt-2 text-[13px] leading-snug text-[#5d4630]">{knownSongs(hudFlags).map(songName).join(" · ")}</p>
-                    )}
-                    {satchelMore === "keeps" && (
-                      <p className="mt-2 text-[13px] leading-snug text-[#5d4630]">{keepsakes.length > 0 ? keepsakes.join(" · ") : t("ui.satchel.keepsEmpty")}</p>
+                    {satchelMore !== null && (
+                      <ul className="mt-2 rounded-xl bg-[#e9dcbc]/60 px-3">
+                        {(satchelMore === "songs" ? knownSongs(hudFlags).map(songName) : keepsakes).map((line) => (
+                          <li key={line} className="flex min-h-11 items-center gap-2.5 border-b border-dashed border-[#cdb985] py-1.5 text-[14px] leading-snug text-[#33241a] last:border-0">
+                            <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true" className="shrink-0"><path d="M6 .5L11.5 6L6 11.5L.5 6Z" fill="#b0302a" /></svg>
+                            <span className="min-w-0 flex-1">{line}</span>
+                          </li>
+                        ))}
+                        {satchelMore === "keeps" && keepsakes.length === 0 && (
+                          <li className="min-h-11 py-3 text-[13px] italic text-[#7a6248]">{t("ui.satchel.keepsEmpty")}</li>
+                        )}
+                      </ul>
                     )}
                   </div>
                 ) : panelTab === "stats" ? (
