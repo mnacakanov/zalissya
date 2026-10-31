@@ -36,21 +36,6 @@ export const SPIRITS: Npc[] = [
 ];
 
 export const ALL_CHARS: Npc[] = [...NPCS, ...SPIRITS];
-export const VILLAGER_IDS = new Set(NPCS.map((n) => n.id));
-
-// The hut residents, indoors: the same people (same ids, so meeting
-// them inside counts the same as outside), anchored in their rooms.
-// The Domovyk keeps by his pich; Vesna keeps by her work table. They
-// are home when you step in — a house spirit never leaves his house,
-// and the znakharka is in for the evening.
-export const DOMOVYK_IN: Npc = {
-  id: "domovyk", name: t("char.domovyk.name.1"), pron: t("char.domovyk.pron.1"), role: t("char.domovyk.role.1"),
-  x: 330, y: 165, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk",
-};
-export const VESNA_IN: Npc = {
-  id: "vesna", name: t("char.vesna.name.1"), pron: t("char.vesna.pron.1"), role: t("char.vesna.role.1"),
-  x: 250, y: 320, tunic: "#a83c32", hair: "#5d3a1a", style: "herbalist",
-};
 
 // --- Lysa Hora people -------------------------------------------------------
 // The sabbath host. The Chort here is the same devil as by the millstone

@@ -73,7 +73,7 @@ import { askedIds, markAsked } from "./systems/askedTopics";
 import { advance, canNapToNightfall, type Clock, DAWN, DAY_MINUTES, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
+import { type AreaId, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W } from "./world/areas";
 import { circleRectCollide, clamp, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
@@ -439,9 +439,8 @@ export function App() {
       // Saves from before the one-world map stored Lysa Hora in its own
       // local coordinates: move them onto the mountain in the shared world.
       const onOldMountain = area === "lysa" && s.x < LYSA_ORIGIN.x;
-      const ws = worldSize(area);
-      playerRef.current.x = clamp(s.x + (onOldMountain ? LYSA_ORIGIN.x : 0), 30, ws.w - 30);
-      playerRef.current.y = clamp(s.y + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, ws.h - 20);
+      playerRef.current.x = clamp(s.x + (onOldMountain ? LYSA_ORIGIN.x : 0), 30, WORLD_W - 30);
+      playerRef.current.y = clamp(s.y + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, WORLD_H - 20);
       if (oldRoom) {
         const c0 = HOUSE_CENTER(oldRoom);
         playerRef.current.x = c0.x;
@@ -1841,7 +1840,6 @@ export function App() {
       my += stickRef.current.y;
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
-      const ws = worldSize(area);
       const solids = [...SOLID, ...BENCH_SOLIDS, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : []), ...caveSolids(flagsRef.current)];
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
@@ -1860,13 +1858,13 @@ export function App() {
         const stepX = nx * speed * dt * Math.min(1, len);
         const stepY = ny * speed * dt * Math.min(1, len);
         // axis-separated collision
-        let tx = clamp(p.x + stepX, PLAYER_R + 4, ws.w - PLAYER_R - 4);
+        let tx = clamp(p.x + stepX, PLAYER_R + 4, WORLD_W - PLAYER_R - 4);
         // in the pond he swims, and stays in deep enough water; on land
         // the pond, the river and the bog's pools stop him
         const canStand = (x: number, y: number) =>
-          swimming ? inPondShape(x, y, -14) : !solids.some((b) => circleRectCollide(x, y - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(x, y) && !inRiver(x, y) && !inBoloto(x, y)));
+          swimming ? inPondShape(x, y, -14) : !solids.some((b) => circleRectCollide(x, y - 6, PLAYER_R, b)) && !inPond(x, y) && !inRiver(x, y) && !inBoloto(x, y);
         if (canStand(tx, p.y)) p.x = tx;
-        let ty = clamp(p.y + stepY, 46, ws.h - 10);
+        let ty = clamp(p.y + stepY, 46, WORLD_H - 10);
         if (canStand(p.x, ty)) p.y = ty;
         dirtyRef.current = true;
       }
@@ -1930,8 +1928,8 @@ export function App() {
       if (!dialogueRef.current && !panelRef.current) {
         // One world: crossing the steppe onto the mountain just changes the
         // region (the HUD, the sabbath's rules) — no teleport.
-        const region: AreaId | null = isHutArea(area) ? null : p.x >= LYSA_BORDER_X && p.y < LYSA_BORDER_Y ? "lysa" : "village";
-        if (region && region !== area) {
+        const region: AreaId = p.x >= LYSA_BORDER_X && p.y < LYSA_BORDER_Y ? "lysa" : "village";
+        if (region !== area) {
           areaRef.current = region;
           setHudArea(region);
           fishingRef.current = null;
@@ -2000,7 +1998,7 @@ export function App() {
       // Bald Mountain; the witches ate them, probably)
       const roosting = isNight(clockRef.current.minute);
       chickensRef.current.forEach((ch, ci) => {
-        if (!roosting || isHutArea(area)) return;
+        if (!roosting) return;
         // at night the hens go up to the hen-house and sit in a row by it
         const rx = 648 + ci * 12;
         const ry = 778;
@@ -2010,7 +2008,7 @@ export function App() {
         if (d > 1) { const st = Math.min(d, 40 * dt); ch.x += (dx / d) * st; ch.y += (dy / d) * st; }
         ch.tx = ch.x; ch.ty = ch.y; ch.wait = 1;
       });
-      for (const ch of !isHutArea(area) && !roosting ? chickensRef.current : []) {
+      for (const ch of !roosting ? chickensRef.current : []) {
         ch.phase += dt;
         if (ch.wait > 0) {
           ch.wait -= dt;
@@ -2194,17 +2192,14 @@ export function App() {
       // (during the vigil the camera looks up toward Viy, so both the
       // chalk ring and his lids are in view)
       const focusY = fight ? p.y - 110 : p.y;
-      const camX = clamp(p.x - vw / 2, 0, Math.max(0, ws.w - vw));
+      const camX = clamp(p.x - vw / 2, 0, Math.max(0, WORLD_W - vw));
       CAM.x = camX;
-      const camY = clamp(focusY - vh / 2, 0, Math.max(0, ws.h - vh));
+      const camY = clamp(focusY - vh / 2, 0, Math.max(0, WORLD_H - vh));
       CAM.y = camY;
 
       // --- render
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx2d.clearRect(0, 0, vw, vh);
-      if (isHutArea(area)) {
-        // (no separate rooms any more — the khaty stand in the world)
-      } else {
       drawGround(ctx2d, camX, camY, vw, vh, now);
       // (the fields and gardens are baked into the ground's detail tiles)
       // the trees' shadows lie on the ground, under everything that stands
@@ -2266,11 +2261,9 @@ export function App() {
       });
       patchesRef.current.forEach((patch) => drawHerbPatch(ctx2d, patch.x, patch.y, camX, camY, now, patch.available, HERBS[patch.kind]));
       for (const f of FENCES) drawFence(ctx2d, f, camX, camY);
-      }
 
       type Drawable = { y: number; draw: () => void };
       const drawables: Drawable[] = [];
-      if (!isHutArea(area)) {
       for (const id of HOUSE_IDS) {
         const r = HOUSE_RECTS[id];
         const alpha = roofAlphaRef.current[id];
@@ -2349,7 +2342,6 @@ export function App() {
         if (ugR && tr.x > ugR.x - 90 && tr.x < ugR.x + ugR.w + 90 && tr.y > ugR.y && tr.y < ugR.y + ugR.h + 160) continue;
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
-      }
       for (const npc of [...villageChars, ...lysaChars, ...(sabbath ? LYSA_DANCERS : [])]) {
         const pos = charPos(npc, now);
         drawables.push({
@@ -2399,7 +2391,7 @@ export function App() {
           },
         });
       }
-      for (const ch of !isHutArea(area) ? chickensRef.current : []) {
+      for (const ch of chickensRef.current) {
         drawables.push({
           y: ch.y,
           draw: () => drawChicken(ctx2d, ch.x, ch.y, ch.wait > 0.4 && ch.wait < 1 ? Math.sin((1 - ch.wait) * 9) * 0.5 + 0.5 : 0, camX, camY),
@@ -2477,7 +2469,7 @@ export function App() {
       // drifting pollen / seeds in the light (outdoors only — the huts
       // have dust motes enough of their own in the lamplight)
       ctx2d.fillStyle = "rgba(255,244,200,0.55)";
-      for (let i = 0; i < (isHutArea(area) ? 0 : 22); i++) {
+      for (let i = 0; i < 22; i++) {
         const px = ((hash2(i, 3) * WORLD_W + now * 0.012 * (0.6 + hash2(i, 4))) % WORLD_W) - camX;
         const py = ((hash2(i, 8) * WORLD_H + Math.sin(now * 0.001 + i * 2.1) * 16) % WORLD_H) - camY;
         if (px < -4 || px > vw + 4 || py < -4 || py > vh + 4) continue;
@@ -2489,16 +2481,14 @@ export function App() {
       // vignette — warm for the village day, cold moonlit blue on Lysa Hora
       // the air thickens toward Lysa Hora: a cold moonlit wash that grows
       // over the last stretch of steppe and covers the mountain
-      if (!isHutArea(area)) {
-        const edge = LYSA_ORIGIN.x - camX;
-        if (edge - 500 < vw) {
-          const g = ctx2d.createLinearGradient(edge - 500, 0, edge + 60, 0);
-          g.addColorStop(0, "rgba(16,18,48,0)");
-          // by night the dark does this work already
-          g.addColorStop(1, `rgba(16,18,48,${isNight(clockRef.current.minute) ? 0.12 : 0.3})`);
-          ctx2d.fillStyle = g;
-          ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
-        }
+      const edge = LYSA_ORIGIN.x - camX;
+      if (edge - 500 < vw) {
+        const g = ctx2d.createLinearGradient(edge - 500, 0, edge + 60, 0);
+        g.addColorStop(0, "rgba(16,18,48,0)");
+        // by night the dark does this work already
+        g.addColorStop(1, `rgba(16,18,48,${isNight(clockRef.current.minute) ? 0.12 : 0.3})`);
+        ctx2d.fillStyle = g;
+        ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
       }
       // butterflies, fireflies, bats, and a stork crossing the sky
       if (area === "village") {
@@ -2530,10 +2520,8 @@ export function App() {
           ctx2d.fillRect(x0 + r.w, y0, Math.max(0, vw - x0 - r.w), r.h);
         }
       }
-      if (!isHutArea(area)) {
-        drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
-          [...(perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []), ...(omelkoAtHome(flagsRef.current) && insideRef.current !== "pustka" ? PUSTKA_WINDOWS : []), ...workTargets(flagsRef.current).filter((w) => (w.kind === "stack") === (insideRef.current === "pustka")).map((w) => { const wp = workSpot(w); return { x: wp.x, y: wp.y - 8, r: 70, col: "255,214,110", k: 0.5 }; })], p);
-      }
+      drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
+        [...(perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []), ...(omelkoAtHome(flagsRef.current) && insideRef.current !== "pustka" ? PUSTKA_WINDOWS : []), ...workTargets(flagsRef.current).filter((w) => (w.kind === "stack") === (insideRef.current === "pustka")).map((w) => { const wp = workSpot(w); return { x: wp.x, y: wp.y - 8, r: 70, col: "255,214,110", k: 0.5 }; })], p);
       // the black that covers a trip through the crack, the ladder or the hatch
       if (fadeRef.current > 0.01) {
         ctx2d.fillStyle = `rgba(4,3,6,${Math.min(1, fadeRef.current)})`;

@@ -12,12 +12,11 @@ import { flagCount, flagHas } from "./flags";
 //   5. it dries overnight (at the next dawn)           → tobaccoDry
 //   6. bring it to the otaman                          → tobaccoGiven, lyulka
 // The reward is his old spare pipe: a smoke before Viy's vigil steadies the
-// hand — +2 Nerve at the vigil.
+// hand — LYULKA_NERVE extra Nerve at the vigil (systems/viyFight.ts).
 
 export type TobaccoStage = "none" | "gather" | "hang" | "drying" | "ready" | "done";
 
 export const LEAVES_NEEDED = 3;
-export const LYULKA_NERVE = 2;
 
 export function tobaccoStage(flags: ReadonlySet<string>): TobaccoStage {
   if (flagHas(flags, "tobaccoGiven")) return "done";

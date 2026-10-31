@@ -97,19 +97,3 @@ export function drawVigilOverlay(c: CanvasRenderingContext2D, s: FightState, vw:
     c.fillRect(0, 0, vw, vh);
   }
 }
-
-// Night over the open village: a blue-black wash, with the campfire
-// keeping a warm pocket of light around it.
-export function drawNight(c: CanvasRenderingContext2D, dark: number, vw: number, vh: number, fireX: number, fireY: number): void {
-  if (dark <= 0.001) return;
-  c.save();
-  c.fillStyle = `rgba(8,12,38,${dark})`;
-  c.fillRect(0, 0, vw, vh);
-  c.globalCompositeOperation = "lighter";
-  const g = c.createRadialGradient(fireX, fireY, 8, fireX, fireY, 190);
-  g.addColorStop(0, `rgba(255,150,60,${dark * 0.55})`);
-  g.addColorStop(1, "rgba(255,150,60,0)");
-  c.fillStyle = g;
-  c.fillRect(fireX - 200, fireY - 200, 400, 400);
-  c.restore();
-}

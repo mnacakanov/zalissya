@@ -87,9 +87,12 @@ export function wardCooldown(dex: number): number {
   return Math.max(0.7, 1.6 - 0.15 * (Math.max(1, dex) - 1));
 }
 
+// The otaman's pipe: a smoke before the vigil steadies the hand.
+export const LYULKA_NERVE = 2;
+
 export function startFight(prep: FightPrep, seed = 1): FightState {
   // the otaman's pipe (systems/tobacco.ts): a smoke steadies the hand
-  const maxNerve = maxNerveFor(prep.con) + (prep.lyulka ? 2 : 0);
+  const maxNerve = maxNerveFor(prep.con) + (prep.lyulka ? LYULKA_NERVE : 0);
   return {
     t: 0,
     nerve: maxNerve,

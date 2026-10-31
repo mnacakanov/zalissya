@@ -12,7 +12,6 @@ import { t } from "../i18n";
 // with `grant` hands over an item the moment it is asked (the lines are
 // written for the state that will be true once it is given).
 
-export type VigilGrant = "chalk" | "wreath" | "ironward";
 
 export type VigilContext = {
   flags: ReadonlySet<string>;
