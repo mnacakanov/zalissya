@@ -1,6 +1,8 @@
 # Zalissya
 
-A 2D top-down pixel-art RPG on a Cossack khutir in Gogol's Ukraine. You are a wandering kobzar: you learn songs, play for the khutir by the evening fire, and sing a duma all night to keep Viy asleep. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
+**Adding content?** Read [`CLAUDE.md`](CLAUDE.md) (rules and layout) and [`CONTENT_GUIDE.md`](CONTENT_GUIDE.md) (setting, voice, art style, step-by-step recipes).
+
+A 2D top-down RPG, painted in a storybook style, on a Cossack khutir in Gogol's Ukraine. You are a wandering kobzar: you learn songs, play for the khutir by the evening fire, and sing a duma all night to keep Viy asleep. No classes, no XP pool: skills grow by doing (KCD-style), and the six D&D stats (STR/DEX/CON/INT/WIS/CHA) all start at 1 and are derived from skill levels plus keepsake bonuses.
 
 The game is in **Ukrainian** (the default) and **English**; switch on the title screen. It plays with touch, keyboard, or a gamepad (Steam Deck included).
 
