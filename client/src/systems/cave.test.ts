@@ -5,6 +5,7 @@ import { circleRectCollide, type Rect } from "../world/geometry";
 import { PLAYER_R } from "../world/areas";
 import { caveSolids, crackShown, firstPass, HOARD_COINS, lazAvailable, lullResult, makeCaveLife, passFlags, POUCH_COINS, startleBats, stepCaveLife, takeHoard, takePouch } from "./cave";
 import { purse } from "./trade";
+import { caveTopicSet } from "../dialogue/cave";
 
 describe("the serpent", () => {
   test("only a sad song moves him; a neutral one is listened to; a happy one wakes him", () => {
@@ -202,5 +203,19 @@ describe("the chapel hatch", () => {
     const door = doorOf("kaplytsia");
     const can = floodFrom(houseSolids("kaplytsia"), { x: door.x, y: door.y + 30 }, bounds("kaplytsia"));
     expect(can(CHAPEL_HATCH.x, CHAPEL_HATCH.y, 34)).toBe(true);
+  });
+});
+
+describe("what the kobzar has been told", () => {
+  const ids = (npc: string, flags: string[]) => caveTopicSet(npc, new Set(flags), true)?.topics.map((x) => x.id) ?? [];
+  test("the girl is not asked about until the dowry or Onufriy has mentioned her", () => {
+    expect(ids("zmiy", [])).not.toContain("bride");
+    expect(ids("zmiy", ["zmiyGirl"])).toContain("bride");
+    const hoard = caveTopicSet("zmiy", new Set(), true)?.topics.find((x) => x.id === "hoard");
+    expect(hoard?.grant).toBe("zmiyGirl");
+  });
+  test("Omelko speaks of the Zmiy only to someone who knows there is one", () => {
+    expect(ids("omelko", [])).not.toContain("zmiy");
+    expect(ids("omelko", ["zmiyKnown"])).toContain("zmiy");
   });
 });

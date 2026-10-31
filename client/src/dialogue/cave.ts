@@ -6,7 +6,9 @@ import { type DialogueTopic, type TopicSet } from "./topics";
 // Conversations in the Serpent's Cave and the tunnel (data/cave.ts):
 //   Onufriy — the hermit at the mouth, gentle and dry; he points at the sad song
 //   Omelko  — the blind kobzar; teaches the duma of Marusia Bohuslavka
-//   Zmiy    — the serpent; awake he asks, asleep he mumbles; the hoard is his dowry
+//   Zmiy    — the serpent; awake he asks, asleep he mumbles; the hoard is his dowry.
+//             Flags zmiyKnown / zmiyGirl: what the kobzar has been told (the girl's
+//             topic and Omelko's talk of the Zmiy wait until he has heard of them)
 //   Vohnyk  — a little flame who forgets everything, himself included
 //   Sydir   — a chumak turned smuggler, mid-tunnel; teaches «Ой не ходи, Грицю»
 // Myroslav and Okhrim carry the rumours that put the cave and the tunnel on
@@ -31,7 +33,7 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
       topics: [
         topic("who", "cave.onufriy.t.who", L("cave.onufriy.who.0", "cave.onufriy.who.1")),
         topic("candle", "cave.onufriy.t.candle", L("cave.onufriy.candle.0", "cave.onufriy.candle.1")),
-        topic("zmiy", "cave.onufriy.t.zmiy", lulled ? L("cave.onufriy.zmiy.lulled.0", "cave.onufriy.zmiy.lulled.1") : L("cave.onufriy.zmiy.0", "cave.onufriy.zmiy.1")),
+        topic("zmiy", "cave.onufriy.t.zmiy", lulled ? L("cave.onufriy.zmiy.lulled.0", "cave.onufriy.zmiy.lulled.1") : L("cave.onufriy.zmiy.0", "cave.onufriy.zmiy.1"), lulled ? undefined : "zmiyGirl"),
         topic("omelko", "cave.onufriy.t.omelko", L("cave.onufriy.omelko.0", "cave.onufriy.omelko.1")),
         topic("tunnel", "cave.onufriy.t.tunnel", lulled || through ? L("cave.onufriy.tunnel.open.0", "cave.onufriy.tunnel.open.1") : L("cave.onufriy.tunnel.0", "cave.onufriy.tunnel.1")),
       ],
@@ -47,7 +49,8 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
         knows
           ? topic("sing", "cave.omelko.t.singAgain", lulled ? L("cave.omelko.singAgain.lulled") : L("cave.omelko.singAgain.0", "cave.omelko.singAgain.1"))
           : topic("marusia", "cave.omelko.t.marusia", L("cave.omelko.marusia.0", "cave.omelko.marusia.1"), "marusia"),
-        topic("zmiy", "cave.omelko.t.zmiy", L("cave.omelko.zmiy.0", "cave.omelko.zmiy.1")),
+        // he only talks of the Zmiy to someone who knows there is one
+        ...(flagHas(flags, "zmiyKnown") ? [topic("zmiy", "cave.omelko.t.zmiy", L("cave.omelko.zmiy.0", "cave.omelko.zmiy.1"))] : []),
         topic("kobza", "cave.omelko.t.kobza", L("cave.omelko.kobza.0", "cave.omelko.kobza.1")),
       ],
     };
@@ -67,8 +70,9 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
       intro: L(firstMeeting ? "cave.zmiy.intro" : "cave.zmiy.again"),
       topics: [
         topic("who", "cave.zmiy.t.who", L("cave.zmiy.who.0", "cave.zmiy.who.1")),
-        topic("bride", "cave.zmiy.t.bride", L("cave.zmiy.bride.0", "cave.zmiy.bride.1", "cave.zmiy.bride.2")),
-        topic("hoard", "cave.zmiy.t.hoard", L("cave.zmiy.hoard.0", "cave.zmiy.hoard.1")),
+        // nobody has told the kobzar about the girl until the dowry or Onufriy has
+        topic("hoard", "cave.zmiy.t.hoard", L("cave.zmiy.hoard.0", "cave.zmiy.hoard.1"), "zmiyGirl"),
+        ...(flagHas(flags, "zmiyGirl") ? [topic("bride", "cave.zmiy.t.bride", L("cave.zmiy.bride.0", "cave.zmiy.bride.1", "cave.zmiy.bride.2"))] : []),
         // asking opens the song choice: the lines are what he says before it
         topic("sing", "cave.zmiy.t.sing", L("cave.zmiy.sing.0", "cave.zmiy.sing.1"), undefined, "sing"),
       ],

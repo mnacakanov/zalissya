@@ -751,7 +751,9 @@ export function App() {
   const applyGrant = (g: GrantId) => {
     const f = flagsRef.current;
     // Rumours of the cave and of the tunnel (dialogue/cave.ts)
-    if (g === "caveRumor") { setFlag("caveHeard"); showToast(t("cave.toast.caveHeard")); return; }
+    if (g === "caveRumor") { setFlag("caveHeard"); setFlag("zmiyKnown"); showToast(t("cave.toast.caveHeard")); return; }
+    // whoever has heard of the girl and her dowry knows there is a Zmiy
+    if (g === "zmiyGirl") { setFlag("zmiyKnown"); setFlag("zmiyGirl"); return; }
     if (g === "lazRumor") { setFlag("lazKnown"); showToast(t("cave.toast.lazKnown")); return; }
     // The chumak choices (systems/chumaky.ts).
     if (g === "persuade" || g === "treatOstap" || g === "vesnaTonic") {
@@ -1172,6 +1174,7 @@ export function App() {
           openTopicDialogue(p.npc, pset.intro, pset.topics);
           return;
         } else if (CAVE_CHAR_IDS.has(p.npc.id)) {
+          if (p.npc.id === "zmiy") setFlag("zmiyKnown"); // he gives his own name
           const cset = caveTopicSet(p.npc.id, flags, firstMeeting);
           if (cset) {
             openTopicDialogue(p.npc, cset.intro, cset.topics);
