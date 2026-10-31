@@ -21,6 +21,11 @@ graphics. Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 - **The old save.** It reads `localStorage['zalissya-save-v1']` (same
   origin as the web game) through `JavaScriptBridge`, and starts there if
   that spot is free.
+- **An app on the home screen (PWA).** Open the link in Safari or Chrome
+  on a phone and choose "Add to Home Screen" (Android: "Install app").
+  The game then opens full screen with one tap. The engine is cached
+  after the first run, and every new export updates itself (the service
+  worker's cache name changes with each build).
 - **HUD.** fps (with the low of the last 2 s), the load time, the GPU, and
   the save it found.
 
@@ -49,7 +54,7 @@ graphics. Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
    godot --headless --path . --export-release "Web" build/index.html
    ```
 
-4. Copy `build/index.*` to `docs/godot-demo/`.
+4. Replace `docs/godot-demo/` with `build/index.*`.
 
 The web export is **single-threaded** (`variant/thread_support=false`), so
 it needs none of the cross-origin isolation headers GitHub Pages cannot
