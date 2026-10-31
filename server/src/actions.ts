@@ -1,5 +1,7 @@
-// Actions for the Slavic Village Game: one durable save slot (position,
-// villagers met, herbs gathered) so progress survives between sessions.
+// Actions for Zalissya: one durable save slot (position, area, people met,
+// herbs, story flags and counters) so progress survives between sessions.
+// The limits in saveProgress mirror SAVE_LIMITS in client/src/save/types.ts;
+// save/limits.test.ts fails if the two drift apart.
 
 import { defineAction, z, type ActionsModule } from "@hatch/space-sdk";
 import { eq } from "drizzle-orm";
@@ -13,8 +15,8 @@ const saveShape = z.object({
   exists: z.boolean(),
   x: z.number(),
   y: z.number(),
-  // Current area — optional in the shape for backward compatibility with
-  // saves written before Lysa Hora existed (they read back as "village").
+  // Current area. Always present in what the server returns: a row written
+  // before Lysa Hora existed reads back as "village" (see the getSave handler).
   area: areaEnum,
   talked: z.array(z.string()),
   herbs: z.number(),

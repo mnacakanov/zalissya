@@ -24,7 +24,11 @@ export type SaveData = {
 
 export type SaveInput = Omit<SaveData, "exists">;
 
-// Mirrors the server's zod limits so both adapters accept the same saves.
+// Mirrors the server's zod limits (server/src/actions.ts; save/limits.test.ts
+// checks they match). Past a limit the two targets differ: the browser save
+// drops the newest entries, while the Muse action rejects the whole save, so
+// stay well under them. flags.length has a wide margin today (about 90 named
+// and per-spot flags in the whole game).
 export const SAVE_LIMITS = { talked: 80, flags: 250, herbs: 100000 } as const;
 
 export interface SaveAdapter {
