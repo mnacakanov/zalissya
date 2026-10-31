@@ -67,3 +67,10 @@ send. It uses the Compatibility (WebGL 2) renderer.
 | `index.wasm` (the engine, the same for any game) | 39.5 MB | 10.1 MB |
 | `index.pck` (all the art and code, lossy WebP textures) | 0.9 MB | |
 | `index.js` | 0.28 MB | |
+
+## Result (owner's test, Oct 2026)
+
+On the owner's device: 100+ fps, a fast first load, and the second load
+came entirely from the PWA cache. The spike passes: Godot's single-threaded
+web export is good enough as the everyday "open with one tap and test"
+build, while Godot also gives the real targets (Steam Deck, mobile native).
