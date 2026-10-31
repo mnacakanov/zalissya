@@ -1165,5 +1165,10 @@
   "pustka.role": "The empty hut by the hollow",
   "pustka.chest.0": "Under a rotten cloth: an empty sabre scabbard, a tobacco pouch with no tobacco, and a letter in crooked letters.",
   "pustka.chest.1": "“If I'm not back by Pokrova, let the otaman smoke my tobacco, and leave the hut be: let it wait. Taras Dovhyi.” Seven Pokrovas have passed since. The hut is waiting still.",
-  "pustka.chest.again": "The empty scabbard, the pouch and Taras Dovhyi's letter. You put everything back as it lay."
+  "pustka.chest.again": "The empty scabbard, the pouch and Taras Dovhyi's letter. You put everything back as it lay.",
+  "ui.promptLabel.petDog": "Pet the dog 🐕",
+  "dog.pet.0": "The dog thumps its tail so hard the dust flies. It belongs to the otaman, but it loves anyone who pets it.",
+  "dog.pet.1": "The dog sniffs the kobza, sneezes, and acts as if it meant to.",
+  "dog.pet.2": "The dog offers an ear and shuts its eyes. Clearly it respects kobzars more than the otaman.",
+  "dog.pet.asleep": "The dog sleeps by the porch, a paw twitching. Chasing something in its dreams. Let it."
 }

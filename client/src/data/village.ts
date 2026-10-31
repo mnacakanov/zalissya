@@ -95,6 +95,22 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
   add("kovyla", [[1556, 520], [1596, 560], [1540, 700], [1590, 724], [1500, 530], [1446, 742], [1552, 800], [1430, 800], [1600, 610]]);
 }
 
+// Yard things that make the khutir lived in (render/animals.ts): the stork's
+// nest on its pole by the chapel, washing on a line by the Domovyk's khata,
+// log beehives by the herb garden, haystacks at the field edge, a hay cart
+// left by the forge.
+export type YardProp = { kind: "storkNest" | "laundry" | "beehive" | "haystack" | "hayCart"; x: number; y: number; w?: number };
+export const YARD_PROPS: YardProp[] = [
+  { kind: "storkNest", x: 740, y: 420 },
+  { kind: "laundry", x: 120, y: 455, w: 80 },
+  { kind: "beehive", x: 1000, y: 800 }, { kind: "beehive", x: 1030, y: 812 }, { kind: "beehive", x: 1060, y: 800 },
+  { kind: "haystack", x: 560, y: 1330 }, { kind: "haystack", x: 640, y: 1345 }, { kind: "haystack", x: 1240, y: 1340 },
+  { kind: "hayCart", x: 170, y: 735 },
+];
+const PROP_SOLID: Record<YardProp["kind"], { w: number; h: number }> = {
+  storkNest: { w: 8, h: 8 }, laundry: { w: 4, h: 4 }, beehive: { w: 14, h: 8 }, haystack: { w: 34, h: 10 }, hayCart: { w: 52, h: 12 },
+};
+
 // the otaman's korohva (banner) on its pole by his porch
 export const OTAMAN_FLAGPOLE: Rect = { x: 628, y: 300, w: 8, h: 8 };
 
@@ -109,6 +125,12 @@ export const SOLID: Rect[] = [
   // the khaty you walk into: walls with a door, and their furniture
   ...HOUSE_IDS.flatMap((id) => houseSolids(id)),
   OTAMAN_FLAGPOLE,
+  ...YARD_PROPS.flatMap((pr) => {
+    const sz = PROP_SOLID[pr.kind];
+    const one = { x: pr.x - sz.w / 2, y: pr.y - sz.h, w: sz.w, h: sz.h };
+    // the washing line is two posts, not a wall
+    return pr.kind === "laundry" ? [one, { ...one, x: one.x + (pr.w ?? 0) }] : [one];
+  }),
   WELL,
   FIRE,
   KAPLYTSIA,

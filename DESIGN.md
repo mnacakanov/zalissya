@@ -364,3 +364,17 @@ The owner saw the river's reeds move as the kobzar walked beside them, and the w
 - the water's colour bands took their height from the middle of the screen.
 
 Now the reeds stand on a grid of the world and sway slowly. The current is small ripples born on the water, drifting downstream a few dozen pixels while they fade in and out. The shallows are lighter bands drawn along the banks themselves, with a glint on the far bank.
+
+## A living khutir
+
+The khutir now has more life in it than the three hens.
+
+- **Animals** (`systems/critters.ts`, with tests; drawn in `render/animals.ts`):
+  - **The otaman's yard dog** trots up to the kobzar when he comes near its yard and sits at his heel. It goes home when he leaves and sleeps by the porch at night. It can be petted ("Погладити пса"), and it has opinions about kobzars.
+  - **Geese** wander round the pond and swim in it, and scatter from someone striding into the flock.
+  - **A red-and-white cow** grazes on the pasture by the windmill.
+  - **A bay horse** is tied at the korchma's rail.
+- **The sky:** a stork stands in its nest on a tall pole by the chapel, clattering its bill now and then. Every so often another stork crosses the sky, its shadow sliding over the ground.
+- **Small life:** by day, butterflies flutter round the flowers. At night, fireflies glow over the grass and bats circle the pustka and Viy's hollow.
+- **Yard things:** washing on a line by the Domovyk's khata, log beehives by the herb garden, haystacks at the field edge, and a hay cart by the forge.
+- **Cheap to draw:** everything is anchored to the world and drawn only when on screen.

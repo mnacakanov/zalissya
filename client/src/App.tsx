@@ -6,7 +6,7 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/c
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, HOUSES, KAPLYTSIA, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
+import { DECOR, FENCES, HOUSES, KAPLYTSIA, YARD_PROPS, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL, WINDMILL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawKurhan, drawMallow, drawSunflower, drawWindmill } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -19,6 +19,8 @@ import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/
 import { korchmaTopicSet } from "./dialogue/korchma";
 import { KORCHMA_PLAY, ODARKA, OKHRIM } from "./data/korchma";
 import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
+import { makeCritters, stepCritter } from "./systems/critters";
+import { drawBeehive, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
 import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
@@ -130,6 +132,8 @@ export function App() {
       tx: 700 + i * 130, ty: 700, wait: 0, phase: hash2(i, 7) * 6,
     })),
   );
+  // the khutir's animals: the dog, geese, the cow, the horse (systems/critters.ts)
+  const crittersRef = useRef(makeCritters());
   const promptRef = useRef<Prompt>(null);
   const dialogueRef = useRef<Dialogue | null>(null);
   const dirtyRef = useRef(false);
@@ -1220,6 +1224,15 @@ export function App() {
         );
         return;
       }
+      case "petDog": {
+        // the otaman's dog has opinions about kobzars (systems/critters.ts)
+        const dog = crittersRef.current.find((c) => c.kind === "dog");
+        const asleep = isNight(clockRef.current.minute);
+        const n = Math.floor(Math.random() * 3);
+        showToast(t(asleep ? "dog.pet.asleep" : (`dog.pet.${n}` as TextKey)));
+        if (dog && !asleep) { dog.wait = 2; dog.sitting = true; }
+        return;
+      }
       case "pustkaChest": {
         // Taras Dovhyi's letter (data/houses.ts PUSTKA_ROOM): read once,
         // remembered after; it is lore, and it names the tobacco field.
@@ -1553,6 +1566,13 @@ export function App() {
         }
       }
 
+      // --- the khutir's animals go about their day (systems/critters.ts)
+      if (area === "village" && !fight) {
+        const away = houseAt(p.x, p.y) !== null;
+        const world = { player: away ? { x: -9999, y: -9999 } : { x: p.x, y: p.y }, night: isNight(clockRef.current.minute), rnd: Math.random };
+        for (const cr of crittersRef.current) stepCritter(cr, dt, world);
+      }
+
       // --- chickens wander (village only — there are no chickens on the
       // Bald Mountain; the witches ate them, probably)
       for (const ch of !isHutArea(area) ? chickensRef.current : []) {
@@ -1669,6 +1689,10 @@ export function App() {
         spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
         spot(houseAt(p.x, p.y) === "korchma", KORCHMA_PLAY.x, KORCHMA_PLAY.y, 40, () => ({ kind: "playKorchma" }));
         spot(houseAt(p.x, p.y) === "pustka", PUSTKA_CHEST.x, PUSTKA_CHEST.y, 34, () => ({ kind: "pustkaChest" }));
+        {
+          const dog = crittersRef.current.find((c) => c.kind === "dog");
+          if (dog) spot(true, dog.x, dog.y, 38, () => ({ kind: "petDog" }));
+        }
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         const tStage = tobaccoStage(flagsNow);
         TOBACCO_SPOTS.forEach((ts, idx) => {
@@ -1882,6 +1906,39 @@ export function App() {
           draw: () => drawFishing(ctx2d, p.x, p.y, camX, camY, now, fphase),
         });
       }
+      // the animals and the yard things
+      if (area === "village") {
+        const nightNow = isNight(clockRef.current.minute);
+        for (const cr of crittersRef.current) {
+          const sx = cr.x - camX;
+          const sy = cr.y - camY;
+          if (sx < -60 || sx > vw + 60 || sy < -60 || sy > vh + 60) continue;
+          drawables.push({
+            y: cr.y,
+            draw: () => {
+              if (cr.kind === "dog") drawDog(ctx2d, sx, sy, cr.face, cr.moving, cr.sitting, cr.phase, nightNow);
+              else if (cr.kind === "goose") drawGoose(ctx2d, sx, sy, cr.face, cr.moving, cr.phase, inPond(cr.x, cr.y));
+              else if (cr.kind === "cow") drawCow(ctx2d, sx, sy, cr.face, cr.moving, cr.phase);
+              else drawHorse(ctx2d, sx, sy, -1, cr.phase);
+            },
+          });
+        }
+        for (const pr of YARD_PROPS) {
+          const sx = pr.x - camX;
+          const sy = pr.y - camY;
+          if (sx < -120 || sx > vw + 120 || sy < -60 || sy > vh + 160) continue;
+          drawables.push({
+            y: pr.y,
+            draw: () => {
+              if (pr.kind === "storkNest") drawStorkNest(ctx2d, sx, sy, now);
+              else if (pr.kind === "laundry") drawLaundry(ctx2d, sx, sy, pr.w ?? 80, now);
+              else if (pr.kind === "beehive") drawBeehive(ctx2d, sx, sy, now);
+              else if (pr.kind === "haystack") drawHaystack(ctx2d, sx, sy);
+              else drawHayCart(ctx2d, sx, sy);
+            },
+          });
+        }
+      }
       drawables.sort((a, b) => a.y - b.y);
       for (const d of drawables) d.draw();
 
@@ -1909,6 +1966,11 @@ export function App() {
           ctx2d.fillStyle = g;
           ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
         }
+      }
+      // butterflies, fireflies, bats, and a stork crossing the sky
+      if (area === "village") {
+        drawSmallLife(ctx2d, DECOR, camX, camY, vw, vh, now, isNight(clockRef.current.minute));
+        if (!isNight(clockRef.current.minute)) drawFlyingStork(ctx2d, camX, camY, vw, vh, now);
       }
       // the colour of the hour, and mist on the water at dawn
       if (area === "village") {
@@ -2101,6 +2163,8 @@ export function App() {
                                     ? t("ui.promptLabel.playKorchma")
                                   : prompt.kind === "pustkaChest"
                                     ? t("ui.promptLabel.pustkaChest")
+                                  : prompt.kind === "petDog"
+                                    ? t("ui.promptLabel.petDog")
                                   : prompt.kind === "grave"
                                     ? t("ui.promptLabel.grave")
                                   : prompt.kind === "tobacco"
