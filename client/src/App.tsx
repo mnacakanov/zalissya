@@ -1488,8 +1488,13 @@ export function App() {
         const dog = crittersRef.current.find((c) => c.kind === "dog");
         const asleep = isNight(clockRef.current.minute);
         const n = Math.floor(Math.random() * 3);
-        showToast(t(asleep ? "dog.pet.asleep" : (`dog.pet.${n}` as TextKey)));
+        const petLine = t(asleep ? "dog.pet.asleep" : (`dog.pet.${n}` as TextKey));
         if (dog && !asleep) { dog.wait = 2; dog.sitting = true; }
+        // with Prokip's gift you still pet him, and now he answers
+        // (dialogue/animals.ts)
+        if (flagHas(flagsRef.current, "zviryna")) {
+          openDialogue(animalSpeaker("dog"), [petLine, animalLine("dog", flagsRef.current, asleep, false, Math.random())]);
+        } else showToast(petLine);
         return;
       }
       case "pustkaChest": {
@@ -2024,8 +2029,10 @@ export function App() {
           const dog = crittersRef.current.find((c) => c.kind === "dog");
           // with Prokip's gift the animals talk; without, the dog is petted
           const hears = flagHas(flagsNow, "zviryna");
-          if (dog && !hears) spot(true, dog.x, dog.y, 38, () => ({ kind: "petDog" }));
-          if (hears) crittersRef.current.forEach((cr, idx) => spot(true, cr.x, cr.y, cr.kind === "cow" || cr.kind === "horse" ? 50 : 38, () => ({ kind: "animal", idx })));
+          // the dog is always petted (and, with Prokip's gift, answers);
+          // the geese, the cow and the horse are listened to
+          if (dog) spot(true, dog.x, dog.y, 38, () => ({ kind: "petDog" }));
+          if (hears) crittersRef.current.forEach((cr, idx) => spot(cr.kind !== "dog", cr.x, cr.y, cr.kind === "cow" || cr.kind === "horse" ? 50 : 38, () => ({ kind: "animal", idx })));
         }
         spot(ostapNow === "dead", GRAVE.x, GRAVE.y, 50, () => ({ kind: "grave" }));
         const tStage = tobaccoStage(flagsNow);
