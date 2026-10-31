@@ -11,8 +11,9 @@ import { isNight } from "./time";
 //      handed that sieve to everyone, and you are the first who went.
 //   2. «Привіт від Прокопа» — carry his regards to Vesna and ask, politely,
 //      whether it will rain on Kupala. It sounds like nothing. It is the
-//      sore spot of fifty years (a Kupala night, rain, a man who never
-//      admitted he was wrong): she chases you out with a broom and stays
+//      old sore spot (she was his apprentice, a girl; one Kupala night she
+//      said it would rain, he said no, it poured, he never admitted it, and
+//      she went off to heal on her own): she chases you out with a broom and stays
 //      cross with you. Prokip laughs till he cries, tells you why, and
 //      sends you to apologize; until you do, Vesna won't talk to you.
 //   3. «Перелесник» — the serious one. A fiery serpent flies to the

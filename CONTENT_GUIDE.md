@@ -86,7 +86,7 @@ Transliteration rules and the English/Ukrainian split are in `CLAUDE.md` (Rule 1
 
 - **Ukrainian first, then translate.** Write the line the way a person on the khutir would say it, then render it in English with the same rhythm. Don't write English and translate it back.
 - **Short and punchy.** One to three sentences a line. Prefer a concrete image («очі, як утоплена колода») to an explanation.
-- **Voices.**
+- **Voices.** (Each character's age, look and ties are in `CHARACTERS.md`; check it before writing about anyone.)
   - **Myroslav, the otaman:** gruff and fatherly, an old Sich man; orders that are really care.
   - **Vesna, the znakharka:** dry and warm, practical, sees through everyone.
   - **Radek, the smith:** a Pole who ran from his lord. Swears in Polish («пся крев», «Jezus Maria», «a nie…»), mixed into his Ukrainian.
