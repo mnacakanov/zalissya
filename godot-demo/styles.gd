@@ -429,12 +429,18 @@ func _build_walk(metres: float) -> void:
 	anim_kind = ""
 	var sf := SpriteFrames.new()
 	var cell_h := 0.0
-	var sheet: Texture2D = _tex("kobzar_walk") if ResourceLoader.exists("res://styles/%s/kobzar_walk.png" % style) else null
+	# a layout may name its own sheet and the order of its rows, e.g.
+	# "walk": {"file": "kobzar_walk_4dir", "rows": ["down", "up", "right", "left"]}
+	var walk: Dictionary = layout.get("walk", {})
+	var sheet_name: String = walk.get("file", "kobzar_walk")
+	var sheet: Texture2D = _tex(sheet_name) if ResourceLoader.exists("res://styles/%s/%s.png" % [style, sheet_name]) else null
 	if sheet != null:
 		var cw := sheet.get_width() / 6.0
 		var ch := sheet.get_height() / 4.0
 		cell_h = ch
-		var rows := ["walk_down", "walk_up", "walk_left", "walk_right"]
+		var rows := []
+		for r in walk.get("rows", ["down", "up", "left", "right"]):
+			rows.append("walk_" + r)
 		for r in 4:
 			sf.add_animation(rows[r])
 			sf.set_animation_speed(rows[r], 10)
@@ -460,7 +466,7 @@ func _build_walk(metres: float) -> void:
 	sf.remove_animation("default")
 	player_anim = AnimatedSprite2D.new()
 	player_anim.sprite_frames = sf
-	player_anim.animation = sf.get_animation_names()[0]
+	player_anim.animation = "walk_down" if sf.has_animation("walk_down") else sf.get_animation_names()[0]
 	player_anim.centered = false
 	var first: Texture2D = sf.get_frame_texture(sf.get_animation_names()[0], 0)
 	player_anim.offset = Vector2(-first.get_width() / 2.0, -first.get_height())

@@ -14,6 +14,7 @@
     },
     "door": [0.38, 0.60]
   },
+  "walk": {"file": "kobzar_walk_4dir", "rows": ["down", "up", "right", "left"]},
   "horod": {"file": "horod", "metres": 5.5},
   "skull_stake": {"file": "skull_stake", "metres": 1.7},
   "heights": {"kobzar": 1.75, "npc_prokip": 1.72, "cow": 1.45, "bench": 0.55}
