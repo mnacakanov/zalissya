@@ -1,5 +1,5 @@
 import { CAVE_LIGHTS, TUNNEL_LIGHTS } from "../data/cave";
-import { HOUSE_RECTS, type HouseId } from "../data/houses";
+import { CAVE_MOUTH, HOUSE_RECTS, type HouseId } from "../data/houses";
 import { RIVER_HALF, riverY } from "../data/land";
 import { LYSA_WORLD } from "../data/lysa";
 import { FIRE, KAPLYTSIA, POND } from "../data/village";
@@ -102,7 +102,7 @@ function windowLights(id: HouseId): Light[] {
     case "mlyn": return []; // nobody grinds by night (that anyone admits to)
     case "duplo": case "kurhan": case "pechera": return [];
     // a faint glimmer at the cave's mouth; the tunnel's ridge shows nothing
-    case "zmiieva": return [{ x: r.x + r.w / 2, y: base - 20, r: 56, col: "255,190,100", k: 0.55 }];
+    case "zmiieva": return [{ x: CAVE_MOUTH.x, y: CAVE_MOUTH.y - 20, r: 56, col: "255,190,100", k: 0.55 }];
     case "lazna": return [];
     // the lampadka before the icons, through the two narrow windows
     case "kaplytsia": return at([16, r.w - 30], base - 60 + 24, 14);

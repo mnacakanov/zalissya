@@ -1490,6 +1490,8 @@
   "cave.prompt.tunnelWest": "Вилізти до печери ⬆",
   "cave.prompt.tunnelEast": "Піднятися драбиною до каплички ⬆",
   "cave.prompt.chapelHatch": "Підняти люк ⬇",
+  "cave.prompt.caveMouth": "Увійти до печери ⬇",
+  "cave.prompt.caveExit": "Вийти на світло ⬆",
   "cave.prompt.hoard": "Взяти червінці 🪙",
   "cave.prompt.pouch": "Узяти калитку 🪙",
   "cave.pass.crack": "Ти знову проліз у щілину.",

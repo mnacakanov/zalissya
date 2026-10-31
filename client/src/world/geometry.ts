@@ -16,3 +16,10 @@ export function circleRectCollide(cx: number, cy: number, r: number, b: Rect): b
   const dy = cy - ny;
   return dx * dx + dy * dy < r * r;
 }
+// One axis of a camera that follows `p` inside a span [lo, hi] of the world:
+// kept inside the span, or, when the span is smaller than the screen (a small
+// cave on a big monitor), centred on it.
+export function followAxis(p: number, view: number, lo: number, hi: number): number {
+  if (hi - lo <= view) return lo + (hi - lo) / 2 - view / 2;
+  return clamp(p - view / 2, lo, hi - view);
+}

@@ -9,6 +9,12 @@ export const WORLD_H = 2300;
 // Hora" (the HUD, the sabbath rules).
 export const LYSA_BORDER_X = 2620;
 export const LYSA_BORDER_Y = 1150;
+// The underground (the Serpent's Cave, the tunnel; data/houses.ts) lives in a
+// band of the same coordinate space BELOW the open world: nothing on the
+// surface stands over it, and nothing underground can be walked onto from the
+// surface. You get there only by the mouth, the crack, the ladder or the hatch.
+export const UNDER_TOP = 2400;
+export const UNDER_BOTTOM = 3100;
 export const PLAYER_SPEED = 175;
 export const PLAYER_R = 13;
 export const SPAWN = { x: 840, y: 760 };

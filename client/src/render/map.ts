@@ -1,5 +1,5 @@
 import { CART, GRAVE } from "../data/chumaky";
-import { DOMOVYK_HOME, doorOf, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
+import { CAVE_HILL, DOMOVYK_HOME, doorOf, HOUSE_RECTS, mapPosition, PICH_SPOT } from "../data/houses";
 import { BOLOTO, BOLOTO_POOLS, BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
 import { BREW_SPOT, COOK_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
@@ -59,11 +59,12 @@ const CROP_COL: Record<string, string> = {
 };
 
 export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, view: MapView, flags: ReadonlySet<string>, target: { x: number; y: number } | null, now: number): void {
-  // world → canvas transform
+  // world → canvas transform (underground, the kobzar is shown at the cave's mouth)
+  const pl = mapPosition(view.player);
   const span = view.zoom === "world" ? { w: WORLD_W, h: WORLD_H } : { w: 1500, h: 1500 * (h / w) };
   const s = Math.min(w / span.w, h / span.h);
-  const ox = view.zoom === "world" ? (w - WORLD_W * s) / 2 : w / 2 - view.player.x * s;
-  const oy = view.zoom === "world" ? (h - WORLD_H * s) / 2 : h / 2 - view.player.y * s;
+  const ox = view.zoom === "world" ? (w - WORLD_W * s) / 2 : w / 2 - pl.x * s;
+  const oy = view.zoom === "world" ? (h - WORLD_H * s) / 2 : h / 2 - pl.y * s;
   const X = (x: number) => ox + x * s;
   const Y = (y: number) => oy + y * s;
 
@@ -141,14 +142,14 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   if (flagHas(flags, "ostapDied")) glyph(GRAVE.x, GRAVE.y - 8, "✝");
   if (!flagHas(flags, "viySealed")) glyph(1420, 260, "◉");
   // the Serpent's Cave once the kobzar has heard of it, and the old tunnel once he knows of it
-  const cave = HOUSE_RECTS.zmiieva;
-  if (flagHas(flags, "caveHeard")) glyph(cave.x + cave.w / 2, cave.y + 120, "∩");
+  if (flagHas(flags, "caveHeard")) glyph(CAVE_HILL.x + CAVE_HILL.w / 2, CAVE_HILL.y + 90, "∩");
   if (flagHas(flags, "lazKnown")) {
     const kp = HOUSE_RECTS.kaplytsia;
     c.save();
     c.setLineDash([7, 6]); c.lineCap = "butt"; c.lineWidth = 2; c.strokeStyle = "rgba(90,58,30,0.75)";
-    c.beginPath(); c.moveTo(X(cave.x + 50), Y(cave.y + 40));
-    c.bezierCurveTo(X(cave.x - 60), Y(cave.y - 500), X(kp.x + 200), Y(kp.y + 900), X(kp.x + 70), Y(kp.y + 100));
+    // (the tunnel itself lies in the underground band; the map only hints at its way)
+    c.beginPath(); c.moveTo(X(CAVE_HILL.x + 10), Y(CAVE_HILL.y + 80));
+    c.bezierCurveTo(X(CAVE_HILL.x - 250), Y(CAVE_HILL.y - 700), X(kp.x + 200), Y(kp.y + 900), X(kp.x + 70), Y(kp.y + 100));
     c.stroke();
     c.restore();
   }
@@ -175,7 +176,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   label("map.hemp", 1460, 1462, 11, "#f2f6e8");
   label("map.tobacco", 2080, 1930, 11);
   label("map.pond", POND.x, POND.y, 10, "#e9f4f8");
-  if (flagHas(flags, "caveHeard")) label("map.cave", cave.x + cave.w / 2, cave.y + 82, 11);
+  if (flagHas(flags, "caveHeard")) label("map.cave", CAVE_HILL.x + CAVE_HILL.w / 2, CAVE_HILL.y + 52, 11);
   label("map.boloto", BOLOTO.x, BOLOTO.y - BOLOTO.ry - 10, 11, "#e9f2dc");
   label("map.korchma", HOUSE_RECTS.korchma.x + HOUSE_RECTS.korchma.w / 2, HOUSE_RECTS.korchma.y - 30, 11);
 
@@ -189,8 +190,8 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
     c.fillStyle = "#f2c416"; c.fillText("★", X(target.x), Y(target.y));
   }
   // the kobzar
-  const px = X(view.player.x);
-  const py = Y(view.player.y);
+  const px = X(pl.x);
+  const py = Y(pl.y);
   c.fillStyle = "rgba(200,40,30,0.25)";
   c.beginPath(); c.arc(px, py, 10 + Math.sin(now * 0.008) * 3, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#c8281e";

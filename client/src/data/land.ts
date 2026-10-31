@@ -87,8 +87,8 @@ function nearBolotoPath(x: number, y: number): boolean {
 // the forest to Did Prokip's door (data/houses.ts HOUSE_RECTS.prokip). Two
 // bezier legs; no tree stands within reach of it, or you could not get by
 // (tree trunks are solid: data/village.ts SOLID).
-// It runs between the river and the tunnel's ridge (HOUSE_RECTS.lazna), then
-// round the ridge's east end and up to the door from the south.
+// It runs through the forest south of the river and up to the door from the
+// south (the tunnel lies underground, off the surface: data/houses.ts).
 export const PROKIP_PATH: number[][][] = [
   [[2262, 1910], [2600, 1860], [3000, 1900], [3350, 1880]],
   [[3350, 1880], [3660, 1860], [3600, 2090], [3790, 2034]],

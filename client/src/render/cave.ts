@@ -7,10 +7,10 @@ import { darken, rr } from "./shapes";
 
 // --- The Serpent's Cave and the tunnel under the river -----------------------------------
 // Two places in the same painted hand as the khaty:
-//   zmiieva — outside, a grassy hill with a rocky face and a black mouth to the south;
+//   zmiieva — outside, a small grassy hill with a rocky face and a black mouth to the south;
 //             inside, the hall, ledges, a glowing pool, an old monk's cell, Omelko's
 //             rock and the serpent's lair with the hidden crack in its back wall
-//   lazna   — outside, a bare rock ridge (nothing to see, nothing to find); inside,
+//   lazna   — no outside at all (it lies underground, off the map); inside,
 //             a long timbered tunnel of candle niches, boulders, the smuggler's camp,
 //             a sentry's bones, a ladder up at one end and a crack up at the other
 // Both interiors are painted ONCE into an offscreen canvas and stamped each frame;
@@ -147,49 +147,6 @@ export function drawCaveHill(c: Ctx, x: number, y: number, w: number, h: number,
   const gl = c.createRadialGradient(x + w / 2, y + h - 22, 2, x + w / 2, y + h - 22, 44);
   gl.addColorStop(0, `rgba(255,190,90,${fl})`); gl.addColorStop(1, "rgba(255,190,90,0)");
   c.fillStyle = gl; c.fillRect(x + w / 2 - 46, y + h - 68, 92, 68);
-  c.restore();
-}
-
-// --- outside: the ridge over the tunnel --------------------------------------------------
-// Nothing to find here, and it is meant to look it: a low bare ridge on the steppe.
-export function drawLaznaRidge(c: Ctx, x: number, y: number, w: number, h: number, alpha: number): void {
-  if (alpha <= 0.01) return;
-  const cv = bake("ridge", w + PAD * 2, h + PAD * 2, (g) => {
-    g.translate(PAD, PAD);
-    g.fillStyle = "rgba(10,20,8,0.3)";
-    g.beginPath(); g.ellipse(w / 2 + 10, h - 20, w * 0.5, 30, 0, 0, Math.PI * 2); g.fill();
-    // a long low back of turf and rock
-    const body = g.createLinearGradient(0, 0, 0, h);
-    body.addColorStop(0, "#6e8a54"); body.addColorStop(0.55, "#587a44"); body.addColorStop(1, "#46603a");
-    g.fillStyle = body;
-    g.beginPath();
-    g.moveTo(10, h - 30);
-    for (let k = 0; k <= 40; k++) {
-      const px = 10 + (k / 40) * (w - 20);
-      g.lineTo(px, 24 + Math.sin(k * 0.55) * 10 + hash2(k, 73) * 12);
-    }
-    g.lineTo(w - 10, h - 30);
-    for (let k = 40; k >= 0; k--) g.lineTo(10 + (k / 40) * (w - 20), h - 14 - hash2(k, 79) * 12);
-    g.closePath(); g.fill(); g.strokeStyle = INK; g.lineWidth = 1.3; g.stroke();
-    for (let i = 0; i < 90; i++) {
-      const rx = 30 + hash2(i, 3) * (w - 60);
-      const ry = 34 + hash2(i, 7) * (h - 80);
-      rock(g, rx, ry, 12 + hash2(i, 11) * 24, 7 + hash2(i, 15) * 12, i % 3 ? "#86806f" : "#706a5c", i % 3 === 0 ? 0.5 : 0.15);
-    }
-    for (let i = 0; i < 160; i++) {
-      const gx = 20 + hash2(i, 21) * (w - 40);
-      const gy = 30 + hash2(i, 25) * (h - 70);
-      g.strokeStyle = i % 3 ? "rgba(40,72,30,0.55)" : "rgba(160,196,110,0.5)"; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx - 2, gy - 6); g.moveTo(gx, gy); g.lineTo(gx + 2, gy - 5); g.stroke();
-    }
-    // ferns in the clefts, and a fallen log nobody has moved in years
-    for (let i = 0; i < 12; i++) blob(g, 60 + i * (w - 120) / 11, h - 40 + hash2(i, 31) * 16, 15, 9, "#4f8040", false);
-    g.fillStyle = "#6a4a2c"; rr(g, w * 0.62, h * 0.52, 130, 14, 6); g.fill(); g.strokeStyle = INK; g.lineWidth = 1; g.stroke();
-    g.fillStyle = "#8a6a44"; g.beginPath(); g.ellipse(w * 0.62 + 128, h * 0.52 + 7, 4, 7, 0, 0, Math.PI * 2); g.fill();
-  });
-  c.save();
-  c.globalAlpha = alpha;
-  c.drawImage(cv, x - PAD, y - PAD);
   c.restore();
 }
 

@@ -1,4 +1,4 @@
-import { HOUSE_RECTS } from "../data/houses";
+import { CAVE_MOUTH, HOUSE_RECTS, type HouseId, isUnderground } from "../data/houses";
 import { LYSA_ORIGIN, LYSA_SUMMIT, LYSA_WORLD } from "../data/lysa";
 const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
 import { LYSA_H, LYSA_W, VILLAGE_W } from "../world/areas";
@@ -110,11 +110,15 @@ function roads(): Road[] {
   ];
   // footpaths worn from each door to the nearest road
   let seed = 10;
-  for (const [hid, h] of Object.entries(HOUSE_RECTS)) {
-    // the tunnel has no door, so no path leads to its ridge
-    if (hid === "lazna") continue;
-    const dx = h.x + h.w / 2;
-    const dy = h.y + h.h;
+  // (the cave and the tunnel lie underground, off the map: only the cave's
+  // mouth on the surface has a path)
+  const doors = [
+    ...Object.entries(HOUSE_RECTS).filter(([hid]) => !isUnderground(hid as HouseId)).map(([, h]) => ({ x: h.x + h.w / 2, y: h.y + h.h })),
+    CAVE_MOUTH,
+  ];
+  for (const door of doors) {
+    const dx = door.x;
+    const dy = door.y;
     const ty = dy < 600 ? 620 : dy + 34;
     r.push({ pts: bezierPts([dx, dy - 4], [dx, (dy + ty) / 2], [dx + (dx < 840 ? 6 : -6), (dy + ty) / 2 + 6], [dx + (dx < 840 ? 12 : -12), ty], 5), w: 20, seed: seed++, ruts: false });
   }

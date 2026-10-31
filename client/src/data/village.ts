@@ -1,7 +1,7 @@
 import { hash2, type Rect } from "../world/geometry";
 import { FOREST_TREES } from "./land";
 import { KABYTSIA } from "./items";
-import { HOUSE_IDS, HOUSE_RECTS, houseSolids } from "./houses";
+import { CAVE_HILL, CAVE_HILL_SOLID, HOUSE_IDS, HOUSE_RECTS, houseSolids } from "./houses";
 
 // --- World layout -----------------------------------------------------------
 
@@ -98,13 +98,12 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // nothing grows through a roof or on the maidan's chapel
   // (and a clearing round the old hollow oak in the south forest, where
   // Motrya sleeps by day: data/hideouts.ts)
-  // (a tree's crown hangs over what lies behind it: keep the lane in front of the
-  // Serpent's Cave's mouth clear, and the trees off the tunnel ridge's south face)
-  const zm = HOUSE_RECTS.zmiieva;
-  const lz = HOUSE_RECTS.lazna;
+  // (a tree's crown hangs over what lies behind it: keep the hill and the lane in
+  // front of the Serpent's Cave's mouth clear. The cave and the tunnel themselves
+  // lie in the underground band, so they clear nothing else.)
   const CAVE_CLEARINGS = [
-    { x: zm.x + zm.w / 2 - 110, y: zm.y + zm.h, w: 220, h: 150 },
-    { x: lz.x, y: lz.y + lz.h, w: lz.w, h: 120 },
+    CAVE_HILL,
+    { x: CAVE_HILL.x + CAVE_HILL.w / 2 - 110, y: CAVE_HILL.y + CAVE_HILL.h, w: 220, h: 150 },
   ];
   // and a little yard before Did Prokip's door, so no crown hides it
   const pk = HOUSE_RECTS.prokip;
@@ -199,6 +198,8 @@ export const SOLID: Rect[] = [
   ...HOUSES.map((h) => ({ x: h.x, y: h.y + 26, w: h.w, h: h.h - 26 })),
   // the khaty you walk into: walls with a door, and their furniture
   ...HOUSE_IDS.flatMap((id) => houseSolids(id)),
+  // the Serpent's Cave's hill on the surface: not to be walked onto
+  CAVE_HILL_SOLID,
   OTAMAN_FLAGPOLE,
   ...SIGNPOSTS.map((sp) => ({ x: sp.x - 3, y: sp.y - 5, w: 6, h: 6 })),
   { x: WAYSIDE_CROSS.x - 4, y: WAYSIDE_CROSS.y - 5, w: 8, h: 6 },

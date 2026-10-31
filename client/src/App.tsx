@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./data/characters";
-import { BED_SPOT_WORLD, doorOf, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
+import { BED_SPOT_WORLD, CAVE_HILL, doorOf, fromOldUnderground, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, isUnderground, PICH_SPOT, PUSTKA_CHEST, UG_BAND_FLAG } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, KABYTSIA, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
 import { DECOR, FENCES, FIRE, FIRE_SEAT, HOUSES, SIGNPOSTS, WAYSIDE_CROSS, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
@@ -48,10 +48,10 @@ import { SatchelIcon } from "./ui/SatchelIcon";
 import { satchelGroups, type SatchelAction } from "./systems/satchel";
 import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
-import { drawCaveHill, drawLaznaRidge } from "./render/cave";
+import { drawCaveHill } from "./render/cave";
 import { drawBats, drawCrawler, drawVohnyk, drawZmiy } from "./render/caveLife";
 import { ARRIVE, CAVE_CHAR_IDS, CAVE_CHARS, CAVE_SPOTS, CHAPEL_HATCH, TUNNEL_CHARS, TUNNEL_SPOTS, ZMIY } from "./data/cave";
-import { caveSolids, firstPass, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
+import { caveSolids, firstPass, isMouthSpot, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
 import { caveRumorTopics, caveTopicSet } from "./dialogue/cave";
 import { pustkaTopics } from "./dialogue/pustka";
 import { burnLogs, chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, workTargets, type Work } from "./systems/pustka";
@@ -73,8 +73,8 @@ import { askedIds, markAsked } from "./systems/askedTopics";
 import { advance, canNapToNightfall, type Clock, DAWN, DAY_MINUTES, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
-import { type AreaId, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, ROAD_START, SPAWN, WORLD_H, WORLD_W } from "./world/areas";
-import { circleRectCollide, clamp, hash2 } from "./world/geometry";
+import { type AreaId, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, ROAD_START, SPAWN, UNDER_BOTTOM, UNDER_TOP, WORLD_H, WORLD_W } from "./world/areas";
+import { circleRectCollide, clamp, followAxis, hash2 } from "./world/geometry";
 import { t } from "./i18n";
 
 // Zalissya — the game component: state, the frame loop, interaction, and
@@ -440,8 +440,15 @@ export function App() {
       // Saves from before the one-world map stored Lysa Hora in its own
       // local coordinates: move them onto the mountain in the shared world.
       const onOldMountain = area === "lysa" && s.x < LYSA_ORIGIN.x;
+      // The cave and the tunnel moved off the surface into the underground band:
+      // a save made before (no "ugBand" flag) that stands in their old places on
+      // the surface wakes in the same spot of the new ones. Saves after it
+      // may stand anywhere, the old places included.
+      const oldUg = s.flags.includes(UG_BAND_FLAG) ? null : fromOldUnderground(s);
+      const sy = oldUg ? oldUg.y : s.y;
+      const underground = sy >= UNDER_TOP;
       playerRef.current.x = clamp(s.x + (onOldMountain ? LYSA_ORIGIN.x : 0), 30, WORLD_W - 30);
-      playerRef.current.y = clamp(s.y + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, WORLD_H - 20);
+      playerRef.current.y = underground ? clamp(sy, 60, UNDER_BOTTOM - 20) : clamp(sy + (onOldMountain ? LYSA_ORIGIN.y : 0), 60, WORLD_H - 20);
       if (oldRoom) {
         const c0 = HOUSE_CENTER(oldRoom);
         playerRef.current.x = c0.x;
@@ -473,6 +480,7 @@ export function App() {
       talkedRef.current = new Set(mappedTalked);
       herbsRef.current = s.herbs;
       flagsRef.current = new Set(s.flags);
+      if (!flagsRef.current.has(UG_BAND_FLAG)) { flagsRef.current.add(UG_BAND_FLAG); dirtyRef.current = true; }
       clockRef.current = readClock(flagsRef.current);
       setHudClock(clockRef.current);
       // Stats/skills migration for older saves: spendable herb stock
@@ -507,6 +515,9 @@ export function App() {
       setHudTalked(mappedTalked);
       setHudHerbs(s.herbs);
       setHudFlags(new Set(flagsRef.current));
+    } else {
+      // a new game starts in the new world (see the migration above)
+      flagsRef.current.add(UG_BAND_FLAG);
     }
   }, [saveQuery.data]);
 
@@ -730,7 +741,7 @@ export function App() {
       openDialogue(ZMIY, [t("cave.sing.wakes.0"), t("cave.sing.wakes.1")]);
     }
   };
-  // Through the crack, up the ladder, or down the chapel hatch.
+  // Through the mouth, the crack, up the ladder, or down the chapel hatch.
   const passLaz = (spot: LazSpot) => {
     const f = flagsRef.current;
     if (!lazAvailable(spot, f)) return;
@@ -739,10 +750,13 @@ export function App() {
     const to = ARRIVE[LAZ_TO[spot]];
     const pl = playerRef.current;
     pl.x = to.x; pl.y = to.y; pl.moving = false;
-    passingRef.current = true;
     fadeRef.current = 1;
     dirtyRef.current = true;
-    showToast(t(`cave.pass.${spot}${first ? "First" : ""}` as TextKey));
+    // (the cave's mouth is a plain doorway: the frame's own "you enter" toast does)
+    if (!isMouthSpot(spot)) {
+      passingRef.current = true;
+      showToast(t(`cave.pass.${spot}${first ? "First" : ""}` as TextKey));
+    }
   };
 
   // --- Viy's night -------------------------------------------------------------
@@ -1869,7 +1883,8 @@ export function App() {
         const canStand = (x: number, y: number) =>
           swimming ? inPondShape(x, y, -14) : !solids.some((b) => circleRectCollide(x, y - 6, PLAYER_R, b)) && !inPond(x, y) && !inRiver(x, y) && !inBoloto(x, y);
         if (canStand(tx, p.y)) p.x = tx;
-        let ty = clamp(p.y + stepY, 46, WORLD_H - 10);
+        // (underground the walls keep him in; the surface ends at the world's edge)
+        let ty = clamp(p.y + stepY, 46, isUnderground(insideRef.current) ? UNDER_BOTTOM : WORLD_H - 10);
         if (canStand(p.x, ty)) p.y = ty;
         dirtyRef.current = true;
       }
@@ -2177,6 +2192,8 @@ export function App() {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
         // the cave and the tunnel: the ways through, the hoard, the sentry's pouch
+        spot(!insideNow, CAVE_SPOTS.mouthOut.x, CAVE_SPOTS.mouthOut.y, 52, () => ({ kind: "laz", spot: "caveMouth" }));
+        spot(insideNow === "zmiieva", CAVE_SPOTS.mouthIn.x, CAVE_SPOTS.mouthIn.y, 46, () => ({ kind: "laz", spot: "caveExit" }));
         spot(insideNow === "zmiieva" && lazAvailable("crack", flagsNow), CAVE_SPOTS.crack.x, CAVE_SPOTS.crack.y, 44, () => ({ kind: "laz", spot: "crack" }));
         spot(insideNow === "zmiieva" && zmiyLulled(flagsNow) && !flagHas(flagsNow, "zmiyHoard"), CAVE_SPOTS.hoard.x, CAVE_SPOTS.hoard.y, 42, () => ({ kind: "hoard" }));
         spot(insideNow === "lazna", TUNNEL_SPOTS.west.x, TUNNEL_SPOTS.west.y, 44, () => ({ kind: "laz", spot: "tunnelWest" }));
@@ -2202,9 +2219,12 @@ export function App() {
       // (during the vigil the camera looks up toward Viy, so both the
       // chalk ring and his lids are in view)
       const focusY = fight ? p.y - 110 : p.y;
-      const camX = clamp(p.x - vw / 2, 0, Math.max(0, WORLD_W - vw));
+      // (underground, the camera stays within the cave's or tunnel's own room:
+      // the band holds nothing else to look at)
+      const ugCam = isUnderground(insideNow) ? HOUSE_RECTS[insideNow] : null;
+      const camX = ugCam ? followAxis(p.x, vw, ugCam.x, ugCam.x + ugCam.w) : clamp(p.x - vw / 2, 0, Math.max(0, WORLD_W - vw));
       CAM.x = camX;
-      const camY = clamp(focusY - vh / 2, 0, Math.max(0, WORLD_H - vh));
+      const camY = ugCam ? followAxis(focusY, vh, ugCam.y, ugCam.y + ugCam.h) : clamp(focusY - vh / 2, 0, Math.max(0, WORLD_H - vh));
       CAM.y = camY;
 
       // --- render
@@ -2275,7 +2295,9 @@ export function App() {
       type Drawable = { y: number; draw: () => void };
       const drawables: Drawable[] = [];
       for (const id of HOUSE_IDS) {
-        const r = HOUSE_RECTS[id];
+        // (the tunnel has no surface; the cave shows only its hill)
+        if (id === "lazna") continue;
+        const r = id === "zmiieva" ? CAVE_HILL : HOUSE_RECTS[id];
         const alpha = roofAlphaRef.current[id];
         drawables.push({ y: r.y + r.h, draw: () => id === "otaman"
           ? drawOtamanKhata(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
@@ -2293,8 +2315,6 @@ export function App() {
                 ? drawPechera(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, !isSabbath(clockRef.current.minute))
               : id === "zmiieva"
                 ? drawCaveHill(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
-              : id === "lazna"
-                ? drawLaznaRidge(ctx2d, r.x - camX, r.y - camY, r.w, r.h, alpha)
               : id === "kaplytsia"
                 ? drawKaplytsia(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "prokip"
@@ -2345,11 +2365,8 @@ export function App() {
         if (Math.abs(wp.x - camX - vw / 2) > vw || Math.abs(wp.y - camY - vh / 2) > vh) continue;
         drawables.push({ y: wp.y + 2, draw: () => drawWorkGlint(ctx2d, wp.x - camX, wp.y - camY, now, wp.x, wp.y) });
       }
-      // (underground, the crowns of the forest outside must not hang over the floor)
-      const ugR = insideNow === "zmiieva" || insideNow === "lazna" ? HOUSE_RECTS[insideNow] : null;
       for (const tr of TREES) {
         if (tr.x < camX - 90 || tr.x > camX + vw + 90 || tr.y < camY - 130 || tr.y > camY + vh + 40) continue;
-        if (ugR && tr.x > ugR.x - 90 && tr.x < ugR.x + ugR.w + 90 && tr.y > ugR.y && tr.y < ugR.y + ugR.h + 160) continue;
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       for (const npc of [...villageChars, ...lysaChars, ...(sabbath ? LYSA_DANCERS : [])]) {
@@ -2522,14 +2539,15 @@ export function App() {
       // where light falls — the fire, lit windows, the korchma door, the
       // room the kobzar is in — then the vigil on top so the chalk stays
       // bright
-      // underground, nothing past the cave's or tunnel's walls is to be seen
+      // underground, nothing past the cave's or tunnel's walls is to be seen (the band
+      // holds only the two rooms, so this is the black of the earth around them)
       {
         const ug = insideRef.current;
-        if (ug === "zmiieva" || ug === "lazna") {
+        if (isUnderground(ug)) {
           const r = HOUSE_RECTS[ug];
           const x0 = r.x - camX;
           const y0 = r.y - camY;
-          ctx2d.fillStyle = `rgba(7,6,8,${Math.min(1, 1 - roofAlphaRef.current[ug])})`;
+          ctx2d.fillStyle = "rgb(7,6,8)";
           ctx2d.fillRect(0, 0, vw, Math.max(0, y0));
           ctx2d.fillRect(0, y0 + r.h, vw, Math.max(0, vh - y0 - r.h));
           ctx2d.fillRect(0, y0, Math.max(0, x0), r.h);
@@ -2615,7 +2633,7 @@ export function App() {
       onSuccess: () => {
         talkedRef.current = new Set();
         herbsRef.current = 0;
-        flagsRef.current = new Set();
+        flagsRef.current = new Set([UG_BAND_FLAG]);
         areaRef.current = "village";
         setHudArea("village");
         lysaPatchesRef.current.forEach((pt) => { pt.taken = false; });

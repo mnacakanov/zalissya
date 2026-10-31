@@ -1490,6 +1490,8 @@
   "cave.prompt.tunnelWest": "Climb up to the cave ⬆",
   "cave.prompt.tunnelEast": "Climb the ladder to the kaplytsia ⬆",
   "cave.prompt.chapelHatch": "Lift the hatch ⬇",
+  "cave.prompt.caveMouth": "Go into the cave ⬇",
+  "cave.prompt.caveExit": "Go out into the daylight ⬆",
   "cave.prompt.hoard": "Take the chervintsi 🪙",
   "cave.prompt.pouch": "Take the purse 🪙",
   "cave.pass.crack": "Back through the crack.",

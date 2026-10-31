@@ -1,3 +1,4 @@
+import { UNDER_TOP } from "../world/areas";
 import { type Rect } from "../world/geometry";
 
 // --- Khaty you walk into ----------------------------------------------------
@@ -27,12 +28,13 @@ import { type Rect } from "../world/geometry";
 //   kaplytsia — the log chapel at the head of the maidan (KAPLYTSIA_ROOM)
 //   prokip — Did Prokip's khatka, alone in the south-east forest past the
 //     chumak bridge (PROKIP_ROOM; systems/vorozhbyt.ts)
-//   zmiieva — the Serpent's Cave in the south forest, big enough to get lost
-//     in (ZMIIEVA_ROOM); data/cave.ts has who and what lives in it
+//   zmiieva — the Serpent's Cave under the south forest, big enough to get lost
+//     in (ZMIIEVA_ROOM); data/cave.ts has who and what lives in it. Its room
+//     lies in the underground band (UNDER_TOP); the surface shows only the
+//     hill with its mouth (CAVE_HILL), and the mouth is a spot, not a door
 //   lazna — the hidden tunnel (лаз) from the cave to under the kaplytsia. It
-//     is an underground place with no door: you only arrive by the crack, the
-//     ladder or the chapel hatch (data/cave.ts), and from outside it is a bare
-//     rock ridge on the steppe east of the chumak road (LAZNA_ROOM)
+//     is an underground place with no surface at all: you only arrive by the
+//     crack, the ladder or the chapel hatch (data/cave.ts) (LAZNA_ROOM)
 export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia" | "prokip" | "zmiieva" | "lazna";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
@@ -53,15 +55,56 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // far out: over the chumak bridge and east through the forest, past the
   // end of the tunnel's ridge, where "decent people don't walk" (Vesna)
   prokip: { x: 3680, y: 1840, w: 220, h: 170 },
-  // south of the river, east of the old oak, clear of the bridge road and the
-  // tobacco field: a rocky hill with its mouth to the south
-  zmiieva: { x: 1150, y: 1740, w: 760, h: 460 },
-  // a bare ridge on the steppe east of the chumak road, north of the river (so
-  // it never stands in Did Prokip's forest, far to the south-east); its inside
-  // is the tunnel
-  lazna: { x: 2400, y: 1180, w: 1200, h: 300 },
+  // The two underground places lie in their own band below the open world
+  // (world/areas.ts UNDER_TOP), side by side, so they take no surface space
+  // at all. The surface shows only a small hill with the cave's mouth
+  // (CAVE_HILL); the tunnel has no surface at all.
+  zmiieva: { x: 1150, y: 2500, w: 760, h: 460 },
+  lazna: { x: 2400, y: 2500, w: 1200, h: 300 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
+
+// --- The underground ---------------------------------------------------------------
+export type UndergroundId = "zmiieva" | "lazna";
+export const UNDERGROUND_IDS: readonly UndergroundId[] = ["zmiieva", "lazna"];
+export const isUnderground = (id: HouseId | null): id is UndergroundId => id === "zmiieva" || id === "lazna";
+
+// What the surface shows of the cave: a small rocky hill south of the river,
+// east of the old oak, with its mouth to the south. You cannot walk onto it;
+// press A at the mouth (CAVE_MOUTH) to go in (data/cave.ts).
+export const CAVE_HILL: Rect = { x: 1340, y: 1960, w: 380, h: 240 };
+export const CAVE_MOUTH = { x: CAVE_HILL.x + CAVE_HILL.w / 2, y: CAVE_HILL.y + CAVE_HILL.h };
+// the hill's body, as a wall (the cliff's foot stays clear, so the kobzar
+// always stands in front of it)
+export const CAVE_HILL_SOLID: Rect = { x: CAVE_HILL.x + 24, y: CAVE_HILL.y + 28, w: CAVE_HILL.w - 48, h: CAVE_HILL.h - 32 };
+
+// Where the world map shows the kobzar: on the surface as he is; underground,
+// at the cave's mouth, or (in the tunnel) on a straight line from there to the
+// kaplytsia, by how far along the tunnel he is. The band itself is off the map.
+export function mapPosition(p: { x: number; y: number }): { x: number; y: number } {
+  if (p.y < UNDER_TOP) return p;
+  const cave = HOUSE_RECTS.zmiieva;
+  const tun = HOUSE_RECTS.lazna;
+  if (p.x < (cave.x + cave.w + tun.x) / 2) return CAVE_MOUTH;
+  const kap = HOUSE_RECTS.kaplytsia;
+  const k = Math.min(1, Math.max(0, (p.x - tun.x) / tun.w));
+  return { x: CAVE_MOUTH.x + (kap.x + kap.w / 2 - CAVE_MOUTH.x) * k, y: CAVE_MOUTH.y + (kap.y + kap.h - CAVE_MOUTH.y) * k };
+}
+
+// Saves from before the move stored positions in the cave's and the tunnel's
+// old places on the surface. Find them, and where they are now.
+// (a save carrying this flag was made after the move)
+export const UG_BAND_FLAG = "ugBand";
+const OLD_UNDERGROUND: Array<{ rect: Rect; dy: number }> = [
+  { rect: { x: 1150, y: 1740, w: 760, h: 460 }, dy: 2500 - 1740 },
+  { rect: { x: 2400, y: 1180, w: 1200, h: 300 }, dy: 2500 - 1180 },
+];
+export function fromOldUnderground(p: { x: number; y: number }): { x: number; y: number } | null {
+  for (const { rect: r, dy } of OLD_UNDERGROUND) {
+    if (p.x > r.x + 4 && p.x < r.x + r.w - 4 && p.y > r.y + 4 && p.y < r.y + r.h - 10) return { x: p.x, y: p.y + dy };
+  }
+  return null;
+}
 
 export const WALL = 14;
 export const BACK_WALL = 34; // the north wall plus its inner face
@@ -190,8 +233,8 @@ export const PROKIP_ROOM = {
   lava: { x: 14, y: 116, w: 40, h: 12 },
 } as const satisfies Record<string, Rect>;
 
-// The Serpent's Cave. Footprint 760×460, the mouth at x 357…403. From the
-// mouth the hall runs back to two ledges with a channel between them; above
+// The Serpent's Cave. Footprint 760×460, the mouth (a spot, ARRIVE.caveIn) at
+// x 357…403. From the mouth the hall runs back to two ledges with a channel between them; above
 // them is the upper cavern: Zmiy's lair in the west (the crack in its back
 // wall is the hidden tunnel), the pool in the middle, Omelko's nook in the
 // east. An old monk's cell, long empty, stands in the south-west corner of the hall.
@@ -265,8 +308,9 @@ export function toWorld(id: HouseId, p: { x: number; y: number }): { x: number; 
 export function houseSolids(id: HouseId): Rect[] {
   const r = HOUSE_RECTS[id];
   const half = (r.w - DOOR_GAP) / 2;
-  // the tunnel has no door: its south wall is whole
-  const south: Rect[] = id === "lazna"
+  // the underground has no door: its south wall is whole (you leave by a spot,
+  // data/cave.ts)
+  const south: Rect[] = isUnderground(id)
     ? [{ x: r.x, y: r.y + r.h - WALL, w: r.w, h: WALL }]
     : [
         { x: r.x, y: r.y + r.h - WALL, w: half, h: WALL },

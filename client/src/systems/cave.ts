@@ -1,5 +1,4 @@
-import { BAT_CIRCLE, BAT_ROOSTS, NEWT_AREA, NEWT_HOMES, RAT_HOMES, ZMIY_COIL_WORLD } from "../data/cave";
-import { clamp, hash2, type Rect } from "../world/geometry";
+import { BAT_CIRCLE, BAT_ROOSTS, NEWT_AREA, NEWT_HOMES, RAT_HOMES, ZMIY_COIL_WORLD } from "../data/cave";import { clamp, hash2, type Rect } from "../world/geometry";
 import { flagHas } from "./flags";
 import { reception, SONGS, type Mood, type SongId } from "./songs";
 import { addChervintsi } from "./trade";
@@ -59,20 +58,29 @@ export function takePouch(flags: Set<string>): number {
 //   tunnelWest   — the tunnel's west end → the cave, behind the coil
 //   tunnelEast   — the ladder at the tunnel's east end → under the kaplytsia
 //   chapelHatch  — the hatch under the kaplytsia's rug → the tunnel's east end
-export type LazSpot = "crack" | "tunnelWest" | "tunnelEast" | "chapelHatch";
-export type Arrival = "tunnelWest" | "cave" | "chapel" | "tunnelEast";
+//   caveMouth    — the hill's mouth on the surface → just inside the cave
+//   caveExit     — just inside the cave → the surface, before the mouth
+// (the cave and the tunnel lie in the underground band, so every way in or out
+// is a fade, never a walk: data/houses.ts)
+export type LazSpot = "crack" | "tunnelWest" | "tunnelEast" | "chapelHatch" | "caveMouth" | "caveExit";
+export type Arrival = "tunnelWest" | "cave" | "chapel" | "tunnelEast" | "caveIn" | "outside";
 
 export const LAZ_TO: Record<LazSpot, Arrival> = {
   crack: "tunnelWest",
   tunnelWest: "cave",
   tunnelEast: "chapel",
   chapelHatch: "tunnelEast",
+  caveMouth: "caveIn",
+  caveExit: "outside",
 };
+
+// the two ends on the surface are plain doorways: they teach nothing and tell no story
+export const isMouthSpot = (spot: LazSpot): boolean => spot === "caveMouth" || spot === "caveExit";
 
 export function lazAvailable(spot: LazSpot, flags: ReadonlySet<string>): boolean {
   switch (spot) {
     case "crack": return crackShown(flags);
-    case "tunnelWest": case "tunnelEast": return true;
+    case "tunnelWest": case "tunnelEast": case "caveMouth": case "caveExit": return true;
     // you can only lift the rug if you know there is something under it
     case "chapelHatch": return lazKnown(flags) || flagHas(flags, "lazChapel") || flagHas(flags, "lazOpen");
   }
@@ -81,15 +89,17 @@ export function lazAvailable(spot: LazSpot, flags: ReadonlySet<string>): boolean
 // What passing through teaches the kobzar (and the world): the cave's end
 // of the way is "lazOpen", the chapel's end "lazChapel" (the rug lies folded
 // back once the hatch has been used).
-const PASS_FLAG: Record<LazSpot, "lazOpen" | "lazChapel"> = {
+const PASS_FLAG: Partial<Record<LazSpot, "lazOpen" | "lazChapel">> = {
   crack: "lazOpen", tunnelWest: "lazOpen", tunnelEast: "lazChapel", chapelHatch: "lazChapel",
 };
 export function passFlags(spot: LazSpot): string[] {
-  return ["lazKnown", PASS_FLAG[spot]];
+  const f = PASS_FLAG[spot];
+  return f ? ["lazKnown", f] : [];
 }
 // First time through this end of the tunnel?
 export function firstPass(spot: LazSpot, flags: ReadonlySet<string>): boolean {
-  return !flagHas(flags, PASS_FLAG[spot]);
+  const f = PASS_FLAG[spot];
+  return f ? !flagHas(flags, f) : false;
 }
 
 // --- bats ---------------------------------------------------------------------------------

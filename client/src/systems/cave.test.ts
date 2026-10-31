@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { ARRIVE, CAVE_SPOTS, CHAPEL_HATCH, OMELKO, SYDIR, TUNNEL_SPOTS, VOHNYK, ZMIY } from "../data/cave";
-import { doorOf, HOUSE_RECTS, houseAt, houseSolids, type HouseId } from "../data/houses";
-import { circleRectCollide, type Rect } from "../world/geometry";
-import { PLAYER_R } from "../world/areas";
-import { caveSolids, crackShown, firstPass, HOARD_COINS, lazAvailable, lullResult, makeCaveLife, passFlags, POUCH_COINS, startleBats, stepCaveLife, takeHoard, takePouch } from "./cave";
+import { CAVE_HILL, CAVE_HILL_SOLID, CAVE_MOUTH, doorOf, fromOldUnderground, HOUSE_RECTS, houseAt, houseSolids, type HouseId, isUnderground, mapPosition, UNDERGROUND_IDS } from "../data/houses";
+import { SOLID } from "../data/village";
+import { circleRectCollide, followAxis, type Rect } from "../world/geometry";
+import { PLAYER_R, UNDER_BOTTOM, UNDER_TOP, WORLD_H, WORLD_W } from "../world/areas";
+import { caveSolids, crackShown, firstPass, HOARD_COINS, isMouthSpot, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, POUCH_COINS, startleBats, stepCaveLife, takeHoard, takePouch } from "./cave";
 import { purse } from "./trade";
 import { caveTopicSet } from "../dialogue/cave";
 
@@ -146,14 +147,17 @@ const bounds = (id: HouseId, pad = 60): Rect => {
 const caveSolidsFor = (flags: ReadonlySet<string>) => [...houseSolids("zmiieva"), ...caveSolids(flags)];
 
 describe("walking the cave", () => {
-  const outside = { x: doorOf("zmiieva").x, y: doorOf("zmiieva").y + 30 };
-  test("the door leads in, and every arrival point is open floor", () => {
+  // (the cave's mouth is a spot now: you arrive just inside it)
+  const outside = ARRIVE.caveIn;
+  test("every arrival point is open floor, in the room it names", () => {
+    expect(houseAt(ARRIVE.caveIn.x, ARRIVE.caveIn.y)).toBe("zmiieva");
     expect(houseAt(ARRIVE.cave.x, ARRIVE.cave.y)).toBe("zmiieva");
     expect(houseAt(ARRIVE.tunnelWest.x, ARRIVE.tunnelWest.y)).toBe("lazna");
     expect(houseAt(ARRIVE.tunnelEast.x, ARRIVE.tunnelEast.y)).toBe("lazna");
     expect(houseAt(ARRIVE.chapel.x, ARRIVE.chapel.y)).toBe("kaplytsia");
     const open = (id: HouseId, p: { x: number; y: number }) => !houseSolids(id).some((b) => circleRectCollide(p.x, p.y - 6, PLAYER_R, b));
     expect(open("zmiieva", ARRIVE.cave)).toBe(true);
+    expect(open("zmiieva", ARRIVE.caveIn)).toBe(true);
     expect(open("lazna", ARRIVE.tunnelWest)).toBe(true);
     expect(open("lazna", ARRIVE.tunnelEast)).toBe(true);
     expect(open("kaplytsia", ARRIVE.chapel)).toBe(true);
@@ -169,6 +173,10 @@ describe("walking the cave", () => {
     const can = floodFrom(caveSolidsFor(new Set(["zmiyLulled"])), outside, bounds("zmiieva"));
     expect(can(CAVE_SPOTS.crack.x, CAVE_SPOTS.crack.y, 44)).toBe(true);
     expect(can(CAVE_SPOTS.hoard.x, CAVE_SPOTS.hoard.y, 40)).toBe(true);
+  });
+  test("from just inside the mouth you can reach the way back out", () => {
+    const can = floodFrom(caveSolidsFor(new Set()), ARRIVE.caveIn, bounds("zmiieva"));
+    expect(can(CAVE_SPOTS.mouthIn.x, CAVE_SPOTS.mouthIn.y, 40)).toBe(true);
   });
   test("coming up from the tunnel you can reach the crack, and can get back down it", () => {
     const can = floodFrom(caveSolidsFor(new Set(["lazOpen"])), ARRIVE.cave, bounds("zmiieva"));
@@ -187,13 +195,113 @@ describe("walking the tunnel", () => {
     expect(can(TUNNEL_SPOTS.east.x, TUNNEL_SPOTS.east.y, 40)).toBe(true);
     expect(can(ARRIVE.tunnelEast.x, ARRIVE.tunnelEast.y, 8)).toBe(true);
   });
-  test("it has no door: nobody walks in from the forest", () => {
+  test("it has no door: nobody walks in from the dark around it", () => {
     const r = HOUSE_RECTS.lazna;
     const outer = floodFrom(houseSolids("lazna"), { x: r.x + r.w / 2, y: r.y + r.h + 30 }, bounds("lazna", 60));
-    // (the flood does work from out there: it walks the ridge's whole south side)
+    // (the flood does work from out there: it walks the room's whole south side)
     expect(outer(r.x + 40, r.y + r.h + 30, 8)).toBe(true);
     expect(outer(ARRIVE.tunnelWest.x, ARRIVE.tunnelWest.y, 20)).toBe(false);
     expect(outer(ARRIVE.tunnelEast.x, ARRIVE.tunnelEast.y, 20)).toBe(false);
+  });
+});
+
+// --- the underground does not take up the surface ------------------------------------
+describe("the underground band", () => {
+  const overlap = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const surface: Rect = { x: 0, y: 0, w: WORLD_W, h: WORLD_H };
+  test("no underground room touches the surface, or another", () => {
+    for (const id of UNDERGROUND_IDS) {
+      const r = HOUSE_RECTS[id];
+      expect(overlap(r, surface)).toBe(false);
+      expect(r.y).toBeGreaterThanOrEqual(UNDER_TOP);
+      expect(r.y + r.h).toBeLessThanOrEqual(UNDER_BOTTOM);
+      expect(r.x).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.w).toBeLessThanOrEqual(WORLD_W);
+    }
+    expect(overlap(HOUSE_RECTS.zmiieva, HOUSE_RECTS.lazna)).toBe(false);
+  });
+  test("every other house stands on the surface", () => {
+    for (const [id, r] of Object.entries(HOUSE_RECTS)) {
+      if (isUnderground(id as HouseId)) continue;
+      expect(r.y + r.h).toBeLessThanOrEqual(WORLD_H);
+    }
+  });
+  test("the surface is never inside an underground room, nor the reverse", () => {
+    // sample the whole surface: houseAt names no underground room there
+    for (let x = 0; x < WORLD_W; x += 40) {
+      for (let y = 0; y < WORLD_H; y += 40) expect(isUnderground(houseAt(x, y))).toBe(false);
+    }
+    // and in the band only the two rooms answer
+    for (let x = 0; x < WORLD_W; x += 40) {
+      for (let y = UNDER_TOP; y < UNDER_BOTTOM; y += 40) {
+        const id = houseAt(x, y);
+        expect(id === null || isUnderground(id)).toBe(true);
+      }
+    }
+  });
+  test("the band holds nothing but their own walls, and the surface only the hill", () => {
+    const stray = SOLID.filter((b) => b.y + b.h > UNDER_TOP && !UNDERGROUND_IDS.some((id) => overlap(b, HOUSE_RECTS[id])));
+    expect(stray).toEqual([]);
+    expect(SOLID).toContain(CAVE_HILL_SOLID);
+    // ...and the old footprints are free land now: no solid but trees and the like sits there
+    const oldCave: Rect = { x: 1150, y: 1740, w: 760, h: 460 };
+    const oldRidge: Rect = { x: 2400, y: 1180, w: 1200, h: 300 };
+    const big = SOLID.filter((b) => (overlap(b, oldCave) && !overlap(b, CAVE_HILL)) || overlap(b, oldRidge)).filter((b) => b.w > 40 || b.h > 40);
+    expect(big).toEqual([]);
+  });
+  test("the hill is a wall, but the way to its mouth is open", () => {
+    expect(CAVE_HILL_SOLID.y + CAVE_HILL_SOLID.h).toBeLessThanOrEqual(CAVE_MOUTH.y);
+    const stand = (p: { x: number; y: number }) => !SOLID.some((b) => circleRectCollide(p.x, p.y - 6, PLAYER_R, b));
+    expect(stand(ARRIVE.outside)).toBe(true);
+    expect(stand(CAVE_SPOTS.mouthOut)).toBe(true);
+    expect(houseAt(ARRIVE.outside.x, ARRIVE.outside.y)).toBeNull();
+    expect(stand({ x: CAVE_HILL.x + CAVE_HILL.w / 2, y: CAVE_HILL.y + CAVE_HILL.h / 2 })).toBe(false);
+  });
+  test("the mouth leads in, the exit leads out", () => {
+    expect(LAZ_TO.caveMouth).toBe("caveIn");
+    expect(LAZ_TO.caveExit).toBe("outside");
+    expect(isMouthSpot("caveMouth") && isMouthSpot("caveExit") && !isMouthSpot("crack")).toBe(true);
+    expect(lazAvailable("caveMouth", new Set())).toBe(true);
+    expect(lazAvailable("caveExit", new Set())).toBe(true);
+    // a plain doorway teaches nothing
+    expect(passFlags("caveMouth")).toEqual([]);
+    expect(firstPass("caveMouth", new Set())).toBe(false);
+  });
+});
+
+describe("saves from before the move", () => {
+  test("a kobzar saved in the old cave wakes in the same spot of the new one", () => {
+    const old = { x: 1300, y: 1900 };
+    const now = fromOldUnderground(old);
+    expect(now).toEqual({ x: 1300, y: 1900 + (HOUSE_RECTS.zmiieva.y - 1740) });
+    expect(houseAt(now?.x ?? 0, now?.y ?? 0)).toBe("zmiieva");
+  });
+  test("one saved in the old tunnel wakes in the new one", () => {
+    const now = fromOldUnderground({ x: 3000, y: 1300 });
+    expect(houseAt(now?.x ?? 0, now?.y ?? 0)).toBe("lazna");
+  });
+  test("one saved anywhere else is left alone", () => {
+    expect(fromOldUnderground({ x: 840, y: 760 })).toBeNull();
+    expect(fromOldUnderground({ x: 1530, y: 2230 })).toBeNull(); // before the old mouth
+  });
+});
+
+describe("the camera underground", () => {
+  test("it stays inside the room, or centres on a room smaller than the screen", () => {
+    const r = HOUSE_RECTS.zmiieva;
+    // a screen smaller than the cave: kept inside it
+    expect(followAxis(r.x + 5, 400, r.x, r.x + r.w)).toBe(r.x);
+    expect(followAxis(r.x + r.w, 400, r.x, r.x + r.w)).toBe(r.x + r.w - 400);
+    expect(followAxis(r.x + 300, 400, r.x, r.x + r.w)).toBe(r.x + 100);
+    // a screen bigger than the cave: the cave sits in the middle of it
+    expect(followAxis(r.x + 50, 1200, r.x, r.x + r.w)).toBe(r.x + r.w / 2 - 600);
+  });
+  test("the map shows the kobzar at the cave's mouth, not in the band", () => {
+    expect(mapPosition(ARRIVE.caveIn)).toEqual(CAVE_MOUTH);
+    expect(mapPosition({ x: 840, y: 760 })).toEqual({ x: 840, y: 760 });
+    const inTunnel = mapPosition(ARRIVE.tunnelEast);
+    expect(inTunnel.y).toBeLessThan(WORLD_H);
+    expect(inTunnel.x).toBeGreaterThan(0);
   });
 });
 

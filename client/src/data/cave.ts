@@ -1,12 +1,14 @@
 import { t } from "../i18n";
 import type { Rect } from "../world/geometry";
 import type { Npc } from "./characters";
-import { HOUSE_RECTS, toWorld, ZMIY_COIL } from "./houses";
+import { CAVE_MOUTH, HOUSE_RECTS, toWorld, ZMIY_COIL } from "./houses";
 
 // --- The Serpent's Cave, the tunnel under the river, and who lives in them ----------
 // South of the river, east of the old oak, a rocky hill stands in the forest
-// (data/houses.ts HOUSE_RECTS.zmiieva). Children are told a Zmiy sleeps in it;
-// the children are right. Inside:
+// (data/houses.ts CAVE_HILL). Children are told a Zmiy sleeps in it; the
+// children are right. Its inside is not under the hill on the map: the room
+// lies in the underground band (HOUSE_RECTS.zmiieva), so it takes no room
+// from the forest, and the mouth is a spot that fades you down into it. Inside:
 //   Omelko  — a blind old kobzar in the east nook, who sees the dark fine
 //   Zmiy    — the serpent, asleep on his hoard in the west lair; his coil lies
 //             across the way to the crack in the back wall until a song moves him
@@ -50,6 +52,10 @@ export const CAVE_CHAR_IDS = new Set([...CAVE_CHARS, ...TUNNEL_CHARS].map((n) =>
 
 // --- Places to press A at (world coordinates) -----------------------------------
 export const CAVE_SPOTS = {
+  // the mouth, seen from outside (on the surface, in front of the hill) and
+  // from inside (the way back up into the daylight)
+  mouthOut: { x: CAVE_MOUTH.x, y: CAVE_MOUTH.y + 22 },
+  mouthIn: toWorld("zmiieva", { x: 380, y: 426 }),
   // the crack in the lair's back wall, behind the serpent's coil
   crack: toWorld("zmiieva", { x: 50, y: 82 }),
   // the hoard under the serpent's tail, on the passage side
@@ -69,6 +75,9 @@ export const CHAPEL_HATCH = toWorld("kaplytsia", { x: 70, y: 98 });
 // Where each way through lets you out.
 export const ARRIVE = {
   cave: toWorld("zmiieva", { x: 56, y: 100 }),
+  // just inside the mouth, and just outside it on the surface
+  caveIn: toWorld("zmiieva", { x: 380, y: 396 }),
+  outside: { x: CAVE_MOUTH.x, y: CAVE_MOUTH.y + 48 },
   tunnelWest: toWorld("lazna", { x: 72, y: 130 }),
   tunnelEast: toWorld("lazna", { x: 1150, y: 132 }),
   chapel: toWorld("kaplytsia", { x: 70, y: 106 }),
