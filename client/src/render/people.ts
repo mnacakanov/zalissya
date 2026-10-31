@@ -19,11 +19,10 @@ import { CAM, rr } from "./shapes";
 //   kozak     — Okhrim: a red zhupan, the oseledets, moustaches to the chest
 //   vorozhbyt — Did Prokip: a long patched svyta, wild white hair, a beard
 //               to the belt, a crooked staff
-//   hermit    — Onufriy: a dark habit with a rope belt, a cowl, a long white beard
 //   oldkobzar — Omelko: a blind old kobzar, white hair, drooping moustaches,
 //               milky eyes
 
-export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch" | "warlock" | "vorozhbyt" | "hermit" | "oldkobzar";
+export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch" | "warlock" | "vorozhbyt" | "oldkobzar";
 
 export type FolkOpts = {
   tunic: string; hair: string; style: FolkStyle;
@@ -45,13 +44,13 @@ type Costume = {
   pants?: string; boots: string;
   skirt?: string; skirt2?: string; apron?: string;
   sash?: string; leather?: string;
-  kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch" | "kuchma" | "cowl";
+  kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch" | "kuchma";
   goatee?: boolean;
   beard?: boolean; staff?: boolean;
   loose?: boolean;
   oseledets?: boolean; moust?: string; longMoust?: boolean; pipe?: boolean;
   vinok?: boolean; braid?: boolean;
-  longBeard?: string; blind?: boolean;
+  blind?: boolean;
 };
 
 function costumeFor(o: FolkOpts): Costume {
@@ -88,10 +87,6 @@ function costumeFor(o: FolkOpts): Costume {
       // the hair would not fit under one
       return { kind: "m", skin: "#d8ae88", hair: o.hair, shirt: "#e4dccb", emb: "#3a6a3a", coat: o.tunic, trim: "#3a3226", coatLen: 0.08,
         pants: "#4a4438", boots: "#3a2a1c", sash: "#7a3a24", moust: o.hair, beard: true, staff: true };
-    case "hermit":
-      // a monk who left his monastery: a habit to the ground, a rope for a belt
-      return { kind: "m", skin: "#d8b494", hair: o.hair, shirt: "#b8aa94", emb: "#7a6a54", coat: o.tunic, trim: "#2a2018", coatLen: 0.05,
-        pants: o.tunic, boots: "#2c2015", sash: "#9a8a62", hat: "cowl", longBeard: o.hair };
     case "oldkobzar":
       // blind Omelko: a faded svytka, white hair, long drooping moustaches
       return { kind: "m", skin: "#d4a880", hair: o.hair, shirt: "#e8e0cc", emb: "#8a3a2a", coat: o.tunic, trim: "#5a4a30", coatLen: 0.26,
@@ -350,18 +345,6 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     c.fillStyle = "#9a2430";
     c.beginPath(); c.moveTo(x - hh * 0.3, headCy - hh * 1.22); c.quadraticCurveTo(x + hh * 0.2, headCy - hh * 1.5, x + hh * 0.6, headCy - hh * 1.0); c.lineTo(x + hh * 0.3, headCy - hh * 1.2); c.closePath(); c.fill(); ink();
   }
-  if (C.hat === "cowl") {
-    // the monk's hood, drawn back over the crown and falling to the shoulders
-    c.fillStyle = paint(C.coat ?? "#3a302a", x - hh * 0.5, hh);
-    c.beginPath();
-    c.moveTo(x - hh * 0.5, headCy + hh * 0.5);
-    c.quadraticCurveTo(x - hh * 0.62, headCy - hh * 0.3, x - hh * 0.1, headCy - hh * 0.95);
-    c.quadraticCurveTo(x + hh * 0.5, headCy - hh * 0.5, x + hh * 0.5, headCy + hh * 0.5);
-    c.lineTo(x + hh * 0.4, headCy + hh * 0.5);
-    c.quadraticCurveTo(x + hh * 0.44, headCy - hh * 0.2, x, headCy - hh * 0.46);
-    c.quadraticCurveTo(x - hh * 0.44, headCy - hh * 0.2, x - hh * 0.4, headCy + hh * 0.5);
-    c.closePath(); c.fill(); ink();
-  }
   if (C.hat === "witch") {
     // the honest silhouette of a vidma: a broad brim and a crooked point
     c.fillStyle = paint("#241f2c", x - hh * 0.9, hh * 1.8);
@@ -455,16 +438,6 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     c.lineCap = "butt";
     c.fillStyle = "#4a3220";
     c.beginPath(); c.arc(sx - hh * 0.05, top - hh * 0.26, hh * 0.14, 0, Math.PI * 2); c.fill(); ink();
-  }
-  if (C.longBeard) {
-    // a long beard to the chest, parted a little by the wind of a breath
-    c.fillStyle = C.longBeard;
-    c.beginPath();
-    c.moveTo(x - hh * 0.36 + fx, headCy + hh * 0.1);
-    c.quadraticCurveTo(x - hh * 0.4 + fx, headCy + hh * 0.9, x + fx, headCy + hh * 1.35);
-    c.quadraticCurveTo(x + hh * 0.4 + fx, headCy + hh * 0.9, x + hh * 0.36 + fx, headCy + hh * 0.1);
-    c.quadraticCurveTo(x + fx, headCy + hh * 0.34, x - hh * 0.36 + fx, headCy + hh * 0.1);
-    c.closePath(); c.fill(); ink();
   }
   // the otaman's lyulka, smoking
   if (C.pipe) {

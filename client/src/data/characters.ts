@@ -13,7 +13,7 @@ export type Npc = {
   y: number;
   tunic: string;
   hair: string;
-  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock" | "vorozhbyt" | "hermit" | "oldkobzar" | "zmiy" | "vohnyk";
+  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock" | "vorozhbyt" | "oldkobzar" | "zmiy" | "vohnyk";
   // someone who stays put and does not walk a schedule may sit (the cave's
   // old kobzar on his rock)
   pose?: "sit";

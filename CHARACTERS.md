@@ -64,7 +64,6 @@ One short entry per character, so that everything written about them agrees. **C
 
 ## The Serpent's Cave and the tunnel
 
-- **Onufriy (Онуфрій):** old; once a monk, now a hermit who keeps a candle at the cave's mouth. Quiet and kind ("Softly, son").
 - **Omelko (Омелько):** a blind old kobzar in the cave's east nook; hears who you are in your step; calls you "brother".
 - **Zmiy (Змій):** the old serpent asleep on a dowry-hoard in the west lair. Old and tired, dry humour ("I haven't eaten anyone in a hundred years. You're not tasty."). Sung to sleep with a sad song.
 - **Vohnyk (Вогник):** a little wandering flame over the pool; bright, vain, forgets its own name.

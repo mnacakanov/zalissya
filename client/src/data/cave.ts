@@ -7,7 +7,6 @@ import { HOUSE_RECTS, toWorld, ZMIY_COIL } from "./houses";
 // South of the river, east of the old oak, a rocky hill stands in the forest
 // (data/houses.ts HOUSE_RECTS.zmiieva). Children are told a Zmiy sleeps in it;
 // the children are right. Inside:
-//   Onufriy — a hermit monk who keeps a candle at the mouth of the cave
 //   Omelko  — a blind old kobzar in the east nook, who sees the dark fine
 //   Zmiy    — the serpent, asleep on his hoard in the west lair; his coil lies
 //             across the way to the crack in the back wall until a song moves him
@@ -26,10 +25,6 @@ import { HOUSE_RECTS, toWorld, ZMIY_COIL } from "./houses";
 //   lazChapel   — he has used the chapel hatch (the rug lies folded back)
 //   zmiyHoard, sentryPouch — the coins are taken
 
-export const ONUFRIY: Npc = {
-  id: "onufriy", name: t("char.onufriy.name"), pron: t("char.onufriy.pron"), role: t("char.onufriy.role"),
-  ...toWorld("zmiieva", { x: 98, y: 372 }), tunic: "#3a302a", hair: "#d8d2c4", style: "hermit",
-};
 export const OMELKO: Npc = {
   id: "omelko", name: t("char.omelko.name"), pron: t("char.omelko.pron"), role: t("char.omelko.role"),
   ...toWorld("zmiieva", { x: 655, y: 152 }), tunic: "#8a7a60", hair: "#e6e2d8", style: "oldkobzar", pose: "sit",
@@ -49,7 +44,7 @@ export const SYDIR: Npc = {
 
 // Who stands where: the cave's people only while the kobzar is in the cave, the
 // tunnel's only while he is in the tunnel (App.tsx adds them to the scene).
-export const CAVE_CHARS: Npc[] = [ONUFRIY, OMELKO, ZMIY, VOHNYK];
+export const CAVE_CHARS: Npc[] = [OMELKO, ZMIY, VOHNYK];
 export const TUNNEL_CHARS: Npc[] = [SYDIR];
 export const CAVE_CHAR_IDS = new Set([...CAVE_CHARS, ...TUNNEL_CHARS].map((n) => n.id));
 
@@ -91,7 +86,6 @@ export type CaveLight = { x: number; y: number; r: number; col: string; k: numbe
 const lamp = (id: "zmiieva" | "lazna", x: number, y: number, r: number, col: string, k = 1): CaveLight => ({ ...toWorld(id, { x, y }), r, col, k });
 export const CAVE_LIGHTS: CaveLight[] = [
   lamp("zmiieva", 380, 440, 120, "255,200,120", 0.7), // the mouth: daylight leaking in
-  lamp("zmiieva", 168, 340, 150, "255,190,100", 0.9), // Onufriy's candle
   lamp("zmiieva", 360, 150, 150, "120,230,210", 0.55), // the pool, faintly aglow
   lamp("zmiieva", 655, 140, 100, "255,170,90", 0.55), // Omelko's rushlight
   lamp("zmiieva", 150, 150, 110, "255,214,120", 0.5), // the hoard's glint

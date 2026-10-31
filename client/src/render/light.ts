@@ -101,7 +101,7 @@ function windowLights(id: HouseId): Light[] {
     case "pustka": return [];
     case "mlyn": return []; // nobody grinds by night (that anyone admits to)
     case "duplo": case "kurhan": case "pechera": return [];
-    // the monk's candle at the cave's mouth; the tunnel's ridge shows nothing
+    // a faint glimmer at the cave's mouth; the tunnel's ridge shows nothing
     case "zmiieva": return [{ x: r.x + r.w / 2, y: base - 20, r: 56, col: "255,190,100", k: 0.55 }];
     case "lazna": return [];
     // the lampadka before the icons, through the two narrow windows

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ARRIVE, CAVE_SPOTS, CHAPEL_HATCH, ONUFRIY, OMELKO, SYDIR, TUNNEL_SPOTS, VOHNYK, ZMIY } from "../data/cave";
+import { ARRIVE, CAVE_SPOTS, CHAPEL_HATCH, OMELKO, SYDIR, TUNNEL_SPOTS, VOHNYK, ZMIY } from "../data/cave";
 import { doorOf, HOUSE_RECTS, houseAt, houseSolids, type HouseId } from "../data/houses";
 import { circleRectCollide, type Rect } from "../world/geometry";
 import { PLAYER_R } from "../world/areas";
@@ -158,9 +158,8 @@ describe("walking the cave", () => {
     expect(open("lazna", ARRIVE.tunnelEast)).toBe(true);
     expect(open("kaplytsia", ARRIVE.chapel)).toBe(true);
   });
-  test("with the serpent awake: the hermit, the old kobzar, the pool and the serpent are reachable, but not the crack", () => {
+  test("with the serpent awake: the old kobzar, the pool and the serpent are reachable, but not the crack", () => {
     const can = floodFrom(caveSolidsFor(new Set()), outside, bounds("zmiieva"));
-    expect(can(ONUFRIY.x, ONUFRIY.y, 64)).toBe(true);
     expect(can(OMELKO.x, OMELKO.y, 64)).toBe(true);
     expect(can(ZMIY.x, ZMIY.y, 150)).toBe(true);
     expect(can(VOHNYK.x, VOHNYK.y, 100)).toBe(true);
@@ -175,7 +174,7 @@ describe("walking the cave", () => {
     const can = floodFrom(caveSolidsFor(new Set(["lazOpen"])), ARRIVE.cave, bounds("zmiieva"));
     expect(can(CAVE_SPOTS.crack.x, CAVE_SPOTS.crack.y, 44)).toBe(true);
     // ...but the rest of the cave is shut off by the coil until a song is sung
-    expect(can(ONUFRIY.x, ONUFRIY.y, 64)).toBe(false);
+    expect(can(OMELKO.x, OMELKO.y, 64)).toBe(false);
   });
 });
 
@@ -208,7 +207,7 @@ describe("the chapel hatch", () => {
 
 describe("what the kobzar has been told", () => {
   const ids = (npc: string, flags: string[]) => caveTopicSet(npc, new Set(flags), true)?.topics.map((x) => x.id) ?? [];
-  test("the girl is not asked about until the dowry or Onufriy has mentioned her", () => {
+  test("the girl is not asked about until the dowry has mentioned her", () => {
     expect(ids("zmiy", [])).not.toContain("bride");
     expect(ids("zmiy", ["zmiyGirl"])).toContain("bride");
     const hoard = caveTopicSet("zmiy", new Set(), true)?.topics.find((x) => x.id === "hoard");

@@ -9,7 +9,7 @@ import { rr } from "./shapes";
 // --- The Serpent's Cave and the tunnel under the river -----------------------------------
 // Two places in the same painted hand as the khaty:
 //   zmiieva — outside, a grassy hill with a rocky face and a black mouth to the south;
-//             inside, the hall, ledges, a glowing pool, Onufriy's cell, Omelko's
+//             inside, the hall, ledges, a glowing pool, an old monk's cell, Omelko's
 //             rock and the serpent's lair with the hidden crack in its back wall
 //   lazna   — outside, a bare rock ridge (nothing to see, nothing to find); inside,
 //             a long timbered tunnel of candle niches, boulders, the smuggler's camp,
@@ -137,13 +137,13 @@ export function drawCaveHill(c: Ctx, x: number, y: number, w: number, h: number,
       blob(g, bx, by, br, br * 0.72, "#4a7a3c");
       blob(g, bx - br * 0.2, by - br * 0.22, br * 0.55, br * 0.4, "#6a9a52", false);
     }
-    // a few stones worn flat before the mouth, where the monk's feet go
+    // a few stones worn flat before the mouth, where the children dare each other to stand
     for (let i = 0; i < 6; i++) rock(g, mx - 16 + (i % 3) * 16, h + 6 + (i > 2 ? 8 : 0), 7, 3.6, "#9a9486");
   });
   c.save();
   c.globalAlpha = alpha;
   c.drawImage(cv, x - PAD, y - PAD);
-  // the monk's candle, flickering in the dark of the mouth
+  // a warm glimmer in the dark of the mouth (the rushlight, deep inside)
   const fl = 0.28 + Math.sin(t * 0.011) * 0.06 + Math.sin(t * 0.027) * 0.04;
   const gl = c.createRadialGradient(x + w / 2, y + h - 22, 2, x + w / 2, y + h - 22, 44);
   gl.addColorStop(0, `rgba(255,190,90,${fl})`); gl.addColorStop(1, "rgba(255,190,90,0)");
@@ -295,7 +295,7 @@ function bakeCave(g: Ctx, w: number, h: number): void {
     g.beginPath(); g.moveTo(S.x, S.y + S.h); g.lineTo(sx - 2, S.y - 14); g.lineTo(sx + 3, S.y - 14); g.lineTo(S.x + S.w, S.y + S.h); g.closePath(); g.fill();
     g.strokeStyle = INK; g.lineWidth = 1; g.stroke();
   }
-  // Onufriy's cell: straw mat, blanket, jug, and a little table with a candle and a book
+  // the old cell, empty for years: straw mat, blanket, jug, and a little table with a candle stub and a book
   {
     const m = room.mat;
     g.fillStyle = "rgba(10,8,6,0.3)"; rr(g, m.x + 3, m.y + 4, m.w, m.h, 6); g.fill();
@@ -495,8 +495,7 @@ export function drawCaveInterior(c: Ctx, id: "zmiieva" | "lazna", x: number, y: 
       g.addColorStop(0, `rgba(150,255,190,${k})`); g.addColorStop(1, "rgba(150,255,190,0)");
       c.fillStyle = g; c.fillRect(x + mx - 30, y + my - 30, 60, 60);
     });
-    // Onufriy's candle and Omelko's rushlight
-    flame(c, x + room.table.x + 19, y + room.table.y + 4, t, 1);
+    // Omelko's rushlight
     flame(c, x + room.seat.x + room.seat.w - 6, y + room.seat.y - 18, t, 5, 0.85);
     // drips from three stalactites, each at its own pace
     for (let i = 0; i < 3; i++) {

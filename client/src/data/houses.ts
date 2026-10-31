@@ -194,10 +194,10 @@ export const PROKIP_ROOM = {
 // mouth the hall runs back to two ledges with a channel between them; above
 // them is the upper cavern: Zmiy's lair in the west (the crack in its back
 // wall is the hidden tunnel), the pool in the middle, Omelko's nook in the
-// east. Onufriy keeps his cell in the south-west corner of the hall.
+// east. An old monk's cell, long empty, stands in the south-west corner of the hall.
 //   ledgeW, ledgeE — the rock shelves; pool — water, not to be walked
 //   stalag1…4      — stalagmites in the hall
-//   mat, table     — Onufriy's straw mat and his table with the candle
+//   mat, table     — the old cell's straw mat and its table
 //   seat           — Omelko's flat rock
 //   curl           — the serpent's body round his hoard (always there)
 // While he is awake his coil also lies across the passage into the lair
