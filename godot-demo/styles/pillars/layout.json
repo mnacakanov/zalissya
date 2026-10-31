@@ -4,15 +4,15 @@
   "metre": 88,
   "scale": 0.73,
   "hut": {
-    "exterior": {"file": "hut_exterior", "footprint": [[-283, -116], [5, -19], [292, -125]]},
+    "exterior": {"file": "hut_exterior", "footprint": [[-297, -103], [25, -3], [300, -115]]},
     "interior": {
       "file": "hut_interior",
-      "footprint": [[-289, -125], [14, -16], [311, -130]],
-      "pich": [-160, -151],
-      "prokip": [-80, -105],
-      "solids": [[66, -217, 90, 40], [132, -144, 110, 50]]
+      "footprint": [[-322, -120], [26, -3], [323, -140]],
+      "pich": [-185, -172],
+      "prokip": [-95, -125],
+      "solids": [[73, -220, 135, 45], [-70, -198, 140, 40], [155, -150, 170, 70]]
     },
-    "door": [0.40, 0.63]
+    "door": [0.38, 0.60]
   },
   "horod": {"file": "horod", "metres": 5.5},
   "skull_stake": {"file": "skull_stake", "metres": 1.7},
