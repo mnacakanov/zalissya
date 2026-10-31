@@ -1,0 +1,25 @@
+{
+  "_note": "The maidan of Zalissya, laid out in metres on the ground: x runs east, y runs south, (0, 0) is the fire in the middle of the maidan. Everything is drawn in the chosen style (Pillars-lite: styles/pillars/). 'at' is the centre of a thing's footprint. See zalissya/README.md.",
+  "style": "pillars",
+  "hut_size": [7, 5],
+  "bounds": [-40, -34, 40, 36],
+  "start": [0, 13],
+  "maidan": {"center": [0, -5], "radius": [15, 10], "texture": "ground_maidan"},
+  "roads": [
+    {"kind": "road", "width": 3.2, "points": [[0, 3], [0.8, 9], [-0.6, 15], [0.4, 21], [0, 26]]}
+  ],
+  "paths": [
+    {"width": 1.1, "points": [[8, -9], [10.5, -11.5], [11.9, -13.3]]}
+  ],
+  "buildings": [
+    {"id": "otaman", "name": "Хата отамана", "kind": "khata", "at": [0, -15]},
+    {"id": "domovyk", "name": "Хата Домовика", "kind": "khata", "at": [-13, -10]},
+    {"id": "vesna", "name": "Хата Весни", "kind": "khata", "at": [13, -5]},
+    {"id": "pustka", "name": "Пустка", "kind": "khata", "at": [12, -16]},
+    {"id": "kaplytsia", "name": "Каплиця", "kind": "placeholder", "at": [0, -6.5], "size": [3.5, 3], "height": 4.5},
+    {"id": "krynytsia", "name": "Криниця", "kind": "placeholder", "at": [5, -3.5], "size": [1.6, 1.6], "height": 1.0},
+    {"id": "vatra", "name": "Ватра", "kind": "placeholder", "at": [0, 0], "size": [1.8, 1.2], "height": 0.4},
+    {"id": "kuznia", "name": "Кузня Радека", "kind": "placeholder", "at": [-16, -1.5], "size": [4.5, 3], "height": 3.0}
+  ],
+  "props": []
+}

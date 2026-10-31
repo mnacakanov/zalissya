@@ -1,0 +1,130 @@
+# Zalissya in Godot: the maidan
+
+The first piece of the khutir rebuilt in Godot, in the owner's chosen style,
+**Pillars-lite**: the Pillars camera angle, with the art in the ink and
+watercolour of [`ART_STYLE.md`](../../ART_STYLE.md). It is the Godot demo's
+main scene, live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
+The style test is behind the "Тест стилів" button.
+
+The maidan is built entirely from **one data file, `maidan.json`**. You can
+add, move or replace buildings there without touching code.
+
+- `maidan.tscn` / `maidan.gd` is the script that builds the maidan.
+- `maidan.json` is everything that stands on the maidan.
+- The art is in `../styles/pillars/`, the chosen style's folder.
+
+## Coordinates
+
+Everything is placed in **metres on the ground**:
+- `x` runs east and `y` runs south;
+- `0, 0` is the fire (vatra) in the middle of the maidan;
+- `at` is the centre of a thing's footprint.
+
+As in the 2D game, the khutir is a horseshoe round the maidan, open to the
+south. The road comes in from the south.
+
+**Finding a spot.** Press F3 or "Контури" in the demo. It shows:
+- a yellow grid every 5 m round the fire;
+- the footprints in red and the walls in cyan;
+- the maidan's edge in magenta;
+- every building's name.
+
+The HUD always shows where the kobzar stands, in metres. Walk to a spot and
+read it off. Use − / + (or the mouse wheel) to zoom out over the whole
+maidan.
+
+## `maidan.json`
+
+| Field | Meaning |
+|---|---|
+| `style` | which style folder the art comes from (`pillars`) |
+| `hut_size` | the khata's footprint in metres, `[along the door wall, deep]` |
+| `bounds` | how far the grass goes: `[west, north, east, south]` |
+| `start` | where the kobzar starts |
+| `maidan` | the trodden earth: `center`, `radius` `[east-west, north-south]`, and `texture` (a ground tile in the style folder; it falls back to the road until `ground_maidan.png` exists) |
+| `roads` | `{"width", "points": [[x, y], …]}`, drawn with `ground_road` |
+| `paths` | the same, drawn with `ground_path` |
+| `buildings` | see below |
+| `props` | small things: `{"file", "at", "metres"}` (its height); no collision |
+
+### Buildings
+
+Each building has an `id`, a `name` (Ukrainian, shown with F3) and a `kind`.
+
+**`"kind": "khata"`** is the style's hut, which you can walk into. It uses:
+- the hut and room art from `styles/pillars/`;
+- the door, the pich and the furniture from `styles/pillars/layout.json`.
+
+Only `at` is needed. Every khata faces south, with its door in the south
+wall.
+
+**`"kind": "placeholder"`** is a plain labelled block for something with no
+art yet. It takes:
+- `size` `[x, y]` in metres;
+- `height` in metres;
+- `solid` (default `true`).
+
+**`"kind": "sprite"`** is a building with its own picture. It is solid, and
+you can't walk into it. It takes:
+- `file`: the PNG's name in the style folder, without `.png`;
+- `size` `[x, y]`: its footprint on the ground, in metres;
+- `footprint` `[[left], [front], [right]]`: the picture's ground corners, in
+  pixels from the bottom centre of the PNG. These are the same numbers a
+  style's `layout.json` uses:
+  - left is the south-west corner;
+  - front is the south-east corner;
+  - right is the north-east corner.
+
+To replace a placeholder with art, change its kind to `sprite` and add
+`file` and `footprint`. Example:
+
+```json
+{"id": "kaplytsia", "name": "Каплиця", "kind": "sprite", "file": "kaplytsia",
+ "at": [0, -6.5], "size": [3.5, 3], "footprint": [[-120, -60], [10, -5], [130, -70]]}
+```
+
+## Art for the maidan
+
+Read [`ART_STYLE.md`](../../ART_STYLE.md) first. Then:
+- **Camera:** the camera of `styles/pillars/hut_exterior.png`. Ground lines
+  running east go down to the right, and lines running north go up to the
+  right. The south face (the door wall) is the lower-left face.
+- **Scale:** 88 px per metre upright, the same as the hut. A 1.9 m door is
+  about 165 px tall.
+- **File:** a transparent PNG with the building standing on the bottom edge
+  of the picture.
+- **Normal map:** optional. `tools/normals.py` makes the `<name>_n.png`.
+
+Still missing, in rough order:
+- the kaplytsia;
+- the well (krynytsia);
+- the fire with the kobzar's log;
+- Radek's forge;
+- the otaman's long hut, built through the siny;
+- a trodden-earth tile, `ground_maidan.png`, seamless;
+- trees, fences, the people.
+
+The kobzar, Prokip, the cow, the bench and the horod in `styles/pillars/`
+are still in the old 3D-render look, except the kobzar's walk sheet
+(`kobzar_walk_4dir.png`).
+
+## Seeing your change
+
+1. Push to `main`, or merge a PR into it.
+2. CI exports the demo and publishes it in about a minute (`.github/workflows/godot.yml`).
+3. Close the demo and open it again. If you still see the old build, close
+   and reopen once more.
+
+To run it locally, use Godot 4.7.2 and open `godot-demo/` (see
+`../README.md`).
+
+## Working in parallel
+
+- `maidan.json` and the art are for collaborators to change freely.
+- `maidan.gd`, the code, is changed by the Claude session that wrote it.
+  If you need a new kind of thing (a walk-in building with its own room,
+  people who stand about, night), open an issue and say what you need.
+- Pull before you edit `maidan.json`, and keep each change small, so that
+  two people's edits don't collide.
+- Follow the workflow in [`CLAUDE.md`](../../CLAUDE.md): work on a branch
+  and open a PR.

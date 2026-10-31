@@ -757,6 +757,10 @@ func _build_ui() -> void:
 	b_dbg.text = "Контури"
 	b_dbg.pressed.connect(_toggle_debug)
 	row.add_child(b_dbg)
+	var b_mai := Button.new()
+	b_mai.text = "Залісся"
+	b_mai.pressed.connect(func(): get_tree().change_scene_to_file("res://maidan.tscn"))
+	row.add_child(b_mai)
 	var b_old := Button.new()
 	b_old.text = "Старе демо"
 	b_old.pressed.connect(func(): get_tree().change_scene_to_file("res://main.tscn"))

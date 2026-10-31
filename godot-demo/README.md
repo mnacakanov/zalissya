@@ -4,7 +4,14 @@ A technical demo, not the game. It checks whether Zalissya can move its
 rendering to Godot and still run from GitHub Pages, with BG2-style
 graphics. Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 
-## The style test (issue #2), the main scene
+## Zalissya's maidan, the main scene
+
+`maidan.tscn` / `maidan.gd`, built from `zalissya/maidan.json`, in the
+chosen style (Pillars-lite). See [`zalissya/README.md`](zalissya/README.md):
+the coordinates, the data file, the art it needs and how to work on it in
+parallel.
+
+## The style test (issue #2)
 
 `styles.tscn` / `styles.gd`: one small scene, Did Prokip's walkable hut,
 the kobzar, Prokip, a cow, a bench and a horod. It is built in three render
