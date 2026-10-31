@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { eveningMood, fireCheck, knownSongs, knowsSong, reception, rewardFor } from "./songs";
+import { flagCount } from "./flags";
+import { eveningMood, fireCheck, knownSongs, knowsSong, recordPerformance, reception, rewardFor } from "./songs";
 
 describe("songs", () => {
   test("a kobzar starts with the duma about Holota", () => {
@@ -20,5 +21,21 @@ describe("songs", () => {
     expect(rewardFor(reception("sad", "sad"))).toEqual({ music: 2, kulish: true });
     expect(rewardFor(reception("happy", "neutral"))).toEqual({ music: 1, kulish: true });
     expect(rewardFor(reception("sad", "happy"))).toEqual({ music: 1, kulish: false });
+  });
+  test("a performance uses up the evening, pays the Music reward and feeds a kobzar who pleased", () => {
+    const f = new Set(["played=1", "playedDay=1", "meals=2"]);
+    const r = recordPerformance(f, 2, "match");
+    expect(flagCount(f, "played")).toBe(3);
+    expect(flagCount(f, "playedDay")).toBe(2);
+    expect(flagCount(f, "meals")).toBe(3);
+    expect(typeof r.level).toBe("number");
+    expect(fireCheck(f, 2, 19 * 60)).toEqual({ ok: false, reason: "alreadyPlayed" });
+  });
+  test("a clash still teaches a little but earns no kulish", () => {
+    const f = new Set<string>();
+    recordPerformance(f, 1, "clash");
+    expect(flagCount(f, "played")).toBe(1);
+    expect(flagCount(f, "meals")).toBe(0);
+    expect(f.has("playedDay=1")).toBe(true);
   });
 });

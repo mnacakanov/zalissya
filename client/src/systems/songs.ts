@@ -1,4 +1,5 @@
-import { flagCount, flagHas } from "./flags";
+import { bumpCount, flagCount, flagHas, setCount } from "./flags";
+import { craftLevel } from "./skills";
 
 // --- The kobza: songs, moods and performing --------------------------------
 // The player is a wandering kobzar. The kobza is always on his back; what
@@ -98,4 +99,21 @@ export function fireCheck(flags: ReadonlySet<string>, day: number, minute: numbe
   if (!isEvening(minute)) return { ok: false, reason: "daytime" };
   if (flagCount(flags, "playedDay") === day) return { ok: false, reason: "alreadyPlayed" };
   return { ok: true, firstEver: flagCount(flags, "played") === 0 };
+}
+
+// What a finished performance leaves behind, the same at the campfire and in
+// the korchma: Music grows by the reward, the evening is used up, and a
+// listener who liked it pays in a meal of kulish. Pure on the flag set; the
+// caller syncs the HUD once afterwards, when every flag is already written.
+export function recordPerformance(
+  flags: Set<string>,
+  day: number,
+  rec: Reception,
+): { level: number; leveledUp: boolean } {
+  const reward = rewardFor(rec);
+  const before = craftLevel(flagCount(flags, "played"));
+  const after = bumpCount(flags, "played", reward.music);
+  setCount(flags, "playedDay", day);
+  if (reward.kulish) bumpCount(flags, "meals", 1);
+  return { level: craftLevel(after), leveledUp: craftLevel(after) > before };
 }

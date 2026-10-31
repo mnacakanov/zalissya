@@ -64,9 +64,9 @@ import { drawDark, drawFog, drawVignette, gradeDay } from "./render/light";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawPerelesnyk, drawViy } from "./render/spirits";
 import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawKabytsia, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
-import { flagCount, flagHas } from "./systems/flags";
+import { bumpCount as bumpFlagCount, flagCount, flagHas, hasCounter } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
-import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, rewardFor, songFlag, type SongId, SONGS } from "./systems/songs";
+import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, recordPerformance, reception, songFlag, type SongId, SONGS } from "./systems/songs";
 import { CARPENTRY_THRESH, carpentryLevel, CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { askedIds, markAsked } from "./systems/askedTopics";
@@ -361,11 +361,7 @@ export function App() {
     syncFlags();
   };
   const bumpCount = (name: string, by: number): number => {
-    const next = flagCount(flagsRef.current, name) + by;
-    for (const f of [...flagsRef.current]) {
-      if (f.startsWith(`${name}=`)) flagsRef.current.delete(f);
-    }
-    flagsRef.current.add(`${name}=${next}`);
+    const next = bumpFlagCount(flagsRef.current, name, by);
     syncFlags();
     return next;
   };
@@ -486,12 +482,11 @@ export function App() {
       // all — they are computed from skill levels and people met.
       let migrated = false;
       const loadedFlags = flagsRef.current;
-      const hasCounter = (name: string) => [...loadedFlags].some((f) => f.startsWith(`${name}=`));
-      if (!hasCounter("herbStock")) {
+      if (!hasCounter(loadedFlags, "herbStock")) {
         loadedFlags.add(`herbStock=${s.herbs}`);
         migrated = true;
       }
-      if (!hasCounter("fishTotal")) {
+      if (!hasCounter(loadedFlags, "fishTotal")) {
         loadedFlags.add(`fishTotal=${flagCount(loadedFlags, "fish")}`);
         migrated = true;
       }
@@ -684,17 +679,12 @@ export function App() {
     // Read the room: the evening's mood against the song's (systems/songs.ts).
     const evening = eveningMood(c.day, flagsRef.current);
     const rec = reception(evening.mood, SONGS[song].mood);
-    const reward = rewardFor(rec);
-    const before = flagCount(flagsRef.current, "played");
-    const after = bumpCount("played", reward.music);
-    for (const f of [...flagsRef.current]) if (f.startsWith("playedDay=")) flagsRef.current.delete(f);
-    flagsRef.current.add(`playedDay=${c.day}`);
-    if (reward.kulish) bumpCount("meals", 1);
-    const lvlUp = craftLevel(after) > craftLevel(before);
+    const { level, leveledUp } = recordPerformance(flagsRef.current, c.day, rec);
+    syncFlags();
     const title = songName(song);
     showToast(
-      t(`ui.play.${rec}` as TextKey, { song: title, level: craftLevel(after) }) +
-        (lvlUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
+      t(`ui.play.${rec}` as TextKey, { song: title, level }) +
+        (leveledUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
     );
     openDialogue(FIRE_NPC, [rec === "clash" ? t(`ui.play.clash.${evening.mood}` as TextKey) : t(`ui.play.audience.${song}` as TextKey)]);
   };
@@ -705,16 +695,11 @@ export function App() {
     if (!fireCheck(flagsRef.current, c.day, c.minute).ok) return;
     const room = korchmaMood(c.day, flagsRef.current);
     const rec = reception(room.mood, SONGS[song].mood);
-    const reward = rewardFor(rec);
-    const before = flagCount(flagsRef.current, "played");
-    const after = bumpCount("played", reward.music);
-    for (const f of [...flagsRef.current]) if (f.startsWith("playedDay=")) flagsRef.current.delete(f);
-    flagsRef.current.add(`playedDay=${c.day}`);
-    if (reward.kulish) bumpCount("meals", 1);
-    const lvlUp = craftLevel(after) > craftLevel(before);
+    const { level, leveledUp } = recordPerformance(flagsRef.current, c.day, rec);
+    syncFlags();
     showToast(
-      t(`korchma.play.${rec}` as TextKey, { song: songName(song), level: craftLevel(after) }) +
-        (lvlUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
+      t(`korchma.play.${rec}` as TextKey, { song: songName(song), level }) +
+        (leveledUp ? ` ${t("ui.play.levelUpTail", { cha: liveStats().cha.total })}` : ""),
     );
     openDialogue(KORCHMA_NPC, [t(rec === "clash" ? (`korchma.play.room.clash.${room.mood}` as TextKey) : (`korchma.play.room.${rec}` as TextKey))]);
   };

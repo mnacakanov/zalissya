@@ -1,4 +1,4 @@
-import { flagCount, flagHas } from "./flags";
+import { bumpCount, flagCount, flagHas } from "./flags";
 
 // --- A roof for Omelko (data/pustka.ts) ----------------------------------------------
 // The pustka, Taras Dovhyi's empty khata, can be made fit to live in, and the
@@ -57,13 +57,6 @@ export function workTargets(f: ReadonlySet<string>): WorkTarget[] {
 // Omelko lives in the pustka once he has been told it is ready and has moved
 export const omelkoAtHome = (f: ReadonlySet<string>): boolean => flagHas(f, "omelkoMoved");
 
-function bump(flags: Set<string>, name: string, by: number): number {
-  const next = flagCount(flags, name) + by;
-  for (const f of [...flags]) if (f.startsWith(`${name}=`)) flags.delete(f);
-  flags.add(`${name}=${next}`);
-  return next;
-}
-
 // Carpentry is a skill like the others (systems/skills.ts): it grows by doing
 export type Work = { before: number; after: number; minutes: number };
 
@@ -74,8 +67,8 @@ export function chopLog(flags: Set<string>): (Work & { quest: boolean; logs: num
   if (!chopAvailable(flags) || logsChopped(flags) >= WOOD_NEEDED) return null; // the pile holds six, no more
   const before = flagCount(flags, "carpentry");
   const quest = pustkaStage(flags) === "work";
-  bump(flags, "logs", 1);
-  const after = bump(flags, "carpentry", 1);
+  bumpCount(flags, "logs", 1);
+  const after = bumpCount(flags, "carpentry", 1);
   return { before, after, minutes: CHOP_MINUTES, quest, logs: logsChopped(flags) };
 }
 
@@ -94,7 +87,7 @@ export function burnLogs(flags: Set<string>, fromAbs: number, toAbs: number): nu
     if (BURN_HOURS.includes(hour) && left > 0) left--;
     if (hour === 6) left = 0;
   }
-  if (left !== before) bump(flags, "logs", left - before);
+  if (left !== before) bumpCount(flags, "logs", left - before);
   return before - left;
 }
 
@@ -102,7 +95,7 @@ export function cutReed(flags: Set<string>, i: number): (Work & { reeds: number 
   if (!reedAvailable(flags, i)) return null;
   const before = flagCount(flags, "carpentry");
   flags.add(`reed${i}`);
-  const after = bump(flags, "carpentry", 1);
+  const after = bumpCount(flags, "carpentry", 1);
   return { before, after, minutes: REED_MINUTES, reeds: reedsCut(flags) };
 }
 
@@ -110,14 +103,14 @@ export function thatchRoof(flags: Set<string>): Work | null {
   if (!thatchAvailable(flags)) return null;
   const before = flagCount(flags, "carpentry");
   flags.add("pustkaRoof");
-  return { before, after: bump(flags, "carpentry", 2), minutes: THATCH_MINUTES };
+  return { before, after: bumpCount(flags, "carpentry", 2), minutes: THATCH_MINUTES };
 }
 
 export function stackWood(flags: Set<string>): Work | null {
   if (!stackAvailable(flags)) return null;
   const before = flagCount(flags, "carpentry");
   flags.add("pustkaFire");
-  return { before, after: bump(flags, "carpentry", 1), minutes: STACK_MINUTES };
+  return { before, after: bumpCount(flags, "carpentry", 1), minutes: STACK_MINUTES };
 }
 
 // What the khata says when you step into it (ui.enterHut.*): before anything

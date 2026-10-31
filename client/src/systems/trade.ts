@@ -1,4 +1,4 @@
-import { flagCount } from "./flags";
+import { flagCount, setCount } from "./flags";
 
 // --- Radek buys horseshoes ---------------------------------------------------
 // Forged pieces used to pile up in the satchel: the iron ward takes one,
@@ -15,11 +15,6 @@ export const HORSESHOE_PRICE = 1;
 
 export function purse(flags: ReadonlySet<string>): number {
   return flagCount(flags, PURSE);
-}
-
-function setCount(flags: Set<string>, name: string, n: number): void {
-  for (const f of [...flags]) if (f.startsWith(`${name}=`)) flags.delete(f);
-  if (n > 0) flags.add(`${name}=${n}`);
 }
 
 // Put chervintsi in the purse (a hoard, a dead man's pouch). Returns what the

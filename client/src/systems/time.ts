@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { counterValue, setCount } from "./flags";
 // --- Day and night -----------------------------------------------------------
 // Zalissya keeps time now. A full day passes in about ten real minutes of
 // play (the clock stops while you talk or read your Character sheet), and
@@ -29,19 +30,9 @@ export const UNTIL_DAWN_FLAGS = ["wellfed", "tonic", "strongtonic", "rested", "b
 export type Clock = { day: number; minute: number };
 export type DayPhase = "dawn" | "day" | "dusk" | "night";
 
-function counter(flags: ReadonlySet<string>, name: string): number | null {
-  for (const f of flags) {
-    if (f.startsWith(`${name}=`)) {
-      const n = Number(f.slice(name.length + 1));
-      if (Number.isFinite(n)) return n;
-    }
-  }
-  return null;
-}
-
 export function readClock(flags: ReadonlySet<string>): Clock {
-  const day = counter(flags, "day");
-  const minute = counter(flags, "clock");
+  const day = counterValue(flags, "day");
+  const minute = counterValue(flags, "clock");
   return {
     day: day != null && day >= 1 ? Math.floor(day) : 1,
     minute: minute != null ? ((Math.floor(minute) % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES : START_MINUTE,
@@ -50,11 +41,8 @@ export function readClock(flags: ReadonlySet<string>): Clock {
 
 // Write the clock back as flags (replacing any old values).
 export function writeClock(flags: Set<string>, c: Clock): void {
-  for (const f of [...flags]) {
-    if (f.startsWith("day=") || f.startsWith("clock=")) flags.delete(f);
-  }
-  flags.add(`day=${c.day}`);
-  flags.add(`clock=${c.minute}`);
+  setCount(flags, "day", c.day);
+  setCount(flags, "clock", c.minute);
 }
 
 // Move the clock forward. `dawns` counts how many 06:00 marks were
