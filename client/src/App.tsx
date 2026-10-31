@@ -52,6 +52,7 @@ import { type QuestItem, questLog } from "./systems/quests";
 import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, rewardFor, songFlag, type SongId, SONGS } from "./systems/songs";
 import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
+import { askedIds, markAsked } from "./systems/askedTopics";
 import { advance, canNapToNightfall, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
@@ -330,7 +331,9 @@ export function App() {
   };
   // A topic conversation: greeting pages first, then the question menu.
   const openTopicDialogue = (npc: Npc, intro: string[], topics: DialogueTopic[]) => {
-    const d: Dialogue = { npc, lines: intro, line: 0, topics, asked: [], view: "lines", topicLine: 0 };
+    // questions already asked of this person keep their ✓ (systems/askedTopics.ts)
+    const asked = askedIds(flagsRef.current, npc.id, topics);
+    const d: Dialogue = { npc, lines: intro, line: 0, topics, asked, view: "lines", topicLine: 0 };
     dialogueRef.current = d;
     setDialogue(d);
   };
@@ -350,6 +353,7 @@ export function App() {
       return;
     }
     if (topic.grant) applyGrant(topic.grant);
+    if (markAsked(flagsRef.current, dlg.npc.id, topic)) syncFlags();
     const asked = dlg.asked?.includes(topic.id) ? dlg.asked : [...(dlg.asked ?? []), topic.id];
     const next: Dialogue = { ...dlg, view: "topic", topic, topicLine: 0, asked };
     dialogueRef.current = next;
