@@ -9,7 +9,7 @@ import { circleRectCollide } from "../world/geometry";
 import { flagCount } from "./flags";
 import { carpentryLevel } from "./skills";
 import { computeStats } from "./stats";
-import { chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, reedsCut, REEDS_NEEDED, stackWood, thatchRoof, WOOD_NEEDED, workTargets } from "./pustka";
+import { chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, reedsCut, REEDS_NEEDED, stackWood, thatchRoof, burnLogs, WOOD_NEEDED, workTargets } from "./pustka";
 
 const open = () => new Set<string>(["perelesnykGone"]);
 const permitted = () => new Set<string>(["perelesnykGone", "omelkoHome", "pustkaLeave"]);
@@ -45,7 +45,7 @@ describe("the work", () => {
     const f = permitted();
     for (let i = 0; i < WOOD_NEEDED + 2; i++) chopLog(f);
     expect(logsChopped(f)).toBe(WOOD_NEEDED);
-    expect(flagCount(f, "carpentry")).toBe(WOOD_NEEDED + 2); // every swing counts, wanted or not
+    expect(flagCount(f, "carpentry")).toBe(WOOD_NEEDED); // the pile holds six: further swings do nothing
     expect(thatchRoof(f)).toBeNull(); // no reeds yet
     for (let i = 0; i < REEDS_NEEDED; i++) expect(cutReed(f, i)).not.toBeNull();
     expect(cutReed(f, 0)).toBeNull(); // each clump once
@@ -72,6 +72,45 @@ describe("the work", () => {
     for (const who of ["myroslav", "vesna", "radek", "odarka", "okhrim"]) expect(pustkaTopics(who, f)).toHaveLength(1);
     expect(pustkaTopics("myroslav", permitted())).toHaveLength(1); // while the work is on: a reminder, not thanks
     expect(pustkaTopics("vesna", permitted())).toHaveLength(0);
+  });
+});
+
+describe("the pile burns down overnight", () => {
+  const H = 60;
+  const lit = () => {
+    const f = permitted();
+    for (let i = 0; i < WOOD_NEEDED; i++) chopLog(f);
+    for (let i = 0; i < REEDS_NEEDED; i++) cutReed(f, i);
+    thatchRoof(f); stackWood(f);
+    return f;
+  };
+  test("the pile holds six, and the block can be worked again once it is burnt", () => {
+    const f = lit();
+    expect(chopLog(f)).toBeNull();
+    burnLogs(f, 12 * H, 14 * H); // by day nothing burns
+    expect(logsChopped(f)).toBe(6);
+    burnLogs(f, 20 * H, 22 * H + 5); // the marks at 21:00 and 22:00
+    expect(logsChopped(f)).toBe(4);
+    expect(chopLog(f)).not.toBeNull();
+  });
+  test("one log an hour from 21:00, none left by the morning", () => {
+    const f = lit();
+    expect(burnLogs(f, 20 * H, 27 * H)).toBe(6); // 20:00 → 03:00
+    expect(logsChopped(f)).toBe(0);
+    expect(chopLog(f)).not.toBeNull(); // a fresh day, a fresh pile
+  });
+  test("a long sleep counts the same, and a pile cut late is cleared at dawn", () => {
+    const f = lit();
+    expect(burnLogs(f, 20 * H, 30 * H)).toBe(6); // slept through to 06:00
+    const g = lit();
+    expect(burnLogs(g, 27 * H + 30, 31 * H)).toBe(6); // started at 03:30: only dawn clears it
+    expect(logsChopped(g)).toBe(0);
+  });
+  test("nothing burns until the pich is lit", () => {
+    const f = permitted();
+    for (let i = 0; i < WOOD_NEEDED; i++) chopLog(f);
+    expect(burnLogs(f, 20 * H, 30 * H)).toBe(0);
+    expect(logsChopped(f)).toBe(6);
   });
 });
 

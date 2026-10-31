@@ -54,7 +54,7 @@ import { ARRIVE, CAVE_CHAR_IDS, CAVE_CHARS, CAVE_SPOTS, CHAPEL_HATCH, TUNNEL_CHA
 import { caveSolids, firstPass, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
 import { caveRumorTopics, caveTopicSet } from "./dialogue/cave";
 import { pustkaTopics } from "./dialogue/pustka";
-import { chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, workTargets, type Work } from "./systems/pustka";
+import { burnLogs, chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, workTargets, type Work } from "./systems/pustka";
 import { CHOP_SPOT, OMELKO_HOME, PUSTKA_WINDOWS, REED_SPOTS, STACK_SPOT, THATCH_SPOT, workSpot } from "./data/pustka";
 import { drawChopBlock, drawReedClump, drawReedStubble, drawWorkGlint } from "./render/pustka";
 import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
@@ -70,7 +70,7 @@ import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, re
 import { CARPENTRY_THRESH, carpentryLevel, CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { askedIds, markAsked } from "./systems/askedTopics";
-import { advance, canNapToNightfall, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
+import { advance, canNapToNightfall, type Clock, DAWN, DAY_MINUTES, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
 import { type AreaId, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
@@ -594,9 +594,12 @@ export function App() {
     return base + up + ready;
   };
   const passTime = (minutes: number): boolean => {
+    const startAbs = (clockRef.current.day - 1) * DAY_MINUTES + clockRef.current.minute;
     const { clock, dawns } = advance(clockRef.current, minutes);
     clockRef.current = clock;
     writeClock(flagsRef.current, clock);
+    // the lit pich of the pustka burns its woodpile through the night
+    burnLogs(flagsRef.current, startAbs, (clock.day - 1) * DAY_MINUTES + clock.minute);
     let expired = false;
     let newsQueued: string | null = null;
     if (dawns > 0) {
@@ -1614,10 +1617,13 @@ export function App() {
       }
       case "chop": {
         const w = chopLog(flagsRef.current);
-        if (!w) return;
+        if (!w) {
+          if (chopAvailable(flagsRef.current)) showToast(t(flagHas(flagsRef.current, "pustkaFire") ? "pustka.toast.chopFullFire" : "pustka.toast.chopFull"));
+          return;
+        }
         syncFlags();
         passTime(w.minutes);
-        const base = w.quest ? t("pustka.toast.chopQuest", { n: w.logs, need: WOOD_NEEDED }) : t("pustka.toast.chopFree");
+        const base = w.quest ? t("pustka.toast.chopQuest", { n: w.logs, need: WOOD_NEEDED }) : t("pustka.toast.chopFree", { n: w.logs, need: WOOD_NEEDED });
         showToast(workToast(w, base));
         return;
       }

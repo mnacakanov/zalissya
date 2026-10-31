@@ -71,12 +71,31 @@ export type Work = { before: number; after: number; minutes: number };
 // are for the stove; after that the block is a free place to work, and each
 // log costs a little of the day.
 export function chopLog(flags: Set<string>): (Work & { quest: boolean; logs: number }) | null {
-  if (!chopAvailable(flags)) return null;
+  if (!chopAvailable(flags) || logsChopped(flags) >= WOOD_NEEDED) return null; // the pile holds six, no more
   const before = flagCount(flags, "carpentry");
-  const quest = pustkaStage(flags) === "work" && flagCount(flags, "logs") < WOOD_NEEDED;
-  if (quest) bump(flags, "logs", 1);
+  const quest = pustkaStage(flags) === "work";
+  bump(flags, "logs", 1);
   const after = bump(flags, "carpentry", 1);
   return { before, after, minutes: CHOP_MINUTES, quest, logs: logsChopped(flags) };
+}
+
+// Once the pich is lit it eats the pile: one log at each hour mark from
+// 21:00 to 02:00, six logs a night, and whatever is left is gone by dawn.
+// So the block can be worked again every day, but only up to a pile of six,
+// and the skill cannot be farmed without end. `fromAbs` and `toAbs` are
+// absolute game minutes (day-1)*1440+minute; returns how many logs burned.
+export const BURN_HOURS = [21, 22, 23, 0, 1, 2];
+export function burnLogs(flags: Set<string>, fromAbs: number, toAbs: number): number {
+  if (!flagHas(flags, "pustkaFire")) return 0;
+  const before = flagCount(flags, "logs");
+  let left = before;
+  for (let h = Math.floor(fromAbs / 60) + 1; h <= Math.floor(toAbs / 60); h++) {
+    const hour = h % 24;
+    if (BURN_HOURS.includes(hour) && left > 0) left--;
+    if (hour === 6) left = 0;
+  }
+  if (left !== before) bump(flags, "logs", left - before);
+  return before - left;
 }
 
 export function cutReed(flags: Set<string>, i: number): (Work & { reeds: number }) | null {

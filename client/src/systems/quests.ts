@@ -51,7 +51,7 @@ type Derived = ReturnType<typeof derive>;
 
 const omelkoHomeText = (d: Derived): string => {
   const stage = pustkaStage(d.f);
-  if (stage === "work") return t("quest.omelkoHome.work", { logs: logsChopped(d.f), wood: WOOD_NEEDED, reeds: reedsCut(d.f), reedsNeed: REEDS_NEEDED });
+  if (stage === "work") return t("quest.omelkoHome.work", { logs: flagHas(d.f, "pustkaFire") ? WOOD_NEEDED : logsChopped(d.f), wood: WOOD_NEEDED, reeds: reedsCut(d.f), reedsNeed: REEDS_NEEDED });
   return t(`quest.omelkoHome.${stage === "locked" || stage === "ask" ? "permission" : stage}` as TextKey);
 };
 
