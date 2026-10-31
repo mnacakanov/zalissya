@@ -232,53 +232,6 @@ export function drawKovyla(c: CanvasRenderingContext2D, x: number, y: number, t:
 
 // (cherries and willows are trees now: render/trees.ts)
 
-// Вітряк — the windmill on the rise by the old millstone, sails turning.
-export function drawWindmill(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
-  c.fillStyle = "rgba(30,50,20,0.3)";
-  c.beginPath(); c.ellipse(x, y + 6, 40, 10, 0, 0, Math.PI * 2); c.fill();
-  // legs / base
-  c.fillStyle = "#5c4430";
-  c.fillRect(x - 22, y - 20, 5, 26);
-  c.fillRect(x + 17, y - 20, 5, 26);
-  // body
-  c.fillStyle = "#8a6440";
-  c.beginPath();
-  c.moveTo(x - 24, y - 18); c.lineTo(x - 18, y - 86); c.lineTo(x + 18, y - 86); c.lineTo(x + 24, y - 18);
-  c.closePath(); c.fill();
-  c.strokeStyle = "rgba(60,40,22,0.5)";
-  c.lineWidth = 1.2;
-  for (let ly = y - 80; ly < y - 18; ly += 8) { c.beginPath(); c.moveTo(x - 22, ly); c.lineTo(x + 22, ly); c.stroke(); }
-  c.fillStyle = "#4a3320";
-  c.fillRect(x - 6, y - 40, 12, 22);
-  // roof
-  c.fillStyle = "#6e543c";
-  c.beginPath(); c.moveTo(x - 24, y - 84); c.lineTo(x, y - 110); c.lineTo(x + 24, y - 84); c.closePath(); c.fill();
-  // sails
-  const hubX = x;
-  const hubY = y - 82;
-  const a0 = t * 0.0004;
-  for (let i = 0; i < 4; i++) {
-    const a = a0 + (i * Math.PI) / 2;
-    const ex = hubX + Math.cos(a) * 62;
-    const ey = hubY + Math.sin(a) * 62;
-    c.strokeStyle = "#5c4430";
-    c.lineWidth = 3;
-    c.beginPath(); c.moveTo(hubX, hubY); c.lineTo(ex, ey); c.stroke();
-    // lattice sail
-    const nx = -Math.sin(a) * 10;
-    const ny = Math.cos(a) * 10;
-    c.fillStyle = "rgba(232,222,198,0.75)";
-    c.beginPath();
-    c.moveTo(hubX + Math.cos(a) * 16, hubY + Math.sin(a) * 16);
-    c.lineTo(ex, ey);
-    c.lineTo(ex + nx, ey + ny);
-    c.lineTo(hubX + Math.cos(a) * 16 + nx, hubY + Math.sin(a) * 16 + ny);
-    c.closePath(); c.fill();
-  }
-  c.fillStyle = "#3a2a1c";
-  c.beginPath(); c.arc(hubX, hubY, 4, 0, Math.PI * 2); c.fill();
-}
-
 // Курган with a кам'яна баба — an ancient steppe mound and its stone idol.
 export function drawKurhan(c: CanvasRenderingContext2D, x: number, y: number): void {
   c.fillStyle = "rgba(30,50,20,0.25)";
@@ -779,5 +732,86 @@ export function drawPustka(c: CanvasRenderingContext2D, x: number, y: number, w:
     const ht = 8 + hash2(i, 23) * 12;
     c.beginPath(); c.moveTo(px, y + h); c.quadraticCurveTo(px + 3, y + h - ht / 2, px + (hash2(i, 29) - 0.5) * 6, y + h - ht); c.stroke();
   }
+  c.restore();
+}
+
+// The windmill (vitriak), walk-in: a post mill whose body is one room of
+// boards. Seen from outside: the board walls on their post-frame, a short
+// ladder to the door, a gable roof of boards, and the sails on the gable,
+// turning. When the kobzar is inside the walls and roof lift away like a
+// khata's, and the sails grow faint (they are still there, overhead).
+export function drawMlyn(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  const INK = "rgba(34,22,14,0.85)";
+  const ink = (lw = 1) => { c.strokeStyle = INK; c.lineWidth = lw; c.stroke(); };
+  const front = 70;
+  const wallTop = y + h - front;
+  if (alpha > 0.01) {
+    c.save();
+    c.globalAlpha = alpha;
+    c.fillStyle = "rgba(30,50,20,0.28)";
+    c.beginPath(); c.ellipse(x + w / 2, y + h + 8, w * 0.6, 12, 0, 0, Math.PI * 2); c.fill();
+    // the trestle legs it stands on, under the body
+    c.fillStyle = "#5c4430";
+    c.fillRect(x + 10, y + h - 10, 6, 12); c.fillRect(x + w - 16, y + h - 10, 6, 12);
+    // the board walls, weathered
+    const g = c.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, "#9a7048"); g.addColorStop(0.6, "#8a6440"); g.addColorStop(1, "#6a4a2c");
+    c.fillStyle = g;
+    c.beginPath(); c.rect(x, wallTop, w, front - 8); c.fill(); ink();
+    c.strokeStyle = "rgba(50,32,16,0.45)"; c.lineWidth = 1;
+    for (let bx = x + 10; bx < x + w; bx += 10) { c.beginPath(); c.moveTo(bx, wallTop + 2); c.lineTo(bx, y + h - 10); c.stroke(); }
+    // the door and the little ladder up to it
+    const dx = x + w / 2 - 16;
+    c.fillStyle = "#3a2614";
+    c.fillRect(dx, y + h - 52, 32, 44);
+    c.fillStyle = "#5a3a22";
+    c.fillRect(dx - 12, y + h - 50, 10, 42); // the door leaf, swung open
+    c.strokeStyle = "#6e4a2a"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(dx + 4, y + h - 8); c.lineTo(dx + 2, y + h + 8); c.moveTo(dx + 28, y + h - 8); c.lineTo(dx + 30, y + h + 8); c.stroke();
+    c.lineWidth = 1.6;
+    for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(dx + 3, y + h - 4 + k * 5); c.lineTo(dx + 29, y + h - 4 + k * 5); c.stroke(); }
+    // a little window high up
+    c.fillStyle = "#2e2418"; c.fillRect(x + 18, wallTop + 12, 16, 12);
+    c.fillStyle = "rgba(255,220,150,0.25)"; c.fillRect(x + 20, wallTop + 14, 12, 8);
+    // the gable roof of boards, steep
+    const ridge = y - 26;
+    c.fillStyle = "#5e4630";
+    c.beginPath(); c.moveTo(x - 10, wallTop + 4); c.lineTo(x + w / 2, ridge); c.lineTo(x + w + 10, wallTop + 4); c.closePath(); c.fill(); ink(1.1);
+    c.strokeStyle = "rgba(30,20,10,0.4)"; c.lineWidth = 1;
+    for (let k = 1; k < 7; k++) {
+      const yy = ridge + ((wallTop + 4 - ridge) * k) / 7;
+      const half = ((w / 2 + 10) * k) / 7;
+      c.beginPath(); c.moveTo(x + w / 2 - half, yy); c.lineTo(x + w / 2 + half, yy); c.stroke();
+    }
+    c.restore();
+  }
+  // the sails on the gable: still there, faintly, when the walls are gone
+  c.save();
+  c.globalAlpha = 0.3 + 0.7 * alpha;
+  const hubX = x + w / 2;
+  const hubY = y + 6;
+  const a0 = t * 0.0004;
+  for (let i = 0; i < 4; i++) {
+    const a = a0 + (i * Math.PI) / 2;
+    const ex = hubX + Math.cos(a) * 92;
+    const ey = hubY + Math.sin(a) * 92;
+    c.strokeStyle = "#4e3826"; c.lineWidth = 4;
+    c.beginPath(); c.moveTo(hubX, hubY); c.lineTo(ex, ey); c.stroke();
+    const nx = -Math.sin(a) * 15;
+    const ny = Math.cos(a) * 15;
+    c.fillStyle = "rgba(232,222,198,0.85)";
+    c.beginPath();
+    c.moveTo(hubX + Math.cos(a) * 22, hubY + Math.sin(a) * 22);
+    c.lineTo(ex, ey); c.lineTo(ex + nx, ey + ny);
+    c.lineTo(hubX + Math.cos(a) * 22 + nx, hubY + Math.sin(a) * 22 + ny);
+    c.closePath(); c.fill(); ink(0.8);
+    c.strokeStyle = "rgba(90,70,40,0.6)"; c.lineWidth = 0.8;
+    for (let k = 1; k < 5; k++) {
+      const r = 22 + k * 14;
+      c.beginPath(); c.moveTo(hubX + Math.cos(a) * r, hubY + Math.sin(a) * r); c.lineTo(hubX + Math.cos(a) * r + nx, hubY + Math.sin(a) * r + ny); c.stroke();
+    }
+  }
+  c.fillStyle = "#3a2a1c";
+  c.beginPath(); c.arc(hubX, hubY, 6, 0, Math.PI * 2); c.fill();
   c.restore();
 }

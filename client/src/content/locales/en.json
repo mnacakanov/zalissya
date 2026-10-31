@@ -1184,7 +1184,7 @@
   "char.opanas.name": "Opanas",
   "char.opanas.pron": "o-PAH-nas",
   "char.opanas.role": "Warlock · milks other people's cows",
-  "hide.solokha.0": "Solokha sits on the windmill's step, cracking sunflower seeds. “I'm grinding flour, kobzar. What are you staring at? By day I'm a widow like any widow.”",
+  "hide.solokha.0": "Solokha sits inside the windmill on a sack of flour, cracking sunflower seeds. “I'm grinding flour, kobzar. What are you staring at? By day I'm a widow like any widow.”",
   "hide.solokha.1": "“And by night, let everyone mind their own business. You your songs, me mine. And don't tell the Chort you saw me here; he's the jealous sort.”",
   "hide.motrya.0": "Motrya peers out of the old oak's hollow, sleepy and cross. “The sun's still up! Go on, go… I sleep here like an owl.”",
   "hide.motrya.1": "“The sabbath's at night, didn't you know? Come when it's dark. And learn the hopak; without the hopak it's dull up there.”",
@@ -1196,5 +1196,7 @@
   "cave.day": "A breath of sulphur and warmth comes out of the cave. Deep inside, something huge is snoring, and every breath brings down a trickle of small stones. You back away quietly.",
   "cave.night": "The cave is empty and warm. Its master is up on the summit, at the sabbath.",
   "lysa.day.empty": "By day the summit is empty: cold ash, a trodden ring, a broom somebody forgot. The sabbath gathers when it gets dark.",
-  "lysa.day.notYet": "Nobody here by day. The sabbath gathers when it gets dark."
+  "lysa.day.notYet": "Nobody here by day. The sabbath gathers when it gets dark.",
+  "ui.enterHut.mlyn": "The windmill. Flour dust hangs in the shaft of light from the little window, the millstones are still, and the sails creak overhead. It smells of grain and of something burnt.",
+  "ui.hut.mlyn": "🌾 The windmill"
 }

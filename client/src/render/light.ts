@@ -95,6 +95,7 @@ function windowLights(id: HouseId): Light[] {
       { x: r.x + r.w / 2, y: base + 10, r: 90, col: "255,170,80", k: 0.85 },
     ];
     case "pustka": return [];
+    case "mlyn": return []; // nobody grinds by night (that anyone admits to)
   }
 }
 

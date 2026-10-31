@@ -41,7 +41,7 @@ export function makeCritters(): Critter[] {
     make("dog", 1060, 360, 90),
     make("goose", 1240, 980, 80, { x: GOOSE_ROOST.x - 18, y: GOOSE_ROOST.y }), make("goose", 1290, 1000, 80, { x: GOOSE_ROOST.x, y: GOOSE_ROOST.y + 8 }),
     make("goose", 1360, 990, 80, { x: GOOSE_ROOST.x + 18, y: GOOSE_ROOST.y + 2 }), make("goose", 1400, 1015, 80, { x: GOOSE_ROOST.x + 6, y: GOOSE_ROOST.y - 8 }),
-    make("cow", 300, 860, 70, { x: SHED.x + 6, y: SHED.y + 26 }),
+    make("cow", 236, 960, 56, { x: SHED.x + 6, y: SHED.y + 26 }),
     make("horse", 2214, 1206, 10),
   ];
 }

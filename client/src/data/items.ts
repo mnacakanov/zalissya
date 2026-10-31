@@ -68,7 +68,7 @@ export const WISH_LINES: string[] = [
 export const HERB_SPOTS: Array<{ x: number; y: number; kind: HerbKind }> = [
   { x: 690, y: 390, kind: "kropyva" }, { x: 1040, y: 770, kind: "polyn" },
   { x: 700, y: 980, kind: "kalendula" }, { x: 1050, y: 990, kind: "zvirobiy" },
-  { x: 420, y: 880, kind: "dereviy" }, { x: 980, y: 760, kind: "kropyva" },
+  { x: 530, y: 950, kind: "dereviy" }, { x: 980, y: 760, kind: "kropyva" },
   { x: 620, y: 340, kind: "polyn" }, { x: 900, y: 900, kind: "kalendula" },
   { x: 140, y: 440, kind: "zvirobiy" }, { x: 1380, y: 620, kind: "dereviy" },
 ];

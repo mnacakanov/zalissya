@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, MLYN_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -19,6 +19,7 @@ export function drawKhataInterior(
   if (id === "otaman") { drawOtamanInterior(c, x, y, t); return; }
   if (id === "korchma") { drawKorchmaInterior(c, x, y, t); return; }
   if (id === "pustka") { drawPustkaInterior(c, x, y, t, flags); return; }
+  if (id === "mlyn") { drawMlynInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -1075,5 +1076,112 @@ function drawPustkaInterior(c: CanvasRenderingContext2D, x: number, y: number, t
     c.fillStyle = "#8a8070";
     c.beginPath(); c.ellipse(-8, -2, 6, 4, 0, 0, Math.PI * 2); c.fill(); // a dry bowl
     c.restore();
+  }
+}
+
+// --- The windmill -------------------------------------------------------------------
+// A room of boards, flour everywhere: the millstones in their wooden case
+// under the hopper, the great cog-wheel on the back wall, the grain bin,
+// sacks of flour (Solokha's seat by day), a ladder to the loft, and flour
+// dust turning in the light from the little window.
+function drawMlynInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.mlyn;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  const shadow = (r: Box) => { c.fillStyle = "rgba(30,20,10,0.28)"; rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill(); };
+  const room = MLYN_ROOM;
+  // a plank floor, floured
+  c.fillStyle = "#9a7a54";
+  c.fillRect(x, y, w, h);
+  c.strokeStyle = "rgba(60,40,20,0.4)"; c.lineWidth = 1;
+  for (let px = x + 12; px < x + w; px += 12) { c.beginPath(); c.moveTo(px, y + BACK_WALL); c.lineTo(px, y + h); c.stroke(); }
+  c.fillStyle = "rgba(244,238,224,0.35)";
+  for (let i = 0; i < 18; i++) {
+    c.beginPath(); c.ellipse(x + 20 + hash2(i, 931) * (w - 40), y + 40 + hash2(i, 933) * (h - 60), 5 + hash2(i, 935) * 8, 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  // board walls; the back wall's face with the great cog-wheel
+  c.fillStyle = "#7a5a38";
+  c.fillRect(x, y + WALL, w, BACK_WALL - WALL);
+  c.strokeStyle = "rgba(40,26,12,0.45)";
+  for (let px = x + 8; px < x + w; px += 8) { c.beginPath(); c.moveTo(px, y + WALL); c.lineTo(px, y + BACK_WALL); c.stroke(); }
+  c.fillStyle = "#5a3a20";
+  c.fillRect(x, y, w, WALL); c.fillRect(x, y, WALL, h); c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL); c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "#8a6a44"; c.fillRect(x + half, y + h - WALL, DOOR_GAP, WALL);
+  {
+    const gx = x + w / 2 - 6;
+    const gy = y + WALL + 8;
+    const spin = t * 0.0004;
+    c.strokeStyle = "#4e3420"; c.lineWidth = 3;
+    c.beginPath(); c.arc(gx, gy, 14, Math.PI, 0); c.stroke();
+    c.lineWidth = 1.6;
+    for (let k = 0; k < 7; k++) {
+      const a = Math.PI + (k / 6) * Math.PI + (spin % (Math.PI / 6));
+      if (a > Math.PI * 2) continue;
+      c.beginPath(); c.moveTo(gx + Math.cos(a) * 14, gy + Math.sin(a) * 14); c.lineTo(gx + Math.cos(a) * 18, gy + Math.sin(a) * 18); c.stroke();
+    }
+  }
+  // the little window, and its shaft of light with flour turning in it
+  c.fillStyle = "#cfe0e8"; c.fillRect(x + 18, y + WALL + 3, 14, 10);
+  {
+    const g = c.createLinearGradient(x + 25, y + BACK_WALL, x + 40, y + h);
+    g.addColorStop(0, "rgba(255,244,210,0.3)"); g.addColorStop(1, "rgba(255,244,210,0)");
+    c.fillStyle = g;
+    c.beginPath(); c.moveTo(x + 18, y + BACK_WALL); c.lineTo(x + 32, y + BACK_WALL); c.lineTo(x + 70, y + h - 20); c.lineTo(x + 46, y + h - 20); c.closePath(); c.fill();
+    c.fillStyle = "rgba(255,250,235,0.7)";
+    for (let i = 0; i < 7; i++) {
+      const ph = (t * 0.00006 + i / 7) % 1;
+      c.beginPath(); c.arc(x + 26 + ph * 30 + Math.sin(ph * 8 + i) * 4, y + BACK_WALL + ph * 60, 0.9, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // the ladder up to the loft
+  c.strokeStyle = "#6e4a2a"; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(x + w - WALL - 14, y + WALL); c.lineTo(x + w - WALL - 14, y + BACK_WALL + 30); c.moveTo(x + w - WALL - 4, y + WALL); c.lineTo(x + w - WALL - 4, y + BACK_WALL + 30); c.stroke();
+  for (let ry = y + WALL + 5; ry < y + BACK_WALL + 30; ry += 6) { c.beginPath(); c.moveTo(x + w - WALL - 14, ry); c.lineTo(x + w - WALL - 4, ry); c.stroke(); }
+  // the millstones in their case, the hopper above, flour spilling out
+  {
+    const m = R(room.millstones);
+    shadow(m);
+    c.fillStyle = "#7a5a38";
+    rr(c, m.x, m.y, m.w, m.h, 4); c.fill();
+    c.strokeStyle = "rgba(30,20,10,0.8)"; c.lineWidth = 0.9; c.stroke();
+    const cx = m.x + m.w / 2;
+    const cy = m.y + m.h / 2 + 2;
+    const gg = c.createRadialGradient(cx - 6, cy - 4, 2, cx, cy, 20);
+    gg.addColorStop(0, "#c8c4bc"); gg.addColorStop(1, "#7a766e");
+    c.fillStyle = gg;
+    c.beginPath(); c.ellipse(cx, cy, 20, 11, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.fillStyle = "#3a3632";
+    c.beginPath(); c.ellipse(cx, cy, 3.4, 2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#8a6440";
+    c.beginPath(); c.moveTo(cx - 12, cy - 22); c.lineTo(cx + 12, cy - 22); c.lineTo(cx + 4, cy - 8); c.lineTo(cx - 4, cy - 8); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = "#f4eee0";
+    c.beginPath(); c.ellipse(m.x + m.w + 2, m.y + m.h, 8, 3.4, 0, 0, Math.PI * 2); c.fill();
+  }
+  // the grain bin, heaped with grain
+  {
+    const b = R(room.bin);
+    shadow(b);
+    c.fillStyle = "#6e4a2a"; rr(c, b.x, b.y, b.w, b.h, 2); c.fill();
+    c.strokeStyle = "rgba(30,20,10,0.8)"; c.lineWidth = 0.9; c.stroke();
+    c.fillStyle = "#d8b860";
+    c.beginPath(); c.ellipse(b.x + b.w / 2, b.y + 8, b.w / 2 - 3, 5, 0, 0, Math.PI * 2); c.fill();
+  }
+  // sacks of flour, slumped against each other
+  {
+    const s0 = R(room.sacks);
+    for (const [ox, oy, sw, sh] of [[0, 4, 14, 22], [13, 2, 15, 24], [5, 18, 16, 14]] as const) {
+      const sx = s0.x + ox;
+      const sy = s0.y + oy;
+      c.fillStyle = "rgba(30,20,10,0.25)"; rr(c, sx + 2, sy + 3, sw, sh, 5); c.fill();
+      const g = c.createLinearGradient(sx, 0, sx + sw, 0);
+      g.addColorStop(0, "#efe6d2"); g.addColorStop(1, "#b8ac94");
+      c.fillStyle = g; rr(c, sx, sy, sw, sh, 5); c.fill();
+      c.strokeStyle = "rgba(30,20,10,0.7)"; c.lineWidth = 0.8; c.stroke();
+      c.strokeStyle = "#8a6440"; c.beginPath(); c.moveTo(sx + 3, sy + 4); c.lineTo(sx + sw - 3, sy + 4); c.stroke();
+    }
+    // one more, lying by the wall: Solokha's seat by day
+    c.fillStyle = "#e4dac2"; rr(c, x + 104, y + 94, 24, 12, 5); c.fill();
+    c.strokeStyle = "rgba(30,20,10,0.7)"; c.lineWidth = 0.8; c.stroke();
   }
 }

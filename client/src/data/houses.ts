@@ -19,7 +19,9 @@ import { type Rect } from "../world/geometry";
 //     altogether (see OTAMAN_ROOM below)
 //   korchma — the inn on the chumak road past the khutir (KORCHMA_ROOM)
 //   pustka — the abandoned khata of Taras Dovhyi by Viy's hollow (PUSTKA_ROOM)
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka";
+//   mlyn — the windmill on the rise by the old millstone (MLYN_ROOM), where
+//     Solokha sits out the day on a flour sack
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -30,6 +32,7 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   otaman: { x: 650, y: 120, w: 380, h: 200 },
   korchma: { x: 1830, y: 1000, w: 350, h: 210 },
   pustka: { x: 1084, y: 140, w: 210, h: 176 },
+  mlyn: { x: 330, y: 900, w: 150, h: 130 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -97,12 +100,23 @@ export const PUSTKA_ROOM = {
   lava: { x: 20, y: 124, w: 40, h: 12 },
   table: { x: 136, y: 108, w: 44, h: 28 },
 } as const satisfies Record<string, Rect>;
+// The windmill (vitriak): a post mill, its body one room of boards. The
+// millstones turn under their hopper in the middle of the back, the grain
+// bin stands on the left, sacks of flour on the right; a ladder climbs to
+// the sails' loft. Footprint 150×130, the door at x 52…98.
+export const MLYN_ROOM = {
+  millstones: { x: 46, y: BACK_WALL + 4, w: 54, h: 30 },
+  bin: { x: 14, y: 66, w: 24, h: 40 },
+  sacks: { x: 108, y: BACK_WALL + 2, w: 28, h: 30 },
+} as const satisfies Record<string, Rect>;
+
 // Where to stand to open the skrynia (in the world).
 export const PUSTKA_CHEST = { x: 1084 + 123, y: 140 + 76 };
 
 function furniture(id: HouseId): Rect[] {
   if (id === "korchma") return Object.values(KORCHMA_ROOM);
   if (id === "pustka") return Object.values(PUSTKA_ROOM);
+  if (id === "mlyn") return Object.values(MLYN_ROOM);
   if (id !== "otaman") return Object.values(ROOM);
   const parts: Rect[] = [];
   for (const px of [OTAMAN_WALLS.west, OTAMAN_WALLS.east]) {

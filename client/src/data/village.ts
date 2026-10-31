@@ -72,7 +72,9 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
 
 // Landmarks: the windmill by the Chort's old millstone, and a burial mound
 // with its stone idol where the khutir gives way to the steppe.
-export const WINDMILL = { x: 404, y: 1012 };
+// (the windmill is walk-in now: data/houses.ts HOUSE_RECTS.mlyn; this is its
+// place for the map)
+export const WINDMILL = { x: 405, y: 980 };
 export const KURHAN = { x: 1600, y: 800 };
 export const KURHAN_STEPPE = { x: 2150, y: 520 };
 
@@ -145,7 +147,6 @@ export const SOLID: Rect[] = [
   { x: 1352, y: 196, w: 136, h: 84 },
   ...TREES.map((t) => ({ x: t.x - 10, y: t.y - 8, w: 20, h: 14 })),
   ...FENCES,
-  { x: WINDMILL.x - 26, y: WINDMILL.y - 16, w: 52, h: 22 },
   { x: KURHAN.x - 56, y: KURHAN.y - 22, w: 112, h: 26 },
   { x: KURHAN_STEPPE.x - 56, y: KURHAN_STEPPE.y - 22, w: 112, h: 26 },
 ];

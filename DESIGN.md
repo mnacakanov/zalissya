@@ -427,3 +427,12 @@ The owner pointed out that a sabbath is an evening thing, and that warlocks belo
   - Beelzebub snores in a cave on the mountain's north-east slope: you can look in, feel the warm sulphur breath, and back away;
   - the Chort keeps his old day-place by the millstone.
 - **Warlocks:** besides Opanas, half the sabbath dancers are warlocks, dancing with their arms up beside the witches.
+
+## Into the windmill
+
+Solokha said she hides in the mill, but the windmill had no inside, so she stood on its step. The windmill is now a walk-in building like the khaty (`HOUSE_RECTS.mlyn`, `MLYN_ROOM`):
+
+- **Outside:** a post mill of weathered boards on its trestle legs, with a little ladder up to the door, a steep board gable and the sails turning on it.
+- **Inside:** the walls and roof lift away and the sails grow faint overhead. There are the millstones in their wooden case under the hopper, with flour spilling out, the great cog-wheel turning on the back wall, a grain bin heaped with grain, slumped sacks of flour, a ladder to the loft, and flour dust turning in the shaft of light from the little window.
+- **Solokha** sits out the day on a flour sack inside.
+- **Nearby:** the cow's pasture moved a little west to make room, and a herb patch that the new walls covered moved beside it.
