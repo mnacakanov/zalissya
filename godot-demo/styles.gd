@@ -401,7 +401,10 @@ func _build_people() -> void:
 	player_sprite = _sprite_m("kobzar", heights.kobzar)
 	player.add_child(player_sprite)
 	_build_walk(heights.kobzar)
-	if anim_kind == "":
+	# the cut-out rig only where a layout asks for it ("rig": true): the first
+	# parts set didn't come from one figure (sleeves drawn as barrels, thighs
+	# askew), and the owner judged the walk broken; frame sheets are better
+	if anim_kind == "" and layout.get("rig", false):
 		_build_rig(heights.kobzar)
 	var cam := Camera2D.new()
 	cam.position_smoothing_enabled = true

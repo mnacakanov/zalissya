@@ -48,7 +48,10 @@ a gamepad.
     for the left-hand directions;
   - `kobzar_parts/front|back/` (head, torso, upper and lower arms and legs,
     near and far, kobza, optional pelvis): a cut-out rig (`_build_rig`), the
-    limbs swinging from joints found by proportion, mirrored for the left;
+    limbs swinging from joints found by proportion, mirrored for the left.
+    Only with `"rig": true` in the layout: the first parts set (Request 3)
+    was judged broken by the owner, so BG2 and Pillars-lite wait for frame
+    sheets;
   - with none of these, the standing `kobzar.png` bobs along.
 - **Pixel art.** `"pixel": true` in a layout draws every sprite at one whole
   density (`scale`), so texels stay square.
