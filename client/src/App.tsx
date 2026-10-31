@@ -521,7 +521,6 @@ export function App() {
       });
     }, 2500);
     return () => window.clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started]);
 
   // The Chort's bargain: a real choice at the signature line. Signing is
