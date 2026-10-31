@@ -32,7 +32,7 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
     const home = omelkoAtHome(flags);
     const stage = pustkaStage(flags);
     return {
-      intro: L(home ? (firstMeeting ? "cave.omelko.homeIntro" : "cave.omelko.homeAgain") : firstMeeting ? "cave.omelko.intro" : "cave.omelko.again"),
+      intro: home ? L(firstMeeting ? "cave.omelko.homeIntro" : "cave.omelko.homeAgain") : firstMeeting ? L("cave.omelko.intro", "cave.omelko.introWish") : L("cave.omelko.again"),
       topics: [
         topic("who", "cave.omelko.t.who", L("cave.omelko.who.0", "cave.omelko.who.1")),
         home
@@ -46,9 +46,13 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
         // the draught from behind the serpent: he hears it, and he hears who passes
         ...(home ? [] : [topic("tunnel", "cave.omelko.t.tunnel", lulled || through ? L("cave.omelko.tunnel.open.0", "cave.omelko.tunnel.open.1") : L("cave.omelko.tunnel.0", "cave.omelko.tunnel.1"))]),
         topic("kobza", "cave.omelko.t.kobza", L("cave.omelko.kobza.0", "cave.omelko.kobza.1")),
-        // "A roof for Omelko" (systems/pustka.ts): it opens once Stepan's shape has stopped coming
-        ...(stage === "ask" ? [topic("home", "cave.omelko.t.home", L("cave.omelko.home.0", "cave.omelko.home.1"), "omelkoHome")] : []),
-        ...(stage === "permission" || stage === "work" ? [topic("home", "cave.omelko.t.home", L("cave.omelko.homeWait.0", "cave.omelko.homeWait.1"))] : []),
+        // "A roof for Omelko" (systems/pustka.ts): he wants a home of his own and says so from the
+        // first meeting; the work itself opens once Stepan's shape has stopped coming
+        ...(stage === "permission" || stage === "work"
+          ? [topic("home", "cave.omelko.t.home", L("cave.omelko.homeWait.0", "cave.omelko.homeWait.1"))]
+          : stage === "locked" || stage === "ask"
+            ? [topic("home", "cave.omelko.t.home", L("cave.omelko.home.0", "cave.omelko.home.1"), "omelkoHome")]
+            : []),
         ...(stage === "ready" ? [topic("move", "cave.omelko.t.move", L("cave.omelko.move.0", "cave.omelko.move.1"), "omelkoMove")] : []),
       ],
     };

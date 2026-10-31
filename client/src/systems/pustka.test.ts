@@ -19,7 +19,9 @@ describe("the way in", () => {
     expect(pustkaStage(new Set())).toBe("locked");
     expect(pustkaStage(new Set(["perelesnykSpared", "omelkoHome", "pustkaLeave"]))).toBe("locked");
     expect(pustkaStage(open())).toBe("ask");
-    expect(caveTopicSet("omelko", new Set(), false)?.topics.map((x) => x.id)).not.toContain("home");
+    // he wants a home from the very first meeting; only the work waits for the perelesnyk
+    expect(caveTopicSet("omelko", new Set(), true)?.intro.length).toBe(2);
+    expect(caveTopicSet("omelko", new Set(), false)?.topics.find((x) => x.id === "home")?.grant).toBe("omelkoHome");
     expect(caveTopicSet("omelko", open(), false)?.topics.map((x) => x.id)).toContain("home");
   });
   test("the empty khata hints at what it could be, once it may be", () => {
