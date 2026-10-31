@@ -130,9 +130,10 @@ Interior of [building] at the same isometric camera, roof and the two near walls
 ```
 Traditional khata layout: the pich in a corner by the door; the pokut (holy corner with icon and rushnyk) diagonal from it, with the table under it; lavy (benches) along the walls; the pil (sleeping platform) between the pich and the back wall; the skrynia (painted chest) by the pil; the mysnyk (dish shelf) by the door.
 
-**Tree** (1024×1024; trunk foot at the bottom centre):
+**Tree** (1024×1024; trunk foot at the bottom centre). Trees are drawn **side-on like the accepted oak** (owner decision), not from the isometric camera. Replace the style block's "Camera:" sentence with the one below, and remove "side view" from the negative prompt:
 ```
-A single [species, age] tree seen from the same isometric camera (from above at about 40 degrees, so the top of the crown is visible as well as its side): [trunk and roots], [crown: shape, density, colours], golden dapples on the upper-left of the crown. Real size: [height, crown width]. The trunk's foot is at the bottom centre of the image.
+Camera: near side-on, as in the attached accepted oak: seen from a little above eye level, so the crown is mostly seen from the side with only a hint of its top; the trunk upright. Same scale and view as the accepted oak.
+A single [species, age] tree: [trunk and roots], [crown: shape, density, colours], golden dapples on the upper-left of the crown. Real size: [height, crown width]. The trunk's foot is at the bottom centre of the image.
 ```
 
 **Prop** (1024×1024; base at the bottom centre): `A single [object] as used on a Cossack khutir, seen from the isometric camera with a corner toward the viewer: [material, condition, details], real size [ ].`
