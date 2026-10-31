@@ -1,5 +1,6 @@
 import { HOUSE_RECTS, type HouseId } from "../data/houses";
 import { RIVER_HALF, riverY } from "../data/land";
+import { LYSA_WORLD } from "../data/lysa";
 import { FIRE, KAPLYTSIA, POND } from "../data/village";
 import { DAWN, DUSK, NIGHT_FROM } from "../systems/time";
 import { WORLD_W } from "../world/areas";
@@ -111,6 +112,10 @@ export function drawDark(
   const lights: Light[] = [
     { x: FIRE.x + FIRE.w / 2, y: FIRE.y + FIRE.h / 2, r: 200 * fl, col: "255,150,60", k: 1 },
     { x: KAPLYTSIA.x + KAPLYTSIA.w / 2, y: KAPLYTSIA.y + KAPLYTSIA.h + 6, r: 40, col: "255,200,120", k: 0.6 },
+    // the sabbath bonfire on Lysa Hora, and the moon's pale wash on its crown
+    { x: LYSA_WORLD.summit.x, y: LYSA_WORLD.summit.y, r: 260 * fl, col: "255,140,90", k: 1 },
+    { x: LYSA_WORLD.summit.x + 120, y: LYSA_WORLD.summit.y - 160, r: 420, col: "170,180,255", k: 0.45 },
+    { x: LYSA_WORLD.offer.x, y: LYSA_WORLD.offer.y, r: 50, col: "200,210,255", k: 0.5 },
   ];
   for (const id of Object.keys(HOUSE_RECTS) as HouseId[]) {
     if (id === inside) {

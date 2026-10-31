@@ -1761,21 +1761,8 @@ export function App() {
       const lx = LYSA_ORIGIN.x - camX;
       const ly = LYSA_ORIGIN.y - camY;
       if (lx < vw && lx + LYSA_W > 0 && ly < vh && ly + LYSA_H > 0) {
-        ctx2d.save();
-        ctx2d.beginPath();
-        ctx2d.ellipse(lx + LYSA_W / 2, ly + LYSA_H / 2, LYSA_W / 2 + 40, LYSA_H / 2 + 30, 0, 0, Math.PI * 2);
-        ctx2d.clip();
+        // (its rock, crown and trail are in the world's ground: render/village.ts)
         drawLysaGround(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, vw, vh, now, flagHas(flagsNow, "lysaOffering"));
-        // feather the mountain's foot into the steppe grass
-        ctx2d.translate(lx + LYSA_W / 2, ly + LYSA_H / 2);
-        ctx2d.scale(1, (LYSA_H + 60) / (LYSA_W + 80));
-        const rim = ctx2d.createRadialGradient(0, 0, (LYSA_W / 2 + 40) * 0.72, 0, 0, LYSA_W / 2 + 40);
-        rim.addColorStop(0, "rgba(160,170,92,0)");
-        rim.addColorStop(0.55, "rgba(132,140,88,0.55)");
-        rim.addColorStop(1, "rgba(160,172,94,1)");
-        ctx2d.fillStyle = rim;
-        ctx2d.fillRect(-LYSA_W, -LYSA_W, LYSA_W * 2, LYSA_W * 2);
-        ctx2d.restore();
         drawLysaFire(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, now);
         lysaPatchesRef.current.forEach((patch) => drawLysaFlower(ctx2d, patch.x, patch.y, camX, camY, now, !patch.taken));
       }
@@ -1962,7 +1949,8 @@ export function App() {
         if (edge - 500 < vw) {
           const g = ctx2d.createLinearGradient(edge - 500, 0, edge + 60, 0);
           g.addColorStop(0, "rgba(16,18,48,0)");
-          g.addColorStop(1, "rgba(16,18,48,0.42)");
+          // by night the dark does this work already
+          g.addColorStop(1, `rgba(16,18,48,${isNight(clockRef.current.minute) ? 0.12 : 0.3})`);
           ctx2d.fillStyle = g;
           ctx2d.fillRect(Math.max(0, edge - 500), 0, vw, vh);
         }

@@ -378,3 +378,17 @@ The khutir now has more life in it than the three hens.
 - **Small life:** by day, butterflies flutter round the flowers. At night, fireflies glow over the grass and bats circle the pustka and Viy's hollow.
 - **Yard things:** washing on a line by the Domovyk's khata, log beehives by the herb garden, haystacks at the field edge, and a hay cart by the forge.
 - **Cheap to draw:** everything is anchored to the world and drawn only when on screen.
+
+## Lysa Hora, painted into the world
+
+The mountain was still in the old style: a checkerboard of blue-grey tiles clipped to an oval, a smooth pale trail, standing stones like posts, and stick-figure snags. It was nearly black at night.
+
+- **Rock:** the rock is now part of the world's ground (`render/village.ts`, `mountainAt`): mottled grey-violet stone with lichen and grit, worn pale on the bald crown round the summit.
+- **The foot:** it is torn into the dry steppe by noise instead of cut by an oval, and the grass gives out where the rock begins.
+- **Detail tiles:** cracks, scree and boulders are baked into them.
+- **Trail:** the trail up is one of the world's worn roads, switchbacking to the summit.
+- **On the summit:**
+  - the standing stones are rough, leaning menhirs with lichen and carved crescents;
+  - the dead snags are gnarled, forked and reaching;
+  - the crescent moon is shaded.
+- **At night:** the sabbath bonfire and the offering stone are light sources, and the moon throws a pale wash over the crown, so the sabbath reads in the dark. The cold wash over the last stretch of steppe is lighter by day and nearly gone at night, where the darkness does that work.

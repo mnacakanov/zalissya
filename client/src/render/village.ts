@@ -1,7 +1,7 @@
 import { HOUSE_RECTS } from "../data/houses";
-import { LYSA_WORLD } from "../data/lysa";
+import { LYSA_ORIGIN, LYSA_SUMMIT, LYSA_WORLD } from "../data/lysa";
 const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
-import { VILLAGE_W } from "../world/areas";
+import { LYSA_H, LYSA_W, VILLAGE_W } from "../world/areas";
 import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
@@ -100,6 +100,11 @@ function roads(): Road[] {
     { pts: [...bezierPts([VILLAGE_W - 60, 646], [1950, 660], [2250, 900], [2250, 1300], 6), ...linePts([[2250, 1300], [2250, WORLD_H + 40]], 6)], w: 50, seed: 4, ruts: true },
     { pts: linePts([[1500, 646], [1500, 452], [VILLAGE_W, 452]], 6), w: 54, seed: 5, ruts: false },
     { pts: bezierPts([2005, 1214], [2080, 1236], [2160, 1230], [2244, 1170], 6), w: 30, seed: 6, ruts: false },
+    // the trail up Lysa Hora, switchbacking from the trailhead to the summit
+    { pts: [
+      ...bezierPts([LYSA_ORIGIN.x - 10, LYSA_ORIGIN.y + 470], [LYSA_ORIGIN.x + 140, LYSA_ORIGIN.y + 510], [LYSA_ORIGIN.x + 300, LYSA_ORIGIN.y + 500], [LYSA_ORIGIN.x + 430, LYSA_ORIGIN.y + 452], 6),
+      ...bezierPts([LYSA_ORIGIN.x + 430, LYSA_ORIGIN.y + 452], [LYSA_ORIGIN.x + 490, LYSA_ORIGIN.y + 426], [LYSA_ORIGIN.x + 510, LYSA_ORIGIN.y + 404], [LYSA_ORIGIN.x + LYSA_SUMMIT.x - 120, LYSA_ORIGIN.y + LYSA_SUMMIT.y], 6),
+    ], w: 36, seed: 7, ruts: false },
   ];
   // footpaths worn from each door to the nearest road
   let seed = 10;
@@ -302,6 +307,25 @@ const GRASS_D = [52, 88, 36], GRASS_L = [104, 142, 58], GRASS_SUN = [148, 158, 7
 const STEPPE_D = [128, 128, 70], STEPPE_L = [178, 168, 100];
 const DIRT_D = [92, 66, 42], DIRT_L = [134, 102, 66], DIRT_WET = [66, 48, 32], GRIT = [168, 150, 120];
 
+// --- Lysa Hora's rock --------------------------------------------------------------
+// The Bald Mountain rises out of the dry steppe in the same ground as
+// everything else: grey-violet rock, darker on the slopes, worn pale on the
+// bald crown round the summit, its foot torn into the grass by noise rather
+// than cut by an oval. mountainAt() says how much rock is at a point.
+const MTN = {
+  cx: LYSA_ORIGIN.x + LYSA_W / 2, cy: LYSA_ORIGIN.y + LYSA_H / 2,
+  rx: LYSA_W / 2 + 40, ry: LYSA_H / 2 + 30,
+};
+export function mountainAt(x: number, y: number): number {
+  const dx = (x - MTN.cx) / MTN.rx;
+  const dy = (y - MTN.cy) / MTN.ry;
+  const d = dx * dx + dy * dy;
+  if (d > 1.6) return 0;
+  const e = 1 - d + (valueNoise(x / 70, y / 70, 201) - 0.5) * 0.4 + (valueNoise(x / 18, y / 18, 203) - 0.5) * 0.14;
+  return Math.max(0, Math.min(1, e / 0.22));
+}
+const ROCK_D = [62, 60, 74], ROCK_L = [112, 108, 120], CROWN = [150, 144, 140], LICHEN = [138, 148, 108];
+
 function bakeTile(tx: number, ty: number): HTMLCanvasElement {
   const n = TILE / GROUND_TEXEL;
   const cv = document.createElement("canvas");
@@ -325,12 +349,27 @@ function bakeTile(tx: number, ty: number): HTMLCanvasElement {
       const k = (grain > 0.93 ? -0.25 : grain < 0.05 ? 0.2 : 0);
       // the ground under foot
       const w = wearAt(wx, wy);
+      const mk = mountainAt(wx, wy);
       const o = (j * n + i) * 4;
       for (let ch = 0; ch < 3; ch++) {
         const lush = (GRASS_D[ch] ?? 0) + ((GRASS_L[ch] ?? 0) - (GRASS_D[ch] ?? 0)) * (gv + k);
         const sunny = lush + ((GRASS_SUN[ch] ?? 0) - lush) * sun * 0.6;
         const st = (STEPPE_D[ch] ?? 0) + ((STEPPE_L[ch] ?? 0) - (STEPPE_D[ch] ?? 0)) * (gv + k);
         let col = sunny + (st - sunny) * dry;
+        if (mk > 0) {
+          // the rock: mottled, with lichen, paler toward the bald crown
+          const r1 = valueNoise(wx / 54, wy / 54, 211);
+          const r2 = valueNoise(wx / 11, wy / 11, 213);
+          const rv = 0.6 * r1 + 0.4 * r2;
+          let rock = (ROCK_D[ch] ?? 0) + ((ROCK_L[ch] ?? 0) - (ROCK_D[ch] ?? 0)) * rv;
+          const crown = Math.max(0, 1 - Math.hypot(wx - LYSA_WORLD.summit.x, (wy - LYSA_WORLD.summit.y) * 1.3) / 330);
+          rock += ((CROWN[ch] ?? 0) - rock) * crown * 0.55;
+          const lich = Math.max(0, (valueNoise(wx / 26, wy / 26, 217) - 0.72) / 0.28);
+          rock += ((LICHEN[ch] ?? 0) - rock) * lich * 0.6;
+          const gr = ih(wx >> 1, wy >> 1, 219);
+          if (gr > 0.97) rock *= 1.25; else if (gr < 0.04) rock *= 0.72;
+          col = col + (rock - col) * mk;
+        }
         if (w > 0) {
           const d1 = valueNoise(wx / 46, wy / 46, 61);
           const d2 = valueNoise(wx / 9, wy / 9, 67);
@@ -377,9 +416,57 @@ function bakeDetail(tx: number, ty: number, px: number): HTMLCanvasElement {
   if (!g) return cv;
   g.scale(px, px);
   drawGrassDetail(g, tx * TILE, ty * TILE, TILE, TILE);
+  drawRockDetail(g, tx * TILE, ty * TILE, TILE, TILE);
   drawLand(g, tx * TILE, ty * TILE, TILE, TILE, 0);
   detailTiles.set(ty * 1000 + tx, cv);
   return cv;
+}
+
+// Cracks, scree and the odd boulder on the mountain's rock (baked).
+function drawRockDetail(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number): void {
+  if (camX > MTN.cx + MTN.rx * 1.3 || camX + vw < MTN.cx - MTN.rx * 1.3 || camY > MTN.cy + MTN.ry * 1.3 || camY + vh < MTN.cy - MTN.ry * 1.3) return;
+  const cell = 26;
+  c.lineCap = "round";
+  for (let gy = Math.floor(camY / cell) - 1; gy * cell < camY + vh + cell; gy++) {
+    for (let gx = Math.floor(camX / cell) - 1; gx * cell < camX + vw + cell; gx++) {
+      const wx = gx * cell + hash2(gx, gy * 5) * cell;
+      const wy = gy * cell + hash2(gx * 7, gy) * cell;
+      const mk = mountainAt(wx, wy);
+      if (mk < 0.6 || dirtAt(wx, wy) > 120) continue;
+      const h = hash2(gx * 3, gy * 11);
+      const x = wx - camX;
+      const y = wy - camY;
+      if (h < 0.22) {
+        // a crack, forking
+        c.strokeStyle = "rgba(24,22,32,0.5)"; c.lineWidth = 1.1;
+        const a = hash2(gx, gy) * Math.PI;
+        const l = 8 + h * 30;
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l * 0.6);
+        c.lineTo(x + Math.cos(a + 0.6) * l * 1.4, y + Math.sin(a + 0.6) * l * 0.8); c.stroke();
+      } else if (h < 0.4) {
+        // scree: a scatter of pale chips with dark undersides
+        for (let k = 0; k < 4; k++) {
+          const sx = x + (hash2(gx + k, gy) - 0.5) * 16;
+          const sy = y + (hash2(gx, gy + k) - 0.5) * 9;
+          c.fillStyle = "rgba(20,18,28,0.45)";
+          c.beginPath(); c.ellipse(sx + 0.6, sy + 0.8, 2.2, 1.4, 0, 0, Math.PI * 2); c.fill();
+          c.fillStyle = "#9a96a2";
+          c.beginPath(); c.ellipse(sx, sy, 2, 1.3, 0, 0, Math.PI * 2); c.fill();
+        }
+      } else if (h > 0.96) {
+        // a boulder, outlined like everything else
+        const r = 6 + hash2(gy, gx) * 6;
+        c.fillStyle = "rgba(14,12,20,0.4)";
+        c.beginPath(); c.ellipse(x + 2, y + r * 0.5, r * 1.1, r * 0.4, 0, 0, Math.PI * 2); c.fill();
+        const g = c.createLinearGradient(x - r, 0, x + r, 0);
+        g.addColorStop(0, "#8e8a98"); g.addColorStop(1, "#4a4656");
+        c.fillStyle = g;
+        c.beginPath(); c.ellipse(x, y, r, r * 0.7, 0, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = "rgba(24,20,30,0.75)"; c.lineWidth = 0.9; c.stroke();
+      }
+    }
+  }
+  c.lineCap = "butt";
 }
 
 function drawGrassDetail(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number): void {
@@ -397,7 +484,7 @@ function drawGrassDetail(c: CanvasRenderingContext2D, camX: number, camY: number
       const h = hash2(gx, gy);
       const wx = gx * cell + hash2(gx * 3, gy * 7) * cell;
       const wy = gy * cell + hash2(gx * 5, gy * 11) * cell;
-      if (dirtAt(wx, wy) > 90) continue;
+      if (dirtAt(wx, wy) > 90 || mountainAt(wx, wy) > 0.5) continue;
       const steppe = wx > VILLAGE_W - 100;
       const px = wx - camX;
       const py = wy - camY;
