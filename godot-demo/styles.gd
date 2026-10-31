@@ -460,6 +460,7 @@ func _build_walk(metres: float) -> void:
 	sf.remove_animation("default")
 	player_anim = AnimatedSprite2D.new()
 	player_anim.sprite_frames = sf
+	player_anim.animation = sf.get_animation_names()[0]
 	player_anim.centered = false
 	var first: Texture2D = sf.get_frame_texture(sf.get_animation_names()[0], 0)
 	player_anim.offset = Vector2(-first.get_width() / 2.0, -first.get_height())
@@ -625,20 +626,29 @@ func _animate_walk(v: Vector2) -> void:
 		else:
 			player_sprite.position.y = 0
 		return
+	if anim_kind == "sheet4":
+		# a four-way sheet stands still on the first frame of the way he
+		# last walked: he keeps facing it, in the same drawing as his walk
+		player_anim.visible = true
+		player_sprite.visible = false
+		if not moving:
+			if player_anim.is_playing():
+				player_anim.stop()
+				player_anim.frame = 0
+			return
+		var anim: String = ("walk_down" if v.y > 0 else "walk_up") if absf(v.y) > absf(v.x) else ("walk_right" if v.x > 0 else "walk_left")
+		player_anim.flip_h = false
+		player_anim.play(anim)
+		return
 	player_anim.visible = moving
 	player_sprite.visible = not moving
 	if not moving:
 		player_anim.stop()
 		return
-	if anim_kind == "sheet4":
-		var anim: String = ("walk_down" if v.y > 0 else "walk_up") if absf(v.y) > absf(v.x) else ("walk_right" if v.x > 0 else "walk_left")
-		player_anim.flip_h = false
-		player_anim.play(anim)
-	else:
-		player_anim.play("walk_back" if v.y < -0.1 else "walk_front")
-		if absf(v.x) > 0.05:
-			player_anim.flip_h = v.x < 0
-			player_sprite.scale.x = absf(player_sprite.scale.x) * (-1.0 if v.x < 0 else 1.0)
+	player_anim.play("walk_back" if v.y < -0.1 else "walk_front")
+	if absf(v.x) > 0.05:
+		player_anim.flip_h = v.x < 0
+		player_sprite.scale.x = absf(player_sprite.scale.x) * (-1.0 if v.x < 0 else 1.0)
 
 
 # --- light: the hour's colour over everything, lamps that show at night; in
