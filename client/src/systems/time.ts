@@ -24,7 +24,7 @@ export const WAKE_MINUTE = 7 * 60;
 export const NIGHTFALL_MINUTE = 21 * 60 + 10;
 
 // Bonuses that last until the next dawn.
-export const UNTIL_DAWN_FLAGS = ["wellfed", "tonic", "strongtonic", "rested"] as const;
+export const UNTIL_DAWN_FLAGS = ["wellfed", "tonic", "strongtonic", "rested", "bathed"] as const;
 
 export type Clock = { day: number; minute: number };
 export type DayPhase = "dawn" | "day" | "dusk" | "night";

@@ -52,6 +52,37 @@ export function inRiver(x: number, y: number): boolean {
   return Math.abs(y - riverY(x)) < RIVER_HALF && !onBridge(x);
 }
 
+// --- the boloto ------------------------------------------------------------
+// Far from the khutir, past the river and deep in the south-west forest,
+// the ground goes soft and black: a bog of dark pools, tussocks, duckweed
+// and dead birches. The Bolotianyk lives here, not in the khutir's pond.
+// A footpath leaves the south road past the bridge and peters out at its
+// edge. The pools are deep water: you do not walk in them.
+export const BOLOTO = { x: 380, y: 2040, rx: 250, ry: 150 };
+export const BOLOTO_POOLS: Array<{ x: number; y: number; rx: number; ry: number }> = [
+  { x: 380, y: 2030, rx: 92, ry: 50 }, // the deep one, where he sits
+  { x: 250, y: 2090, rx: 54, ry: 28 },
+  { x: 506, y: 2080, rx: 48, ry: 24 },
+  { x: 300, y: 1960, rx: 40, ry: 20 },
+  { x: 470, y: 1980, rx: 34, ry: 16 },
+];
+export function inBoloto(x: number, y: number): boolean {
+  return BOLOTO_POOLS.some((p) => ((x - p.x) / p.rx) ** 2 + ((y - p.y) / p.ry) ** 2 < 1);
+}
+// the footpath from the south road, past the bridge, to the bog
+export const BOLOTO_PATH: number[][] = [[840, 1740], [700, 1800], [600, 1900], [540, 1960]];
+function nearBolotoPath(x: number, y: number): boolean {
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    const v = 1 - u;
+    const P = BOLOTO_PATH;
+    const bx = v * v * v * (P[0]?.[0] ?? 0) + 3 * v * v * u * (P[1]?.[0] ?? 0) + 3 * v * u * u * (P[2]?.[0] ?? 0) + u * u * u * (P[3]?.[0] ?? 0);
+    const by = v * v * v * (P[0]?.[1] ?? 0) + 3 * v * v * u * (P[1]?.[1] ?? 0) + 3 * v * u * u * (P[2]?.[1] ?? 0) + u * u * u * (P[3]?.[1] ?? 0);
+    if (Math.hypot(x - bx, y - by) < 40) return true;
+  }
+  return false;
+}
+
 // --- forests ----------------------------------------------------------------
 // Dense, but with gaps to walk through; the Lisovyk would approve.
 export type ForestTree = { x: number; y: number; kind: "pine" | "birch" | "oak"; s: number };
@@ -72,6 +103,9 @@ export const FOREST_TREES: ForestTree[] = [];
         const y = gy + (hash2(gy, gx) - 0.5) * 40;
         // keep the bridges' roads open
         if (BRIDGES.some((b) => Math.abs(x - b.x) < 90) && y < 2000) continue;
+        // nor in the bog, nor on the path to it (a few dead birches stand
+        // in it, drawn with the bog)
+        if (((x - BOLOTO.x) / (BOLOTO.rx + 30)) ** 2 + ((y - BOLOTO.y) / (BOLOTO.ry + 30)) ** 2 < 1 || nearBolotoPath(x, y)) continue;
         const k = hash2(gx * 3, gy * 7);
         const kind = k < r.pines ? "pine" : k < r.pines + 0.3 ? "oak" : "birch";
         FOREST_TREES.push({ x, y, kind, s: 0.9 + hash2(x, y) * 0.45 });

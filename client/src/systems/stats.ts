@@ -41,6 +41,8 @@ export function computeStats(input: {
   if (input.flags.has("stone")) give("con", 1, t("stat.computeStats.2"));
   if (input.flags.has("wellfed")) give("con", 1, t("stat.computeStats.3"));
   if (input.flags.has("rested")) give("con", 1, t("stat.rested"));
+  // a swim in the pond: washed and fresh, better company (until dawn)
+  if (input.flags.has("bathed")) give("cha", 1, t("stat.bathed"));
   if (input.flags.has("tonic")) { give("int", 1, t("stat.computeStats.4")); give("wis", 1, t("stat.computeStats.5")); }
   if (input.flags.has("strongtonic")) { give("int", 2, t("stat.computeStats.6")); give("wis", 2, t("stat.computeStats.7")); }
   if (input.flags.has("gold")) give("cha", 2, t("stat.computeStats.8"));

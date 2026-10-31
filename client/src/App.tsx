@@ -6,7 +6,7 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
+import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -14,8 +14,8 @@ import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
 import { tobaccoTopics } from "./dialogue/tobacco";
 import { tradeTopics } from "./dialogue/trade";
 import { purse, sellHorseshoes } from "./systems/trade";
-import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
-import { drawRiver } from "./render/land";
+import { HEMP_SPOT, inBoloto, inRiver, TOBACCO_SPOTS } from "./data/land";
+import { drawBoloto, drawRiver } from "./render/land";
 import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
 import { chumakTopicSet, chumakTopicsFor, type ChumakContext } from "./dialogue/chumaky";
 import { korchmaTopicSet } from "./dialogue/korchma";
@@ -175,6 +175,9 @@ export function App() {
   const flagsRef = useRef<Set<string>>(new Set());
   // Fishing: null when not fishing; phase "wait" until a bite, then "bite"
   // for a short window — tap Reel in during it or the fish is gone.
+  // In the pond, swimming (from the bank's "bathe" prompt until he climbs
+  // out again): not saved — a save made in the water loads in the water.
+  const bathingRef = useRef(false);
   const fishingRef = useRef<{ phase: "wait" | "bite"; biteAt: number; biteEnd: number } | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   // Smithing cooldown: the anvil (and the arm) need a breath between pieces.
@@ -443,6 +446,13 @@ export function App() {
       else if (area === "village" && SOLID.some((b) => circleRectCollide(playerRef.current.x, playerRef.current.y - 6, PLAYER_R, b))) {
         playerRef.current.x = SPAWN.x;
         playerRef.current.y = SPAWN.y;
+      }
+      // saved while bathing: still in the water
+      bathingRef.current = area === "village" && inPond(playerRef.current.x, playerRef.current.y);
+      if (bathingRef.current && !inPondShape(playerRef.current.x, playerRef.current.y, -14)) {
+        const e = pondEdge(playerRef.current.x, playerRef.current.y, -30);
+        playerRef.current.x = e.x;
+        playerRef.current.y = e.y;
       }
       // Map pre-rename save ids to their current forms.
       const idMap: Record<string, string> = { miroslav: "myroslav", bohdan: "radek", vij: "viy" };
@@ -1444,6 +1454,35 @@ export function App() {
         );
         return;
       }
+      case "bathe": {
+        // Into the pond, clothes on the bank. The first swim of the day
+        // washes the road off him: fresh until dawn (CHA +1). By night
+        // the water is black and warm, and the drowned girls of the May
+        // night are said to swim in it.
+        const p = playerRef.current;
+        const e = pondEdge(p.x, p.y, -32);
+        p.x = e.x; p.y = e.y;
+        bathingRef.current = true;
+        fishingRef.current = null;
+        const night = isNight(clockRef.current.minute);
+        const fresh = !flagHas(flagsRef.current, "bathed");
+        setFlag("bathed");
+        showToast(t(night ? "pond.bathe.night" : fresh ? "pond.bathe.fresh" : "pond.bathe.again"));
+        dirtyRef.current = true;
+        return;
+      }
+      case "shore": {
+        // out onto the bank, where he went in or the nearest dry place
+        const p = playerRef.current;
+        for (const off of [22, 34, 48, 64]) {
+          const e = pondEdge(p.x, p.y, off);
+          if (!SOLID.some((b) => circleRectCollide(e.x, e.y - 6, PLAYER_R, b)) && !inPond(e.x, e.y)) { p.x = e.x; p.y = e.y; break; }
+        }
+        bathingRef.current = false;
+        showToast(t("pond.shore"));
+        dirtyRef.current = true;
+        return;
+      }
       case "petDog": {
         // the otaman's dog has opinions about kobzars (systems/critters.ts)
         const dog = crittersRef.current.find((c) => c.kind === "dog");
@@ -1694,14 +1733,19 @@ export function App() {
         p.phase += dt * 11;
         // Constitution is walking pace: a fed, seasoned traveller covers
         // ground brisker than a newcomer living on air (+4 per CON).
-        const speed = PLAYER_SPEED + (liveStats().con.total - 1) * 4;
+        const swimming = bathingRef.current;
+        const speed = (PLAYER_SPEED + (liveStats().con.total - 1) * 4) * (swimming ? 0.5 : 1);
         const stepX = nx * speed * dt * Math.min(1, len);
         const stepY = ny * speed * dt * Math.min(1, len);
         // axis-separated collision
         let tx = clamp(p.x + stepX, PLAYER_R + 4, ws.w - PLAYER_R - 4);
-        if (!solids.some((b) => circleRectCollide(tx, p.y - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(tx, p.y) && !inRiver(tx, p.y)))) p.x = tx;
+        // in the pond he swims, and stays in deep enough water; on land
+        // the pond, the river and the bog's pools stop him
+        const canStand = (x: number, y: number) =>
+          swimming ? inPondShape(x, y, -14) : !solids.some((b) => circleRectCollide(x, y - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(x, y) && !inRiver(x, y) && !inBoloto(x, y)));
+        if (canStand(tx, p.y)) p.x = tx;
         let ty = clamp(p.y + stepY, 46, ws.h - 10);
-        if (!solids.some((b) => circleRectCollide(p.x, ty - 6, PLAYER_R, b)) && (isHutArea(area) || (!inPond(p.x, ty) && !inRiver(p.x, ty)))) p.y = ty;
+        if (canStand(p.x, ty)) p.y = ty;
         dirtyRef.current = true;
       }
 
@@ -2000,6 +2044,12 @@ export function App() {
         spot(insideNow === "lazna", TUNNEL_SPOTS.east.x, TUNNEL_SPOTS.east.y, 44, () => ({ kind: "laz", spot: "tunnelEast" }));
         spot(insideNow === "lazna" && !flagHas(flagsNow, "sentryPouch"), TUNNEL_SPOTS.pouch.x, TUNNEL_SPOTS.pouch.y, 38, () => ({ kind: "pouch" }));
         spot(insideNow === "kaplytsia" && lazAvailable("chapelHatch", flagsNow), CHAPEL_HATCH.x, CHAPEL_HATCH.y, 34, () => ({ kind: "laz", spot: "chapelHatch" }));
+        // the pond: on the bank, a swim (if nothing else is offered);
+        // in the water, the way out
+        if (!nextPrompt && !fishingRef.current) {
+          if (bathingRef.current) nextPrompt = { kind: "shore" };
+          else if (inPondShape(p.x, p.y, 34)) nextPrompt = { kind: "bathe" };
+        }
       }
       if (fight) nextPrompt = null;
       const key = promptKeyOf(nextPrompt);
@@ -2040,6 +2090,7 @@ export function App() {
         ctx2d.restore();
       }
       drawRiver(ctx2d, camX, camY, vw, vh, now);
+      drawBoloto(ctx2d, camX, camY, vw, vh, now);
       // the tobacco quest's spots glow softly while they are wanted
       if (tobaccoStage(flagsNow) === "gather") {
         const pulse = 0.35 + Math.sin(now * 0.004) * 0.15;
@@ -2208,6 +2259,7 @@ export function App() {
         y: p.y,
         draw: () => drawPerson(ctx2d, p.x - camX, p.y - camY, {
           tunic: "#efe3c8", hair: "#5d3a1a", style: "player",
+          ...(bathingRef.current ? { pose: "bathe" as const } : {}),
           moving: p.moving || dancing, phase: dancing ? now * 0.018 : p.phase, face: p.face, t: now,
           // Sold your soul to the Chort? Then the sun casts no shadow
           // for you — until you buy it back with three fish.
@@ -2351,9 +2403,7 @@ export function App() {
   }, [started]);
 
   function inPond(x: number, y: number): boolean {
-    const dx = (x - POND.x) / (POND.rx + 6);
-    const dy = (y - POND.y) / (POND.ry + 6);
-    return dx * dx + dy * dy < 1;
+    return inPondShape(x, y, 6);
   }
 
   // --- hold-to-move pad ------------------------------------------------------
@@ -2524,6 +2574,10 @@ export function App() {
                                     ? t("ui.promptLabel.pustkaChest")
                                   : prompt.kind === "petDog"
                                     ? t("ui.promptLabel.petDog")
+                                  : prompt.kind === "bathe"
+                                    ? t("ui.promptLabel.bathe")
+                                  : prompt.kind === "shore"
+                                    ? t("ui.promptLabel.shore")
                                   : prompt.kind === "grave"
                                     ? t("ui.promptLabel.grave")
                                   : prompt.kind === "tobacco"
@@ -3263,12 +3317,13 @@ export function App() {
                   {keepsakes.length > 0 && (
                     <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">{keepsakes.join(" · ")}</p>
                   )}
-                  {(flagHas(hudFlags, "wellfed") || flagHas(hudFlags, "tonic") || flagHas(hudFlags, "strongtonic")) && (
+                  {(flagHas(hudFlags, "wellfed") || flagHas(hudFlags, "tonic") || flagHas(hudFlags, "strongtonic") || flagHas(hudFlags, "bathed")) && (
                     <p className="mt-0.5 text-[12px] font-semibold text-[#7a4a2b]">
                       {t("ui.misc.105")} {[
                         flagHas(hudFlags, "wellfed") ? t("ui.misc.106") : null,
                         flagHas(hudFlags, "tonic") ? t("ui.misc.107") : null,
                         flagHas(hudFlags, "strongtonic") ? t("ui.misc.108") : null,
+                        flagHas(hudFlags, "bathed") ? t("ui.buff.bathed") : null,
                       ].filter(Boolean).join(" · ")}
                     </p>
                   )}

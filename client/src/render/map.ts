@@ -1,9 +1,9 @@
 import { CART, GRAVE } from "../data/chumaky";
 import { DOMOVYK_HOME, doorOf, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
-import { BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
+import { BOLOTO, BOLOTO_POOLS, BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
 import { BREW_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
-import { HOUSES, KURHAN, KURHAN_STEPPE, POND, TREES, WELL, WINDMILL } from "../data/village";
+import { HOUSES, KURHAN, KURHAN_STEPPE, POND, pondShore, TREES, WELL, WINDMILL } from "../data/village";
 import { t, type TextKey } from "../i18n";
 import { chumakyPresent } from "../systems/chumaky";
 import { flagCount, flagHas } from "../systems/flags";
@@ -107,11 +107,16 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.bezierCurveTo(X(1950), Y(660), X(2250), Y(900), X(2250), Y(1300)); c.lineTo(X(2250), Y(WORLD_H)); c.stroke();
   // pond and river
   c.fillStyle = "#6f9fb3";
-  c.beginPath(); c.ellipse(X(POND.x), Y(POND.y), POND.rx * s, POND.ry * s, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); pondShore(0, 36).forEach((q, i) => (i ? c.lineTo(X(q.x), Y(q.y)) : c.moveTo(X(q.x), Y(q.y)))); c.closePath(); c.fill();
   c.beginPath();
   for (let x = 0; x <= WORLD_W; x += 40) c.lineTo(X(x), Y(riverY(x) - RIVER_HALF));
   for (let x = WORLD_W; x >= 0; x -= 40) c.lineTo(X(x), Y(riverY(x) + RIVER_HALF));
   c.closePath(); c.fill();
+  // the boloto in the south-west forest: dark pools in the mire
+  c.fillStyle = "#5a5a34";
+  c.beginPath(); c.ellipse(X(BOLOTO.x), Y(BOLOTO.y), BOLOTO.rx * 0.8 * s, BOLOTO.ry * 0.8 * s, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#2e4036";
+  for (const bp of BOLOTO_POOLS) { c.beginPath(); c.ellipse(X(bp.x), Y(bp.y), bp.rx * s, bp.ry * s, 0, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = "#7a5a38";
   for (const b of BRIDGES) c.fillRect(X(b.x - b.w / 2), Y(riverY(b.x) - RIVER_HALF - 12), b.w * s, (RIVER_HALF * 2 + 24) * s);
   // Lysa Hora
@@ -171,6 +176,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   label("map.tobacco", 2080, 1930, 11);
   label("map.pond", POND.x, POND.y, 10, "#e9f4f8");
   if (flagHas(flags, "caveHeard")) label("map.cave", cave.x + cave.w / 2, cave.y + 82, 11);
+  label("map.boloto", BOLOTO.x, BOLOTO.y - BOLOTO.ry - 10, 11, "#e9f2dc");
   label("map.korchma", HOUSE_RECTS.korchma.x + HOUSE_RECTS.korchma.w / 2, HOUSE_RECTS.korchma.y - 30, 11);
 
   // the quest's goal: a pulsing gold star

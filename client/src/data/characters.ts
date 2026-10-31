@@ -31,7 +31,7 @@ export const SPIRITS: Npc[] = [
   { id: "domovyk", name: t("char.domovyk.name.0"), pron: t("char.domovyk.pron.0"), role: t("char.domovyk.role.0"), x: DOMOVYK_HOME.x, y: DOMOVYK_HOME.y, tunic: "#6e5136", hair: "#8a6f4d", style: "domovyk" },
   { id: "lisovyk", name: t("char.lisovyk.name.0"), pron: t("char.lisovyk.pron.0"), role: t("char.lisovyk.role.0"), x: 1057, y: 96, tunic: "#33502e", hair: "#4c6b35", style: "lisovyk" },
   { id: "chort", name: t("char.chort.name.0"), pron: t("char.chort.pron.0"), role: t("char.chort.role.0"), x: 545, y: 1052, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
-  { id: "bolotianyk", name: t("char.bolotianyk.name.0"), pron: t("char.bolotianyk.pron.0"), role: t("char.bolotianyk.role.0"), x: 1182, y: 1032, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
+  { id: "bolotianyk", name: t("char.bolotianyk.name.0"), pron: t("char.bolotianyk.pron.0"), role: t("char.bolotianyk.role.0"), x: 380, y: 2024, tunic: "#3d5548", hair: "#5d7050", style: "bolotianyk" },
   { id: "viy", name: t("char.viy.name.0"), pron: t("char.viy.pron.0"), role: t("char.viy.role.0"), x: 1420, y: 268, tunic: "#3a3444", hair: "#55506a", style: "viy" },
 ];
 

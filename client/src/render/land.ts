@@ -1,5 +1,5 @@
 import { CAM } from "./shapes";
-import { BRIDGES, type CropKind, FIELDS, GARDENS, RIVER_HALF, riverY } from "../data/land";
+import { BOLOTO, BOLOTO_POOLS, BRIDGES, type CropKind, FIELDS, GARDENS, RIVER_HALF, riverY } from "../data/land";
 import { hash2, type Rect } from "../world/geometry";
 
 // --- Fields, kitchen gardens and the river: drawing -------------------------
@@ -104,7 +104,117 @@ const FIELD_TINT: Partial<Record<CropKind, string>> = {
   buckwheat: "#a8805a", barley: "#c2a25a", oats: "#a8a868", hemp: "#56723a", tobacco: "#7a8a4a",
 };
 
+const BOLOTO_BOX: Rect = { x: BOLOTO.x - BOLOTO.rx - 40, y: BOLOTO.y - BOLOTO.ry - 40, w: (BOLOTO.rx + 40) * 2, h: (BOLOTO.ry + 40) * 2 };
+
+// The bog's ground, baked with the fields (static): black wet earth in
+// soft patches, the pools of dark water skinned with duckweed, and
+// tussocks (купини) standing out of the mire.
+function drawBolotoGround(c: CanvasRenderingContext2D, camX: number, camY: number): void {
+  const X = (x: number) => x - camX;
+  const Y = (y: number) => y - camY;
+  for (let i = 0; i < 26; i++) {
+    const a = hash2(i, 701) * Math.PI * 2;
+    const r = Math.sqrt(hash2(i, 703)) * 0.85;
+    const x = BOLOTO.x + Math.cos(a) * BOLOTO.rx * r;
+    const y = BOLOTO.y + Math.sin(a) * BOLOTO.ry * r;
+    c.fillStyle = i % 3 ? "rgba(70,72,38,0.42)" : "rgba(52,46,30,0.4)";
+    c.beginPath(); c.ellipse(X(x), Y(y), 50 + hash2(i, 705) * 60, 26 + hash2(i, 707) * 30, hash2(i, 709) - 0.5, 0, Math.PI * 2); c.fill();
+  }
+  for (const p of BOLOTO_POOLS) {
+    // a wet olive margin, then the black water
+    c.fillStyle = "rgba(78,84,44,0.8)";
+    c.beginPath(); c.ellipse(X(p.x), Y(p.y), p.rx + 10, p.ry + 7, 0, 0, Math.PI * 2); c.fill();
+    const g = c.createRadialGradient(X(p.x - p.rx * 0.2), Y(p.y - p.ry * 0.3), 2, X(p.x), Y(p.y), p.rx);
+    g.addColorStop(0, "#3c5248"); g.addColorStop(1, "#1e2c24");
+    c.fillStyle = g;
+    c.beginPath();
+    // lumpy, not a clean ellipse
+    for (let k = 0; k <= 24; k++) {
+      const a = (k / 24) * Math.PI * 2;
+      const f = 1 + 0.1 * Math.sin(3 * a + p.x) + 0.06 * Math.sin(5 * a + p.y);
+      const px = X(p.x + Math.cos(a) * p.rx * f);
+      const py = Y(p.y + Math.sin(a) * p.ry * f);
+      if (k === 0) c.moveTo(px, py); else c.lineTo(px, py);
+    }
+    c.closePath(); c.fill();
+    // duckweed (ряска) in drifts along the edges
+    c.fillStyle = "rgba(122,154,58,0.85)";
+    const n = Math.round(p.rx * 0.9);
+    for (let k = 0; k < n; k++) {
+      const a = hash2(k, p.x) * Math.PI * 2;
+      const r = 0.55 + hash2(k, p.y) * 0.4;
+      c.beginPath(); c.arc(X(p.x + Math.cos(a) * p.rx * r), Y(p.y + Math.sin(a) * p.ry * r), 1.2 + hash2(k, 7) * 1.6, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // tussocks: humps of sedge standing out of the mire
+  for (let i = 0; i < 34; i++) {
+    const a = hash2(i, 731) * Math.PI * 2;
+    const r = 0.25 + Math.sqrt(hash2(i, 733)) * 0.75;
+    const x = BOLOTO.x + Math.cos(a) * BOLOTO.rx * r;
+    const y = BOLOTO.y + Math.sin(a) * BOLOTO.ry * r;
+    if (BOLOTO_POOLS.some((p) => ((x - p.x) / (p.rx + 6)) ** 2 + ((y - p.y) / (p.ry + 6)) ** 2 < 1)) continue;
+    c.fillStyle = "rgba(30,36,18,0.35)";
+    c.beginPath(); c.ellipse(X(x + 2), Y(y + 3), 10, 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#6a7a36";
+    c.beginPath(); c.ellipse(X(x), Y(y), 9, 5, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#8a9a48"; c.lineWidth = 1;
+    for (let k = -3; k <= 3; k++) {
+      c.beginPath(); c.moveTo(X(x + k * 1.6), Y(y - 1)); c.lineTo(X(x + k * 3.2), Y(y - 9 - hash2(i, k) * 4)); c.stroke();
+    }
+  }
+}
+
+// The bog, alive (each frame): reeds swaying round the pools, rings
+// spreading where something below breathes out, and two dead birches
+// standing in the water.
+export function drawBoloto(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number): void {
+  if (!visible(BOLOTO_BOX, camX, camY, vw, vh + 60)) return;
+  const X = (x: number) => x - camX;
+  const Y = (y: number) => y - camY;
+  BOLOTO_POOLS.forEach((p, pi) => {
+    for (let k = 0; k < 2; k++) {
+      const life = (t * 0.00018 + hash2(pi, k + 3)) % 1;
+      const rx = p.x + (hash2(pi, k + 5) - 0.5) * p.rx;
+      const ry = p.y + (hash2(pi, k + 9) - 0.5) * p.ry;
+      c.strokeStyle = `rgba(200,220,190,${0.4 * (1 - life)})`; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(X(rx), Y(ry), 3 + life * 14, 1.2 + life * 5, 0, 0, Math.PI * 2); c.stroke();
+    }
+    // reeds and cattails in clumps along the shore
+    c.strokeStyle = "#4e5e2a"; c.lineWidth = 1.6;
+    const clumps = Math.round(p.rx / 12);
+    for (let k = 0; k < clumps; k++) {
+      const a = (k / clumps) * Math.PI * 2 + hash2(pi, k) * 0.4;
+      const bx = p.x + Math.cos(a) * (p.rx + 2);
+      const by = p.y + Math.sin(a) * (p.ry + 2);
+      for (let j = 0; j < 3; j++) {
+        const sx = bx + (j - 1) * 3;
+        const sway = Math.sin(t * 0.0016 + sx * 0.07) * 1.6;
+        const hgt = 16 + hash2(k, j + pi) * 10;
+        c.beginPath(); c.moveTo(X(sx), Y(by)); c.quadraticCurveTo(X(sx + sway * 0.4), Y(by - hgt / 2), X(sx + sway), Y(by - hgt)); c.stroke();
+        if (j === 1 && hash2(k, pi) > 0.5) {
+          c.fillStyle = "#5a3a20";
+          c.beginPath(); c.ellipse(X(sx + sway), Y(by - hgt - 2), 1.8, 4, 0, 0, Math.PI * 2); c.fill();
+        }
+      }
+    }
+  });
+  // dead birches, white bark gone grey, standing in the water
+  for (const [bx, by, hgt] of [[282, 2078, 70], [520, 2072, 56]] as const) {
+    c.fillStyle = "rgba(20,30,24,0.4)";
+    c.beginPath(); c.ellipse(X(bx), Y(by), 9, 3, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#b8b4a4"; c.lineWidth = 5; c.lineCap = "round";
+    c.beginPath(); c.moveTo(X(bx), Y(by)); c.lineTo(X(bx + 3), Y(by - hgt)); c.stroke();
+    c.lineWidth = 2;
+    c.beginPath(); c.moveTo(X(bx + 2), Y(by - hgt * 0.6)); c.lineTo(X(bx - 14), Y(by - hgt * 0.8)); c.stroke();
+    c.beginPath(); c.moveTo(X(bx + 3), Y(by - hgt * 0.8)); c.lineTo(X(bx + 16), Y(by - hgt - 6)); c.stroke();
+    c.strokeStyle = "#3a3630"; c.lineWidth = 1.4;
+    for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(X(bx - 2), Y(by - 10 - k * 14)); c.lineTo(X(bx + 2), Y(by - 10 - k * 14)); c.stroke(); }
+    c.lineCap = "butt";
+  }
+}
+
 export function drawLand(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number): void {
+  if (visible(BOLOTO_BOX, camX, camY, vw, vh + 40)) drawBolotoGround(c, camX, camY);
   // kitchen gardens: dark tilled soil, a row per crop, a wattle edge
   for (const g of GARDENS) {
     if (!visible(g, camX, camY, vw, vh)) continue;

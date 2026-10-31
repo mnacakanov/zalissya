@@ -3,6 +3,7 @@ import { HOUSE_RECTS, type HouseId } from "../data/houses";
 import { RIVER_HALF, riverY } from "../data/land";
 import { LYSA_WORLD } from "../data/lysa";
 import { FIRE, KAPLYTSIA, POND } from "../data/village";
+import { BOLOTO } from "../data/land";
 import { DAWN, DUSK, NIGHT_FROM } from "../systems/time";
 import { WORLD_W } from "../world/areas";
 
@@ -133,6 +134,12 @@ export function drawDark(
     { x: LYSA_WORLD.summit.x + 120, y: LYSA_WORLD.summit.y - 160, r: 420, col: "170,180,255", k: 0.45 },
     { x: LYSA_WORLD.offer.x, y: LYSA_WORLD.offer.y, r: 50, col: "200,210,255", k: 0.5 },
     ...extra,
+    // will-o'-the-wisps (блудні вогники) drifting over the bog
+    ...[0, 1, 2].map((i) => ({
+      x: BOLOTO.x - 120 + i * 110 + Math.sin(t * 0.0004 + i * 2.1) * 40,
+      y: BOLOTO.y - 30 + Math.cos(t * 0.00031 + i * 1.3) * 30 - i * 10,
+      r: 16 + Math.sin(t * 0.003 + i) * 4, col: "160,235,190", k: 0.9,
+    })),
   ];
   for (const id of Object.keys(HOUSE_RECTS) as HouseId[]) {
     if (id === inside) {

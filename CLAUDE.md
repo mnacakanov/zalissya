@@ -136,12 +136,13 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
   - South of the river, the Serpent's Cave (`zmiieva`) and, under the river, the hidden tunnel (`lazna`, no door) are walk-in places too: Onufriy, Omelko, the Zmiy (sing him to sleep with a sad song) and Vohnyk in the cave, Sydir in the tunnel, and a hatch under the rug in the kaplytsia (`data/cave.ts`, `systems/cave.ts`, `dialogue/cave.ts`). Both are dark at any hour; the tunnel is reached only by its crack, ladder or hatch.
   - The little north-east hut is the pustka, the empty khata of Taras Dovhyi (who planted the tobacco field and never came back from the Sich), walk-in, by Viy's hollow; his skrynia holds a letter (`PUSTKA_ROOM`, flag `dovhyiLetter`). The korchma on the chumak road (`KORCHMA_ROOM`), the windmill (`MLYN_ROOM`) and the kaplytsia on the maidan (`KAPLYTSIA_ROOM`: iconostas, analoy, kanun of candles) are walk-in too. Every house in `HOUSE_RECTS` gets walls and furniture in `SOLID`.
 - **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith). In the korchma on the chumak road: Odarka (the shynkarka) and Okhrim (an old Zaporozhian) — `data/korchma.ts`, `dialogue/korchma.ts`, `systems/korchma.ts`.
-  - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy, the boss, sealed by the vigil.
+  - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk (in his boloto in the south-west forest past the river: `BOLOTO` in `data/land.ts`), and Viy, the boss, sealed by the vigil.
   - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, the warlock Opanas, and the dancers (witches and warlocks). The sabbath keeps its hours, 20:30–04:00 (`systems/sabbath.ts`); by day they hide, each in a walk-in place of their own (`data/hideouts.ts`, `data/houses.ts`): Solokha in the windmill (`mlyn`), Motrya in the hollow of the old oak in the south forest (`duplo`), Opanas in the chamber under the steppe kurhan (`kurhan`), Beelzebub asleep in his cave on the slope (`pechera`).
 - **Systems**:
   - topic-based dialogue, 5 skills, 6 derived stats, carry weight (6 + 2×STR)
   - fishing bite minigame, cooking, smithing, two alchemy tiers
   - stat checks, keepsakes, the Chort's soul bargain, the wishing well
   - day/night with sleeping, Viy's vigil
+  - swimming in the pond (the shore is `pondR`/`inPondShape` in `data/village.ts`; flag `bathed`, CHA +1 until dawn)
   - data-driven quest log, autosave every 2.5 s when anything changed
 - **Story spine**: meet the village → herbs → spirits → the dark ones → Lysa Hora → look upon Viy → Viy's night. Myroslav's chalk is required. Vesna's wreath and Radek's iron ward are optional. Then the vigil until cockcrow.

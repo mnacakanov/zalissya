@@ -19,6 +19,41 @@ export const WELL: Rect = { x: 916, y: 470, w: 68, h: 52 };
 export const KAPLYTSIA: Rect = HOUSE_RECTS.kaplytsia;
 export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
 export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
+// The pond is no ellipse: its shore wanders — a bay to the north-east,
+// a bulge where the geese come out, a straighter bank on the west where
+// people fish. pondR(a) is the shore's distance at angle a, as a share of
+// the ellipse POND (a is measured in the ellipse's own squashed space).
+export function pondR(a: number): number {
+  return 1 + 0.12 * Math.sin(2 * a + 0.7) + 0.08 * Math.sin(3 * a + 2.1) + 0.05 * Math.sin(5 * a + 0.3) + 0.03 * Math.sin(7 * a + 1.9);
+}
+// Is a point in the water, `pad` pixels beyond the shore (negative: that
+// far in from it)?
+export function inPondShape(x: number, y: number, pad = 0): boolean {
+  const dx = (x - POND.x) / POND.rx;
+  const dy = (y - POND.y) / POND.ry;
+  const a = Math.atan2(dy, dx);
+  const d = Math.hypot(dx, dy);
+  // a pixel pad, as a share of the radius in this direction
+  const unit = Math.hypot(Math.cos(a) * POND.rx, Math.sin(a) * POND.ry);
+  return d < pondR(a) + pad / unit;
+}
+// The point on the shore toward (x, y), `off` pixels outward (negative:
+// into the water).
+export function pondEdge(x: number, y: number, off: number): { x: number; y: number } {
+  const a = Math.atan2((y - POND.y) / POND.ry, (x - POND.x) / POND.rx);
+  const unit = Math.hypot(Math.cos(a) * POND.rx, Math.sin(a) * POND.ry);
+  const k = pondR(a) + off / unit;
+  return { x: POND.x + Math.cos(a) * POND.rx * k, y: POND.y + Math.sin(a) * POND.ry * k };
+}
+// the shore as a loop of points, for drawing (and the map)
+export function pondShore(off = 0, n = 72): Array<{ x: number; y: number }> {
+  const pts: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    pts.push(pondEdge(POND.x + Math.cos(a) * POND.rx, POND.y + Math.sin(a) * POND.ry, off));
+  }
+  return pts;
+}
 export const GARDEN: Rect = { x: 960, y: 860, w: 150, h: 96 };
 
 export type TreeKind = "pine" | "birch" | "oak" | "apple" | "cherry" | "willow";
@@ -71,7 +106,8 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     [...Object.values(HOUSE_RECTS), ...HOUSES, { x: 880, y: 1760, w: 200, h: 150 }, ...CAVE_CLEARINGS].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
   for (let i = TREES.length - 1; i >= 0; i--) {
     const tr = TREES[i];
-    if (tr && builtOn(tr.x, tr.y)) TREES.splice(i, 1);
+    // (and no tree stands in the pond: willows lean over it from the bank)
+    if (tr && (builtOn(tr.x, tr.y) || inPondShape(tr.x, tr.y, 16))) TREES.splice(i, 1);
   }
   // lone oaks out on the steppe, where the chumaky rest at noon
   for (const [x, y] of [[1980, 230], [2330, 1040], [2480, 300], [1880, 900]] as const) {

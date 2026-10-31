@@ -4,8 +4,9 @@ const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
 import { LYSA_H, LYSA_W, VILLAGE_W } from "../world/areas";
 import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
-import { FIRE, GARDEN, POND, type TreeKind, WELL } from "../data/village";
+import { FIRE, GARDEN, POND, pondEdge, pondShore, type TreeKind, WELL } from "../data/village";
 import { drawLand } from "./land";
+import { BOLOTO_PATH } from "../data/land";
 import { rr } from "./shapes";
 import { drawFolk, type FolkOpts } from "./people";
 import { drawTreeSprite } from "./trees";
@@ -115,6 +116,11 @@ function roads(): Road[] {
     const dy = h.y + h.h;
     const ty = dy < 600 ? 620 : dy + 34;
     r.push({ pts: bezierPts([dx, dy - 4], [dx, (dy + ty) / 2], [dx + (dx < 840 ? 6 : -6), (dy + ty) / 2 + 6], [dx + (dx < 840 ? 12 : -12), ty], 5), w: 20, seed: seed++, ruts: false });
+  }
+  // the footpath through the forest to the boloto
+  {
+    const [a, b, c2, d] = BOLOTO_PATH;
+    if (a && b && c2 && d) r.push({ pts: bezierPts(a, b, c2, d, 6), w: 22, seed: seed++, ruts: false });
   }
   // the pustka's path down to the maidan past the well, and the forge's yard
   r.push({ pts: bezierPts([1189, 312], [1160, 380], [1080, 430], [1000, 470], 5), w: 18, seed: seed++, ruts: false });
@@ -612,43 +618,69 @@ export function drawGround(c: CanvasRenderingContext2D, camX: number, camY: numb
   }
 
 
-  // Pond
-  const px = POND.x - camX;
-  const py = POND.y - camY;
-  c.fillStyle = "#3f7089";
-  c.beginPath(); c.ellipse(px, py, POND.rx + 8, POND.ry + 7, 0, 0, Math.PI * 2); c.fill();
-  const pg = c.createRadialGradient(px - 30, py - 18, 12, px, py, POND.rx);
-  pg.addColorStop(0, "#8fc3d4");
-  pg.addColorStop(1, "#55879e");
-  c.fillStyle = pg;
-  c.beginPath(); c.ellipse(px, py, POND.rx, POND.ry, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "rgba(255,255,255,0.5)";
-  c.lineWidth = 1.6;
-  for (let i = 0; i < 5; i++) {
-    const sx = px - 90 + hash2(i, 31) * 180;
-    const sy = py - 40 + hash2(i, 47) * 80;
-    const off = Math.sin(t * 0.002 + i * 1.7) * 4;
-    c.beginPath();
-    c.moveTo(sx + off, sy);
-    c.lineTo(sx + off + 14, sy);
-    c.stroke();
-  }
-  // lily pads
-  c.fillStyle = "#4d8a3d";
-  for (const [lx, ly] of [[-52, 16], [38, -26], [84, 22]] as const) {
-    c.beginPath(); c.ellipse(px + lx, py + ly, 13, 8, 0.4, 0, Math.PI * 2); c.fill();
-  }
-  c.fillStyle = "#e88bb0";
-  c.beginPath(); c.arc(px + 38, py - 28, 3.4, 0, Math.PI * 2); c.fill();
-  // reeds + cattails at the near edge
-  for (let i = 0; i < 9; i++) {
-    const rx = px - 130 + i * 30 + hash2(i, 91) * 10;
-    const ry = py + POND.ry - 6 + hash2(i, 93) * 12;
-    c.strokeStyle = "#3e6b2a";
-    c.lineWidth = 2;
-    c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx - 3, ry - 26); c.stroke();
-    c.fillStyle = "#6e4a26";
-    c.fillRect(rx - 4.4, ry - 30, 3, 11);
+  // Pond: its shore wanders (data/village.ts pondR), a band of wet mud
+  // and sedge round it, shallows paler along the edge, the deep middle
+  // dark; reeds stand in clumps along the bank, but not on the west
+  // shore where people fish nor by the bench on the north shore.
+  if (POND.x + POND.rx * 1.3 > camX && POND.x - POND.rx * 1.3 < camX + vw && POND.y + POND.ry * 1.3 + 40 > camY && POND.y - POND.ry * 1.3 < camY + vh) {
+    const px = POND.x - camX;
+    const py = POND.y - camY;
+    const loop = (pts: Array<{ x: number; y: number }>) => {
+      c.beginPath();
+      pts.forEach((q, i) => (i ? c.lineTo(q.x - camX, q.y - camY) : c.moveTo(q.x - camX, q.y - camY)));
+      c.closePath();
+    };
+    c.lineJoin = "round";
+    c.fillStyle = "rgba(96,104,58,0.55)"; loop(pondShore(14)); c.fill();
+    c.fillStyle = "#5e6a3a"; loop(pondShore(5)); c.fill();
+    const pg = c.createRadialGradient(px - 30, py - 18, 12, px, py, POND.rx * 1.1);
+    pg.addColorStop(0, "#4f8aa2");
+    pg.addColorStop(1, "#3a6a80");
+    c.fillStyle = pg;
+    loop(pondShore(0)); c.fill();
+    c.strokeStyle = "rgba(140,190,204,0.45)"; c.lineWidth = 12; loop(pondShore(-6)); c.stroke();
+    c.strokeStyle = "rgba(220,238,240,0.5)"; c.lineWidth = 2; loop(pondShore(-1)); c.stroke();
+    c.strokeStyle = "rgba(255,255,255,0.5)";
+    c.lineWidth = 1.6;
+    for (let i = 0; i < 7; i++) {
+      const sx = px - 100 + hash2(i, 31) * 200;
+      const sy = py - 44 + hash2(i, 47) * 88;
+      const off = Math.sin(t * 0.002 + i * 1.7) * 4;
+      c.beginPath();
+      c.moveTo(sx + off, sy);
+      c.lineTo(sx + off + 14, sy);
+      c.stroke();
+    }
+    // lily pads
+    for (const [lx, ly, r] of [[-52, 16, 13], [38, -26, 12], [84, 22, 11], [96, 8, 8], [-20, 44, 9], [118, -12, 10]] as const) {
+      c.fillStyle = "#4d8a3d";
+      c.beginPath(); c.ellipse(px + lx, py + ly, r, r * 0.6, 0.4, 0.3, Math.PI * 2); c.lineTo(px + lx, py + ly); c.fill();
+    }
+    c.fillStyle = "#f0c8d8";
+    c.beginPath(); c.arc(px + 38, py - 28, 3.4, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(px + 96, py + 6, 2.6, 0, Math.PI * 2); c.fill();
+    // reeds and cattails in clumps round the bank
+    c.lineWidth = 1.8;
+    for (let i = 0; i < 26; i++) {
+      const a = (i / 26) * Math.PI * 2 + hash2(i, 95) * 0.15;
+      // a ≈ π is the west shore (the fishing place); -π/2…-π/3 the bench
+      if (Math.abs(a - Math.PI) < 0.45 || (a > Math.PI * 1.35 && a < Math.PI * 1.62)) continue;
+      if (hash2(i, 97) < 0.3) continue;
+      const e = pondEdge(POND.x + Math.cos(a) * POND.rx, POND.y + Math.sin(a) * POND.ry, -3);
+      for (let j = 0; j < 4; j++) {
+        const rx = e.x + (j - 1.5) * 4 - camX;
+        const ry = e.y + (j % 2) * 3 - camY;
+        const sway = Math.sin(t * 0.0018 + (e.x + j * 4) * 0.07) * 1.5;
+        const hgt = 20 + hash2(i, j) * 12;
+        c.strokeStyle = "#3e6b2a";
+        c.beginPath(); c.moveTo(rx, ry); c.quadraticCurveTo(rx + sway * 0.4, ry - hgt / 2, rx + sway - 2, ry - hgt); c.stroke();
+        if (j === 1 || j === 2 && hash2(i, 99) > 0.5) {
+          c.fillStyle = "#6e4a26";
+          c.beginPath(); c.ellipse(rx + sway - 2, ry - hgt - 3, 1.8, 5, 0, 0, Math.PI * 2); c.fill();
+        }
+      }
+    }
+    c.lineJoin = "miter";
   }
 
   // Viy's hollow — a blighted circle at the north-east forest edge where

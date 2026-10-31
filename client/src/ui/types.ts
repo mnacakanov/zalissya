@@ -28,6 +28,8 @@ export type Prompt =
   | { kind: "playKorchma" }
   | { kind: "pustkaChest" }
   | { kind: "petDog" }
+  | { kind: "bathe" }
+  | { kind: "shore" }
   | { kind: "grave" }
   | { kind: "tobacco"; idx: number }
   | { kind: "hemp" }
