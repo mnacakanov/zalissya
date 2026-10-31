@@ -12,6 +12,8 @@ import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
 import { tobaccoTopics } from "./dialogue/tobacco";
+import { tradeTopics } from "./dialogue/trade";
+import { purse, sellHorseshoes } from "./systems/trade";
 import { HEMP_SPOT, inRiver, TOBACCO_SPOTS } from "./data/land";
 import { drawRiver } from "./render/land";
 import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
@@ -674,6 +676,15 @@ export function App() {
       }
       return;
     }
+    // Radek buys horseshoes for chervintsi (systems/trade.ts)
+    if (g === "sellHorseshoes") {
+      const { sold, purse: total } = sellHorseshoes(f);
+      if (sold > 0) {
+        syncFlags();
+        showToast(t("trade.toast.sold", { sold, total }));
+      }
+      return;
+    }
     // «Люлька отамана» (systems/tobacco.ts)
     if (g === "tobaccoQuest" || g === "giveTobacco") {
       if (g === "tobaccoQuest" && tobaccoStage(f) === "none") {
@@ -1003,7 +1014,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -2216,6 +2227,7 @@ export function App() {
   const meals = flagCount(hudFlags, "meals");
   const smithed = flagCount(hudFlags, "smithed");
   const forged = flagCount(hudFlags, "forged");
+  const gold = purse(hudFlags);
   const brewed = flagCount(hudFlags, "brewed");
   const potions = flagCount(hudFlags, "potions");
   const strongPotions = flagCount(hudFlags, "strongPotions");
@@ -2999,6 +3011,7 @@ export function App() {
                     {potions > 0 ? t("ui.misc.97", { potions }) : ""}
                     {strongPotions > 0 ? t("ui.misc.98", { strongPotions }) : ""}
                     {forged > 0 ? t("ui.misc.99", { forged }) : ""}
+                    {gold > 0 ? t("ui.satchel.purse", { gold }) : ""}
                   </p>
                   <p className={`mt-0.5 text-[12px] leading-snug ${carried > cap ? "font-semibold text-[#a83226]" : "text-[#5d4630]"}`}>
                     {t("ui.satchel.carrying", { carried, cap, str: stats.str.total })}

@@ -4,8 +4,9 @@ import { type StatKey, type StatLine } from "./stats";
 // --- Carry capacity ---------------------------------------------------------
 // What you can haul is set by Strength: cap = 6 + 2×STR total. Weights:
 // a lump of bog iron 3, a forged piece 2, a fish 1, an herb 1, a nichnyk
-// 0 (moon-flowers weigh nothing — the mountain insists). Soup, tonics
-// and keepsakes ride in pockets and pouches and are not on the table.
+// 0 (moon-flowers weigh nothing — the mountain insists). Soup, tonics,
+// keepsakes and the purse of chervintsi (systems/trade.ts) ride in
+// pockets and pouches and are not on the table.
 // Iron already handed to Radek (the "horseshoe" flag) is his problem
 // now, not your back's. Ending up OVER the cap (a STR bonus lapsing, or
 // three hauled lumps at a low STR) never deletes anything — it only

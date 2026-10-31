@@ -813,7 +813,7 @@
   "ui.skills.feeds": "→ {stat}",
   "ui.skills.level": "Lv {level}",
   "ui.satchel.basics": "🌿 herbs: {herbStock} · 🎣 fish: {fish}",
-  "ui.satchel.carrying": "🎒 Carrying {carried} / {cap} (STR {str} sets the limit). Weights: fish 1 · herb 1 · horseshoe 2 · bog iron 3 · nichnyky 0.",
+  "ui.satchel.carrying": "🎒 Carrying {carried} / {cap} (STR {str} sets the limit). Weights: fish 1 · herb 1 · horseshoe 2 · bog iron 3 · nichnyky and chervintsi 0.",
   "line.chort.5b": "Hey, what's that smell? Pond and karas! THREE fish, I count without counting. Well, kobzar, shall we settle accounts?",
   "ui.language": "Language",
   "song.name.holota": "Duma of Cossack Holota",
@@ -1205,5 +1205,12 @@
   "ui.hut.kaplytsia": "⛪ The chapel",
   "ui.hut.pechera": "🕳 The cave",
   "hide.beelzebub.0": "Beelzebub sleeps on his stone bed, wrapped in his robe like a bat, snoring so hard that pebbles fall from the ceiling. One yellow eye lazily opens.",
-  "hide.beelzebub.1": "“A KOBZAR. BY DAY. IN MY BEDCHAMBER.” The eye closes. “Come when it's dark. Then we'll talk. Now get out.”"
+  "hide.beelzebub.1": "“A KOBZAR. BY DAY. IN MY BEDCHAMBER.” The eye closes. “Come when it's dark. Then we'll talk. Now get out.”",
+  "trade.radek.t.label": "Horseshoes for gold",
+  "trade.radek.t.question": "Will you buy my horseshoes?",
+  "trade.radek.sell.0": "Show me. …Straight, well forged. A chervinets apiece, true gold.",
+  "trade.radek.sell.1": "Where does a smith get gold? A Cossack doesn't skimp on his horse. The sotnyk pays, I keep quiet. Jezus Maria, if my lord had paid like that…",
+  "trade.radek.none.0": "Bring me what you forge and I'll pay in gold. A chervinets a horseshoe. A Cossack horse unshod is a sabre without a hilt.",
+  "trade.toast.sold": "Radek counts out the gold. Horseshoes sold: {sold}. Chervintsi in your purse: {total}.",
+  "ui.satchel.purse": " · 🪙 chervintsi: {gold}"
 }
