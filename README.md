@@ -12,13 +12,13 @@ It runs in two places from one codebase:
 
 ## What's in the game
 
-- **Zalissya village**: huts (two enterable), a well, a forge, a campfire, a pond and a forest ring.
+- **Zalissya village**: huts (a dozen or so you can walk into: the houses, the korchma, the windmill, the kaplytsia, the caves), a well, a forge, a campfire, a pond and a forest ring.
   - Otaman Myroslav (an old Zaporozhian), Vesna the znakharka, and Radek, a Polish smith who ran from his lord.
 - **Spirits and monsters**:
   - the Domovyk, the house spirit;
   - the Lisovyk, the forest spirit;
   - the Chort, a Dakhno-style devil who bargains for your soul, and your shadow with it;
-  - the Bolotianyk in the pond;
+  - the Bolotianyk, in his boloto in the south-west forest past the river;
   - **Viy (Вій)**, asleep in a blighted hollow.
 - **Viy's night**: once you have looked upon Viy, he stirs.
   - Myroslav teaches the old way (blessed chalk). Vesna can weave a wreath against his gaze, and Radek can forge an iron ward.
@@ -32,7 +32,7 @@ It runs in two places from one codebase:
   - topic-based dialogue, a Character sheet (Stats / Skills / Satchel), and a quest log.
 - **Controls**:
   - Hold-to-move D-pad, plus WASD/arrows. E or Space interacts.
-  - On GitHub Pages, a floating joystick is available through the Pad/Stick toggle. Inside the Muse app, drag controls are deliberately absent, because Muse's pull-to-refresh steals downward drags.
+  - On GitHub Pages, a floating joystick replaces the D-pad: touch anywhere and drag to walk. Inside the Muse app, drag controls are deliberately absent, because Muse's pull-to-refresh steals downward drags.
 
 ## Naming rules (please keep)
 

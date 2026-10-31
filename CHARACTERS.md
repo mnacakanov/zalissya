@@ -34,6 +34,7 @@ One short entry per character, so that everything written about them agrees. **C
 - **Voice:** a Pole who ran from his lord; swears in Polish («пся крев», «Jezus Maria», «a nie…») mixed into his Ukrainian.
 - **Hurts:** was once kept outside a khutir's fence himself.
 - **Does:** the forge; forges the iron ward; buys horseshoes for chervintsi.
+- **Customer:** he says a sotnyk (an officer of a hundred) pays for the horseshoes. The sotnyk is never seen; he is only mentioned (`trade.radek.sell.1`).
 
 ## The korchma on the chumak road
 
@@ -81,7 +82,7 @@ One short entry per character, so that everything written about them agrees. **C
 ## Lysa Hora
 
 - **Beelzebub (Вельзевул):** host of the sabbath. Speaks in CAPITALS, ceremonious, keeps his word. Sleeps by day in his cave on the slope.
-- **Solokha (Солоха):** the witch from Dykanka, a widow, grey-haired. Hides by day in the windmill.
+- **Solokha (Солоха):** the witch from Dykanka, a widow, grey-haired. Hides by day in the windmill. She calls Vesna «my little sister» (`topic.solokha.vesna.0`): read it as a witch's figure of speech, not blood kin (owner to confirm).
 - **Motrya (Мотря):** a dark-haired witch who knows where the nichnyky bloom. Hides by day in the hollow oak.
 - **Opanas (Опанас):** a warlock with a goat's beard and a tall kuchma, "a witch with a moustache"; milks other people's cows. Hides by day under the steppe kurhan.
 - **The dancers:** witches and warlocks circling the sabbath fire. Playful menace.

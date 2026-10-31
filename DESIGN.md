@@ -502,3 +502,7 @@ The Character sheet's satchel used to be a paragraph of emoji and three buttons 
 
 **The world rests behind the sheet.** With the Character sheet or the map open, the world is covered and its clock is stopped, but the frame loop kept repainting it every frame. On a phone that left the main thread so busy that taps on the sheet (Eat, Drink) landed late or seemed not to land: under a 4× CPU slowdown a frame took about 110 ms, and now takes 17. The loop paints the world once when a sheet or the map opens, then idles until it closes (and paints again if the screen is resized). The vigil is exempt.
 
+
+## Review sweep and cleanup (known open issue: gold)
+
+The first review sweep (see `REVIEW.md`) found no player-visible bugs but a lot of drift, now cleaned up: one set of counter helpers in `systems/flags.ts`, shared dialogue and drawing helpers, the dead hut-map code gone, and two CI guards (`i18n/keys.test.ts`, `save/limits.test.ts`). Nothing about play changed, except that the English text says "hut" throughout and Radek no longer promises a horseshoe with your initial. **Known open issue:** gold is unlimited. Forging a horseshoe costs no iron and the trade buys each one for a chervinets, so the Serpent's dowry (`HOARD_COINS`, `POUCH_COINS`) has no stake. It is left in on purpose and recorded in `REVIEW.md`, to be fixed before anything else is sold or bought for chervintsi.

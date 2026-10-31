@@ -8,8 +8,8 @@ How to carry on the work: (A) from the Claude mobile app, (B) back into your Mus
 
 1. Open the Claude app → **Code** (Claude Code on the web). Start a new session on `mnacakanov/zalissya`.
 2. In your first message, say what you want and add: *"Read CLAUDE.md first."* It holds the layout, the commands, and the naming, controls and save rules.
-3. The session works on its own `claude/...` branch and pushes there, never to `main`. It can run `bun run typecheck`, `bun run test` and `bun run build` in `pages/`, and it can play the build in a headless browser to check its work.
-4. When the change is ready, ask: *"Open a PR."* Then, in the GitHub app or on the PR page:
+3. The session works on its own `claude/...` branch. Once typecheck, tests, the build and a browser smoke test pass, the owner allows it to merge that branch into `main` (fast-forward, no PR); collaborators use PRs. It can run `bun run typecheck`, `bun run test` and `bun run build` in `pages/`, and it can play the build in a headless browser to check its work.
+4. If you would rather review first, ask: *"Open a PR."* Then, in the GitHub app or on the PR page:
    - wait for the **Pages** check (typecheck, tests, build) to go green;
    - **Squash and merge**. CI rebuilds `docs/index.html` and Pages redeploys within a few minutes;
    - if something broke, revert the PR from its page. `main` must stay playable.
