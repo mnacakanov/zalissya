@@ -29,7 +29,22 @@ graphics. Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 - **HUD.** fps (with the low of the last 2 s), the load time, the GPU, and
   the save it found.
 
+## Icon
+
+The PWA icon is a Cossack drawn with canvas in the new art direction
+(`ART_STYLE.md`: sepia ink with hatching, watercolour washes, aged paper).
+Its source is `tools/icon.html`, and this writes `icons/icon_512/180/144.png`:
+
+```bash
+NODE_PATH=$(npm root -g) node godot-demo/tools/icon.cjs kozak godot-demo/icons
+```
+
 ## Build
+
+CI does this on every push to `main` that touches `godot-demo/`
+(`.github/workflows/godot.yml`), and publishes the result to
+`docs/godot-demo/`. By hand:
+
 
 1. Get Godot 4.7.2 and its web export templates. Only
    `web_nothreads_release.zip` is needed, in
