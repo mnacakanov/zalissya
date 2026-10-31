@@ -25,6 +25,8 @@ var world: Node2D           # everything that sorts by its feet
 var ground: Node2D          # the floor of the scene, under everything
 var player: CharacterBody2D
 var player_sprite: Sprite2D
+var player_anim: AnimatedSprite2D   # the walk, when the style has one
+var anim_kind := ""                 # "sheet4" (Drova's 4 directions) or "frontback"
 var walls: StaticBody2D
 var hut_ext: Node2D         # the hut's exterior, faded away while you are inside
 var hut_ext_sprite: Node2D
@@ -99,10 +101,14 @@ func _sprite(name: String, scale_k: float) -> Sprite2D:
 	return s
 
 
-## A sprite scaled to a real height (people, the cow, the bench)
+## A sprite scaled to a real height (people, the cow, the bench). Pixel
+## art (layout "pixel": true) is drawn at one fixed density instead, so
+## its texels stay whole.
 func _sprite_m(name: String, metres: float) -> Sprite2D:
 	var s := _sprite(name, 1.0)
-	if s.texture != null:
+	if s.texture != null and layout.get("pixel", false):
+		s.scale = Vector2(k, k)
+	elif s.texture != null:
 		var h: float = s.texture.get_height()
 		s.scale = Vector2.ONE * (metres * metre / h)
 	return s
@@ -388,6 +394,7 @@ func _build_people() -> void:
 	player.add_child(cs)
 	player_sprite = _sprite_m("kobzar", heights.kobzar)
 	player.add_child(player_sprite)
+	_build_walk(heights.kobzar)
 	var cam := Camera2D.new()
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 6.0
@@ -398,6 +405,84 @@ func _build_people() -> void:
 	prokip.position = ground.get_meta("room").get_meta("prokip")
 	prokip.add_child(_sprite_m("npc_prokip", heights.npc_prokip))
 	world.add_child(prokip)
+
+
+# --- the kobzar's walk: whatever the style's art gives ---------------------------
+#   sheet4:    kobzar_walk.png, 4 rows (down, up, left, right) × 6 frames
+#              (Drova's pixel-art way)
+#   frontback: kobzar_walk_front_0..7.png and kobzar_walk_back_0..7.png,
+#              mirrored for the left-hand directions
+# With neither, the single kobzar.png bobs as he walks.
+func _build_walk(metres: float) -> void:
+	player_anim = null
+	anim_kind = ""
+	var sf := SpriteFrames.new()
+	var cell_h := 0.0
+	var sheet := _tex("kobzar_walk")
+	if sheet != null:
+		var cw := sheet.get_width() / 6.0
+		var ch := sheet.get_height() / 4.0
+		cell_h = ch
+		var rows := ["walk_down", "walk_up", "walk_left", "walk_right"]
+		for r in 4:
+			sf.add_animation(rows[r])
+			sf.set_animation_speed(rows[r], 10)
+			for c in 6:
+				var at := AtlasTexture.new()
+				at.atlas = sheet
+				at.region = Rect2(c * cw, r * ch, cw, ch)
+				sf.add_frame(rows[r], at)
+		anim_kind = "sheet4"
+	elif ResourceLoader.exists("res://styles/%s/kobzar_walk_front_0.png" % style):
+		for facing in ["front", "back"]:
+			var anim: String = "walk_" + facing
+			sf.add_animation(anim)
+			sf.set_animation_speed(anim, 10)
+			for i in 8:
+				var t := _tex("kobzar_walk_%s_%d" % [facing, i])
+				if t != null:
+					sf.add_frame(anim, t)
+					cell_h = t.get_height()
+		anim_kind = "frontback"
+	if anim_kind == "":
+		return
+	sf.remove_animation("default")
+	player_anim = AnimatedSprite2D.new()
+	player_anim.sprite_frames = sf
+	player_anim.centered = false
+	var first: Texture2D = sf.get_frame_texture(sf.get_animation_names()[0], 0)
+	player_anim.offset = Vector2(-first.get_width() / 2.0, -first.get_height())
+	var sc: float = k if layout.get("pixel", false) else metres * metre / cell_h
+	player_anim.scale = Vector2(sc, sc)
+	player_anim.visible = false
+	player.add_child(player_anim)
+
+
+func _animate_walk(v: Vector2) -> void:
+	var moving := v.length() > 0.05
+	if player_anim == null:
+		# no walk in this style's art: the standing figure bobs along
+		if moving:
+			player_sprite.position.y = -absf(sin(Time.get_ticks_msec() * 0.018)) * 4.0
+			if absf(v.x) > 0.05:
+				player_sprite.scale.x = absf(player_sprite.scale.x) * (-1.0 if v.x < 0 else 1.0)
+		else:
+			player_sprite.position.y = 0
+		return
+	player_anim.visible = moving
+	player_sprite.visible = not moving
+	if not moving:
+		player_anim.stop()
+		return
+	if anim_kind == "sheet4":
+		var anim: String = ("walk_down" if v.y > 0 else "walk_up") if absf(v.y) > absf(v.x) else ("walk_right" if v.x > 0 else "walk_left")
+		player_anim.flip_h = false
+		player_anim.play(anim)
+	else:
+		player_anim.play("walk_back" if v.y < -0.1 else "walk_front")
+		if absf(v.x) > 0.05:
+			player_anim.flip_h = v.x < 0
+			player_sprite.scale.x = absf(player_sprite.scale.x) * (-1.0 if v.x < 0 else 1.0)
 
 
 # --- light: the hour's colour over everything, lamps that show at night; in
@@ -626,13 +711,7 @@ func _physics_process(_delta: float) -> void:
 		dialog.visible = false
 	player.velocity = v * SPEED
 	player.move_and_slide()
-	# walking: a little bob, and he faces the way he goes
-	if v.length() > 0.05:
-		player_sprite.position.y = -absf(sin(Time.get_ticks_msec() * 0.018)) * 4.0
-		if absf(v.x) > 0.05:
-			player_sprite.scale.x = absf(player_sprite.scale.x) * (-1.0 if v.x < 0 else 1.0)
-	else:
-		player_sprite.position.y = 0
+	_animate_walk(v)
 
 
 func _process(delta: float) -> void:

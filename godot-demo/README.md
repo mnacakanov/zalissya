@@ -41,6 +41,17 @@ a gamepad.
 - **Drova's interior** came glued to the horod; it is cut into
   `derived_room.png` and `derived_horod.png`, with
   `hut_interior_bed.png` placed in the room.
+- **The kobzar's walk** plays whatever the style's art gives:
+  - `kobzar_walk.png`, 4 rows (down, up, left, right) × 6 frames, Drova's
+    pixel-art way;
+  - `kobzar_walk_front_0..7.png` and `kobzar_walk_back_0..7.png`, mirrored
+    for the left-hand directions;
+  - with neither, the standing `kobzar.png` bobs along.
+
+  A parts rig (`kobzar_parts/`) comes when Harry's parts land (requests
+  in #4).
+- **Pixel art.** `"pixel": true` in a layout draws every sprite at one whole
+  density (`scale`), so texels stay square.
 - **Pillars-lite normals.** Run `tools/normals.py` over the Pillars-lite
   PNGs whenever they change.
 - **The old khutir demo** is one button away ("Старе демо" / "Стилі").
