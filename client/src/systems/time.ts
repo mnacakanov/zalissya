@@ -77,6 +77,13 @@ export function minutesUntil(c: Clock, target: number): number {
   return d === 0 ? DAY_MINUTES : d;
 }
 
+// "Nap until nightfall" is offered only while tonight's nightfall is still
+// ahead. Once it has fallen (and until 04:00) the next nightfall is a whole
+// day away, so the nap would sleep through the night and a dawn.
+export function canNapToNightfall(c: Clock): boolean {
+  return c.minute < NIGHTFALL_MINUTE && c.minute >= NIGHT_UNTIL;
+}
+
 export function isNight(minute: number): boolean {
   return minute >= NIGHT_FROM || minute < NIGHT_UNTIL;
 }

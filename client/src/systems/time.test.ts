@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { advance, darkness, isNight, minutesUntil, readClock, timeLabel, writeClock } from "./time";
+import { advance, canNapToNightfall, darkness, isNight, minutesUntil, readClock, timeLabel, writeClock } from "./time";
 
 describe("clock", () => {
   test("old saves start on day 1 at 08:00", () => {
@@ -20,6 +20,15 @@ describe("clock", () => {
   test("minutesUntil wraps to the next occurrence", () => {
     expect(minutesUntil({ day: 1, minute: 600 }, 420)).toBe(1260);
     expect(minutesUntil({ day: 1, minute: 400 }, 420)).toBe(20);
+  });
+  test("napping to nightfall only while nightfall is still ahead", () => {
+    expect(canNapToNightfall({ day: 1, minute: 8 * 60 })).toBe(true);
+    expect(canNapToNightfall({ day: 1, minute: 21 * 60 + 9 })).toBe(true);
+    // at nightfall itself the nap used to sleep a full 24 hours
+    expect(canNapToNightfall({ day: 1, minute: 21 * 60 + 10 })).toBe(false);
+    expect(canNapToNightfall({ day: 1, minute: 23 * 60 })).toBe(false);
+    expect(canNapToNightfall({ day: 2, minute: 2 * 60 })).toBe(false);
+    expect(canNapToNightfall({ day: 2, minute: 4 * 60 })).toBe(true);
   });
   test("night window and darkness", () => {
     expect(isNight(21 * 60)).toBe(true);

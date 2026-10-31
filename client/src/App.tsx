@@ -33,6 +33,7 @@ import { canForgeWard, canWeaveWreath, VIGIL_BROKEN_LINES, VIGIL_INTRO_LINES, VI
 import { BREW_BENCH_NPC, BREW_CHOICE_LINES, CHORT_REFUSED_LINES, CHORT_SIGNED_LINES, CHORT_TRADE_LINES, type DialogueTopic, LYSA_BLESSING_LINES, topicsForLysa, topicsForVillage, WELL_NPC } from "./dialogue/topics";
 import { createGamepadReader, lookAwayHeld, moveFocus, type PadState } from "./input/gamepad";
 import { Joystick } from "./input/Joystick";
+import { keyName } from "./input/keys";
 import { PadButton } from "./input/PadButton";
 import { type Lang, setLanguage, type TextKey } from "./i18n";
 import { LanguagePicker } from "./ui/LanguagePicker";
@@ -51,7 +52,7 @@ import { type QuestItem, questLog } from "./systems/quests";
 import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, rewardFor, songFlag, type SongId, SONGS } from "./systems/songs";
 import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
-import { advance, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
+import { advance, canNapToNightfall, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
 import { type FightState, startFight, stepFight, VIGIL_SECONDS } from "./systems/viyFight";
 import { type BrewRecipe, type Dialogue, type DialogueOption, type Prompt, promptKeyOf } from "./ui/types";
 import { type AreaId, isHutArea, LYSA_BORDER_X, LYSA_BORDER_Y, LYSA_H, LYSA_W, PLAYER_R, PLAYER_SPEED, SPAWN, WORLD_H, WORLD_W, worldSize } from "./world/areas";
@@ -277,12 +278,28 @@ export function App() {
   const saveQuery = useQuery({ queryKey: ["game-save"], queryFn: () => save.load() });
   const saveMut = useMutation({ mutationFn: (v: { x: number; y: number; area: AreaId; talked: string[]; herbs: number; flags: string[] }) => save.save(v) });
   const resetMut = useMutation({ mutationFn: () => save.reset() });
+  // Start waits for the save to be read. If reading fails the game can
+  // still be played, but autosave stays off (loadedRef) so the real save
+  // is never overwritten by a fresh one.
+  const canStart = saveQuery.isSuccess || saveQuery.isError;
 
   // --- feedback + flags ------------------------------------------------------
+  // Messages that must not be lost under another one (dawn news after the
+  // waking line) wait here and show when the current toast ends.
+  const toastQueueRef = useRef<string[]>([]);
   const showToast = (msg: string) => {
     setToast(msg);
     if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 3400);
+    toastTimerRef.current = window.setTimeout(() => {
+      toastTimerRef.current = null;
+      const next = toastQueueRef.current.shift();
+      if (next != null) showToast(next);
+      else setToast(null);
+    }, 3400);
+  };
+  const queueToast = (msg: string) => {
+    if (toastTimerRef.current == null) showToast(msg);
+    else toastQueueRef.current.push(msg);
   };
   const syncFlags = () => {
     setHudFlags(new Set(flagsRef.current));
@@ -411,7 +428,8 @@ export function App() {
   useEffect(() => {
     if (!started) return;
     const iv = window.setInterval(() => {
-      if (!dirtyRef.current) return;
+      // Never write before the old save is read: that would overwrite it.
+      if (!dirtyRef.current || !loadedRef.current) return;
       dirtyRef.current = false;
       saveMut.mutate({
         x: Math.round(playerRef.current.x),
@@ -485,6 +503,7 @@ export function App() {
     clockRef.current = clock;
     writeClock(flagsRef.current, clock);
     let expired = false;
+    let newsQueued: string | null = null;
     if (dawns > 0) {
       for (const f of UNTIL_DAWN_FLAGS) if (flagsRef.current.delete(f)) expired = true;
       // The chumak caravan keeps its own calendar (systems/chumaky.ts):
@@ -502,15 +521,16 @@ export function App() {
           if (f === "ostapDied") news = "chumak.news.died";
         }
       }
-      if (news) {
-        setHudClock(clock);
-        syncFlags();
-        showToast(t(news as TextKey));
-        return false;
-      }
+      // The news waits its turn behind whatever the caller says about the
+      // night (waking up, the buffs wearing off), so neither is lost.
+      if (news) newsQueued = t(news as TextKey);
     }
     setHudClock(clock);
     syncFlags();
+    if (newsQueued) {
+      const msg = newsQueued;
+      window.setTimeout(() => queueToast(msg), 0);
+    }
     return expired;
   };
   const sleepUntil = (target: number, msg: string) => {
@@ -532,7 +552,7 @@ export function App() {
         // The Domovyk hums the lullaby along — if you taught it to the hut.
         if (knowsSong(flagsRef.current, "kolyskova")) {
           setFlag("rested");
-          showToast(t("ui.sleep.rested"));
+          queueToast(t("ui.sleep.rested"));
         }
       } else if (id === "night") sleepUntil(NIGHTFALL_MINUTE, t("ui.pickOption.1"));
     } else if (tag === "play") {
@@ -793,6 +813,9 @@ export function App() {
       wardQueuedRef.current = true;
       return;
     }
+    // The sheet or the map is open: E/Space must not cook, forge or talk
+    // behind it.
+    if (panelRef.current) return;
     const dlg = dialogueRef.current;
     if (dlg) {
       // Topic conversations: the menu is driven by its buttons, answers
@@ -1235,7 +1258,7 @@ export function App() {
           "sleep",
           [
             { id: "morning", label: t("ui.sleep.morning.label.0"), aria: t("ui.sleep.morning.aria.0") },
-            { id: "night", label: t("ui.sleep.night.label.0"), aria: t("ui.sleep.night.aria.0") },
+            ...(canNapToNightfall(c) ? [{ id: "night", label: t("ui.sleep.night.label.0"), aria: t("ui.sleep.night.aria.0") }] : []),
             { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.aria.0") },
           ],
         );
@@ -1348,7 +1371,7 @@ export function App() {
     const pressed = s.pressed;
     if (pressed.size) document.body.dataset.input = "pad";
     if (!startedRef.current) {
-      if (pressed.has("a") || pressed.has("start")) setStarted(true);
+      if (canStart && (pressed.has("a") || pressed.has("start"))) setStarted(true);
       return;
     }
     if (fightRef.current) {
@@ -1405,7 +1428,7 @@ export function App() {
   // Keyboard
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
+      const k = keyName(e);
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
       if (k === "m") {
         if (!e.repeat) toggleMapRef.current();
@@ -1417,7 +1440,7 @@ export function App() {
       }
       keysRef.current.add(k);
     };
-    const up = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    const up = (e: KeyboardEvent) => keysRef.current.delete(keyName(e));
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
@@ -1599,7 +1622,7 @@ export function App() {
           fishing.biteEnd = now + 1100 + (liveStats().dex.total - 1) * 120;
         } else if (fishing.phase === "bite" && now > fishing.biteEnd) {
           fishingRef.current = null;
-          setToast(t("ui.frame.7"));
+          showToast(t("ui.frame.7"));
         }
       }
 
@@ -2117,6 +2140,8 @@ export function App() {
     const clear = () => {
       padRef.current.clear();
       stickRef.current = { x: 0, y: 0 };
+      // a key held while the window lost focus never sends its keyup
+      keysRef.current.clear();
       setPadPressed(new Set());
     };
     window.addEventListener("blur", clear);
@@ -2160,7 +2185,11 @@ export function App() {
         setHudTalked([]);
         setHudHerbs(0);
         setHudFlags(new Set());
+        toastQueueRef.current = [];
+        if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
         setToast(null);
+        setMapOpen(false);
         setConfirmReset(false);
         dialogueRef.current = null;
         setDialogue(null);
@@ -2307,23 +2336,27 @@ export function App() {
       showToast(t("map.none"));
       return;
     }
+    // The map and the sheet never stack: opening one puts the other away,
+    // so panelRef ("a screen is open, stand still") is true exactly while
+    // one of them shows.
+    setPanelOpen(false);
     panelRef.current = true;
     setMapOpen(true);
   };
-  const closeMap = () => {
+  const closeScreens = () => {
     panelRef.current = false;
+    setPanelOpen(false);
     setMapOpen(false);
   };
+  const closeMap = closeScreens;
   const openPanel = (tab: "stats" | "skills" | "quests") => {
     if (fightRef.current) return;
+    setMapOpen(false);
     setPanelTab(tab);
     panelRef.current = true;
     setPanelOpen(true);
   };
-  const closePanel = () => {
-    panelRef.current = false;
-    setPanelOpen(false);
-  };
+  const closePanel = closeScreens;
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#1e3a24] select-none" style={{ touchAction: "none", overscrollBehavior: "none" }}>
@@ -2349,8 +2382,9 @@ export function App() {
             <button
               type="button"
               aria-label={saveQuery.data?.exists ? t("ui.continue") : t("ui.misc.3")}
-              onClick={() => setStarted(true)}
-              className="mt-5 w-full rounded-xl bg-[#7a4a2b] px-4 py-3 font-serif text-base font-bold text-[#f3e9d2] shadow active:bg-[#5d3a1f]"
+              disabled={!canStart}
+              onClick={() => canStart && setStarted(true)}
+              className="mt-5 w-full rounded-xl bg-[#7a4a2b] px-4 py-3 font-serif text-base font-bold text-[#f3e9d2] shadow active:bg-[#5d3a1f] disabled:opacity-50"
             >
               {saveQuery.data?.exists ? t("ui.continue") : t("ui.misc.4")}
             </button>
@@ -2455,12 +2489,12 @@ export function App() {
               thumb landing between arrows walks diagonally instead of
               hitting dead space. No dragging anywhere: a downward drag
               is what the phone's pull-to-refresh steals. */}
-          {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && !hudFight && (
+          {JOYSTICK_ALLOWED && controls === "stick" && !dialogue && !panelOpen && !mapOpen && !hudFight && (
             <div data-touch-controls>
               <Joystick stickRef={stickRef} />
             </div>
           )}
-          {controls === "pad" && !dialogue && !panelOpen && !hudFight && (
+          {controls === "pad" && !dialogue && !panelOpen && !mapOpen && !hudFight && (
             <div data-touch-controls
               className="absolute bottom-5 left-4 z-10"
               style={{ touchAction: "none" }}
@@ -2575,7 +2609,7 @@ export function App() {
           )}
 
           {/* Interact button */}
-          {!dialogue && !panelOpen && !hudFight && prompt && (
+          {!dialogue && !panelOpen && !mapOpen && !hudFight && prompt && (
             <button
               type="button"
               aria-label={promptAria}
@@ -2590,7 +2624,7 @@ export function App() {
               {promptLabel}
             </button>
           )}
-          {!dialogue && !panelOpen && !hudFight && !prompt && controls === "pad" && (
+          {!dialogue && !panelOpen && !mapOpen && !hudFight && !prompt && controls === "pad" && (
             <p className="pointer-events-none absolute bottom-6 right-5 z-10 max-w-[38%] text-right text-[11px] leading-snug text-[#f3e9d2]/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
               {t("ui.misc.39")}
             </p>
