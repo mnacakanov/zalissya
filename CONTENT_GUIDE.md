@@ -197,7 +197,7 @@ This is the preferred way to add a place. The owner wants places you walk into, 
 - **Topic:** a `DialogueTopic` (`id`, `label`, `question`, `lines`, optional `grant`), gated on flags so it appears once it makes sense and goes away once it's done.
 - **Items and state are flags** (`systems/flags.ts`): a plain name (`"map"`, `"dovhyiLetter"`) or a counter (`"fish=3"`). Hand items over with `grant`, which is handled in `applyGrant` in `App.tsx`. A buff that should wear off at dawn goes in `UNTIL_DAWN_FLAGS` (`systems/time.ts`), with its stat bonus in `systems/stats.ts`.
 - **Never store derived things.** Stats and quest progress are computed from flags.
-- **Quest:** a `QuestDef` in `systems/quests.ts`, its id in `PRIORITY`, a test in `quests.test.ts`, and a map star in `questTarget()` (`render/map.ts`).
+- **Quest:** a `QuestDef` in `systems/quests.ts`, its id in `PRIORITY`, a test in `quests.test.ts`, and a map star in `questTarget()` (`render/map.ts`). Most small things should be **secret** (`secret: true`): not written in the log until done, then shown with a "found" toast. Let people hint at them in dialogue instead. Only the story spine and real side threads (the chumaky, Prokip, the pipe) are written down in advance; the Serpent's Cave has no entry at all.
 
 ### A new interactable (something you press A / E / tap on)
 

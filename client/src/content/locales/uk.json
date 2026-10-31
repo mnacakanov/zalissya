@@ -1544,5 +1544,7 @@
   "quest.vesnaSorry.title": "Весна сердиться",
   "quest.vesnaSorry.why": "Весна вигнала тебе віником. За що — знає дід Прокіп.",
   "quest.vesnaSorry.sorry": "Перепросися у Весни.",
-  "quest.vesnaSorry.done": "Весна пробачила. А дощ таки був."
+  "quest.vesnaSorry.done": "Весна пробачила. А дощ таки був.",
+  "ui.quests.found": "✦ Знайдено: {title}",
+  "ui.quests.secret": "Не все записано в цій книжці. Решту хутір розкаже тому, хто питає й придивляється."
 }

@@ -16,6 +16,11 @@ import { t, type TextKey } from "../i18n";
 //     at night, a prepared keeper is pointed at Viy's vigil);
 //   · the OBJECTIVE is the active quest's one-line instruction, unless
 //     you stand inside a hut, which says where the door is.
+//   · SECRET quests (the small things of khutir life: meeting people and
+//     spirits, the Domovyk's bread, the first fish, the first kulish…) are
+//     not written down until you have done them, the way the Serpent's
+//     Cave is never written down at all. People in the khutir tell you of
+//     them; the log only remembers what you found ("found", for a toast).
 // To add a quest: add a QuestDef below, put its id in PRIORITY, and give
 // it a section. Keep details short — they are read on a phone.
 
@@ -58,6 +63,8 @@ type QuestDef = {
   section: SectionId;
   title: string;
   visible?: (d: Derived) => boolean;
+  // not in the log, nor ever the objective, until done (see above)
+  secret?: true;
   done: (d: Derived) => boolean;
   detail: (d: Derived) => string;
   objective: (d: Derived) => string;
@@ -70,6 +77,8 @@ export type QuestLog = {
   objective: string;
   done: number;
   total: number;
+  // the secret quests already found, for the "found" toast
+  found: Array<{ id: string; title: string }>;
 };
 
 const VILLAGERS = ["myroslav", "vesna", "radek"];
@@ -104,6 +113,7 @@ const QUESTS: QuestDef[] = [
   // --- Story
   {
     id: "meet", section: "story", title: t("quest.meet.title.0"),
+    secret: true,
     done: (d) => d.metVillagers >= 3,
     detail: (d) => t("quest.meet.0", { metVillagers: d.metVillagers }),
     objective: (d) => t("quest.meet.1", { metVillagers: d.metVillagers }),
@@ -145,30 +155,36 @@ const QUESTS: QuestDef[] = [
   },
   {
     id: "evening", section: "story", title: t("quest.evening.title"),
+    secret: true,
     done: (d) => flagCount(d.f, "played") >= 1,
     detail: (d) => (flagCount(d.f, "played") >= 1 ? t("quest.evening.done", { played: flagCount(d.f, "played") }) : t("quest.evening.detail")),
     objective: (d) => (d.v.evening ? t("quest.evening.now") : t("quest.evening.wait")),
   },
   {
     id: "herbs", section: "story", title: t("quest.herbs.title.0"),
+    secret: true,
     done: (d) => d.v.herbs >= 5,
     detail: (d) => t("quest.herbs.0", { min: Math.min(d.v.herbs, 5) }),
     objective: (d) => t("quest.herbs.1", { min: Math.min(d.v.herbs, 5) }),
   },
   {
     id: "spirits", section: "story", title: t("quest.spirits.title.0"),
+    secret: true,
     done: (d) => d.metSpirits >= 2,
     detail: (d) => t("quest.spirits.0", { metSpirits: d.metSpirits }),
     objective: (d) => t("quest.spirits.1", { metSpirits: d.metSpirits }),
   },
   {
     id: "dark", section: "story", title: t("quest.dark.title.0"),
+    secret: true,
     done: (d) => d.metDark >= 2,
     detail: (d) => t("quest.dark.0", { metDark: d.metDark }),
     objective: (d) => t("quest.dark.1", { metDark: d.metDark }),
   },
   {
     id: "viy", section: "story", title: t("quest.viy.title.0"),
+    // the otaman tells you of Viy when you first sit with him
+    visible: (d) => d.v.talked.includes("myroslav") || d.metViy,
     done: (d) => d.metViy,
     detail: () => t("quest.viy.0"),
     objective: () => t("quest.viy.1"),
@@ -213,6 +229,7 @@ const QUESTS: QuestDef[] = [
   // --- Village life
   {
     id: "domovyk", section: "life", title: t("quest.domovyk.title.0"),
+    secret: true,
     done: (d) => flagHas(d.f, "stone"),
     detail: (d) =>
       flagHas(d.f, "stone")
@@ -226,6 +243,7 @@ const QUESTS: QuestDef[] = [
   },
   {
     id: "forge", section: "life", title: t("quest.forge.title.0"),
+    secret: true,
     done: (d) => flagHas(d.f, "horseshoe"),
     detail: (d) => (flagHas(d.f, "horseshoe") ? t("quest.forge.0") : d.iron >= 3 ? t("quest.forge.1") : t("quest.forge.2", { iron: d.iron })),
     objective: (d) => (d.iron >= 3 ? t("quest.forge.3") : t("quest.forge.4", { iron: d.iron })),
@@ -239,24 +257,28 @@ const QUESTS: QuestDef[] = [
   },
   {
     id: "fishing", section: "life", title: t("quest.fishing.title.0"),
+    secret: true,
     done: (d) => d.fishTotal >= 1,
     detail: (d) => (d.fishTotal > 0 ? t("quest.fishing.0", { fishTotal: d.fishTotal }) : t("quest.fishing.1")),
     objective: () => t("quest.fishing.2"),
   },
   {
     id: "cooking", section: "life", title: t("quest.cooking.title.0"),
+    secret: true,
     done: (d) => d.cooked >= 1,
     detail: () => t("quest.cooking.0"),
     objective: () => t("quest.cooking.1"),
   },
   {
     id: "smithing", section: "life", title: t("quest.smithing.title.0"),
+    secret: true,
     done: (d) => d.smithed >= 1,
     detail: (d) => (flagHas(d.f, "horseshoe") ? t("quest.smithing.0") : t("quest.smithing.1")),
     objective: () => t("quest.smithing.2"),
   },
   {
     id: "alchemy", section: "life", title: t("quest.alchemy.title.0"),
+    secret: true,
     done: (d) => d.brewed >= 1,
     detail: () => t("quest.alchemy.0"),
     objective: () => t("quest.alchemy.1"),
@@ -265,12 +287,15 @@ const QUESTS: QuestDef[] = [
   // --- Lysa Hora
   {
     id: "lysa-visit", section: "lysa", title: t("quest.lysa-visit.title.0"),
+    secret: true,
     done: (d) => d.visitedLysa,
     detail: () => t("quest.lysa-visit.0"),
     objective: () => t("quest.lysa-visit.1"),
   },
   {
     id: "lysa-sabbath", section: "lysa", title: t("quest.lysa-sabbath.title.0"),
+    // written down once you have climbed the mountain and seen it
+    visible: (d) => d.visitedLysa,
     done: (d) => flagHas(d.f, "moonstone"),
     detail: (d) =>
       flagHas(d.f, "moonstone")
@@ -297,15 +322,16 @@ const QUESTS: QuestDef[] = [
 
 // The order the HUD walks the threads in. Optional preparations (wreath,
 // iron ward) are listed in the log but never become the objective.
+// (Secret quests are listed too, but never become the objective.)
 const PRIORITY = [
-  "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "tobacco",
-  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vesna-sorry", "vigil", "lysa-sabbath",
+  "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "vigil", "tobacco",
+  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vesna-sorry", "lysa-sabbath",
 ];
 
 export function questLog(v: QuestView): QuestLog {
   const d = derive(v);
   const byId = new Map(QUESTS.map((q) => [q.id, q]));
-  const shown = (q: QuestDef) => q.visible?.(d) ?? true;
+  const shown = (q: QuestDef) => (q.visible?.(d) ?? true) && (!q.secret || q.done(d));
   const open = (id: string) => {
     const q = byId.get(id);
     return q != null && shown(q) && !q.done(d);
@@ -345,5 +371,6 @@ export function questLog(v: QuestView): QuestLog {
     objective,
     done: visible.filter((q) => q.done(d)).length,
     total: visible.length,
+    found: visible.filter((q) => q.secret).map((q) => ({ id: q.id, title: q.title })),
   };
 }

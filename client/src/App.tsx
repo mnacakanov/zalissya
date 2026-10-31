@@ -170,6 +170,8 @@ export function App() {
   const dialogueRef = useRef<Dialogue | null>(null);
   const dirtyRef = useRef(false);
   const loadedRef = useRef(false);
+  // the secret quests found so far (null until the game starts)
+  const foundRef = useRef<Set<string> | null>(null);
   // Story flags + counters ("bread", "fish=3", "iron=1", …) — the state of
   // every non-combat system. Mirrored into hudFlags for rendering.
   const flagsRef = useRef<Set<string>>(new Set());
@@ -2581,6 +2583,16 @@ export function App() {
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
   const lysaFlowers = flagCount(hudFlags, "lysaFlower");
   const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute), evening: isEvening(hudClock.minute) });
+  // a secret quest done just now: "found", once (not for what the save
+  // already held when the game started)
+  const foundKey = quests.found.map((q) => q.id).join(",");
+  useEffect(() => {
+    if (!started) return;
+    const prev = foundRef.current;
+    const now = new Set(quests.found.map((q) => q.id));
+    if (prev) for (const q of quests.found) if (!prev.has(q.id)) queueToast(t("ui.quests.found", { title: q.title }));
+    foundRef.current = now;
+  }, [started, foundKey]);
   // where the map puts the kobzar: read once when the map opens (the
   // world is paused while it is open, so this does not go stale)
   const mapPlayer = mapOpen ? { x: playerRef.current.x, y: playerRef.current.y } : { x: 0, y: 0 };
@@ -3259,6 +3271,7 @@ export function App() {
                     <p className="text-[12px] italic leading-snug text-[#7a6248]">
                       {t("ui.quests.intro", { done: quests.done, total: quests.total, now: t("ui.misc.83") })}
                     </p>
+                    <p className="mt-1 text-[12px] italic leading-snug text-[#7a6248]">{t("ui.quests.secret")}</p>
                     {quests.sections.map((section) => (
                       <div key={section.title} className="mt-3">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a3805a]">{section.title}</p>

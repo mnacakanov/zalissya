@@ -84,7 +84,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 
 ## Recipes
 
-- **New quest:** add a `QuestDef` in `systems/quests.ts`, put its id in `PRIORITY`, and add a test in `quests.test.ts`.
+- **New quest:** add a `QuestDef` in `systems/quests.ts`, put its id in `PRIORITY`, and add a test in `quests.test.ts`. Small khutir-life tasks are `secret: true`: they are never the objective and appear in the log only once done (with a "found" toast). Only the story and real side threads are written down in advance.
 - **New text:** add the key to `content/locales/en.json` **and** `uk.json`, then use `t("your.key")`.
 - **New conversation topic:** add it in `dialogue/topics.ts`, or in a story module like `dialogue/viyNight.ts` that is appended in `App.tsx`. A topic with `grant` hands over an item through `applyGrant`.
 - **New interactable:** add a `Prompt` kind (`ui/types.ts`), detect it in the frame loop's "nearest interactable" block, handle it in `doInteract`, and give it a label in `promptLabel`.

@@ -1544,5 +1544,7 @@
   "quest.vesnaSorry.title": "Vesna is cross",
   "quest.vesnaSorry.why": "Vesna chased you out with a broom. Did Prokip knows why.",
   "quest.vesnaSorry.sorry": "Apologize to Vesna.",
-  "quest.vesnaSorry.done": "Vesna has forgiven you. And it did rain."
+  "quest.vesnaSorry.done": "Vesna has forgiven you. And it did rain.",
+  "ui.quests.found": "✦ Found: {title}",
+  "ui.quests.secret": "Not everything is written in this book. The khutir tells the rest to whoever asks and looks about."
 }
