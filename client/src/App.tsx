@@ -13,7 +13,7 @@ import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
 import { tobaccoTopics } from "./dialogue/tobacco";
 import { tradeTopics } from "./dialogue/trade";
-import { purse, sellHorseshoes } from "./systems/trade";
+import { sellHorseshoes } from "./systems/trade";
 import { HEMP_SPOT, inBoloto, inRiver, TOBACCO_SPOTS } from "./data/land";
 import { drawBoloto, drawRiver } from "./render/land";
 import { LEAVES_NEEDED, tobaccoDawn, tobaccoStage } from "./systems/tobacco";
@@ -44,6 +44,8 @@ import { PadButton } from "./input/PadButton";
 import { type Lang, setLanguage, type TextKey } from "./i18n";
 import { LanguagePicker } from "./ui/LanguagePicker";
 import { MapOverlay } from "./ui/MapOverlay";
+import { SatchelIcon } from "./ui/SatchelIcon";
+import { satchelGroups, type SatchelAction } from "./systems/satchel";
 import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
 import { drawCaveHill, drawLaznaRidge } from "./render/cave";
@@ -228,7 +230,9 @@ export function App() {
   const caveLifeRef = useRef(makeCaveLife());
   const fadeRef = useRef(0);
   const passingRef = useRef(false);
-  const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
+  const [panelTab, setPanelTab] = useState<"stats" | "skills" | "satchel" | "quests">("stats");
+  // which fold of the Satchel tab is open: the songs, or the keepsakes
+  const [satchelMore, setSatchelMore] = useState<"songs" | "keeps" | null>(null);
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
   const [lookHeld, setLookHeld] = useState(false);
@@ -2636,15 +2640,9 @@ export function App() {
   const fish = flagCount(hudFlags, "fish");
   const fishTotal = Math.max(flagCount(hudFlags, "fishTotal"), fish);
   const fishLvl = fishLevel(fishTotal);
-  const herbStock = flagCount(hudFlags, "herbStock");
   const cooked = flagCount(hudFlags, "cooked");
-  const meals = flagCount(hudFlags, "meals");
   const smithed = flagCount(hudFlags, "smithed");
-  const forged = flagCount(hudFlags, "forged");
-  const gold = purse(hudFlags);
   const brewed = flagCount(hudFlags, "brewed");
-  const potions = flagCount(hudFlags, "potions");
-  const strongPotions = flagCount(hudFlags, "strongPotions");
   const cookLvl = craftLevel(cooked);
   const smithLvl = craftLevel(smithed);
   const alchemyLvl = craftLevel(brewed);
@@ -2659,10 +2657,14 @@ export function App() {
   const price = soulPrice(stats);
   const carried = carriedWeight(hudFlags);
   const cap = carryCap(stats);
-  const iron = flagCount(hudFlags, "iron");
-  const haulingIron = !flagHas(hudFlags, "horseshoe") && iron > 0;
   const soulLost = flagHas(hudFlags, "soulsold") && !flagHas(hudFlags, "soulback");
-  const lysaFlowers = flagCount(hudFlags, "lysaFlower");
+  const satchel = satchelGroups(hudFlags);
+  // the buttons on the satchel's food and tonic rows
+  const satchelActs: Record<SatchelAction, { label: string; aria: string; bg: string; run: () => void }> = {
+    eat: { label: t("ui.satchel.act.eat"), aria: t("ui.misc.109"), bg: "bg-[#7a4a2b]", run: eatMeal },
+    tonic: { label: t("ui.satchel.act.drink"), aria: t("ui.misc.111"), bg: "bg-[#4c6b35]", run: drinkTonic },
+    strong: { label: t("ui.satchel.act.drink"), aria: t("ui.misc.113"), bg: "bg-[#5a3a6e]", run: drinkStrongTonic },
+  };
   const quests = questLog({ area: hudArea, talked: hudTalked, herbs: hudHerbs, flags: hudFlags, soulPrice: price, night: isNight(hudClock.minute), evening: isEvening(hudClock.minute) });
   // a secret quest done just now: "found", once (not for what the save
   // already held when the game started)
@@ -2811,7 +2813,7 @@ export function App() {
     setMapOpen(false);
   };
   const closeMap = closeScreens;
-  const openPanel = (tab: "stats" | "skills" | "quests") => {
+  const openPanel = (tab: "stats" | "skills" | "satchel" | "quests") => {
     if (fightRef.current) return;
     setMapOpen(false);
     setPanelTab(tab);
@@ -3317,14 +3319,14 @@ export function App() {
                     {t("ui.misc.71")}
                   </button>
                 </div>
-                <div className="mt-2.5 flex gap-1.5" role="tablist" aria-label={t("ui.misc.72")}>
+                <div className="mt-2.5 flex flex-wrap gap-1.5" role="tablist" aria-label={t("ui.misc.72")}>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={panelTab === "stats"}
                     aria-label={t("ui.misc.73")}
                     onClick={() => setPanelTab("stats")}
-                    className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "stats" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
+                    className={`min-h-11 rounded-lg px-2 font-serif text-[12px] font-bold ${panelTab === "stats" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
                     {t("ui.misc.74")}
                   </button>
@@ -3334,9 +3336,19 @@ export function App() {
                     aria-selected={panelTab === "skills"}
                     aria-label={t("ui.misc.75")}
                     onClick={() => setPanelTab("skills")}
-                    className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "skills" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
+                    className={`min-h-11 rounded-lg px-2 font-serif text-[12px] font-bold ${panelTab === "skills" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
                     {t("ui.misc.76")}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={panelTab === "satchel"}
+                    aria-label={t("ui.tab.satchel.aria")}
+                    onClick={() => setPanelTab("satchel")}
+                    className={`min-h-11 rounded-lg px-2 font-serif text-[12px] font-bold ${panelTab === "satchel" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
+                  >
+                    {t("ui.tab.satchel")}
                   </button>
                   <button
                     type="button"
@@ -3344,7 +3356,7 @@ export function App() {
                     aria-selected={panelTab === "quests"}
                     aria-label={t("ui.misc.77")}
                     onClick={() => setPanelTab("quests")}
-                    className={`rounded-lg px-3.5 py-1.5 font-serif text-sm font-bold ${panelTab === "quests" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
+                    className={`min-h-11 rounded-lg px-2 font-serif text-[12px] font-bold ${panelTab === "quests" ? "bg-[#7a4a2b] text-[#f3e9d2]" : "bg-[#e2d3ae] text-[#5d4630]"}`}
                   >
                     {t("ui.misc.78")}
                   </button>
@@ -3392,6 +3404,112 @@ export function App() {
                         })}
                       </div>
                     ))}
+                  </div>
+                ) : panelTab === "satchel" ? (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={cap}
+                        aria-valuenow={carried}
+                        aria-label={t("ui.satchel.load", { carried, cap })}
+                        className="h-[18px] flex-1 overflow-hidden rounded-full border-[1.5px] border-[#22160e]/85 bg-[#e2d3ae]"
+                      >
+                        <div
+                          className="h-full"
+                          style={{
+                            width: `${Math.min(100, Math.round((carried / cap) * 100))}%`,
+                            backgroundImage: "repeating-linear-gradient(45deg,#b0302a 0 5px,#2a1a10 5px 7px,#b0302a 7px 12px)",
+                          }}
+                        />
+                      </div>
+                      <p className={`whitespace-nowrap font-serif text-base font-bold ${carried >= cap ? "text-[#a83226]" : "text-[#33241a]"}`}>
+                        {t("ui.satchel.load", { carried, cap })}
+                      </p>
+                    </div>
+                    <p className={`mt-1 text-[11px] leading-snug ${carried > cap ? "font-semibold text-[#a83226]" : "text-[#5d4630]"}`}>
+                      {t("ui.satchel.limit", { str: stats.str.total })}
+                      {carried > cap ? t("ui.misc.104") : ""}
+                    </p>
+                    {(flagHas(hudFlags, "wellfed") || flagHas(hudFlags, "tonic") || flagHas(hudFlags, "strongtonic") || flagHas(hudFlags, "bathed")) && (
+                      <p className="mt-1 text-[12px] font-semibold text-[#7a4a2b]">
+                        {t("ui.misc.105")} {[
+                          flagHas(hudFlags, "wellfed") ? t("ui.misc.106") : null,
+                          flagHas(hudFlags, "tonic") ? t("ui.misc.107") : null,
+                          flagHas(hudFlags, "strongtonic") ? t("ui.misc.108") : null,
+                          flagHas(hudFlags, "bathed") ? t("ui.buff.bathed") : null,
+                        ].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {satchel.length === 0 && <p className="mt-4 text-[13px] italic leading-snug text-[#7a6248]">{t("ui.satchel.empty")}</p>}
+                    {satchel.map((g) => {
+                      const anyAction = g.rows.some((r) => r.action);
+                      return (
+                        <div key={g.id}>
+                          <div className="mt-3 flex items-center gap-2.5">
+                            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .5L11.5 6L6 11.5L.5 6Z" fill="#b0302a" /></svg>
+                            <p className="font-serif text-[13px] font-bold uppercase tracking-[0.08em] text-[#7a4a2b]">{t(`ui.satchel.group.${g.id}`)}</p>
+                            <div className="h-px flex-1 bg-[#cdb985]" aria-hidden="true" />
+                          </div>
+                          {g.rows.map((r) => {
+                            const act = r.action ? satchelActs[r.action] : null;
+                            return (
+                              <div key={r.id} className="flex min-h-[58px] items-center gap-3 border-b border-dashed border-[#cdb985] last:border-0">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-[1.5px] border-[#22160e]/85 bg-[#e9dcbc]">
+                                  <SatchelIcon id={r.id} size={30} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-serif text-base font-bold leading-tight text-[#33241a]">{t(`ui.satchel.item.${r.id}`)}</p>
+                                  <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">
+                                    {r.unit === 0
+                                      ? t("ui.satchel.weightless")
+                                      : t(r.id === "iron" ? "ui.satchel.rowWeightIron" : "ui.satchel.rowWeight", { unit: r.unit, total: r.weight })}
+                                  </p>
+                                </div>
+                                <p className="w-9 shrink-0 text-right font-serif text-lg font-bold text-[#33241a]">×{r.count}</p>
+                                {act ? (
+                                  <button
+                                    type="button"
+                                    aria-label={act.aria}
+                                    onClick={act.run}
+                                    className={`min-h-11 w-[76px] shrink-0 rounded-xl border-[1.5px] border-[#22160e]/85 font-serif text-sm font-bold text-[#f3e9d2] ${act.bg}`}
+                                  >
+                                    {act.label}
+                                  </button>
+                                ) : (
+                                  anyAction && <div className="w-[76px] shrink-0" aria-hidden="true" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        aria-expanded={satchelMore === "songs"}
+                        onClick={() => setSatchelMore(satchelMore === "songs" ? null : "songs")}
+                        className="min-h-12 flex-1 rounded-xl border-[1.5px] border-[#d9c491] bg-[#e9dcbc] text-sm font-bold text-[#33241a]"
+                      >
+                        {t("ui.satchel.songsBtn", { n: knownSongs(hudFlags).length })}
+                      </button>
+                      <button
+                        type="button"
+                        aria-expanded={satchelMore === "keeps"}
+                        onClick={() => setSatchelMore(satchelMore === "keeps" ? null : "keeps")}
+                        className="min-h-12 flex-1 rounded-xl border-[1.5px] border-[#d9c491] bg-[#e9dcbc] text-sm font-bold text-[#33241a]"
+                      >
+                        {t("ui.satchel.keepsBtn", { n: keepsakes.length })}
+                      </button>
+                    </div>
+                    {satchelMore === "songs" && (
+                      <p className="mt-2 text-[13px] leading-snug text-[#5d4630]">{knownSongs(hudFlags).map(songName).join(" · ")}</p>
+                    )}
+                    {satchelMore === "keeps" && (
+                      <p className="mt-2 text-[13px] leading-snug text-[#5d4630]">{keepsakes.length > 0 ? keepsakes.join(" · ") : t("ui.satchel.keepsEmpty")}</p>
+                    )}
                   </div>
                 ) : panelTab === "stats" ? (
                   <div className="mt-3">
@@ -3448,70 +3566,6 @@ export function App() {
                   </div>
                 )}
 
-                {panelTab !== "quests" && (
-                <div className="mt-3 rounded-xl bg-[#e9dcbc] p-3">
-                  <p className="font-serif text-sm font-bold text-[#33241a]">{t("ui.misc.92")}</p>
-                  <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">
-                    {t("ui.satchel.basics", { herbStock, fish })}
-                    {lysaFlowers > 0 ? t("ui.misc.95", { lysaFlowers }) : ""}
-                    {meals > 0 ? t("ui.misc.96", { meals }) : ""}
-                    {potions > 0 ? t("ui.misc.97", { potions }) : ""}
-                    {strongPotions > 0 ? t("ui.misc.98", { strongPotions }) : ""}
-                    {forged > 0 ? t("ui.misc.99", { forged }) : ""}
-                    {gold > 0 ? t("ui.satchel.purse", { gold }) : ""}
-                  </p>
-                  <p className={`mt-0.5 text-[12px] leading-snug ${carried > cap ? "font-semibold text-[#a83226]" : "text-[#5d4630]"}`}>
-                    {t("ui.satchel.carrying", { carried, cap, str: stats.str.total })}
-                    {haulingIron ? t("ui.misc.103", { iron }) : ""}
-                    {carried > cap ? t("ui.misc.104") : ""}
-                  </p>
-                  <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">
-                    {t("ui.satchel.songs", { songs: knownSongs(hudFlags).map(songName).join(" · ") })}
-                  </p>
-                  {keepsakes.length > 0 && (
-                    <p className="mt-0.5 text-[12px] leading-snug text-[#5d4630]">{keepsakes.join(" · ")}</p>
-                  )}
-                  {(flagHas(hudFlags, "wellfed") || flagHas(hudFlags, "tonic") || flagHas(hudFlags, "strongtonic") || flagHas(hudFlags, "bathed")) && (
-                    <p className="mt-0.5 text-[12px] font-semibold text-[#7a4a2b]">
-                      {t("ui.misc.105")} {[
-                        flagHas(hudFlags, "wellfed") ? t("ui.misc.106") : null,
-                        flagHas(hudFlags, "tonic") ? t("ui.misc.107") : null,
-                        flagHas(hudFlags, "strongtonic") ? t("ui.misc.108") : null,
-                        flagHas(hudFlags, "bathed") ? t("ui.buff.bathed") : null,
-                      ].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      aria-label={t("ui.misc.109")}
-                      disabled={meals < 1}
-                      onClick={eatMeal}
-                      className="rounded-lg bg-[#7a4a2b] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
-                    >
-                      {t("ui.misc.110")}
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t("ui.misc.111")}
-                      disabled={potions < 1}
-                      onClick={drinkTonic}
-                      className="rounded-lg bg-[#4c6b35] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
-                    >
-                      {t("ui.misc.112")}
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t("ui.misc.113")}
-                      disabled={strongPotions < 1}
-                      onClick={drinkStrongTonic}
-                      className="rounded-lg bg-[#5a3a6e] px-3 py-2 font-serif text-sm font-bold text-[#f3e9d2] disabled:opacity-40"
-                    >
-                      {t("ui.misc.114")}
-                    </button>
-                  </div>
-                </div>
-                )}
                 {panelTab === "stats" && <LanguagePicker className="mt-3" onPick={(l) => void switchLanguage(l)} />}
               </div>
             </div>
