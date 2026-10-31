@@ -26,7 +26,9 @@ export type FolkOpts = {
   shadow?: boolean;
   who?: string;
   // "dance": arms up and swinging (the Lysa Hora sabbath)
-  pose?: "dance";
+  // "dance": arms up (the sabbath); "sit": on a bench or a log; "sleep":
+  // lying under a blanket; "bathe": in the pond to the chest
+  pose?: "dance" | "sit" | "sleep" | "bathe";
 };
 
 type Costume = {
@@ -86,6 +88,44 @@ const INK = "rgba(40,26,14,0.85)";
 const INK_W = 0.9;
 
 export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: FolkOpts): void {
+  if (o.pose === "sleep") { drawSleeper(c, x, y, o); return; }
+  if (o.pose === "sit") {
+    // seated: the figure sinks onto the seat, the legs fold forward
+    const drop = 11;
+    const C = costumeFor(o);
+    const hh = H / HEADS;
+    c.save();
+    c.beginPath(); c.rect(x - 60, y - H - 80, 120, H + 80 - H * 0.36 + drop); c.clip();
+    drawFolk(c, x, y + drop, { ...o, pose: undefined, moving: false, shadow: false });
+    c.restore();
+    c.fillStyle = "rgba(20,30,10,0.3)";
+    c.beginPath(); c.ellipse(x, y + 3, 15, 4, 0, 0, Math.PI * 2); c.fill();
+    for (const s of [-1, 1]) {
+      const kx = x + s * hh * 0.42;
+      const col = C.kind === "f" ? (C.skirt ?? "#7a2a3a") : (C.pants ?? "#3c4a6a");
+      c.fillStyle = col;
+      c.beginPath(); c.ellipse(kx, y - H * 0.36 + drop + 3, hh * 0.32, hh * 0.3, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = INK; c.lineWidth = INK_W; c.stroke();
+      c.fillStyle = C.boots;
+      c.beginPath(); c.ellipse(kx, y, hh * 0.28, hh * 0.18, 0, 0, Math.PI * 2); c.fill();
+      c.fillRect(kx - hh * 0.2, y - H * 0.36 + drop + 4, hh * 0.4, Math.max(0, H * 0.36 - drop - 4));
+    }
+    return;
+  }
+  if (o.pose === "bathe") {
+    // in the pond to the chest: only what is above the water shows
+    const sink = H * 0.5;
+    c.save();
+    c.beginPath(); c.rect(x - 60, y - H - 80, 120, H + 80 - 2); c.clip();
+    drawFolk(c, x, y + sink, { ...o, pose: undefined, moving: false, shadow: false });
+    c.restore();
+    const r = (o.t * 0.004 + x * 0.01) % 1;
+    c.strokeStyle = `rgba(230,244,248,${0.6 * (1 - r)})`; c.lineWidth = 1.2;
+    c.beginPath(); c.ellipse(x, y, 12 + r * 10, 3.6 + r * 3, 0, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = "rgba(230,244,248,0.7)";
+    c.beginPath(); c.ellipse(x, y, 11, 3, 0, 0, Math.PI * 2); c.stroke();
+    return;
+  }
   const C = costumeFor(o);
   const hh = H / HEADS;
   // walking: a bob, legs stepping, arms swinging against them
@@ -339,4 +379,31 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
       c.beginPath(); c.arc(x + hh * 0.64 + Math.sin(ph * 5 + i) * 2, headCy + hh * 0.3 - ph * hh * 1.6, hh * (0.08 + ph * 0.18), 0, Math.PI * 2); c.fill();
     }
   }
+}
+
+// Asleep: lying on the bed or bench under a blanket, the head on a pillow,
+// breathing slow.
+function drawSleeper(c: CanvasRenderingContext2D, x: number, y: number, o: FolkOpts): void {
+  const C = costumeFor(o);
+  const br = Math.sin(o.t * 0.0018 + x * 0.1) * 0.8;
+  // the pillow and the head, toward the left
+  c.fillStyle = "#f4efe2";
+  c.beginPath(); c.ellipse(x - 16, y - 4, 7, 4.6, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = INK_W; c.stroke();
+  c.fillStyle = C.skin;
+  c.beginPath(); c.ellipse(x - 14, y - 6, 4.4, 4.8, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fillStyle = C.hat === "khustka" ? "#2c4a8a" : C.hair;
+  c.beginPath(); c.ellipse(x - 16.4, y - 7, 4, 4.4, 0, Math.PI * 0.5, Math.PI * 1.6); c.fill();
+  if (C.moust) { c.fillStyle = C.moust; c.fillRect(x - 12, y - 4.4, 3.6, 1.4); }
+  c.strokeStyle = "#2e2018"; c.lineWidth = 0.8;
+  c.beginPath(); c.moveTo(x - 13, y - 6.6); c.lineTo(x - 11, y - 6.6); c.stroke(); // eyes shut
+  // the blanket over the body, rising with the breath
+  const g = c.createLinearGradient(x - 10, 0, x + 18, 0);
+  const col = o.style === "player" ? "#8a3a2e" : (C.coat ?? C.skirt ?? o.tunic);
+  g.addColorStop(0, col); g.addColorStop(1, darken(col, 0.7));
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(x + 4, y - 4 - br * 0.5, 15, 5.6 + br * 0.3, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = INK_W; c.stroke();
+  c.fillStyle = C.boots;
+  c.beginPath(); c.ellipse(x + 19, y - 4, 2.6, 2.2, 0, 0, Math.PI * 2); c.fill();
 }

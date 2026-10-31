@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
-import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, type Npc } from "./data/characters";
+import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./data/characters";
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
@@ -20,7 +20,9 @@ import { korchmaTopicSet } from "./dialogue/korchma";
 import { KORCHMA_PLAY, ODARKA, OKHRIM } from "./data/korchma";
 import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
 import { makeCritters, stepCritter } from "./systems/critters";
-import { drawBeehive, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
+import { BENCHES, RESIDENTS, type ResidentId, STRAW_BED } from "./data/schedules";
+import { planFor, type Pose, walkToward, type Walker } from "./systems/schedules";
+import { drawBeehive, drawBench, drawHenHouse, drawShed, drawStrawBed, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
 import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
@@ -82,6 +84,17 @@ const PUSTKA_NPC: Npc = {
   id: "pustka", name: t("pustka.name"), pron: "", role: t("pustka.role"),
   x: PUSTKA_CHEST.x, y: PUSTKA_CHEST.y, tunic: "#5e4a3a", hair: "#3a3230", style: "elder",
 };
+// The residents who keep a daily round (systems/schedules.ts), as people.
+const RESIDENT_BASE: Record<ResidentId, Npc> = {
+  myroslav: NPCS.find((n) => n.id === "myroslav") ?? ODARKA,
+  vesna: NPCS.find((n) => n.id === "vesna") ?? ODARKA,
+  radek: NPCS.find((n) => n.id === "radek") ?? ODARKA,
+  odarka: ODARKA,
+  okhrim: OKHRIM,
+};
+const RESIDENT_IDS = new Set<string>(RESIDENTS);
+// benches are things you bump into, not walk through
+const BENCH_SOLIDS = BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 }));
 // What each walk-in house says when you step in, and its HUD label.
 const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka" };
 const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka" };
@@ -134,6 +147,8 @@ export function App() {
   );
   // the khutir's animals: the dog, geese, the cow, the horse (systems/critters.ts)
   const crittersRef = useRef(makeCritters());
+  // where each resident is and how they stand (systems/schedules.ts)
+  const residentsRef = useRef<Partial<Record<ResidentId, Walker & { pose: Pose; sleeping: boolean }>>>({});
   const promptRef = useRef<Prompt>(null);
   const dialogueRef = useRef<Dialogue | null>(null);
   const dirtyRef = useRef(false);
@@ -905,6 +920,15 @@ export function App() {
         // Chort, who does no soul-business on the mountain (sabbath rules).
         // Conversations there are topic menus too; Beelzebub's blessing
         // is reached through his "Receive the blessing" topic.
+        // residents abroad at night have their own word for the kobzar
+        if (RESIDENT_IDS.has(p.npc.id) && areaRef.current === "lysa") {
+          openDialogue(p.npc, [t(`schedule.lysa.${p.npc.id}` as TextKey)]);
+          return;
+        }
+        // a sleeper woken grumbles, then talks all the same
+        if (RESIDENT_IDS.has(p.npc.id) && residentsRef.current[p.npc.id as ResidentId]?.sleeping) {
+          showToast(t(`schedule.woken.${p.npc.id}` as TextKey));
+        }
         if (areaRef.current === "lysa") {
           const tsetL = topicsForLysa(p.npc, flags, firstMeeting);
           if (tsetL) {
@@ -1448,7 +1472,7 @@ export function App() {
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
-      const solids = [...SOLID, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
+      const solids = [...SOLID, ...BENCH_SOLIDS, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
@@ -1566,6 +1590,26 @@ export function App() {
         }
       }
 
+      // --- the residents go about their day (systems/schedules.ts): walking
+      // through doors, sitting, sleeping; when neither they nor where they
+      // are bound is on screen, they are simply there (time skips, sleep)
+      if (!fight && !dialogueRef.current) {
+        const ck = clockRef.current;
+        const vwNow = window.innerWidth;
+        const vhNow = window.innerHeight;
+        const seen = (x: number, y: number) => Math.abs(x - p.x) < vwNow / 2 + 80 && Math.abs(y - p.y) < vhNow / 2 + 80;
+        for (const id of RESIDENTS) {
+          const plan = planFor(id, ck.minute, ck.day);
+          let st = residentsRef.current[id];
+          if (!st) { st = { x: plan.at.x, y: plan.at.y, moving: false, face: 1, phase: 0, pose: plan.pose, sleeping: plan.pose === "sleep" }; residentsRef.current[id] = st; }
+          const far = Math.hypot(plan.at.x - st.x, plan.at.y - st.y) > 260;
+          if (far && !seen(st.x, st.y) && !seen(plan.at.x, plan.at.y)) { st.x = plan.at.x; st.y = plan.at.y; }
+          const there = walkToward(st, plan.at, dt);
+          st.pose = there ? plan.pose : "stand";
+          st.sleeping = there && plan.pose === "sleep";
+        }
+      }
+
       // --- the khutir's animals go about their day (systems/critters.ts)
       if (area === "village" && !fight) {
         const away = houseAt(p.x, p.y) !== null;
@@ -1575,7 +1619,19 @@ export function App() {
 
       // --- chickens wander (village only — there are no chickens on the
       // Bald Mountain; the witches ate them, probably)
-      for (const ch of !isHutArea(area) ? chickensRef.current : []) {
+      const roosting = isNight(clockRef.current.minute);
+      chickensRef.current.forEach((ch, ci) => {
+        if (!roosting || isHutArea(area)) return;
+        // at night the hens go up to the hen-house and sit in a row by it
+        const rx = 648 + ci * 12;
+        const ry = 778;
+        const dx = rx - ch.x;
+        const dy = ry - ch.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 1) { const st = Math.min(d, 40 * dt); ch.x += (dx / d) * st; ch.y += (dy / d) * st; }
+        ch.tx = ch.x; ch.ty = ch.y; ch.wait = 1;
+      });
+      for (const ch of !isHutArea(area) && !roosting ? chickensRef.current : []) {
         ch.phase += dt;
         if (ch.wait > 0) {
           ch.wait -= dt;
@@ -1613,11 +1669,18 @@ export function App() {
       // The Chort keeps two addresses: the millstone by day, the sabbath
       // on Lysa Hora by night.
       const night = isNight(clockRef.current.minute);
-      const lysaChars = night ? LYSA_CHARS : LYSA_CHARS.filter((c) => c.id !== "chort");
+      // the residents, where their day has taken them (systems/schedules.ts)
+      const onLysa = (x: number, y: number) => x > LYSA_BORDER_X && y < LYSA_BORDER_Y;
+      const residents = RESIDENTS.map((id) => {
+        const base = RESIDENT_BASE[id];
+        const st = residentsRef.current[id];
+        return st ? { ...base, x: st.x, y: st.y } : base;
+      });
+      const lysaChars = [...(night ? LYSA_CHARS : LYSA_CHARS.filter((c) => c.id !== "chort")), ...residents.filter((r) => onLysa(r.x, r.y))];
       const villageChars = [
-        ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && night)),
+        ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && night) && !RESIDENT_IDS.has(c.id)),
+        ...residents.filter((r) => !onLysa(r.x, r.y)),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
-        ODARKA, OKHRIM,
       ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
       let nextPrompt: Prompt = null;
@@ -1846,15 +1909,20 @@ export function App() {
             else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true);
             else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
             else {
+              const st = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
               drawPerson(ctx2d, sx, sy, {
                 tunic: npc.tunic, hair: npc.hair, style: npc.style, who: npc.id,
-                moving: false, phase: 0, face: clamp(p.x - pos.x, -1, 1) * 0.7, t: now,
+                moving: st?.moving ?? false, phase: st?.phase ?? 0,
+                face: st?.moving ? st.face : clamp(p.x - pos.x, -1, 1) * 0.7, t: now,
+                ...(st && !st.moving && st.pose !== "stand" ? { pose: st.pose } : {}),
               });
             }
           },
         });
         // name tag — each kind floats at its own height (Viy's is a warning)
-        const tagLift = npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
+        const rst = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
+        const posed = rst && !rst.moving ? rst.pose : "stand";
+        const tagLift = posed === "sleep" ? 24 : posed === "bathe" ? 34 : posed === "sit" ? 56 : npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
         const tagText = npc.id === "viy" ? t("ui.tagText.0") : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
@@ -1904,12 +1972,17 @@ export function App() {
             y: cr.y,
             draw: () => {
               if (cr.kind === "dog") drawDog(ctx2d, sx, sy, cr.face, cr.moving, cr.sitting, cr.phase, nightNow);
-              else if (cr.kind === "goose") drawGoose(ctx2d, sx, sy, cr.face, cr.moving, cr.phase, inPond(cr.x, cr.y));
-              else if (cr.kind === "cow") drawCow(ctx2d, sx, sy, cr.face, cr.moving, cr.phase);
+              else if (cr.kind === "goose") drawGoose(ctx2d, sx, sy, cr.face, cr.moving, cr.phase, inPond(cr.x, cr.y), cr.asleep);
+              else if (cr.kind === "cow") drawCow(ctx2d, sx, sy, cr.face, cr.moving, cr.phase, cr.asleep);
               else drawHorse(ctx2d, sx, sy, -1, cr.phase);
             },
           });
         }
+        for (const b of BENCHES) {
+          if (Math.abs(b.x - p.x) > vw || Math.abs(b.y - p.y) > vh) continue;
+          drawables.push({ y: b.y - 6, draw: () => drawBench(ctx2d, b.x - camX, b.y - camY) });
+        }
+        drawables.push({ y: STRAW_BED.y - 8, draw: () => drawStrawBed(ctx2d, STRAW_BED.x - camX, STRAW_BED.y - camY) });
         for (const pr of YARD_PROPS) {
           const sx = pr.x - camX;
           const sy = pr.y - camY;
@@ -1921,6 +1994,8 @@ export function App() {
               else if (pr.kind === "laundry") drawLaundry(ctx2d, sx, sy, pr.w ?? 80, now);
               else if (pr.kind === "beehive") drawBeehive(ctx2d, sx, sy, now);
               else if (pr.kind === "haystack") drawHaystack(ctx2d, sx, sy);
+              else if (pr.kind === "shed") drawShed(ctx2d, sx, sy);
+              else if (pr.kind === "henHouse") drawHenHouse(ctx2d, sx, sy);
               else drawHayCart(ctx2d, sx, sy);
             },
           });

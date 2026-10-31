@@ -392,3 +392,24 @@ The mountain was still in the old style: a checkerboard of blue-grey tiles clipp
   - the dead snags are gnarled, forked and reaching;
   - the crescent moon is shaded.
 - **At night:** the sabbath bonfire and the offering stone are light sources, and the moon throws a pale wash over the crown, so the sabbath reads in the dark. The cold wash over the last stretch of steppe is lighter by day and nearly gone at night, where the darkness does that work.
+
+## The khutir keeps a day
+
+The residents now live by the clock (`systems/schedules.ts`, with tests; places in `data/schedules.ts`).
+
+- **Beds:** everyone has a bed of their own, or its like:
+  - the otaman on the pil in his khata's west room;
+  - Vesna on the pil in hers;
+  - Radek on a straw bed by the forge (he is a guest, and a Pole);
+  - Odarka on top of the korchma's pich;
+  - Okhrim on the korchma's bench he has paid for in chalk.
+- **The day:**
+  - **Work:** the otaman judges on the maidan, Vesna is at her rack or her herb garden, Radek at the forge, Odarka at the counter.
+  - **Midday:** a rest on one of the new benches (on the maidan, before the Domovyk's khata, by the forge, on the pond shore, before the korchma).
+  - **Evening:** the khutir gathers round the fire, Vesna and Radek bathing in the pond first.
+  - **Night:** home to bed.
+- **Lysa Hora:** on some nights, after the khutir sleeps, Okhrim walks up to play cards with the Chort, as Gogol's Cossacks did, every third night. Vesna goes up the slopes for nichnyky every fourth night and will not say why. Met there, each has a line for the kobzar.
+- **Walking:** they walk out of doors in straight lines but never through a wall. They make for a khata's door to leave or enter it, pass the partition doors in the otaman's khata, and go round any khata standing in the way. When neither they nor where they are bound is on screen, they are simply there, so sleep and time skips never strand them.
+- **Poses:** walking, standing, sitting, sleeping under a blanket, bathing to the chest.
+- **Waking sleepers:** a sleeper can be woken. They grumble, then talk as usual, so no story step is ever locked behind the night.
+- **Animals:** they keep nights too. The cow goes to her new shed and lies down, the geese settle on the pond's north shore, the hens sit in a row by their new hen-house, and the dog sleeps by the porch.

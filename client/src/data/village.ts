@@ -99,16 +99,20 @@ export const DECOR: Array<{ x: number; y: number; kind: DecorKind; seed: number 
 // nest on its pole by the chapel, washing on a line by the Domovyk's khata,
 // log beehives by the herb garden, haystacks at the field edge, a hay cart
 // left by the forge.
-export type YardProp = { kind: "storkNest" | "laundry" | "beehive" | "haystack" | "hayCart"; x: number; y: number; w?: number };
+export type YardProp = { kind: "storkNest" | "laundry" | "beehive" | "haystack" | "hayCart" | "shed" | "henHouse"; x: number; y: number; w?: number };
 export const YARD_PROPS: YardProp[] = [
-  { kind: "storkNest", x: 740, y: 420 },
+  { kind: "storkNest", x: 612, y: 548 },
   { kind: "laundry", x: 120, y: 455, w: 80 },
   { kind: "beehive", x: 1000, y: 800 }, { kind: "beehive", x: 1030, y: 812 }, { kind: "beehive", x: 1060, y: 800 },
   { kind: "haystack", x: 560, y: 1330 }, { kind: "haystack", x: 640, y: 1345 }, { kind: "haystack", x: 1240, y: 1340 },
   { kind: "hayCart", x: 170, y: 735 },
+  // where the cow and the hens spend the night (systems/critters.ts, App)
+  { kind: "shed", x: 196, y: 838 },
+  { kind: "henHouse", x: 660, y: 770 },
 ];
 const PROP_SOLID: Record<YardProp["kind"], { w: number; h: number }> = {
   storkNest: { w: 8, h: 8 }, laundry: { w: 4, h: 4 }, beehive: { w: 14, h: 8 }, haystack: { w: 34, h: 10 }, hayCart: { w: 52, h: 12 },
+  shed: { w: 6, h: 6 }, henHouse: { w: 28, h: 8 },
 };
 
 // the otaman's korohva (banner) on its pole by his porch

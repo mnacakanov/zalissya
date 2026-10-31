@@ -76,7 +76,18 @@ export function drawDog(c: CanvasRenderingContext2D, x: number, y: number, face:
 }
 
 // A grey goose: on land, or swimming (then only the body shows).
-export function drawGoose(c: CanvasRenderingContext2D, x: number, y: number, face: number, moving: boolean, phase: number, swimming: boolean): void {
+export function drawGoose(c: CanvasRenderingContext2D, x: number, y: number, face: number, moving: boolean, phase: number, swimming: boolean, asleep = false): void {
+  if (asleep) {
+    // settled on the grass, head tucked under a wing
+    shadow(c, x, y + 1, 9, 2.6);
+    c.fillStyle = paint(c, "#cfcac0", x - 9, 18);
+    c.beginPath(); c.ellipse(x, y - 4, 9, 5.6, 0, 0, Math.PI * 2); c.fill(); ink(c);
+    c.fillStyle = "#8a8478";
+    c.beginPath(); c.ellipse(x - 1, y - 5, 6, 3.4, -0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#ece8de";
+    c.beginPath(); c.arc(x + 6 * face, y - 7, 3, 0, Math.PI * 2); c.fill(); ink(c, 0.6);
+    return;
+  }
   c.save(); c.translate(x, y); c.scale(face, 1);
   if (swimming) {
     c.strokeStyle = "rgba(230,244,248,0.45)"; c.lineWidth = 1;
@@ -108,9 +119,22 @@ export function drawGoose(c: CanvasRenderingContext2D, x: number, y: number, fac
 }
 
 // A red-and-white cow, grazing, a bell at her neck.
-export function drawCow(c: CanvasRenderingContext2D, x: number, y: number, face: number, moving: boolean, phase: number): void {
+export function drawCow(c: CanvasRenderingContext2D, x: number, y: number, face: number, moving: boolean, phase: number, asleep = false): void {
   shadow(c, x, y + 2, 24, 5);
   c.save(); c.translate(x, y); c.scale(face, 1);
+  if (asleep) {
+    // lying in the straw, legs folded under, head down on her forelegs
+    c.fillStyle = paint(c, "#a8583a", -22, 44);
+    c.beginPath(); c.ellipse(0, -8, 22, 9, 0, 0, Math.PI * 2); c.fill(); ink(c);
+    c.fillStyle = "#f2ece0";
+    c.beginPath(); c.ellipse(-6, -10, 6, 4, 0.3, 0, Math.PI * 2); c.fill();
+    c.fillStyle = paint(c, "#a8583a", 16, 14);
+    c.beginPath(); c.ellipse(22, -6, 6.6, 6, 0.4, 0, Math.PI * 2); c.fill(); ink(c);
+    c.strokeStyle = "#e8e0c8"; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(20, -11); c.quadraticCurveTo(17, -15, 18, -17); c.stroke();
+    c.restore();
+    return;
+  }
   const step = moving ? Math.sin(phase * 6) : 0;
   for (const [lx, s] of [[-16, 1], [-11, -1], [10, -1], [15, 1]] as const) {
     c.fillStyle = "#7a5038";
@@ -351,4 +375,57 @@ export function drawHayCart(c: CanvasRenderingContext2D, x: number, y: number): 
     c.strokeStyle = "#8a6440"; c.lineWidth = 1;
     for (let k = 0; k < 4; k++) { const a = (k / 4) * Math.PI; c.beginPath(); c.moveTo(wx + Math.cos(a) * 6, y - 6 + Math.sin(a) * 6); c.lineTo(wx - Math.cos(a) * 6, y - 6 - Math.sin(a) * 6); c.stroke(); }
   }
+}
+
+// A plain plank bench on two stumps, for resting by day.
+export function drawBench(c: CanvasRenderingContext2D, x: number, y: number): void {
+  shadow(c, x + 2, y + 1, 22, 4);
+  for (const lx of [x - 14, x + 14]) {
+    c.fillStyle = paint(c, "#6e4a2a", lx - 4, 8);
+    c.beginPath(); c.rect(lx - 3.4, y - 8, 6.8, 8); c.fill(); ink(c, 0.7);
+  }
+  c.fillStyle = paint(c, "#a8784a", x - 22, 44);
+  c.beginPath(); c.rect(x - 22, y - 12, 44, 6); c.fill(); ink(c);
+  c.fillStyle = "rgba(255,230,180,0.25)";
+  c.fillRect(x - 21, y - 11.4, 42, 1.4);
+}
+
+// Radek's straw bed by the forge: a heap of straw with a sheepskin on it.
+export function drawStrawBed(c: CanvasRenderingContext2D, x: number, y: number): void {
+  shadow(c, x + 2, y + 2, 24, 5);
+  c.fillStyle = paint(c, "#d8b860", x - 24, 48);
+  c.beginPath(); c.ellipse(x, y - 3, 24, 8, 0, 0, Math.PI * 2); c.fill(); ink(c);
+  c.strokeStyle = "rgba(150,110,40,0.6)"; c.lineWidth = 1;
+  for (let k = -3; k <= 3; k++) { c.beginPath(); c.moveTo(x + k * 6, y - 8); c.lineTo(x + k * 6 + 3, y + 2); c.stroke(); }
+  c.fillStyle = paint(c, "#e8dcc0", x - 14, 28);
+  c.beginPath(); c.ellipse(x + 2, y - 5, 14, 5, 0.05, 0, Math.PI * 2); c.fill(); ink(c, 0.6);
+}
+
+// The cow's shed (khliv): wattle walls under a thatch lean-to, open at the front.
+export function drawShed(c: CanvasRenderingContext2D, x: number, y: number): void {
+  shadow(c, x + 4, y + 30, 46, 8);
+  c.fillStyle = "rgba(60,40,20,0.35)";
+  c.fillRect(x - 40, y - 4, 80, 34);
+  c.strokeStyle = "#7a5a34"; c.lineWidth = 1.4;
+  for (let k = 0; k < 6; k++) { c.beginPath(); c.moveTo(x - 40, y + k * 5); c.quadraticCurveTo(x - 20, y + k * 5 + 2, x - 38 + 0.0, y + k * 5); c.stroke(); }
+  c.fillStyle = paint(c, "#8a6440", x - 42, 8);
+  c.fillRect(x - 42, y - 6, 6, 36); c.fillRect(x + 36, y - 6, 6, 36);
+  c.fillStyle = paint(c, "#b8954f", x - 50, 100);
+  c.beginPath(); c.moveTo(x - 50, y); c.lineTo(x - 36, y - 26); c.lineTo(x + 36, y - 26); c.lineTo(x + 50, y); c.closePath(); c.fill(); ink(c);
+  c.strokeStyle = "rgba(110,82,36,0.5)"; c.lineWidth = 1;
+  for (let k = 0; k < 14; k++) { const px = x - 46 + k * 7; c.beginPath(); c.moveTo(px + 4, y - 24); c.lineTo(px, y - 1); c.stroke(); }
+}
+
+// The hen-house (kurnyk): a little clay hut on stilts with a ladder.
+export function drawHenHouse(c: CanvasRenderingContext2D, x: number, y: number): void {
+  shadow(c, x + 2, y + 1, 18, 4);
+  c.fillStyle = "#6e4a2a";
+  c.fillRect(x - 12, y - 10, 3, 10); c.fillRect(x + 9, y - 10, 3, 10);
+  c.fillStyle = paint(c, "#e8e0cc", x - 14, 28);
+  c.beginPath(); c.rect(x - 14, y - 28, 28, 18); c.fill(); ink(c);
+  c.fillStyle = "#2e2018"; c.fillRect(x - 3, y - 20, 6, 8);
+  c.fillStyle = paint(c, "#b8954f", x - 18, 36);
+  c.beginPath(); c.moveTo(x - 18, y - 26); c.lineTo(x, y - 40); c.lineTo(x + 18, y - 26); c.closePath(); c.fill(); ink(c);
+  c.strokeStyle = "#8a6440"; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(x, y - 12); c.lineTo(x + 10, y + 2); c.moveTo(x + 2, y - 8); c.lineTo(x + 6, y - 6); c.moveTo(x + 5, y - 4); c.lineTo(x + 9, y - 2); c.stroke();
 }

@@ -42,3 +42,13 @@ describe("the khutir's animals", () => {
     expect(goose.x).toBeGreaterThan(before);
   });
 });
+
+describe("the animals' night", () => {
+  test("the cow goes to her shed and the geese to their roost, and sleep", () => {
+    const cs = run(60, { x: -999, y: -999 }, true);
+    const cow = cs.find((c) => c.kind === "cow");
+    expect(cow?.asleep).toBe(true);
+    expect(Math.hypot((cow?.x ?? 0) - (cow?.night?.x ?? 0), (cow?.y ?? 0) - (cow?.night?.y ?? 0))).toBeLessThan(3);
+    for (const g of cs.filter((c) => c.kind === "goose")) expect(g.asleep).toBe(true);
+  });
+});

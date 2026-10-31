@@ -1170,5 +1170,15 @@
   "dog.pet.0": "The dog thumps its tail so hard the dust flies. It belongs to the otaman, but it loves anyone who pets it.",
   "dog.pet.1": "The dog sniffs the kobza, sneezes, and acts as if it meant to.",
   "dog.pet.2": "The dog offers an ear and shuts its eyes. Clearly it respects kobzars more than the otaman.",
-  "dog.pet.asleep": "The dog sleeps by the porch, a paw twitching. Chasing something in its dreams. Let it."
+  "dog.pet.asleep": "The dog sleeps by the porch, a paw twitching. Chasing something in its dreams. Let it.",
+  "schedule.woken.myroslav": "The otaman sits up on the pil, gropes for his sabre, finds his pipe. “Ah, it's you, son… Well, speak, since you've woken me.”",
+  "schedule.woken.vesna": "Vesna opens one eye. “If you're not dying, kobzar, be quick.”",
+  "schedule.woken.radek": "Radek rises out of the straw. “Psia krew, who's there?.. Ah, the singer. Well?”",
+  "schedule.woken.odarka": "Odarka peers down from the pich. “The korchma's shut. But speak, since you're here.”",
+  "schedule.woken.okhrim": "Okhrim, eyes still shut: “A hundred and thirty-nine… a hundred and forty… Ah, son. Sit.”",
+  "schedule.lysa.vesna": "Vesna, a bunch of nichnyky in her hand, does not even start. “You didn't see me here, kobzar. And I, so be it, didn't see you.”",
+  "schedule.lysa.okhrim": "Okhrim is shuffling cards across from the Chort. “Don't put me off, son! One more hand and I win back my hat. And my soul, if luck holds.”",
+  "schedule.lysa.myroslav": "“I'm not here. Neither are you.”",
+  "schedule.lysa.radek": "“Jezus Maria… I only brought a horseshoe. To order.”",
+  "schedule.lysa.odarka": "“The tavern's open here too. Don't ask.”"
 }

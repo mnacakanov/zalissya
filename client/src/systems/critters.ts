@@ -7,7 +7,9 @@
 //            (hissing, one assumes) when someone strides into them
 //   cow    — grazes slowly on the pasture by the windmill
 //   horse  — tied at the korchma's rail: shifts its weight, little more
-// Chickens keep their own older logic in App.
+// At night the cow goes to her shed and lies down, the geese settle on the
+// pond's north shore with their heads tucked; the dog sleeps by the porch.
+// Chickens keep their own older logic in App (they roost at the hen-house).
 
 export type CritterKind = "dog" | "goose" | "cow" | "horse";
 
@@ -21,19 +23,25 @@ export type Critter = {
   moving: boolean;
   phase: number;
   sitting: boolean;
+  asleep: boolean;
+  night?: { x: number; y: number };
 };
 
 const SPEED: Record<CritterKind, number> = { dog: 120, goose: 34, cow: 12, horse: 6 };
 
-function make(kind: CritterKind, x: number, y: number, r: number): Critter {
-  return { kind, x, y, home: { x, y, r }, tx: x, ty: y, wait: 0, face: 1, moving: false, phase: 0, sitting: false };
+function make(kind: CritterKind, x: number, y: number, r: number, night?: { x: number; y: number }): Critter {
+  return { kind, x, y, home: { x, y, r }, tx: x, ty: y, wait: 0, face: 1, moving: false, phase: 0, sitting: false, asleep: false, ...(night ? { night } : {}) };
 }
+// where they spend the night
+export const SHED = { x: 196, y: 838 };
+export const GOOSE_ROOST = { x: 1200, y: 952 };
 
 export function makeCritters(): Critter[] {
   return [
     make("dog", 1060, 360, 90),
-    make("goose", 1240, 980, 80), make("goose", 1290, 1000, 80), make("goose", 1360, 990, 80), make("goose", 1400, 1015, 80),
-    make("cow", 300, 860, 70),
+    make("goose", 1240, 980, 80, { x: GOOSE_ROOST.x - 18, y: GOOSE_ROOST.y }), make("goose", 1290, 1000, 80, { x: GOOSE_ROOST.x, y: GOOSE_ROOST.y + 8 }),
+    make("goose", 1360, 990, 80, { x: GOOSE_ROOST.x + 18, y: GOOSE_ROOST.y + 2 }), make("goose", 1400, 1015, 80, { x: GOOSE_ROOST.x + 6, y: GOOSE_ROOST.y - 8 }),
+    make("cow", 300, 860, 70, { x: SHED.x + 6, y: SHED.y + 26 }),
     make("horse", 2214, 1206, 10),
   ];
 }
@@ -46,6 +54,19 @@ export type CritterWorld = {
 
 export function stepCritter(c: Critter, dt: number, w: CritterWorld): void {
   c.phase += dt;
+  // night: off to where they sleep, and asleep once there
+  if (c.night && w.night) {
+    const dx = c.night.x - c.x;
+    const dy = c.night.y - c.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 2) { c.moving = false; c.asleep = true; return; }
+    const step = Math.min(d, SPEED[c.kind] * 1.6 * dt);
+    c.x += (dx / d) * step; c.y += (dy / d) * step;
+    if (Math.abs(dx) > 0.5) c.face = dx > 0 ? 1 : -1;
+    c.moving = true; c.asleep = false;
+    return;
+  }
+  c.asleep = false;
   const pdx = c.x - w.player.x;
   const pdy = c.y - w.player.y;
   const pd = Math.hypot(pdx, pdy);
