@@ -232,15 +232,22 @@ func _strip(name: String, metres_pts: Array, width_m: float, tile_m: float) -> v
 # --- buildings ------------------------------------------------------------------------
 ## a hut of the style's art, walk-in: its exterior fades while you are in it
 func _build_khata(b: Dictionary) -> void:
+	# its own art when it has some (styles/<style>/huts/<art>/: hut.json and
+	# the pictures it names), else the style's one hut
 	var h: Dictionary = layout.hut
-	var hs: Array = data.get("hut_size", [7, 5])
+	var dir := ""
+	var own := "res://styles/%s/huts/%s/hut.json" % [style, b.get("art", b.id)]
+	if ResourceLoader.exists(own) or FileAccess.file_exists(own):
+		h = JSON.parse_string(FileAccess.get_file_as_string(own))
+		dir = "huts/%s/" % b.get("art", b.id)
+	var hs: Array = h.get("size", data.get("hut_size", [7, 5]))
 	var foot := _rect(b.at, hs)
 	var src := _pts(h.exterior.footprint)
 	var node := Node2D.new()
 	world.add_child(node)
 	var inner := Node2D.new()   # counter-moved against node (see _process)
 	node.add_child(inner)
-	var ext := _sprite(h.exterior.file, k)
+	var ext := _sprite(dir + h.exterior.file, k)
 	ext.position = foot[0] - src[0] * k
 	inner.add_child(ext)
 	# the room, on the ground under everything, laid onto the same footprint
@@ -248,7 +255,11 @@ func _build_khata(b: Dictionary) -> void:
 	var room := Node2D.new()
 	room.transform = _fit(_pts(inn.footprint), foot)
 	ground.add_child(room)
-	room.add_child(_sprite(inn.file, 1.0))
+	room.add_child(_sprite(dir + inn.file, 1.0))
+	# walls inside (the otaman's siny between its two rooms), in the room's
+	# own pixels: [x1, y1, x2, y2]
+	for w in inn.get("walls", []):
+		_wall(room.transform * Vector2(w[0], w[1]), room.transform * Vector2(w[2], w[3]))
 	for r in inn.get("solids", []):
 		var c := Vector2(r[0], r[1])
 		var hw := Vector2(r[2] / 2.0, 0)

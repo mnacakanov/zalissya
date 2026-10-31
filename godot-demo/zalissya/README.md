@@ -65,6 +65,18 @@ Each building has an `id`, a `name` (Ukrainian, shown with F3) and a `kind`.
 Only `at` is needed. Every khata faces south, with its door in the south
 wall.
 
+**Each khata can have its own art.** Put it in
+`styles/pillars/huts/<id>/` (or name the folder with `"art"`):
+- `hut_exterior.png` and `hut_interior.png`, made the way the style's hut
+  is made;
+- a `hut.json` shaped like the `hut` block of `styles/pillars/layout.json`.
+  It holds the footprints, the door, the pich and the solids, plus:
+  - `"size": [x, y]` in metres;
+  - `"walls"` inside the room, as `[x1, y1, x2, y2]` in the room's pixels
+    (for example the siny's partitions).
+
+Until a hut has its own folder, it uses the style's one hut.
+
 **`"kind": "placeholder"`** is a plain labelled block for something with no
 art yet. It takes:
 - `size` `[x, y]` in metres;
