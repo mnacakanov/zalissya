@@ -47,6 +47,7 @@ maidan.
 | `hut_size` | the khata's footprint in metres, `[along the door wall, deep]` |
 | `bounds` | how far the grass goes: `[west, north, east, south]` |
 | `start` | where the kobzar starts |
+| `zoom` | how close the camera starts (1 = the art's own size, smaller = farther out) |
 | `maidan` | the trodden earth: `center`, `radius` `[east-west, north-south]`, and `texture` (a ground tile in the style folder; it falls back to the road until `ground_maidan.png` exists) |
 | `roads` | `{"width", "points": [[x, y], …]}`, drawn with `ground_road` |
 | `paths` | the same, drawn with `ground_path` |

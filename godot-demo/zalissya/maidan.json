@@ -4,6 +4,7 @@
   "hut_size": [7, 5],
   "bounds": [-40, -34, 40, 36],
   "start": [0, 13],
+  "zoom": 0.6,
   "maidan": {"center": [0, -5], "radius": [15, 10], "texture": "ground_maidan"},
   "roads": [
     {"kind": "road", "width": 3.2, "points": [[0, 3], [0.8, 9], [-0.6, 15], [0.4, 21], [0, 26]]}

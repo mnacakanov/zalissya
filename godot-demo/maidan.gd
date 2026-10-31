@@ -461,6 +461,9 @@ func _build_player() -> void:
 	cam = Camera2D.new()
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 6.0
+	# far enough out to see the maidan round him (maidan.json "zoom")
+	var z: float = data.get("zoom", 0.6)
+	cam.zoom = Vector2(z, z)
 	player.add_child(cam)
 
 
