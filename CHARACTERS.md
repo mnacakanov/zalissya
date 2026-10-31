@@ -25,6 +25,7 @@ One short entry per character, so that everything written about them agrees. **C
 - **Look:** plakhta, a green kersetka, an apron, the vinok, a braid.
 - **Voice:** dry and warm, practical, sees through everyone. Calls the kobzar «кобзарю» or «співаче», as an equal, never «синку».
 - **Ties:** learned herbs as a girl from **Did Prokip**, until one Kupala night when she said it would rain, he said it wouldn't, and it poured. He never admitted it; she took her herbs and went to heal on her own. They have feuded, fondly, ever since. Calls him "old fool".
+- **Family:** her elder sister is **Solokha**, the witch of Lysa Hora (same mother). Vesna heals bodies, Solokha keeps secrets; Vesna does not talk about it.
 - **Hurts:** could have saved Ostap and didn't walk the three hundred steps to the camp when the otaman forbade it (if Ostap dies).
 - **Does:** heals folk and cattle, brews tonics at her rack, teaches the lullaby, weaves the wreath against Viy's gaze.
 
@@ -82,7 +83,7 @@ One short entry per character, so that everything written about them agrees. **C
 ## Lysa Hora
 
 - **Beelzebub (Вельзевул):** host of the sabbath. Speaks in CAPITALS, ceremonious, keeps his word. Sleeps by day in his cave on the slope.
-- **Solokha (Солоха):** the witch from Dykanka, a widow, grey-haired. Hides by day in the windmill. She calls Vesna «my little sister» (`topic.solokha.vesna.0`): read it as a witch's figure of speech, not blood kin (owner to confirm).
+- **Solokha (Солоха):** the witch from Dykanka, a widow, grey-haired. Hides by day in the windmill. She is **Vesna's elder sister** (owner decision: literal, same mother, many years between them; `topic.solokha.vesna.0`, `line.solokha.0`). Vesna keeps the tie quiet (`schedule.lysa.vesna`: she is found on the mountain picking nichnyky and asks the kobzar not to tell).
 - **Motrya (Мотря):** a dark-haired witch who knows where the nichnyky bloom. Hides by day in the hollow oak.
 - **Opanas (Опанас):** a warlock with a goat's beard and a tall kuchma, "a witch with a moustache"; milks other people's cows. Hides by day under the steppe kurhan.
 - **The dancers:** witches and warlocks circling the sabbath fire. Playful menace.
