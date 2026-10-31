@@ -1,13 +1,9 @@
-import { t, type TextKey } from "../i18n";
 import { tobaccoStage } from "../systems/tobacco";
 import { type DialogueTopic } from "./topics";
+import { L, topic } from "./helpers";
 
 // Conversations for «Люлька отамана» (systems/tobacco.ts), appended to the
 // khutir's topic menus. `grant` starts the quest / hands the tobacco over.
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"]): DialogueTopic => ({
-  id, label: t(`${base}.label` as TextKey), question: t(`${base}.question` as TextKey), lines, ...(grant ? { grant } : {}),
-});
 
 export function tobaccoTopics(npcId: string, flags: ReadonlySet<string>): DialogueTopic[] {
   const stage = tobaccoStage(flags);

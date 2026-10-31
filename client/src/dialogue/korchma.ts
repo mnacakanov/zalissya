@@ -1,8 +1,9 @@
-import { t, type TextKey } from "../i18n";
+import { t } from "../i18n";
 import { flagHas } from "../systems/flags";
 import { SUPPER_PRICE } from "../systems/korchma";
 import { knowsSong } from "../systems/songs";
-import { type DialogueTopic, type TopicSet } from "./topics";
+import { type TopicSet } from "./topics";
+import { L, topic } from "./helpers";
 
 // Conversations in the korchma (data/korchma.ts): Odarka behind the
 // shynkvas, Okhrim at the long table. Odarka sells supper for fish and
@@ -10,14 +11,6 @@ import { type DialogueTopic, type TopicSet } from "./topics";
 // «Їхав козак за Дунай», the song his kurin rode out to, and is the one
 // person on the steppe who will tell you plainly about looking at Viy.
 
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"]): DialogueTopic => ({
-  id,
-  label: t(`${base}.label` as TextKey),
-  question: t(`${base}.question` as TextKey),
-  lines,
-  ...(grant ? { grant } : {}),
-});
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
 
 export function korchmaTopicSet(npcId: string, flags: ReadonlySet<string>, fish: number, firstMeeting: boolean): TopicSet | null {
   if (npcId === "odarka") {

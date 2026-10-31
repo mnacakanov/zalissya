@@ -2,6 +2,7 @@ import { t, type TextKey } from "../i18n";
 import { flagHas } from "../systems/flags";
 import { type ProkipStage } from "../systems/vorozhbyt";
 import { type DialogueTopic, type TopicSet } from "./topics";
+import { L, topic } from "./helpers";
 
 // Did Prokip's conversations (systems/vorozhbyt.ts), and the lines his
 // thread adds to Vesna and Odarka. Prokip's errand topic changes with the
@@ -9,10 +10,6 @@ import { type DialogueTopic, type TopicSet } from "./topics";
 // His voice: grumbling, insulting with love, calls the kobzar «шмаркачу»
 // (snot-nose), and never once admits he is glad you came.
 
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"]): DialogueTopic => ({
-  id, label: t(`${base}.label` as TextKey), question: t(`${base}.question` as TextKey), lines, ...(grant ? { grant } : {}),
-});
 const seq = (base: string, n: number) => L(...Array.from({ length: n }, (_, i) => `${base}.${i}`));
 
 function errand(stage: ProkipStage, flags: ReadonlySet<string>): DialogueTopic[] {

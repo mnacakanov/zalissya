@@ -2,6 +2,7 @@
 // device only. Same shape and limits as the Muse server, and the same key
 // the original standalone build used, so existing browser saves carry over.
 
+import { clamp } from "../world/geometry";
 import { emptySave, isSaveArea, SAVE_LIMITS, type SaveAdapter, type SaveData } from "./types";
 
 const KEY = "zalissya-save-v1";
@@ -47,7 +48,7 @@ export const localSave: SaveAdapter = {
         y: data.y,
         area: data.area,
         talked: data.talked.slice(0, SAVE_LIMITS.talked),
-        herbs: Math.max(0, Math.min(SAVE_LIMITS.herbs, Math.trunc(data.herbs))),
+        herbs: clamp(Math.trunc(data.herbs), 0, SAVE_LIMITS.herbs),
         flags: data.flags.slice(0, SAVE_LIMITS.flags),
       };
       localStorage.setItem(KEY, JSON.stringify(out));

@@ -1,5 +1,6 @@
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
+import { clamp } from "../world/geometry";
 
 // The small props of "A roof for Omelko" (systems/pustka.ts), drawn at their
 // place in the world. Each is a handful of strokes, no gradients.
@@ -29,7 +30,7 @@ export function drawChopBlock(c: CanvasRenderingContext2D, x: number, y: number,
   c.beginPath(); c.moveTo(x - 6, y - 20); c.lineTo(x + 6, y - 22); c.lineTo(x + 6, y - 15); c.lineTo(x - 5, y - 14); c.closePath(); c.fill();
   c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
   // the pile: logs two to a row, standing ends toward us
-  const n = Math.max(0, Math.min(6, logs));
+  const n = clamp(logs, 0, 6);
   for (let i = 0; i < n; i++) {
     const row = Math.floor(i / 3);
     const col = i % 3;

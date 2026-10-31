@@ -1,11 +1,11 @@
-import { t, type TextKey } from "../i18n";
+import { t } from "../i18n";
 import { flagCount, flagHas } from "../systems/flags";
 import { type DialogueTopic } from "./topics";
+import { L } from "./helpers";
 
 // Radek's horseshoe trade (systems/trade.ts), appended to his topic menu
 // once his forge is lit. With horseshoes in the satchel the topic sells
 // them all (`grant`); without, he says what he pays.
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
 
 export function tradeTopics(npcId: string, flags: ReadonlySet<string>): DialogueTopic[] {
   if (npcId !== "radek" || !flagHas(flags, "horseshoe")) return [];

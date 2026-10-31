@@ -1,8 +1,8 @@
-import { darken, drawFolk } from "./people";
+import { drawFolk } from "./people";
 import { LYSA_OFFER_SPOT, LYSA_STONES, LYSA_SUMMIT, LYSA_THRONE } from "../data/lysa";
-import { CAM, rr } from "./shapes";
 import { LYSA_W } from "../world/areas";
 import { hash2 } from "../world/geometry";
+import { CAM, darken, makeInk, rr } from "./shapes";
 
 // --- Lysa Hora drawing ------------------------------------------------------
 // The summit is drawn at night: blue-rock ground, a huge crescent moon
@@ -14,7 +14,7 @@ import { hash2 } from "../world/geometry";
 // stands on it: the moon over the north edge, the dead snags, the ring of
 // standing stones, Beelzebub's seat, the offering stone, brooms and cauldron.
 const INK = "rgba(20,16,26,0.85)";
-function ink(c: CanvasRenderingContext2D, w = 0.9): void { c.strokeStyle = INK; c.lineWidth = w; c.stroke(); }
+const ink = makeInk(INK);
 
 export function drawLysaGround(c: CanvasRenderingContext2D, camX: number, camY: number, vw: number, vh: number, t: number, offered: boolean) {
   void vw; void vh;

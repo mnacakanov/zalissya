@@ -1,6 +1,6 @@
 import { type TreeKind } from "../data/village";
 import { hash2 } from "../world/geometry";
-import { darken } from "./people";
+import { darken } from "./shapes";
 
 // --- Trees, storybook style -------------------------------------------------------
 // Drawn in the hand of the people and the khaty (render/people.ts): one

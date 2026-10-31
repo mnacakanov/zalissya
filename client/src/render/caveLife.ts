@@ -1,5 +1,5 @@
 import type { Bat, Crawler } from "../systems/cave";
-import { darken } from "./people";
+import { darken, makeInk } from "./shapes";
 
 // --- The cave's creatures ---------------------------------------------------------------
 // Same storybook hand as the people and spirits: soft shading, a thin ink line.
@@ -13,10 +13,8 @@ import { darken } from "./people";
 // x, y are screen coordinates (camera-shifted).
 
 const INK = "rgba(24,18,12,0.85)";
+const ink = makeInk(INK);
 
-function ink(c: CanvasRenderingContext2D, w = 0.9): void {
-  c.strokeStyle = INK; c.lineWidth = w; c.stroke();
-}
 
 // --- the Zmiy ---------------------------------------------------------------------------
 // (sx, sy) is where the serpent "stands" (data/cave.ts ZMIY: lair coords 150,190). The

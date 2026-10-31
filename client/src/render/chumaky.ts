@@ -1,6 +1,5 @@
-import { darken } from "./people";
-import { rr } from "./shapes";
 import { GRAVE } from "../data/chumaky";
+import { makeInk, paint, rr } from "./shapes";
 
 // --- The chumak camp: drawing ----------------------------------------------
 // A salt cart, grey oxen with long horns, a sick man on a sheepskin, and —
@@ -38,12 +37,7 @@ export function drawCart(c: CanvasRenderingContext2D, x: number, y: number, camX
 }
 
 const INK = "rgba(34,22,14,0.85)";
-function paint(c: CanvasRenderingContext2D, col: string, x0: number, w: number): CanvasGradient {
-  const g = c.createLinearGradient(x0, 0, x0 + w, 0);
-  g.addColorStop(0, col); g.addColorStop(0.55, col); g.addColorStop(1, darken(col, 0.7));
-  return g;
-}
-function ink(c: CanvasRenderingContext2D, w = 0.9): void { c.strokeStyle = INK; c.lineWidth = w; c.stroke(); }
+const ink = makeInk(INK);
 
 // A grey steppe ox, the chumak's patient engine: long lyre horns, a dewlap,
 // a slow chew, a tail at the flies.

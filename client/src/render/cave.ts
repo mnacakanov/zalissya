@@ -3,8 +3,7 @@ import { TUNNEL_SPOTS } from "../data/cave";
 import { crackShown } from "../systems/cave";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
-import { darken } from "./people";
-import { rr } from "./shapes";
+import { darken, rr } from "./shapes";
 
 // --- The Serpent's Cave and the tunnel under the river -----------------------------------
 // Two places in the same painted hand as the khaty:

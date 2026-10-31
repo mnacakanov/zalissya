@@ -1,19 +1,11 @@
-import { t, type TextKey } from "../i18n";
 import { pustkaStage } from "../systems/pustka";
 import { type DialogueTopic } from "./topics";
+import { L, topic } from "./helpers";
 
 // "A roof for Omelko" (systems/pustka.ts), the khutir's part:
 //   Myroslav — the empty khata is the khutir's, and he gives it for the work
 //   everyone — once Omelko has moved in, a word of thanks in their own voice
 // (Omelko's own lines are in dialogue/cave.ts, beside the rest of his talk.)
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"]): DialogueTopic => ({
-  id,
-  label: t(`${base}.label` as TextKey),
-  question: t(`${base}.question` as TextKey),
-  lines,
-  ...(grant ? { grant } : {}),
-});
 
 const PRAISE = new Set(["myroslav", "vesna", "radek", "odarka", "okhrim"]);
 

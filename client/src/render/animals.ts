@@ -1,18 +1,12 @@
-import { darken } from "./people";
-import { CAM } from "./shapes";
 import { hash2 } from "../world/geometry";
+import { CAM, makeInk, paint } from "./shapes";
 
 // --- The living khutir: animals and yard things ---------------------------------
 // In the storybook hand of the people (render/people.ts): painted side
 // light, a thin ink outline. x, y are screen coordinates of the ground point.
 
 const INK = "rgba(34,22,14,0.85)";
-function paint(c: CanvasRenderingContext2D, col: string, x0: number, w: number): CanvasGradient {
-  const g = c.createLinearGradient(x0, 0, x0 + w, 0);
-  g.addColorStop(0, col); g.addColorStop(0.55, col); g.addColorStop(1, darken(col, 0.7));
-  return g;
-}
-function ink(c: CanvasRenderingContext2D, w = 0.9): void { c.strokeStyle = INK; c.lineWidth = w; c.stroke(); }
+const ink = makeInk(INK);
 function shadow(c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number): void {
   c.fillStyle = "rgba(20,30,10,0.28)";
   c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill();

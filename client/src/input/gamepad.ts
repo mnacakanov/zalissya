@@ -10,6 +10,8 @@
 //
 // A native port maps its own controller API onto the same PadState.
 
+import { clamp } from "../world/geometry";
+
 export type PadButtonName = "a" | "b" | "x" | "y" | "lb" | "rb" | "lt" | "rt" | "back" | "start" | "up" | "down" | "left" | "right";
 
 export type PadState = {
@@ -57,7 +59,7 @@ export function createGamepadReader(): () => PadState | null {
     if (held.has("right")) x += 1;
     if (held.has("up")) y -= 1;
     if (held.has("down")) y += 1;
-    return { x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)), held, pressed };
+    return { x: clamp(x, -1, 1), y: clamp(y, -1, 1), held, pressed };
   };
 }
 

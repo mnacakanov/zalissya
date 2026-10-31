@@ -12,6 +12,7 @@ import { drawFolk, type FolkOpts } from "./people";
 import { drawTreeSprite } from "./trees";
 import { WORLD_H, WORLD_W } from "../world/areas";
 import { hash2, type Rect } from "../world/geometry";
+import { clamp } from "../world/geometry";
 
 
 // --- The ground, painted in tiles -----------------------------------------------
@@ -297,10 +298,10 @@ function maskAt(x: number, y: number): number {
   if (!roadMask) return 0;
   const fx = x / MASK_TEXEL - 0.5;
   const fy = y / MASK_TEXEL - 0.5;
-  const ix = Math.max(0, Math.min(maskW - 2, Math.floor(fx)));
-  const iy = Math.max(0, Math.min(maskH - 2, Math.floor(fy)));
-  const tx = Math.max(0, Math.min(1, fx - ix));
-  const ty = Math.max(0, Math.min(1, fy - iy));
+  const ix = clamp(Math.floor(fx), 0, maskW - 2);
+  const iy = clamp(Math.floor(fy), 0, maskH - 2);
+  const tx = clamp(fx - ix, 0, 1);
+  const ty = clamp(fy - iy, 0, 1);
   const i = iy * maskW + ix;
   const a = roadMask[i] ?? 0, b = roadMask[i + 1] ?? 0, c = roadMask[i + maskW] ?? 0, d = roadMask[i + maskW + 1] ?? 0;
   return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
@@ -310,7 +311,7 @@ function wearAt(x: number, y: number): number {
   const m = maskAt(x, y);
   if (m <= 0.02) return 0;
   const e = m + (valueNoise(x / 22, y / 22, 83) - 0.5) * 0.55 + (valueNoise(x / 7, y / 7, 89) - 0.5) * 0.22;
-  return Math.max(0, Math.min(1, (e - 0.4) / 0.14));
+  return clamp((e - 0.4) / 0.14, 0, 1);
 }
 
 // palettes
@@ -333,7 +334,7 @@ export function mountainAt(x: number, y: number): number {
   const d = dx * dx + dy * dy;
   if (d > 1.6) return 0;
   const e = 1 - d + (valueNoise(x / 70, y / 70, 201) - 0.5) * 0.4 + (valueNoise(x / 18, y / 18, 203) - 0.5) * 0.14;
-  return Math.max(0, Math.min(1, e / 0.22));
+  return clamp(e / 0.22, 0, 1);
 }
 const ROCK_D = [62, 60, 74], ROCK_L = [112, 108, 120], CROWN = [150, 144, 140], LICHEN = [138, 148, 108];
 
@@ -355,7 +356,7 @@ function bakeTile(tx: number, ty: number): HTMLCanvasElement {
       const g3 = valueNoise(wx / 12, wy / 12, 41);
       const gv = 0.5 * g1 + 0.3 * g2 + 0.2 * g3;
       const sun = Math.max(0, (g2 - 0.62) / 0.38) * (0.6 + 0.4 * g1);
-      const dry = Math.max(0, Math.min(1, (wx - VILLAGE_W + 160 + (g1 - 0.5) * 300) / 620));
+      const dry = clamp((wx - VILLAGE_W + 160 + (g1 - 0.5) * 300) / 620, 0, 1);
       const grain = ih(wx, wy, 7);
       const k = (grain > 0.93 ? -0.25 : grain < 0.05 ? 0.2 : 0);
       // the ground under foot
@@ -795,7 +796,7 @@ export function drawTreeShadows(
   camX: number, camY: number, vw: number, vh: number, minute: number, dark: number,
 ): void {
   // the sun: -1 at 06:00 (in the east), 0 at 13:00, +1 at 20:00 (west)
-  const sunK = Math.max(-1, Math.min(1, (minute - 13 * 60) / (7 * 60)));
+  const sunK = clamp((minute - 13 * 60) / (7 * 60), -1, 1);
   const day = Math.max(0, 1 - dark / 0.62);
   const strength = 0.12 + 0.26 * day;
   for (const tr of trees) {

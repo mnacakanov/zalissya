@@ -1,4 +1,5 @@
-import { CAM, rr } from "./shapes";
+import { CAM, darken, rr } from "./shapes";
+import { clamp } from "../world/geometry";
 
 // --- People, storybook style --------------------------------------------------
 // The owner chose the "storybook" look for people (variant C of the style
@@ -100,12 +101,6 @@ function costumeFor(o: FolkOpts): Costume {
   }
 }
 
-export function darken(hex: string, f: number): string {
-  if (!hex.startsWith("#") || hex.length < 7) return hex;
-  const n = parseInt(hex.slice(1, 7), 16);
-  return `rgb(${Math.round((n >> 16) * f)},${Math.round(((n >> 8) & 255) * f)},${Math.round((n & 255) * f)})`;
-}
-
 const H = 50; // height in world px, feet to crown
 const HEADS = 5.2;
 const INK = "rgba(40,26,14,0.85)";
@@ -166,7 +161,7 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
   const knee = y - H * 0.2;
   const shW = hh * (C.kind === "f" ? 1.5 : 1.75);
   const hipW = hh * (C.kind === "f" ? 1.45 : 1.25);
-  const fx = Math.max(-1, Math.min(1, o.face)) * hh * 0.12; // the face turns
+  const fx = clamp(o.face, -1, 1) * hh * 0.12; // the face turns
   const paint = (col: string, x0: number, w: number): CanvasGradient | string => {
     if (!col.startsWith("#")) return col;
     const g = c.createLinearGradient(x0, 0, x0 + w, 0);

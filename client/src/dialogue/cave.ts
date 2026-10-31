@@ -1,8 +1,8 @@
-import { t, type TextKey } from "../i18n";
 import { flagHas } from "../systems/flags";
 import { omelkoAtHome, pustkaStage } from "../systems/pustka";
 import { knowsSong } from "../systems/songs";
 import { type DialogueTopic, type TopicSet } from "./topics";
+import { L, topic } from "./helpers";
 
 // Conversations in the Serpent's Cave and the tunnel (data/cave.ts):
 //   Omelko  — the blind kobzar; teaches the duma of Marusia Bohuslavka, hears the draught
@@ -14,15 +14,6 @@ import { type DialogueTopic, type TopicSet } from "./topics";
 // Myroslav and Okhrim carry the rumours that put the cave and the tunnel on
 // the kobzar's map (grants caveRumor / lazRumor, applied in App).
 
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"], action?: DialogueTopic["action"]): DialogueTopic => ({
-  id,
-  label: t(`${base}.label` as TextKey),
-  question: t(`${base}.question` as TextKey),
-  lines,
-  ...(grant ? { grant } : {}),
-  ...(action ? { action } : {}),
-});
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
 
 export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMeeting: boolean): TopicSet | null {
   const lulled = flagHas(flags, "zmiyLulled");

@@ -1,8 +1,8 @@
-import { t, type TextKey } from "../i18n";
 import { chumakyPresent, ostapState, PERSUADE_CHA } from "../systems/chumaky";
 import { flagHas } from "../systems/flags";
 import { knowsSong } from "../systems/songs";
 import { type DialogueTopic, type TopicSet } from "./topics";
+import { L, topic } from "./helpers";
 
 // Conversations around the chumak caravan (systems/chumaky.ts). Gnat and
 // Ostap have their own topic sets; the khutir's people get extra topics
@@ -11,14 +11,6 @@ import { type DialogueTopic, type TopicSet } from "./topics";
 
 export type ChumakContext = { flags: ReadonlySet<string>; cha: number; potions: number };
 
-const topic = (id: string, base: string, lines: string[], grant?: DialogueTopic["grant"]): DialogueTopic => ({
-  id,
-  label: t(`${base}.label` as TextKey),
-  question: t(`${base}.question` as TextKey),
-  lines,
-  ...(grant ? { grant } : {}),
-});
-const L = (...keys: string[]) => keys.map((k) => t(k as TextKey));
 
 export function chumakTopicSet(npcId: string, c: ChumakContext, firstMeeting: boolean): TopicSet | null {
   const state = ostapState(c.flags);

@@ -2321,7 +2321,7 @@ export function App() {
       // the perelesnyk over the korchma door at night (systems/vorozhbyt.ts);
       // come close and the shape of Stepan shows under it
       if (perelesnykFlies(flagsNow, clockRef.current.minute) && Math.abs(PERELESNYK_AT.x - camX - vw / 2) < vw && Math.abs(PERELESNYK_AT.y - camY - vh / 2) < vh) {
-        const near = Math.max(0, Math.min(1, 1 - (Math.hypot(p.x - PERELESNYK_AT.x, p.y - PERELESNYK_AT.y) - 60) / 200));
+        const near = clamp(1 - (Math.hypot(p.x - PERELESNYK_AT.x, p.y - PERELESNYK_AT.y) - 60) / 200, 0, 1);
         drawables.push({ y: PERELESNYK_AT.y + 2, draw: () => drawPerelesnyk(ctx2d, PERELESNYK_AT.x - camX, PERELESNYK_AT.y - camY, now, near) });
       }
       // "A roof for Omelko": the chopping block in the pustka's yard and the reeds on the pond's bank
