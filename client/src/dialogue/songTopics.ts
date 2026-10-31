@@ -11,6 +11,8 @@ import { type DialogueTopic } from "./topics";
 //   Radek      — «Розпрягайте, хлопці, коней» (badly, but with feeling)
 // (The chumaky teach «Ой полечко, поле» and «Ой ви, воли мої половії»:
 // dialogue/chumaky.ts.)
+// (In the Serpent's Cave, blind Omelko teaches the duma of Marusia Bohuslavka
+// and the smuggler Sydir «Ой не ходи, Грицю»: dialogue/cave.ts.)
 // (The storm duma comes with the otaman's chalk: dialogue/viyNight.ts.)
 export function songTopics(npcId: string, area: string, flags: ReadonlySet<string>): DialogueTopic[] {
   if (npcId === "vesna" && !knowsSong(flags, "kolyskova")) {

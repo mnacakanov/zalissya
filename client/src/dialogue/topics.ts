@@ -23,14 +23,14 @@ import { t } from "../i18n";
 
 // What asking a topic can hand over (App.applyGrant): Viy's night items,
 // the chumak choices, or a song (any SongId).
-export type GrantId = "chalk" | "wreath" | "ironward" | "persuade" | "treatOstap" | "vesnaTonic" | "tobaccoQuest" | "giveTobacco" | "chumakMap" | "buyMap" | "supper" | "sellHorseshoes" | "prokipNext" | "vesnaAnswer" | SongId;
+export type GrantId = "chalk" | "wreath" | "ironward" | "persuade" | "treatOstap" | "vesnaTonic" | "tobaccoQuest" | "giveTobacco" | "chumakMap" | "buyMap" | "supper" | "sellHorseshoes" | "prokipNext" | "vesnaAnswer" | "caveRumor" | "lazRumor" | SongId;
 
 export type DialogueTopic = {
   id: string;
   label: string;
   question: string;
   lines: string[];
-  action?: "bargain" | "blessing";
+  action?: "bargain" | "blessing" | "sing";
   // Asking hands this item over (Viy's night preparations — see viyNight.ts).
   grant?: GrantId;
 };

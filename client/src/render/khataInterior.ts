@@ -1,6 +1,7 @@
 import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KAPLYTSIA_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, PROKIP_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
+import { drawCaveInterior } from "./cave";
 import { rr } from "./shapes";
 
 // --- Inside a khata ---------------------------------------------------------
@@ -23,8 +24,9 @@ export function drawKhataInterior(
   if (id === "duplo") { drawDuploInterior(c, x, y, t); return; }
   if (id === "kurhan") { drawKurhanInterior(c, x, y, t); return; }
   if (id === "pechera") { drawPecheraInterior(c, x, y, t); return; }
-  if (id === "kaplytsia") { drawKaplytsiaInterior(c, x, y, t); return; }
+  if (id === "kaplytsia") { drawKaplytsiaInterior(c, x, y, t, flags); return; }
   if (id === "prokip") { drawProkipInterior(c, x, y, t); return; }
+  if (id === "zmiieva" || id === "lazna") { drawCaveInterior(c, id, x, y, t, flags); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -1360,7 +1362,7 @@ function drawPecheraInterior(c: CanvasRenderingContext2D, x: number, y: number, 
 // burning before them; the analoy with the book left open at the psalm
 // somebody was reading; the kanun of thin candles for the dead, and the
 // benches by the walls where the old women sit out the long services.
-function drawKaplytsiaInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+function drawKaplytsiaInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number, flags: ReadonlySet<string>): void {
   const { w, h } = HOUSE_RECTS.kaplytsia;
   const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
   const shadow = (r: Box) => { c.fillStyle = "rgba(30,20,10,0.28)"; rr(c, r.x + 3, r.y + 4, r.w, r.h, 3); c.fill(); };
@@ -1380,6 +1382,22 @@ function drawKaplytsiaInterior(c: CanvasRenderingContext2D, x: number, y: number
     for (let py = ry + 4; py < y + h - WALL - 4; py += 10) c.fillRect(rx + 3, py, 16, 2.4);
     c.fillStyle = "#2e3a5a";
     for (let py = ry + 8; py < y + h - WALL - 4; py += 10) { c.fillRect(rx + 9, py, 4, 2); }
+  }
+  // the hatch under the runner (data/cave.ts CHAPEL_HATCH): a faint lump in the
+  // rug for someone who knows; once used, the runner lies folded back from it
+  {
+    const hx = x + w / 2;
+    const hy = y + 98;
+    if (flagHas(flags, "lazChapel")) {
+      c.fillStyle = "#6e4a2a"; c.fillRect(hx - 11, hy - 11, 22, 22);
+      c.strokeStyle = "rgba(30,20,10,0.8)"; c.lineWidth = 0.9; c.strokeRect(hx - 11, hy - 11, 22, 22);
+      c.beginPath(); c.moveTo(hx, hy - 11); c.lineTo(hx, hy + 11); c.stroke();
+      c.strokeStyle = "#2a2018"; c.lineWidth = 1.6; c.beginPath(); c.arc(hx + 5, hy, 2.4, 0, Math.PI * 2); c.stroke();
+      c.fillStyle = "#a83a2a"; c.beginPath(); c.moveTo(hx - 11, hy - 11); c.lineTo(hx + 11, hy - 11); c.lineTo(hx + 11, hy - 20); c.lineTo(hx - 11, hy - 20); c.closePath(); c.fill();
+    } else if (flagHas(flags, "lazKnown") || flagHas(flags, "lazOpen")) {
+      c.fillStyle = "rgba(40,20,10,0.22)"; c.beginPath(); c.ellipse(hx + 2, hy, 11, 5, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(255,230,190,0.2)"; c.beginPath(); c.ellipse(hx, hy - 1, 9, 3.6, 0, 0, Math.PI * 2); c.fill();
+    }
   }
   // log walls
   c.fillStyle = "#9a6c3c";

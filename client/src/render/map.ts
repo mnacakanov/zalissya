@@ -120,7 +120,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.fillStyle = "#e7853a";
   c.beginPath(); c.arc(X(LYSA_WORLD.summit.x), Y(LYSA_WORLD.summit.y), Math.max(2, 26 * s), 0, Math.PI * 2); c.fill();
   // khaty, windmill, kurhany
-  for (const ho of [...HOUSES, ...Object.entries(HOUSE_RECTS).filter(([id]) => !["duplo", "kurhan", "pechera"].includes(id)).map(([, r]) => ({ ...r, y: r.y + 30, h: r.h - 30 }))]) {
+  for (const ho of [...HOUSES, ...Object.entries(HOUSE_RECTS).filter(([id]) => !["duplo", "kurhan", "pechera", "zmiieva", "lazna"].includes(id)).map(([, r]) => ({ ...r, y: r.y + 30, h: r.h - 30 }))]) {
     c.fillStyle = "#f6f1e6"; c.fillRect(X(ho.x), Y(ho.y + 20), ho.w * s, (ho.h - 20) * s);
     c.fillStyle = "#a8854a"; c.fillRect(X(ho.x - 8), Y(ho.y - 10), (ho.w + 16) * s, 34 * s);
   }
@@ -135,6 +135,18 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   if (chumakyPresent(flags)) glyph(CART.x, CART.y, "⛟");
   if (flagHas(flags, "ostapDied")) glyph(GRAVE.x, GRAVE.y - 8, "✝");
   if (!flagHas(flags, "viySealed")) glyph(1420, 260, "◉");
+  // the Serpent's Cave once the kobzar has heard of it, and the old tunnel once he knows of it
+  const cave = HOUSE_RECTS.zmiieva;
+  if (flagHas(flags, "caveHeard")) glyph(cave.x + cave.w / 2, cave.y + 120, "∩");
+  if (flagHas(flags, "lazKnown")) {
+    const kp = HOUSE_RECTS.kaplytsia;
+    c.save();
+    c.setLineDash([7, 6]); c.lineCap = "butt"; c.lineWidth = 2; c.strokeStyle = "rgba(90,58,30,0.75)";
+    c.beginPath(); c.moveTo(X(cave.x + 50), Y(cave.y + 40));
+    c.bezierCurveTo(X(cave.x - 60), Y(cave.y - 500), X(kp.x + 200), Y(kp.y + 900), X(kp.x + 70), Y(kp.y + 100));
+    c.stroke();
+    c.restore();
+  }
   c.restore();
 
   // labels
@@ -158,6 +170,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   label("map.hemp", 1460, 1462, 11, "#f2f6e8");
   label("map.tobacco", 2080, 1930, 11);
   label("map.pond", POND.x, POND.y, 10, "#e9f4f8");
+  if (flagHas(flags, "caveHeard")) label("map.cave", cave.x + cave.w / 2, cave.y + 82, 11);
   label("map.korchma", HOUSE_RECTS.korchma.x + HOUSE_RECTS.korchma.w / 2, HOUSE_RECTS.korchma.y - 30, 11);
 
   // the quest's goal: a pulsing gold star

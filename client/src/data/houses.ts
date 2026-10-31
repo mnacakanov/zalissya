@@ -27,7 +27,13 @@ import { type Rect } from "../world/geometry";
 //   kaplytsia — the log chapel at the head of the maidan (KAPLYTSIA_ROOM)
 //   prokip — Did Prokip's khatka, alone in the south-east forest past the
 //     chumak bridge (PROKIP_ROOM; systems/vorozhbyt.ts)
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia" | "prokip";
+//   zmiieva — the Serpent's Cave in the south forest, big enough to get lost
+//     in (ZMIIEVA_ROOM); data/cave.ts has who and what lives in it
+//   lazna — the hidden tunnel (лаз) from the cave to under the kaplytsia. It
+//     is an underground place with no door: you only arrive by the crack, the
+//     ladder or the chapel hatch (data/cave.ts), and from outside it is a bare
+//     rock ridge in the south-east forest (LAZNA_ROOM)
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia" | "prokip" | "zmiieva" | "lazna";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -47,6 +53,11 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // far out: over the chumak bridge and east through the forest, where
   // "decent people don't walk" (Vesna)
   prokip: { x: 3200, y: 1880, w: 220, h: 170 },
+  // south of the river, east of the old oak, clear of the bridge road and the
+  // tobacco field: a rocky hill with its mouth to the south
+  zmiieva: { x: 1150, y: 1740, w: 760, h: 460 },
+  // a bare ridge in the south-east forest; its inside is the tunnel
+  lazna: { x: 2380, y: 1960, w: 1200, h: 300 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -177,8 +188,56 @@ export const PROKIP_ROOM = {
   lava: { x: 14, y: 116, w: 40, h: 12 },
 } as const satisfies Record<string, Rect>;
 
+// The Serpent's Cave. Footprint 760×460, the mouth at x 357…403. From the
+// mouth the hall runs back to two ledges with a channel between them; above
+// them is the upper cavern: Zmiy's lair in the west (the crack in its back
+// wall is the hidden tunnel), the pool in the middle, Omelko's nook in the
+// east. Onufriy keeps his cell in the south-west corner of the hall.
+//   ledgeW, ledgeE — the rock shelves; pool — water, not to be walked
+//   stalag1…4      — stalagmites in the hall
+//   mat, table     — Onufriy's straw mat and his table with the candle
+//   seat           — Omelko's flat rock
+//   curl           — the serpent's body round his hoard (always there)
+// While he is awake his coil also lies across the passage into the lair
+// (ZMIY_COIL); a song that moves him draws it back.
+export const ZMIIEVA_ROOM = {
+  ledgeW: { x: 14, y: 215, w: 200, h: 50 },
+  ledgeE: { x: 546, y: 215, w: 200, h: 50 },
+  pool: { x: 300, y: 112, w: 120, h: 76 },
+  stalag1: { x: 262, y: 322, w: 26, h: 20 },
+  stalag2: { x: 470, y: 344, w: 26, h: 20 },
+  stalag3: { x: 604, y: 312, w: 30, h: 22 },
+  stalag4: { x: 648, y: 392, w: 28, h: 20 },
+  mat: { x: 40, y: 396, w: 96, h: 30 },
+  table: { x: 150, y: 322, w: 38, h: 26 },
+  seat: { x: 628, y: 128, w: 54, h: 24 },
+  curl: { x: 80, y: 112, w: 150, h: 88 },
+} as const satisfies Record<string, Rect>;
+export const ZMIY_COIL: Rect = { x: 214, y: BACK_WALL, w: 70, h: 215 - BACK_WALL };
+
+// The tunnel: 1200×300, no door. Boulders stand out alternately from the
+// ceiling and the floor, so the way winds through them: a long, slow walk.
+// In the middle the tunnel widens into a chamber where the smuggler Sydir
+// keeps camp (casks, crates, a bedroll); the sentry's bones lie in the lower
+// lane. The crack up to the cave is at the west end, the ladder up to the
+// chapel at the east.
+export const LAZNA_ROOM = {
+  a: { x: 150, y: BACK_WALL, w: 60, h: 110 },
+  b: { x: 290, y: 170, w: 60, h: 116 },
+  c: { x: 430, y: BACK_WALL, w: 60, h: 110 },
+  d: { x: 570, y: 170, w: 60, h: 116 },
+  casks: { x: 700, y: BACK_WALL + 2, w: 76, h: 32 },
+  crates: { x: 820, y: BACK_WALL + 2, w: 52, h: 28 },
+  bedroll: { x: 720, y: 232, w: 92, h: 28 },
+  e: { x: 940, y: BACK_WALL, w: 60, h: 110 },
+  f: { x: 1060, y: 170, w: 60, h: 116 },
+} as const satisfies Record<string, Rect>;
+
 function furniture(id: HouseId): Rect[] {
   if (id === "prokip") return Object.values(PROKIP_ROOM);
+
+  if (id === "zmiieva") return Object.values(ZMIIEVA_ROOM);
+  if (id === "lazna") return Object.values(LAZNA_ROOM);
   if (id === "kaplytsia") return Object.values(KAPLYTSIA_ROOM);
   if (id === "duplo") return Object.values(DUPLO_ROOM);
   if (id === "kurhan") return Object.values(KURHAN_ROOM);
@@ -204,12 +263,18 @@ export function toWorld(id: HouseId, p: { x: number; y: number }): { x: number; 
 export function houseSolids(id: HouseId): Rect[] {
   const r = HOUSE_RECTS[id];
   const half = (r.w - DOOR_GAP) / 2;
+  // the tunnel has no door: its south wall is whole
+  const south: Rect[] = id === "lazna"
+    ? [{ x: r.x, y: r.y + r.h - WALL, w: r.w, h: WALL }]
+    : [
+        { x: r.x, y: r.y + r.h - WALL, w: half, h: WALL },
+        { x: r.x + r.w - half, y: r.y + r.h - WALL, w: half, h: WALL },
+      ];
   return [
     { x: r.x, y: r.y, w: r.w, h: BACK_WALL },
     { x: r.x, y: r.y, w: WALL, h: r.h },
     { x: r.x + r.w - WALL, y: r.y, w: WALL, h: r.h },
-    { x: r.x, y: r.y + r.h - WALL, w: half, h: WALL },
-    { x: r.x + r.w - half, y: r.y + r.h - WALL, w: half, h: WALL },
+    ...south,
     ...furniture(id).map((f) => ({ x: r.x + f.x, y: r.y + f.y, w: f.w, h: f.h })),
   ];
 }

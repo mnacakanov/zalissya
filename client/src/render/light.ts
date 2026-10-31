@@ -1,3 +1,4 @@
+import { CAVE_LIGHTS, TUNNEL_LIGHTS } from "../data/cave";
 import { HOUSE_RECTS, type HouseId } from "../data/houses";
 import { RIVER_HALF, riverY } from "../data/land";
 import { LYSA_WORLD } from "../data/lysa";
@@ -99,6 +100,9 @@ function windowLights(id: HouseId): Light[] {
     case "pustka": return [];
     case "mlyn": return []; // nobody grinds by night (that anyone admits to)
     case "duplo": case "kurhan": case "pechera": return [];
+    // the monk's candle at the cave's mouth; the tunnel's ridge shows nothing
+    case "zmiieva": return [{ x: r.x + r.w / 2, y: base - 20, r: 56, col: "255,190,100", k: 0.55 }];
+    case "lazna": return [];
     // the lampadka before the icons, through the two narrow windows
     case "kaplytsia": return at([16, r.w - 30], base - 60 + 24, 14);
   }
@@ -113,7 +117,12 @@ export function drawDark(
   c: CanvasRenderingContext2D, dark: number, camX: number, camY: number, vw: number, vh: number, dpr: number, t: number,
   inside: HouseId | null,
   extra: readonly Light[] = [],
+  player?: { x: number; y: number },
 ): void {
+  // the cave and the tunnel are dark at noon too: only candles, the pool's glow and
+  // the kobzar's own kahanets (a little oil lamp) light them
+  const underground = inside === "zmiieva" || inside === "lazna";
+  if (underground) dark = Math.max(dark, 0.9);
   if (dark <= 0.001) return;
   const fl = 1 + Math.sin(t * 0.011) * 0.05 + Math.sin(t * 0.027) * 0.03;
   const lights: Light[] = [
@@ -127,9 +136,14 @@ export function drawDark(
   ];
   for (const id of Object.keys(HOUSE_RECTS) as HouseId[]) {
     if (id === inside) {
+      if (underground) continue;
       const r = HOUSE_RECTS[id];
       lights.push({ x: r.x + r.w / 2, y: r.y + r.h / 2, r: r.w * 0.75, col: "255,170,80", k: 0.9 });
-    } else lights.push(...windowLights(id));
+    } else if (!underground) lights.push(...windowLights(id));
+  }
+  if (underground) {
+    for (const l of inside === "zmiieva" ? CAVE_LIGHTS : TUNNEL_LIGHTS) lights.push({ ...l, r: l.r * fl });
+    if (player) lights.push({ x: player.x, y: player.y - 18, r: 150 * fl, col: "255,206,130", k: 0.95 });
   }
   const vis = lights.filter((l) => l.x + l.r > camX && l.x - l.r < camX + vw && l.y + l.r > camY && l.y - l.r < camY + vh);
   // the darkness, with holes

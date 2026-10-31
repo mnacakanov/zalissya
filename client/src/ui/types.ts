@@ -1,5 +1,6 @@
 import { type Npc } from "../data/characters";
 import { type DialogueTopic } from "../dialogue/topics";
+import { type LazSpot } from "../systems/cave";
 
 // --- Component ---------------------------------------------------------------
 
@@ -35,6 +36,9 @@ export type Prompt =
   | { kind: "sieve" }
   | { kind: "perelesnyk" }
   | { kind: "animal"; idx: number }
+  | { kind: "laz"; spot: LazSpot }
+  | { kind: "hoard" }
+  | { kind: "pouch" }
   | null;
 
 export function promptKeyOf(p: Prompt): string {
@@ -48,6 +52,7 @@ export function promptKeyOf(p: Prompt): string {
     case "bloom": return `b:${p.idx}`;
     case "tobacco": return `tb:${p.idx}`;
     case "animal": return `an:${p.idx}`;
+    case "laz": return `laz:${p.spot}`;
     default: return p.kind;
   }
 }
@@ -74,7 +79,7 @@ export type Dialogue = {
   // choiceKind "options": a list of buttons at the choice page, answered
   // by App's pickOption(optionsTag, option id).
   options?: DialogueOption[];
-  optionsTag?: "sleep" | "play" | "playKorchma" | "perelesnyk";
+  optionsTag?: "sleep" | "play" | "playKorchma" | "perelesnyk" | "playZmiy";
   topics?: DialogueTopic[];
   asked?: string[];
   view?: "lines" | "menu" | "topic";

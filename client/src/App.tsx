@@ -46,6 +46,11 @@ import { LanguagePicker } from "./ui/LanguagePicker";
 import { MapOverlay } from "./ui/MapOverlay";
 import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
+import { drawCaveHill, drawLaznaRidge } from "./render/cave";
+import { drawBats, drawCrawler, drawVohnyk, drawZmiy } from "./render/caveLife";
+import { ARRIVE, CAVE_CHAR_IDS, CAVE_CHARS, CAVE_SPOTS, CHAPEL_HATCH, TUNNEL_CHARS, TUNNEL_SPOTS, ZMIY } from "./data/cave";
+import { caveSolids, firstPass, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
+import { caveRumorTopics, caveTopicSet } from "./dialogue/cave";
 import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
@@ -108,8 +113,8 @@ const BENCH_SOLIDS = [
   ...BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 })),
 ];
 // What each walk-in house says when you step in, and its HUD label.
-const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera", kaplytsia: "ui.enterHut.kaplytsia", prokip: "ui.enterHut.prokip" };
-const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera", kaplytsia: "ui.hut.kaplytsia", prokip: "ui.hut.prokip" };
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera", kaplytsia: "ui.enterHut.kaplytsia", prokip: "ui.enterHut.prokip", zmiieva: "ui.enterHut.zmiieva", lazna: "ui.enterHut.lazna" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera", kaplytsia: "ui.hut.kaplytsia", prokip: "ui.hut.prokip", zmiieva: "ui.hut.zmiieva", lazna: "ui.hut.lazna" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -208,7 +213,12 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1, kaplytsia: 1, prokip: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1, kaplytsia: 1, prokip: 1, zmiieva: 1, lazna: 1 });
+  // the cave's bats, salamanders and the tunnel's rats (systems/cave.ts); and the black
+  // fade that covers a trip through the crack, the ladder or the chapel hatch
+  const caveLifeRef = useRef(makeCaveLife());
+  const fadeRef = useRef(0);
+  const passingRef = useRef(false);
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -376,6 +386,16 @@ export function App() {
     if (topic.action === "blessing") {
       blessingPendingRef.current = true;
       openDialogue(dlg.npc, [...linesForLysa(dlg.npc, flagsRef.current), ...LYSA_BLESSING_LINES]);
+      return;
+    }
+    // the serpent: asking what he'd like to hear opens the song choice
+    if (topic.action === "sing") {
+      openOptions(dlg.npc, topic.lines, "playZmiy", [
+        ...knownSongs(flagsRef.current)
+          .filter((id) => id !== "burya" || flagHas(flagsRef.current, "viySealed"))
+          .map((id) => ({ id, label: `${songName(id)} ${MOOD_ICON[SONGS[id].mood]}`, aria: `${songName(id)} — ${t(`ui.songMood.${SONGS[id].mood}` as TextKey)}` })),
+        { id: "cancel", label: t("ui.sleep.cancel.label.0"), aria: t("ui.sleep.cancel.label.0") },
+      ]);
       return;
     }
     if (topic.grant) applyGrant(topic.grant);
@@ -577,12 +597,12 @@ export function App() {
     showToast(expired ? t("ui.sleepUntil.0", { msg }) : msg);
   };
   // A dialogue whose last page is a row of option buttons.
-  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play" | "playKorchma" | "perelesnyk", options: DialogueOption[]) => {
+  const openOptions = (npc: Npc, lines: string[], tag: "sleep" | "play" | "playKorchma" | "perelesnyk" | "playZmiy", options: DialogueOption[]) => {
     const d: Dialogue = { npc, lines, line: 0, choiceAt: lines.length - 1, choiceKind: "options", options, optionsTag: tag };
     dialogueRef.current = d;
     setDialogue(d);
   };
-  const pickOption = (tag: "sleep" | "play" | "playKorchma" | "perelesnyk", id: string) => {
+  const pickOption = (tag: "sleep" | "play" | "playKorchma" | "perelesnyk" | "playZmiy", id: string) => {
     endDialogue();
     if (id === "cancel") return;
     if (tag === "sleep") {
@@ -609,6 +629,8 @@ export function App() {
         openDialogue(PERELESNYK_NPC, PERELESNYK_SPARED());
         showToast(t("perelesnyk.toast.spared"));
       }
+    } else if (tag === "playZmiy") {
+      performAtZmiy(id as SongId);
     }
   };
 
@@ -658,6 +680,43 @@ export function App() {
     openDialogue(KORCHMA_NPC, [t(rec === "clash" ? (`korchma.play.room.clash.${room.mood}` as TextKey) : (`korchma.play.room.${rec}` as TextKey))]);
   };
 
+  // --- the Serpent's Cave (systems/cave.ts, data/cave.ts) ------------------------------
+  // Singing to the Zmiy: a sad song is his own mood and puts him to sleep (his coil
+  // draws back and the crack shows); an ordinary one he just listens to; a merry one
+  // wakes him and sends the bats up. Nothing is lost by a wrong song.
+  const performAtZmiy = (song: SongId) => {
+    if (zmiyLulled(flagsRef.current)) return;
+    const res = lullResult(song);
+    const title = songName(song);
+    if (res === "lulled") {
+      setFlag("zmiyLulled");
+      bumpCount("played", 3);
+      showToast(t("cave.sing.lulled.toast", { song: title }));
+      openDialogue(ZMIY, [t("cave.sing.lulled.0"), t("cave.sing.lulled.1")]);
+    } else if (res === "listens") {
+      showToast(t("cave.sing.listens.toast", { song: title }));
+      openDialogue(ZMIY, [t("cave.sing.listens.0"), t("cave.sing.listens.1")]);
+    } else {
+      startleBats(caveLifeRef.current, performance.now());
+      showToast(t("cave.sing.wakes.toast", { song: title }));
+      openDialogue(ZMIY, [t("cave.sing.wakes.0"), t("cave.sing.wakes.1")]);
+    }
+  };
+  // Through the crack, up the ladder, or down the chapel hatch.
+  const passLaz = (spot: LazSpot) => {
+    const f = flagsRef.current;
+    if (!lazAvailable(spot, f)) return;
+    const first = firstPass(spot, f);
+    for (const fl of passFlags(spot)) setFlag(fl);
+    const to = ARRIVE[LAZ_TO[spot]];
+    const pl = playerRef.current;
+    pl.x = to.x; pl.y = to.y; pl.moving = false;
+    passingRef.current = true;
+    fadeRef.current = 1;
+    dirtyRef.current = true;
+    showToast(t(`cave.pass.${spot}${first ? "First" : ""}` as TextKey));
+  };
+
   // --- Viy's night -------------------------------------------------------------
   const vigilContext = (): VigilContext => ({
     flags: flagsRef.current,
@@ -674,6 +733,9 @@ export function App() {
   });
   const applyGrant = (g: GrantId) => {
     const f = flagsRef.current;
+    // Rumours of the cave and of the tunnel (dialogue/cave.ts)
+    if (g === "caveRumor") { setFlag("caveHeard"); showToast(t("cave.toast.caveHeard")); return; }
+    if (g === "lazRumor") { setFlag("lazKnown"); showToast(t("cave.toast.lazKnown")); return; }
     // The chumak choices (systems/chumaky.ts).
     if (g === "persuade" || g === "treatOstap" || g === "vesnaTonic") {
       const day = clockRef.current.day;
@@ -1054,10 +1116,16 @@ export function App() {
           const pset = prokipTopicSet(prokipStage({ flags, met: true, heard: true }), flags, firstMeeting);
           openTopicDialogue(p.npc, pset.intro, pset.topics);
           return;
+        } else if (CAVE_CHAR_IDS.has(p.npc.id)) {
+          const cset = caveTopicSet(p.npc.id, flags, firstMeeting);
+          if (cset) {
+            openTopicDialogue(p.npc, cset.intro, cset.topics);
+            return;
+          }
         } else if (p.npc.id === "odarka" || p.npc.id === "okhrim") {
           const kset = korchmaTopicSet(p.npc.id, flags, fish, firstMeeting);
           if (kset) {
-            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...(p.npc.id === "odarka" ? odarkaProkipTopics(flags) : []), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...(p.npc.id === "odarka" ? odarkaProkipTopics(flags) : []), ...caveRumorTopics(p.npc.id, flags), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         } else if (p.npc.id === "gnat" || p.npc.id === "ostap") {
@@ -1069,7 +1137,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...(p.npc.id === "vesna" ? vesnaProkipTopics(prokipStage({ flags, met: talkedRef.current.has("prokip"), heard: true })) : []), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...caveRumorTopics(p.npc.id, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...(p.npc.id === "vesna" ? vesnaProkipTopics(prokipStage({ flags, met: talkedRef.current.has("prokip"), heard: true })) : []), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -1416,6 +1484,19 @@ export function App() {
         );
         return;
       }
+      case "laz":
+        passLaz(p.spot);
+        return;
+      case "hoard": {
+        const n = takeHoard(flagsRef.current);
+        if (n > 0) { syncFlags(); showToast(t("cave.toast.hoard", { n })); }
+        return;
+      }
+      case "pouch": {
+        const n = takePouch(flagsRef.current);
+        if (n > 0) { syncFlags(); showToast(t("cave.toast.pouch", { n })); }
+        return;
+      }
       case "tobacco": {
         if (flagHas(flagsRef.current, `tobaccoLeaf${p.idx}`)) return;
         setFlag(`tobaccoLeaf${p.idx}`);
@@ -1600,7 +1681,7 @@ export function App() {
       const len = Math.hypot(mx, my);
       const area = areaRef.current;
       const ws = worldSize(area);
-      const solids = [...SOLID, ...BENCH_SOLIDS, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : [])];
+      const solids = [...SOLID, ...BENCH_SOLIDS, ...LYSA_WORLD.solid, ...(chumakyPresent(flagsRef.current) ? CAMP_SOLID : []), ...caveSolids(flagsRef.current)];
       const dancing = area === "lysa" && now < danceUntilRef.current;
       const frozen = dialogueRef.current != null || panelRef.current || dancing || fightRef.current != null;
       p.moving = len > 0.01 && !frozen;
@@ -1634,8 +1715,12 @@ export function App() {
       if (insideNow !== insideRef.current) {
         insideRef.current = insideNow;
         setHudInside(insideNow);
-        if (insideNow) showToast(t(HOUSE_ENTER[insideNow]));
+        if (insideNow === "zmiieva") setFlag("caveHeard"); // the cave goes on the map once you have seen it
+        // a trip through the crack/ladder/hatch tells its own story (passLaz)
+        if (insideNow && !passingRef.current) showToast(t(HOUSE_ENTER[insideNow]));
+        passingRef.current = false;
       }
+      if (insideNow === "zmiieva" || insideNow === "lazna") stepCaveLife(caveLifeRef.current, dt, now, p);
 
       // --- the clock: stops while talking, reading, dancing, or keeping
       // the vigil; paid out in 5-minute steps so the HUD is not redrawn
@@ -1813,6 +1898,8 @@ export function App() {
         ...hiders.filter((h) => !onLysa(h.x, h.y)),
         ...residents.filter((r) => !onLysa(r.x, r.y)),
         PROKIP,
+        ...(insideNow === "zmiieva" ? CAVE_CHARS : []),
+        ...(insideNow === "lazna" ? TUNNEL_CHARS : []),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
       const vigilReady = flagHas(flagsNow, "chalk") && isNight(clockRef.current.minute);
@@ -1851,7 +1938,7 @@ export function App() {
           // Viy is enormous and the Bolotianyk sits out in the pond, so both
           // can be addressed from further off than a person. With the
           // chalk, after dark, approaching Viy begins the vigil.
-          const reach = npc.id === "viy" ? 158 : npc.id === "bolotianyk" ? 92 : 64;
+          const reach = npc.id === "viy" ? 158 : npc.id === "zmiy" ? 170 : npc.id === "bolotianyk" ? 92 : 64;
           if (d < reach && d - reach < best - 64) {
             best = d - reach + 64;
             nextPrompt = npc.id === "viy" && vigilReady ? { kind: "vigil" } : { kind: "talk", npc };
@@ -1906,6 +1993,13 @@ export function App() {
         IRON_SPOTS.forEach((s, idx) => {
           spot(!flagHas(flagsNow, `ironspot${idx}`) && !flagHas(flagsNow, "horseshoe"), s.x, s.y, 52, () => ({ kind: "iron", idx }));
         });
+        // the cave and the tunnel: the ways through, the hoard, the sentry's pouch
+        spot(insideNow === "zmiieva" && lazAvailable("crack", flagsNow), CAVE_SPOTS.crack.x, CAVE_SPOTS.crack.y, 44, () => ({ kind: "laz", spot: "crack" }));
+        spot(insideNow === "zmiieva" && zmiyLulled(flagsNow) && !flagHas(flagsNow, "zmiyHoard"), CAVE_SPOTS.hoard.x, CAVE_SPOTS.hoard.y, 42, () => ({ kind: "hoard" }));
+        spot(insideNow === "lazna", TUNNEL_SPOTS.west.x, TUNNEL_SPOTS.west.y, 44, () => ({ kind: "laz", spot: "tunnelWest" }));
+        spot(insideNow === "lazna", TUNNEL_SPOTS.east.x, TUNNEL_SPOTS.east.y, 44, () => ({ kind: "laz", spot: "tunnelEast" }));
+        spot(insideNow === "lazna" && !flagHas(flagsNow, "sentryPouch"), TUNNEL_SPOTS.pouch.x, TUNNEL_SPOTS.pouch.y, 38, () => ({ kind: "pouch" }));
+        spot(insideNow === "kaplytsia" && lazAvailable("chapelHatch", flagsNow), CHAPEL_HATCH.x, CHAPEL_HATCH.y, 34, () => ({ kind: "laz", spot: "chapelHatch" }));
       }
       if (fight) nextPrompt = null;
       const key = promptKeyOf(nextPrompt);
@@ -2012,6 +2106,10 @@ export function App() {
                 ? drawKurhanMound(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "pechera"
                 ? drawPechera(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, !isSabbath(clockRef.current.minute))
+              : id === "zmiieva"
+                ? drawCaveHill(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              : id === "lazna"
+                ? drawLaznaRidge(ctx2d, r.x - camX, r.y - camY, r.w, r.h, alpha)
               : id === "kaplytsia"
                 ? drawKaplytsia(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "prokip"
@@ -2043,8 +2141,11 @@ export function App() {
         const near = Math.max(0, Math.min(1, 1 - (Math.hypot(p.x - PERELESNYK_AT.x, p.y - PERELESNYK_AT.y) - 60) / 200));
         drawables.push({ y: PERELESNYK_AT.y + 2, draw: () => drawPerelesnyk(ctx2d, PERELESNYK_AT.x - camX, PERELESNYK_AT.y - camY, now, near) });
       }
+      // (underground, the crowns of the forest outside must not hang over the floor)
+      const ugR = insideNow === "zmiieva" || insideNow === "lazna" ? HOUSE_RECTS[insideNow] : null;
       for (const tr of TREES) {
         if (tr.x < camX - 90 || tr.x > camX + vw + 90 || tr.y < camY - 130 || tr.y > camY + vh + 40) continue;
+        if (ugR && tr.x > ugR.x - 90 && tr.x < ugR.x + ugR.w + 90 && tr.y > ugR.y && tr.y < ugR.y + ugR.h + 160) continue;
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
@@ -2064,6 +2165,8 @@ export function App() {
             else if (npc.style === "witch" || npc.style === "warlock") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false, !sabbath && HIDEOUT_IDS.has(npc.id), npc.style === "warlock");
             else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true, false, Number(npc.id.slice(-1)) % 2 === 1);
             else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
+            else if (npc.style === "zmiy") drawZmiy(ctx2d, sx, sy, now, { lulled: zmiyLulled(flagsNow), hoardTaken: flagHas(flagsNow, "zmiyHoard") });
+            else if (npc.style === "vohnyk") drawVohnyk(ctx2d, sx, sy, now);
             else {
               const st = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
               drawPerson(ctx2d, sx, sy, {
@@ -2071,14 +2174,15 @@ export function App() {
                 moving: st?.moving ?? false, phase: st?.phase ?? 0,
                 face: st?.moving ? st.face : clamp(p.x - pos.x, -1, 1) * 0.7, t: now,
                 ...(st && !st.moving && st.pose !== "stand" ? { pose: st.pose } : {}),
+                ...(!st && npc.pose ? { pose: npc.pose } : {}),
               });
             }
           },
         });
         // name tag — each kind floats at its own height (Viy's is a warning)
         const rst = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
-        const posed = rst && !rst.moving ? rst.pose : "stand";
-        const tagLift = posed === "sleep" ? 24 : posed === "bathe" ? 34 : posed === "sit" ? 56 : npc.id === "viy" ? 168 : npc.style === "beelzebub" ? (sabbath ? 96 : 44) : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
+        const posed = rst && !rst.moving ? rst.pose : npc.pose ?? "stand";
+        const tagLift = npc.style === "zmiy" ? 112 : npc.style === "vohnyk" ? 66 : posed === "sleep" ? 24 : posed === "bathe" ? 34 : posed === "sit" ? 56 : npc.id === "viy" ? 168 : npc.style === "beelzebub" ? (sabbath ? 96 : 44) : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
         const tagText = npc.id === "viy" ? t("ui.tagText.0") : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
@@ -2157,8 +2261,16 @@ export function App() {
           });
         }
       }
+      // the cave's salamanders, or the tunnel's rats
+      if (insideNow === "zmiieva" || insideNow === "lazna") {
+        for (const k of caveLifeRef.current.crawlers) {
+          if ((k.kind === "newt") !== (insideNow === "zmiieva")) continue;
+          drawables.push({ y: k.y, draw: () => drawCrawler(ctx2d, k, camX, camY) });
+        }
+      }
       drawables.sort((a, b) => a.y - b.y);
       for (const d of drawables) d.draw();
+      if (insideNow === "zmiieva") drawBats(ctx2d, caveLifeRef.current.bats, camX, camY, now);
 
       // drifting pollen / seeds in the light (outdoors only — the huts
       // have dust motes enough of their own in the lamplight)
@@ -2202,9 +2314,29 @@ export function App() {
       // where light falls — the fire, lit windows, the korchma door, the
       // room the kobzar is in — then the vigil on top so the chalk stays
       // bright
+      // underground, nothing past the cave's or tunnel's walls is to be seen
+      {
+        const ug = insideRef.current;
+        if (ug === "zmiieva" || ug === "lazna") {
+          const r = HOUSE_RECTS[ug];
+          const x0 = r.x - camX;
+          const y0 = r.y - camY;
+          ctx2d.fillStyle = `rgba(7,6,8,${Math.min(1, 1 - roofAlphaRef.current[ug])})`;
+          ctx2d.fillRect(0, 0, vw, Math.max(0, y0));
+          ctx2d.fillRect(0, y0 + r.h, vw, Math.max(0, vh - y0 - r.h));
+          ctx2d.fillRect(0, y0, Math.max(0, x0), r.h);
+          ctx2d.fillRect(x0 + r.w, y0, Math.max(0, vw - x0 - r.w), r.h);
+        }
+      }
       if (!isHutArea(area)) {
         drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
-          perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []);
+          perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : [], p);
+      }
+      // the black that covers a trip through the crack, the ladder or the hatch
+      if (fadeRef.current > 0.01) {
+        ctx2d.fillStyle = `rgba(4,3,6,${Math.min(1, fadeRef.current)})`;
+        ctx2d.fillRect(0, 0, vw, vh);
+        fadeRef.current = Math.max(0, fadeRef.current - dt * 2.4);
       }
       if (fight) {
         drawVigil(ctx2d, fight, VIGIL_CENTER.x, VIGIL_CENTER.y, camX, camY, now);
@@ -2400,6 +2532,12 @@ export function App() {
                                     ? t("tobacco.prompt.hemp")
                                   : prompt.kind === "hangTobacco"
                                     ? t("tobacco.prompt.hang")
+                                  : prompt.kind === "laz"
+                                    ? t(`cave.prompt.${prompt.spot}` as TextKey)
+                                  : prompt.kind === "hoard"
+                                    ? t("cave.prompt.hoard")
+                                  : prompt.kind === "pouch"
+                                    ? t("cave.prompt.pouch")
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
                                   : prompt.kind === "sieve"

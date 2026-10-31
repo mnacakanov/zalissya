@@ -22,6 +22,14 @@ function setCount(flags: Set<string>, name: string, n: number): void {
   if (n > 0) flags.add(`${name}=${n}`);
 }
 
+// Put chervintsi in the purse (a hoard, a dead man's pouch). Returns what the
+// purse holds after.
+export function addChervintsi(flags: Set<string>, n: number): number {
+  const after = purse(flags) + Math.max(0, Math.floor(n));
+  setCount(flags, PURSE, after);
+  return after;
+}
+
 // Sell every forged piece to Radek. Returns how many were sold and what
 // the purse holds after.
 export function sellHorseshoes(flags: Set<string>): { sold: number; purse: number } {

@@ -108,7 +108,9 @@ function roads(): Road[] {
   ];
   // footpaths worn from each door to the nearest road
   let seed = 10;
-  for (const h of Object.values(HOUSE_RECTS)) {
+  for (const [hid, h] of Object.entries(HOUSE_RECTS)) {
+    // the tunnel has no door, so no path leads to its ridge
+    if (hid === "lazna") continue;
     const dx = h.x + h.w / 2;
     const dy = h.y + h.h;
     const ty = dy < 600 ? 620 : dy + 34;

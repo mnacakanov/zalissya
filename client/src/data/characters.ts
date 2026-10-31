@@ -13,7 +13,10 @@ export type Npc = {
   y: number;
   tunic: string;
   hair: string;
-  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock" | "vorozhbyt";
+  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock" | "vorozhbyt" | "hermit" | "oldkobzar" | "zmiy" | "vohnyk";
+  // someone who stays put and does not walk a schedule may sit (the cave's
+  // old kobzar on his rock)
+  pose?: "sit";
 };
 
 export const NPCS: Npc[] = [
@@ -117,6 +120,14 @@ export function charPos(ch: Npc, now: number): { x: number; y: number } {
   }
   if (ch.id === "solokha") {
     return { x: ch.x + Math.sin(now * 0.00021) * 16, y: ch.y + Math.cos(now * 0.00033) * 5 };
+  }
+  if (ch.id === "vohnyk") {
+    // the little flame over the cave pool never keeps still: a lazy
+    // figure-eight, and it bobs as it goes
+    return {
+      x: ch.x + Math.sin(now * 0.00052) * 74,
+      y: ch.y + Math.sin(now * 0.00104) * 22 + Math.sin(now * 0.0031) * 3,
+    };
   }
   return { x: ch.x, y: ch.y };
 }
