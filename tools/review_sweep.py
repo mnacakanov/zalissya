@@ -79,6 +79,8 @@ pat = re.compile(r"^(?:export )?(?:function|const) ([A-Za-z0-9_]+)\b([^\n]*(?:\n
 for f in code_files:
     for m in pat.finditer(text[f]):
         body = re.sub(r"\s+", " ", m.group(0))[:400]
+        if "makeInk(" in body:  # the one-line binding to the shared helper is the intended shape
+            continue
         defs[m.group(1)].append((f, hashlib.md5(body.encode()).hexdigest()[:6]))
 for name, v in sorted(defs.items()):
     if len({f for f, _ in v}) > 1 and name not in ("PLATFORM", "JOYSTICK_ALLOWED", "PAD", "H", "run"):
