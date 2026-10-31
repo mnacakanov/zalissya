@@ -9,7 +9,7 @@ import { circleRectCollide } from "../world/geometry";
 import { flagCount } from "./flags";
 import { carpentryLevel } from "./skills";
 import { computeStats } from "./stats";
-import { chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, reedsCut, REEDS_NEEDED, stackWood, thatchRoof, WOOD_NEEDED } from "./pustka";
+import { chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, reedsCut, REEDS_NEEDED, stackWood, thatchRoof, WOOD_NEEDED, workTargets } from "./pustka";
 
 const open = () => new Set<string>(["perelesnykGone"]);
 const permitted = () => new Set<string>(["perelesnykGone", "omelkoHome", "pustkaLeave"]);
@@ -70,6 +70,29 @@ describe("the work", () => {
     for (const who of ["myroslav", "vesna", "radek", "odarka", "okhrim"]) expect(pustkaTopics(who, f)).toHaveLength(1);
     expect(pustkaTopics("myroslav", permitted())).toHaveLength(1); // while the work is on: a reminder, not thanks
     expect(pustkaTopics("vesna", permitted())).toHaveLength(0);
+  });
+});
+
+describe("the glint on the work", () => {
+  const kinds = (f: Set<string>) => workTargets(f).map((w) => w.kind + ("idx" in w ? w.idx : "")).join(",");
+  test("nothing glints before leave is given, or once it is over", () => {
+    expect(workTargets(open())).toEqual([]);
+    const f = permitted();
+    for (let i = 0; i < WOOD_NEEDED; i++) chopLog(f);
+    for (let i = 0; i < REEDS_NEEDED; i++) cutReed(f, i);
+    thatchRoof(f); stackWood(f);
+    expect(workTargets(f)).toEqual([]);
+  });
+  test("it marks the next job, and only the jobs still to do", () => {
+    const f = permitted();
+    expect(kinds(f)).toBe("chop,reed0,reed1,reed2,reed3");
+    for (let i = 0; i < WOOD_NEEDED; i++) chopLog(f);
+    cutReed(f, 1);
+    expect(kinds(f)).toBe("reed0,reed2,reed3,stack"); // the logs are in, so the pich can be laid at any time
+    for (const i of [0, 2, 3]) cutReed(f, i);
+    expect(kinds(f)).toBe("thatch,stack");
+    thatchRoof(f);
+    expect(kinds(f)).toBe("stack");
   });
 });
 

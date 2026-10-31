@@ -28,3 +28,13 @@ export const PUSTKA_WINDOWS: Light[] = [34, R.w - 70].flatMap((wx) => [
   { x: R.x + wx + 18, y: R.y + R.h - 64 + 26, r: 22, col: "255,200,110", k: 0.95 },
   { x: R.x + wx + 18, y: R.y + R.h + 18, r: 46, col: "255,180,90", k: 0.55 },
 ]);
+
+// Where a piece of the repair work is done (systems/pustka.ts workTargets)
+export function workSpot(w: { kind: "chop" } | { kind: "reed"; idx: number } | { kind: "thatch" } | { kind: "stack" }): { x: number; y: number } {
+  switch (w.kind) {
+    case "chop": return CHOP_SPOT;
+    case "thatch": return THATCH_SPOT;
+    case "stack": return STACK_SPOT;
+    case "reed": return REED_SPOTS[w.idx] ?? CHOP_SPOT;
+  }
+}

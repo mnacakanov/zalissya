@@ -69,3 +69,26 @@ export function drawReedStubble(c: CanvasRenderingContext2D, x: number, y: numbe
   c.strokeStyle = "#8a9a58"; c.lineWidth = 1.2;
   for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(x + (i - 2.5) * 2.4, y); c.lineTo(x + (i - 2.5) * 2.4 + (hash2(i, 1) - 0.5) * 3, y - 5); c.stroke(); }
 }
+
+// The mark on a place where the repair work is to be done: a warm pulse on
+// the ground and a few motes of light drifting up, like the gleam of a find
+// in a tale. Cheap on purpose: three arcs, four dots. The phase comes from
+// the place, so two marks never pulse in step.
+export function drawWorkGlint(c: CanvasRenderingContext2D, x: number, y: number, t: number, wx: number, wy: number): void {
+  const ph = t * 0.0025 + wx * 0.013 + wy * 0.007;
+  const pulse = 0.5 + 0.5 * Math.sin(ph);
+  c.save();
+  c.fillStyle = `rgba(255,214,110,${0.10 + 0.10 * pulse})`;
+  c.beginPath(); c.ellipse(x, y, 30 + 4 * pulse, 11 + 1.5 * pulse, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = `rgba(255,232,150,${0.35 + 0.35 * pulse})`; c.lineWidth = 1.4;
+  c.beginPath(); c.ellipse(x, y, 22 + 5 * pulse, 8 + 2 * pulse, 0, 0, Math.PI * 2); c.stroke();
+  for (let i = 0; i < 4; i++) {
+    const u = ((t * 0.0004 + i / 4 + hash2(wx, i) * 0.3) % 1);
+    const mx = x + (hash2(i, wx) - 0.5) * 34 + Math.sin(u * 6 + i) * 3;
+    const my = y - 4 - u * 44;
+    const a = Math.sin(u * Math.PI);
+    c.fillStyle = `rgba(255,240,170,${0.85 * a})`;
+    c.beginPath(); c.arc(mx, my, 1.1 + 1.1 * a, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}

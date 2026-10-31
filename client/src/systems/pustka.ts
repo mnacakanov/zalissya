@@ -40,6 +40,20 @@ export const reedAvailable = (f: ReadonlySet<string>, i: number): boolean => pus
 export const thatchAvailable = (f: ReadonlySet<string>): boolean => pustkaStage(f) === "work" && !flagHas(f, "pustkaRoof") && reedsCut(f) >= REEDS_NEEDED;
 export const stackAvailable = (f: ReadonlySet<string>): boolean => pustkaStage(f) === "work" && !flagHas(f, "pustkaFire") && logsChopped(f) >= WOOD_NEEDED;
 
+// Where the work is to be done right now, for the glint that marks it
+// (render/pustka.ts drawWorkGlint). Empty outside the repair. The chopping
+// block is marked only until the six logs are in, though it stays usable.
+export type WorkTarget = { kind: "chop" } | { kind: "reed"; idx: number } | { kind: "thatch" } | { kind: "stack" };
+export function workTargets(f: ReadonlySet<string>): WorkTarget[] {
+  if (pustkaStage(f) !== "work") return [];
+  const out: WorkTarget[] = [];
+  if (logsChopped(f) < WOOD_NEEDED) out.push({ kind: "chop" });
+  for (let i = 0; i < REEDS_NEEDED; i++) if (reedAvailable(f, i)) out.push({ kind: "reed", idx: i });
+  if (thatchAvailable(f)) out.push({ kind: "thatch" });
+  if (stackAvailable(f)) out.push({ kind: "stack" });
+  return out;
+}
+
 // Omelko lives in the pustka once he has been told it is ready and has moved
 export const omelkoAtHome = (f: ReadonlySet<string>): boolean => flagHas(f, "omelkoMoved");
 

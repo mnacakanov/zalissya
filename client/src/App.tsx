@@ -52,9 +52,9 @@ import { ARRIVE, CAVE_CHAR_IDS, CAVE_CHARS, CAVE_SPOTS, CHAPEL_HATCH, TUNNEL_CHA
 import { caveSolids, firstPass, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
 import { caveRumorTopics, caveTopicSet } from "./dialogue/cave";
 import { pustkaTopics } from "./dialogue/pustka";
-import { chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, type Work } from "./systems/pustka";
-import { CHOP_SPOT, OMELKO_HOME, PUSTKA_WINDOWS, REED_SPOTS, STACK_SPOT, THATCH_SPOT } from "./data/pustka";
-import { drawChopBlock, drawReedClump, drawReedStubble } from "./render/pustka";
+import { chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, workTargets, type Work } from "./systems/pustka";
+import { CHOP_SPOT, OMELKO_HOME, PUSTKA_WINDOWS, REED_SPOTS, STACK_SPOT, THATCH_SPOT, workSpot } from "./data/pustka";
+import { drawChopBlock, drawReedClump, drawReedStubble, drawWorkGlint } from "./render/pustka";
 import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
@@ -2317,6 +2317,14 @@ export function App() {
           drawables.push({ y: rp.y, draw: () => (reedTaken(flagsNow, i) ? drawReedStubble(ctx2d, rp.x - camX, rp.y - camY) : drawReedClump(ctx2d, rp.x - camX, rp.y - camY, now)) });
         });
       }
+      // a glint on whatever place the repair wants worked next
+      for (const w of workTargets(flagsNow)) {
+        if ((w.kind === "stack") !== (insideNow === "pustka")) continue;
+        if (insideNow && insideNow !== "pustka") continue;
+        const wp = workSpot(w);
+        if (Math.abs(wp.x - camX - vw / 2) > vw || Math.abs(wp.y - camY - vh / 2) > vh) continue;
+        drawables.push({ y: wp.y + 2, draw: () => drawWorkGlint(ctx2d, wp.x - camX, wp.y - camY, now, wp.x, wp.y) });
+      }
       // (underground, the crowns of the forest outside must not hang over the floor)
       const ugR = insideNow === "zmiieva" || insideNow === "lazna" ? HOUSE_RECTS[insideNow] : null;
       for (const tr of TREES) {
@@ -2507,7 +2515,7 @@ export function App() {
       }
       if (!isHutArea(area)) {
         drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
-          [...(perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []), ...(omelkoAtHome(flagsRef.current) && insideRef.current !== "pustka" ? PUSTKA_WINDOWS : [])], p);
+          [...(perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []), ...(omelkoAtHome(flagsRef.current) && insideRef.current !== "pustka" ? PUSTKA_WINDOWS : []), ...workTargets(flagsRef.current).filter((w) => (w.kind === "stack") === (insideRef.current === "pustka")).map((w) => { const wp = workSpot(w); return { x: wp.x, y: wp.y - 8, r: 70, col: "255,214,110", k: 0.5 }; })], p);
       }
       // the black that covers a trip through the crack, the ladder or the hatch
       if (fadeRef.current > 0.01) {
