@@ -4,7 +4,7 @@ const LYSA_TRAILHEAD = LYSA_WORLD.trailhead;
 import { LYSA_H, LYSA_W, VILLAGE_W } from "../world/areas";
 import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
-import { FIRE, GARDEN, POND, pondEdge, pondShore, type TreeKind, WELL } from "../data/village";
+import { FIRE, FIRE_SEAT, GARDEN, POND, pondEdge, pondShore, type TreeKind, WELL } from "../data/village";
 import { drawLand } from "./land";
 import { BOLOTO_PATH, PROKIP_PATH } from "../data/land";
 import { rr } from "./shapes";
@@ -910,10 +910,22 @@ export function drawFire(c: CanvasRenderingContext2D, camX: number, camY: number
   c.beginPath(); c.ellipse(x, y - 8, 5.6, 9 + fl * 0.7, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#ffe89a";
   c.beginPath(); c.ellipse(x, y - 5, 2.8, 5 + fl * 0.4, 0, 0, Math.PI * 2); c.fill();
-  // log benches
+  // log benches: the otaman's and Vesna's either side, and the kobzar's
+  // on the near side, facing the khutir (FIRE_SEAT)
   c.fillStyle = "#7a4a24";
   rr(c, x - 74, y - 4, 34, 9, 4); c.fill();
   rr(c, x + 40, y - 4, 34, 9, 4); c.fill();
+  {
+    const sx = FIRE_SEAT.x - camX;
+    const sy = FIRE_SEAT.y - camY + 5;
+    c.fillStyle = "rgba(30,50,20,0.28)";
+    c.beginPath(); c.ellipse(sx, sy + 7, 24, 4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#7a4a24";
+    rr(c, sx - 21, sy - 1, 42, 10, 5); c.fill();
+    c.fillStyle = "#a8743c";
+    c.beginPath(); c.ellipse(sx - 21, sy + 4, 3, 5, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(sx + 21, sy + 4, 3, 5, 0, 0, Math.PI * 2); c.fill();
+  }
 }
 
 // Vesna's alchemy bench: a drying rack hung with herb bundles over a

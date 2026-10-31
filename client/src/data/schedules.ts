@@ -55,7 +55,7 @@ export const PLACES = {
     work: { x: 372, y: 596 },
     rest: bench(3),
     bathe: inPond(40, -14),
-    evening: fireAt(0, 40),
+    evening: fireAt(88, 32), // a bit apart, east of the kobzar's log
   },
   odarka: {
     bed: toWorld("korchma", { x: KORCHMA_ROOM.pich.x + 34, y: KORCHMA_ROOM.pich.y + 26 }),

@@ -19,6 +19,9 @@ export const WELL: Rect = { x: 916, y: 470, w: 68, h: 52 };
 // HOUSE_RECTS.kaplytsia; render/khutir.ts drawKaplytsia).
 export const KAPLYTSIA: Rect = HOUSE_RECTS.kaplytsia;
 export const FIRE: Rect = { x: 806, y: 596, w: 68, h: 44 };
+// The kobzar's log on the south side of the fire, facing the khutir: he
+// sits here when he plays of an evening (drawFire draws the log).
+export const FIRE_SEAT = { x: FIRE.x + FIRE.w / 2, y: FIRE.y + FIRE.h + 20 };
 export const POND = { x: 1330, y: 1050, rx: 165, ry: 92 };
 // The pond is no ellipse: its shore wanders — a bay to the north-east,
 // a bulge where the geese come out, a straighter bank on the west where

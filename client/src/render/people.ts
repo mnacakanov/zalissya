@@ -31,8 +31,11 @@ export type FolkOpts = {
   who?: string;
   // "dance": arms up and swinging (the Lysa Hora sabbath)
   // "dance": arms up (the sabbath); "sit": on a bench or a log; "sleep":
-  // lying under a blanket; "bathe": in the pond to the chest
-  pose?: "dance" | "sit" | "sleep" | "bathe";
+  // lying under a blanket; "bathe": in the pond to the chest; "play":
+  // seated with the kobza on the knees, playing
+  pose?: "dance" | "sit" | "sleep" | "bathe" | "play";
+  // (the kobza is in his hands, not on his back)
+  kobzaHeld?: boolean;
 };
 
 type Costume = {
@@ -110,14 +113,15 @@ const INK_W = 0.9;
 
 export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: FolkOpts): void {
   if (o.pose === "sleep") { drawSleeper(c, x, y, o); return; }
-  if (o.pose === "sit") {
+  if (o.pose === "sit" || o.pose === "play") {
     // seated: the figure sinks onto the seat, the legs fold forward
     const drop = 11;
     const C = costumeFor(o);
     const hh = H / HEADS;
+    const playing = o.pose === "play";
     c.save();
     c.beginPath(); c.rect(x - 60, y - H - 80, 120, H + 80 - H * 0.36 + drop); c.clip();
-    drawFolk(c, x, y + drop, { ...o, pose: undefined, moving: false, shadow: false });
+    drawFolk(c, x, y + drop, { ...o, pose: undefined, moving: false, shadow: false, kobzaHeld: playing });
     c.restore();
     c.fillStyle = "rgba(20,30,10,0.3)";
     c.beginPath(); c.ellipse(x, y + 3, 15, 4, 0, 0, Math.PI * 2); c.fill();
@@ -131,6 +135,7 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
       c.beginPath(); c.ellipse(kx, y, hh * 0.28, hh * 0.18, 0, 0, Math.PI * 2); c.fill();
       c.fillRect(kx - hh * 0.2, y - H * 0.36 + drop + 4, hh * 0.4, Math.max(0, H * 0.36 - drop - 4));
     }
+    if (playing) drawKobzaPlayed(c, x, y - H * 0.36 + drop, hh, o.t, o.face);
     return;
   }
   if (o.pose === "bathe") {
@@ -180,7 +185,7 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     c.beginPath(); c.ellipse(x, y + 1, shW * 0.75, hh * 0.28, 0, 0, Math.PI * 2); c.fill();
   }
   // the kobza on the back
-  if (C.kobza) {
+  if (C.kobza && !o.kobzaHeld) {
     c.save(); c.translate(x + shW * 0.25, shY + hh * 0.9); c.rotate(-0.5 + step * 0.05);
     c.fillStyle = paint("#b07a3a", -hh * 0.6, hh * 1.2);
     c.beginPath(); c.ellipse(0, hh * 0.5, hh * 0.62, hh * 0.8, 0, 0, Math.PI * 2); c.fill(); ink();
@@ -478,4 +483,51 @@ function drawSleeper(c: CanvasRenderingContext2D, x: number, y: number, o: FolkO
   c.strokeStyle = INK; c.lineWidth = INK_W; c.stroke();
   c.fillStyle = C.boots;
   c.beginPath(); c.ellipse(x + 19, y - 4, 2.6, 2.2, 0, 0, Math.PI * 2); c.fill();
+}
+
+// The kobza played on the knees: the round body across the lap, the neck
+// up and to the side, the strings catching the light, the right hand
+// strumming over them; and the tune rising in little notes that drift up
+// and fade (their phase from the world position, so they never slide).
+function drawKobzaPlayed(c: CanvasRenderingContext2D, x: number, lapY: number, hh: number, t: number, face: number): void {
+  const s = face < 0 ? -1 : 1;
+  const bx = x + s * hh * 0.15;
+  const by = lapY + hh * 0.1;
+  // the neck, up toward the left hand
+  c.save();
+  c.translate(bx, by); c.rotate(s * -0.9);
+  c.fillStyle = "#6e4525";
+  c.fillRect(-hh * 0.1, -hh * 2.1, hh * 0.2, hh * 1.9);
+  c.fillStyle = "#4a2e18";
+  c.fillRect(-hh * 0.16, -hh * 2.3, hh * 0.32, hh * 0.3); // the head with its pegs
+  c.restore();
+  // the body: a round, deep bowl of pale wood
+  const g = c.createLinearGradient(bx - hh * 0.8, 0, bx + hh * 0.8, 0);
+  g.addColorStop(0, "#d09a52"); g.addColorStop(1, "#8a5a2a");
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(bx, by, hh * 0.85, hh * 0.62, s * -0.35, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = INK_W; c.stroke();
+  c.fillStyle = "#3a2414";
+  c.beginPath(); c.arc(bx - s * hh * 0.1, by - hh * 0.05, hh * 0.17, 0, Math.PI * 2); c.fill(); // the rose
+  // strings
+  c.strokeStyle = "rgba(250,236,200,0.85)"; c.lineWidth = 0.5;
+  for (let k = -1; k <= 1; k++) {
+    c.beginPath(); c.moveTo(bx + s * hh * 0.4, by + hh * 0.2 + k * 1.2); c.lineTo(bx - s * hh * 1.5, by - hh * 1.2 + k * 1.2); c.stroke();
+  }
+  // the strumming hand
+  const strum = Math.sin(t * 0.02 + x) * hh * 0.18;
+  c.fillStyle = "#e8bf96";
+  c.beginPath(); c.ellipse(bx + s * hh * 0.25, by + strum * 0.4, hh * 0.2, hh * 0.15, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = INK_W * 0.8; c.stroke();
+  // the tune: three notes drifting up and fading
+  for (let i = 0; i < 3; i++) {
+    const ph = (t * 0.0005 + i / 3 + x * 0.003) % 1;
+    const nx = x + s * (hh * 0.8 + ph * hh * 2.2) + Math.sin(ph * 6 + i) * hh * 0.3;
+    const ny = lapY - H * 0.55 - ph * H * 0.8;
+    c.globalAlpha = Math.sin(ph * Math.PI) * 0.85;
+    c.fillStyle = "#3a2414"; c.strokeStyle = "#3a2414"; c.lineWidth = 1;
+    c.beginPath(); c.ellipse(nx, ny, 2.4, 1.8, -0.4, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(nx + 2.1, ny - 0.5); c.lineTo(nx + 2.1, ny - 8); c.lineTo(nx + 5, ny - 6); c.stroke();
+    c.globalAlpha = 1;
+  }
 }

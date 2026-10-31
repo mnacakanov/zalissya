@@ -6,7 +6,7 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./
 import { BED_SPOT_WORLD, doorOf, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, KABYTSIA, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, FIRE, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
+import { DECOR, FENCES, FIRE, FIRE_SEAT, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -1508,6 +1508,11 @@ export function App() {
           showToast(t(check.reason === "daytime" ? "ui.play.daytime" : "ui.play.alreadyPlayed"));
           return;
         }
+        // he takes his log on the near side of the fire, kobza on his knees
+        playerRef.current.x = FIRE_SEAT.x;
+        playerRef.current.y = FIRE_SEAT.y;
+        fishingRef.current = null;
+        dirtyRef.current = true;
         openOptions(
           FIRE_NPC,
           [`${t(check.firstEver ? "ui.play.first" : "ui.play.prompt")} ${t(`ui.mood.${eveningMood(c.day, flagsRef.current).reason}` as TextKey)}`],
@@ -2392,7 +2397,7 @@ export function App() {
         y: p.y,
         draw: () => drawPerson(ctx2d, p.x - camX, p.y - camY, {
           tunic: "#efe3c8", hair: "#5d3a1a", style: "player",
-          ...(bathingRef.current ? { pose: "bathe" as const } : {}),
+          ...(bathingRef.current ? { pose: "bathe" as const } : dialogueRef.current?.npc.id === FIRE_NPC.id ? { pose: "play" as const } : {}),
           moving: p.moving || dancing, phase: dancing ? now * 0.018 : p.phase, face: p.face, t: now,
           // Sold your soul to the Chort? Then the sun casts no shadow
           // for you — until you buy it back with three fish.
