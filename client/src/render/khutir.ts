@@ -711,23 +711,27 @@ export function drawKaplytsia(c: CanvasRenderingContext2D, x: number, y: number,
 // The same khata as the others underneath (drawKhataBig), gone grey, the
 // clay showing through, the windows boarded, the door hanging ajar, a hole
 // rotted through the thatch, and weeds up to the sill.
-export function drawPustka(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+export type PustkaLook = { roof: boolean; fire: boolean; home: boolean };
+export function drawPustka(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number, look: PustkaLook = { roof: false, fire: false, home: false }): void {
   if (alpha <= 0.01) return;
-  drawKhataBig(c, x, y, w, h, t, 77, alpha, false); // nobody lights the pich
+  drawKhataBig(c, x, y, w, h, t, 77, alpha, look.fire); // nobody lights the pich until the wood is stacked
   c.save();
   c.globalAlpha = alpha;
   const wallTop = y + h - 64;
-  // grime and the clay showing through where the whitewash fell away
-  c.fillStyle = "rgba(90,84,70,0.32)";
-  c.fillRect(x, wallTop + 6, w, 52);
-  c.fillStyle = "#a88a62";
-  for (let i = 0; i < 9; i++) {
-    const px = x + 8 + hash2(i, 5) * (w - 30);
-    const py = wallTop + 10 + hash2(i, 9) * 40;
-    c.beginPath(); c.ellipse(px, py, 5 + hash2(i, 13) * 9, 3 + hash2(i, 17) * 4, 0, 0, Math.PI * 2); c.fill();
+  // grime and the clay showing through where the whitewash fell away (a lived-in
+  // khata has been whitewashed again)
+  if (!look.home) {
+    c.fillStyle = "rgba(90,84,70,0.32)";
+    c.fillRect(x, wallTop + 6, w, 52);
+    c.fillStyle = "#a88a62";
+    for (let i = 0; i < 9; i++) {
+      const px = x + 8 + hash2(i, 5) * (w - 30);
+      const py = wallTop + 10 + hash2(i, 9) * 40;
+      c.beginPath(); c.ellipse(px, py, 5 + hash2(i, 13) * 9, 3 + hash2(i, 17) * 4, 0, 0, Math.PI * 2); c.fill();
+    }
   }
-  // boarded windows
-  for (const wx of [x + 34, x + w - 70]) {
+  // boarded windows (pulled open once somebody lives there)
+  for (const wx of look.home ? [] : [x + 34, x + w - 70]) {
     const wy = wallTop + 14;
     c.fillStyle = "#3a342c";
     c.fillRect(wx, wy, 36, 24);
@@ -740,21 +744,34 @@ export function drawPustka(c: CanvasRenderingContext2D, x: number, y: number, w:
   c.fillStyle = "#1e1a16";
   c.fillRect(dx, y + h - 51, 34, 41);
   c.fillStyle = "#5e4a36";
-  c.save(); c.translate(dx, y + h - 51); c.rotate(-0.08); c.fillRect(0, 0, 12, 41); c.restore();
+  if (look.home) c.fillRect(dx, y + h - 51, 34, 41); // hung straight again, and shut
+  else { c.save(); c.translate(dx, y + h - 51); c.rotate(-0.08); c.fillRect(0, 0, 12, 41); c.restore(); }
   // a hole rotted through the thatch, ribs of the roof showing
   const eave = wallTop + 6;
   const ridge = y + (eave - y) * 0.42;
   const hx = x + w * 0.62;
   const hy = (ridge + eave) / 2;
-  c.fillStyle = "#2a241c";
-  c.beginPath(); c.ellipse(hx, hy, 22, 11, 0.1, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#6e5a3a"; c.lineWidth = 2;
-  for (const o of [-12, 0, 12]) { c.beginPath(); c.moveTo(hx + o - 4, hy - 10); c.lineTo(hx + o + 4, hy + 10); c.stroke(); }
+  if (look.roof) {
+    // mended: a patch of fresh golden thatch, bound with straw rope
+    c.fillStyle = "#d8b45e";
+    c.beginPath(); c.ellipse(hx, hy, 25, 13, 0.1, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#a8843a"; c.lineWidth = 1.2;
+    for (let k = -22; k <= 22; k += 5) { c.beginPath(); c.moveTo(hx + k, hy - 10); c.lineTo(hx + k + 2, hy + 10); c.stroke(); }
+    c.strokeStyle = "#8a6a2a"; c.lineWidth = 2;
+    for (const o of [-8, 8]) { c.beginPath(); c.moveTo(hx - 22, hy + o * 0.6); c.lineTo(hx + 22, hy + o * 0.6 - 1); c.stroke(); }
+  } else {
+    c.fillStyle = "#2a241c";
+    c.beginPath(); c.ellipse(hx, hy, 22, 11, 0.1, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#6e5a3a"; c.lineWidth = 2;
+    for (const o of [-12, 0, 12]) { c.beginPath(); c.moveTo(hx + o - 4, hy - 10); c.lineTo(hx + o + 4, hy + 10); c.stroke(); }
+  }
   // the thatch grey and sagging; weeds along the pryzba
-  c.fillStyle = "rgba(70,70,64,0.3)";
-  c.fillRect(x - 18, ridge, w + 36, eave - ridge + 6);
+  if (!look.home) {
+    c.fillStyle = "rgba(70,70,64,0.3)";
+    c.fillRect(x - 18, ridge, w + 36, eave - ridge + 6);
+  }
   c.strokeStyle = "#5d7a3a"; c.lineWidth = 1.6;
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < (look.home ? 8 : 22); i++) {
     const px = x - 6 + (i / 21) * (w + 12);
     if (Math.abs(px - (x + w / 2)) < 24) continue;
     const ht = 8 + hash2(i, 23) * 12;

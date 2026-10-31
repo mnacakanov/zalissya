@@ -64,7 +64,7 @@ One short entry per character, so that everything written about them agrees. **C
 
 ## The Serpent's Cave and the tunnel
 
-- **Omelko (Омелько):** a blind old kobzar in the cave's east nook; hears who you are in your step; calls you "brother".
+- **Omelko (Омелько):** a blind old kobzar in the cave's east nook; hears who you are in your step; calls you "brother". Once the player mends Taras's khata ("A roof for Omelko") he moves out of the cave and lives there.
 - **Zmiy (Змій):** the old serpent asleep on a dowry-hoard in the west lair. Old and tired, dry humour ("I haven't eaten anyone in a hundred years. You're not tasty."). Sung to sleep with a sad song.
 - **Vohnyk (Вогник):** a little wandering flame over the pool; bright, vain, forgets its own name.
 - **Sydir (Сидір):** a chumak turned smuggler, camping in the tunnel; carries salt past other men's tollgates.

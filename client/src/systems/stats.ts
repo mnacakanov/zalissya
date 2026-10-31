@@ -1,11 +1,11 @@
-import { craftLevel, fishLevel, herbLevel } from "./skills";
+import { carpentryLevel, craftLevel, fishLevel, herbLevel } from "./skills";
 import { t } from "../i18n";
 
 // --- Stats ------------------------------------------------------------------
 // The six classic stats, all starting at 1 (KCD2-style: no dump stats, no
 // points to assign — a stat grows because its skill grows). A stat's BASE
 // is derived, never stored, so old saves get honest values for free:
-//   STR = Smithing level    DEX = Fishing level     CON = Cooking level
+//   STR = Smithing level + Carpentry level − 1    DEX = Fishing level     CON = Cooking level
 //   INT = Alchemy level     WIS = Herbalism level   CHA = Music level
 // Keepsakes, food and tonics add BONUSES on top; the TOTAL is what the
 // world feels (bite window, walking pace, double finds, the Chort's price).
@@ -23,10 +23,10 @@ export type StatLine = { base: number; bonus: number; total: number; bonusWhy: s
 
 export function computeStats(input: {
   herbs: number; fishTotal: number; cooked: number; smithed: number; brewed: number;
-  played: number; flags: ReadonlySet<string>;
+  played: number; carpentry?: number; flags: ReadonlySet<string>;
 }): Record<StatKey, StatLine> {
   const base: Record<StatKey, number> = {
-    str: craftLevel(input.smithed),
+    str: craftLevel(input.smithed) + carpentryLevel(input.carpentry ?? 0) - 1,
     dex: fishLevel(input.fishTotal),
     con: craftLevel(input.cooked),
     int: craftLevel(input.brewed),

@@ -41,6 +41,10 @@ export type Prompt =
   | { kind: "laz"; spot: LazSpot }
   | { kind: "hoard" }
   | { kind: "pouch" }
+  | { kind: "chop" }
+  | { kind: "reed"; idx: number }
+  | { kind: "thatch" }
+  | { kind: "stack" }
   | null;
 
 export function promptKeyOf(p: Prompt): string {
@@ -55,6 +59,7 @@ export function promptKeyOf(p: Prompt): string {
     case "tobacco": return `tb:${p.idx}`;
     case "animal": return `an:${p.idx}`;
     case "laz": return `laz:${p.spot}`;
+    case "reed": return `rd:${p.idx}`;
     default: return p.kind;
   }
 }

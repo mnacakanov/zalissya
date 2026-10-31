@@ -51,6 +51,10 @@ import { drawBats, drawCrawler, drawVohnyk, drawZmiy } from "./render/caveLife";
 import { ARRIVE, CAVE_CHAR_IDS, CAVE_CHARS, CAVE_SPOTS, CHAPEL_HATCH, TUNNEL_CHARS, TUNNEL_SPOTS, ZMIY } from "./data/cave";
 import { caveSolids, firstPass, LAZ_TO, lazAvailable, lullResult, makeCaveLife, passFlags, startleBats, stepCaveLife, takeHoard, takePouch, zmiyLulled, type LazSpot } from "./systems/cave";
 import { caveRumorTopics, caveTopicSet } from "./dialogue/cave";
+import { pustkaTopics } from "./dialogue/pustka";
+import { chopAvailable, chopLog, cutReed, logsChopped, omelkoAtHome, pustkaEnterKey, pustkaStage, REEDS_NEEDED, reedAvailable, reedTaken, stackAvailable, stackWood, thatchAvailable, thatchRoof, WOOD_NEEDED, type Work } from "./systems/pustka";
+import { CHOP_SPOT, OMELKO_HOME, PUSTKA_WINDOWS, REED_SPOTS, STACK_SPOT, THATCH_SPOT } from "./data/pustka";
+import { drawChopBlock, drawReedClump, drawReedStubble } from "./render/pustka";
 import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
@@ -61,7 +65,7 @@ import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
 import { eveningMood, fireCheck, isEvening, knownSongs, knowsSong, reception, rewardFor, songFlag, type SongId, SONGS } from "./systems/songs";
-import { CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
+import { CARPENTRY_THRESH, carpentryLevel, CRAFT_THRESH, craftLevel, FISH_THRESH, fishLevel, herbLevel, THRESH } from "./systems/skills";
 import { computeStats, soulPrice, STAT_DEFS } from "./systems/stats";
 import { askedIds, markAsked } from "./systems/askedTopics";
 import { advance, canNapToNightfall, type Clock, DAWN, darkness, isNight, minutesUntil, MS_PER_GAME_MINUTE, NIGHTFALL_MINUTE, readClock, START_MINUTE, timeLabel, UNTIL_DAWN_FLAGS, WAKE_MINUTE, writeClock } from "./systems/time";
@@ -550,6 +554,7 @@ export function App() {
       smithed: flagCount(flagsRef.current, "smithed"),
       brewed: flagCount(flagsRef.current, "brewed"),
       played: flagCount(flagsRef.current, "played"),
+      carpentry: flagCount(flagsRef.current, "carpentry"),
       flags: flagsRef.current,
     });
 
@@ -576,6 +581,14 @@ export function App() {
   // --- time --------------------------------------------------------------------
   // Move the clock on and store it in the flags. Every dawn crossed ends
   // the until-dawn bonuses (meals, tonics); returns whether any ended.
+  // What a bit of honest work says: the deed, a level if it earned one, and,
+  // when the last of the khata's work is done, whom to tell (systems/pustka.ts)
+  const workToast = (w: Work, base: string): string => {
+    const lvl = carpentryLevel(w.after);
+    const up = lvl > carpentryLevel(w.before) ? ` ${t("pustka.toast.level", { level: lvl, str: liveStats().str.total })}` : "";
+    const ready = pustkaStage(flagsRef.current) === "ready" ? ` ${t("pustka.toast.ready")}` : "";
+    return base + up + ready;
+  };
   const passTime = (minutes: number): boolean => {
     const { clock, dawns } = advance(clockRef.current, minutes);
     clockRef.current = clock;
@@ -757,6 +770,10 @@ export function App() {
     // whoever has heard of the girl and her dowry knows there is a Zmiy
     if (g === "zmiyGirl") { setFlag("zmiyKnown"); setFlag("zmiyGirl"); return; }
     if (g === "lazRumor") { setFlag("lazKnown"); showToast(t("cave.toast.lazKnown")); return; }
+    // "A roof for Omelko" (systems/pustka.ts)
+    if (g === "omelkoHome") { setFlag("omelkoHome"); showToast(t("pustka.toast.omelkoHome")); return; }
+    if (g === "pustkaLeave") { setFlag("pustkaLeave"); showToast(t("pustka.toast.leave")); return; }
+    if (g === "omelkoMove") { setFlag("omelkoMoved"); showToast(t("pustka.toast.moved")); return; }
     // The chumak choices (systems/chumaky.ts).
     if (g === "persuade" || g === "treatOstap" || g === "vesnaTonic") {
       const day = clockRef.current.day;
@@ -1185,7 +1202,7 @@ export function App() {
         } else if (p.npc.id === "odarka" || p.npc.id === "okhrim") {
           const kset = korchmaTopicSet(p.npc.id, flags, fish, firstMeeting);
           if (kset) {
-            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...(p.npc.id === "odarka" ? odarkaProkipTopics(flags) : []), ...caveRumorTopics(p.npc.id, flags), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, kset.intro, [...kset.topics, ...(p.npc.id === "odarka" ? odarkaProkipTopics(flags) : []), ...caveRumorTopics(p.npc.id, flags), ...pustkaTopics(p.npc.id, flags), ...tobaccoTopics(p.npc.id, flags), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         } else if (p.npc.id === "gnat" || p.npc.id === "ostap") {
@@ -1197,7 +1214,7 @@ export function App() {
         } else {
           const tset = topicsForVillage(p.npc, herbsRef.current, flags, fish, price, statsNow.int.total, firstMeeting);
           if (tset) {
-            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...caveRumorTopics(p.npc.id, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...(p.npc.id === "vesna" ? vesnaProkipTopics(prokipStage({ flags, met: talkedRef.current.has("prokip"), heard: true })) : []), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
+            openTopicDialogue(p.npc, tset.intro, [...tset.topics, ...songTopics(p.npc.id, areaRef.current, flags), ...caveRumorTopics(p.npc.id, flags), ...pustkaTopics(p.npc.id, flags), ...chumakTopicsFor(p.npc.id, chumakContext()), ...tobaccoTopics(p.npc.id, flags), ...tradeTopics(p.npc.id, flags), ...(p.npc.id === "vesna" ? vesnaProkipTopics(prokipStage({ flags, met: talkedRef.current.has("prokip"), heard: true })) : []), ...mapTopics(p.npc.id, flags, fish), ...vigilTopics(p.npc.id, vigilContext())]);
             return;
           }
         }
@@ -1586,6 +1603,39 @@ export function App() {
         if (n > 0) { syncFlags(); showToast(t("cave.toast.hoard", { n })); }
         return;
       }
+      case "chop": {
+        const w = chopLog(flagsRef.current);
+        if (!w) return;
+        syncFlags();
+        passTime(w.minutes);
+        const base = w.quest ? t("pustka.toast.chopQuest", { n: w.logs, need: WOOD_NEEDED }) : t("pustka.toast.chopFree");
+        showToast(workToast(w, base));
+        return;
+      }
+      case "reed": {
+        const w = cutReed(flagsRef.current, p.idx);
+        if (!w) return;
+        syncFlags();
+        passTime(w.minutes);
+        showToast(workToast(w, t("pustka.toast.reed", { n: w.reeds, need: REEDS_NEEDED })));
+        return;
+      }
+      case "thatch": {
+        const w = thatchRoof(flagsRef.current);
+        if (!w) return;
+        syncFlags();
+        passTime(w.minutes);
+        showToast(workToast(w, t("pustka.toast.thatch")));
+        return;
+      }
+      case "stack": {
+        const w = stackWood(flagsRef.current);
+        if (!w) return;
+        syncFlags();
+        passTime(w.minutes);
+        showToast(workToast(w, t("pustka.toast.stack")));
+        return;
+      }
       case "pouch": {
         const n = takePouch(flagsRef.current);
         if (n > 0) { syncFlags(); showToast(t("cave.toast.pouch", { n })); }
@@ -1816,7 +1866,7 @@ export function App() {
         setHudInside(insideNow);
         if (insideNow === "zmiieva") setFlag("caveHeard"); // the cave goes on the map once you have seen it
         // a trip through the crack/ladder/hatch tells its own story (passLaz)
-        if (insideNow && !passingRef.current) showToast(t(HOUSE_ENTER[insideNow]));
+        if (insideNow && !passingRef.current) showToast(t(insideNow === "pustka" ? pustkaEnterKey(pustkaStage(flagsRef.current)) : HOUSE_ENTER[insideNow]));
         passingRef.current = false;
       }
       if (insideNow === "zmiieva" || insideNow === "lazna") stepCaveLife(caveLifeRef.current, dt, now, p);
@@ -1997,7 +2047,8 @@ export function App() {
         ...hiders.filter((h) => !onLysa(h.x, h.y)),
         ...residents.filter((r) => !onLysa(r.x, r.y)),
         PROKIP,
-        ...(insideNow === "zmiieva" ? CAVE_CHARS : []),
+        ...(insideNow === "zmiieva" ? CAVE_CHARS.filter((c) => !(c.id === "omelko" && omelkoAtHome(flagsNow))) : []),
+        ...(insideNow === "pustka" && omelkoAtHome(flagsNow) ? [OMELKO_HOME] : []),
         ...(insideNow === "lazna" ? TUNNEL_CHARS : []),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
@@ -2076,6 +2127,11 @@ export function App() {
         spot(true, FIRE.x + FIRE.w / 2, FIRE.y + FIRE.h / 2, 84, () => ({ kind: "play" }));
         spot(houseAt(p.x, p.y) === "korchma", KORCHMA_PLAY.x, KORCHMA_PLAY.y, 40, () => ({ kind: "playKorchma" }));
         spot(houseAt(p.x, p.y) === "pustka", PUSTKA_CHEST.x, PUSTKA_CHEST.y, 34, () => ({ kind: "pustkaChest" }));
+        // "A roof for Omelko" (systems/pustka.ts): the block, the reeds, the ladder, the pich
+        spot(!insideNow && chopAvailable(flagsNow), CHOP_SPOT.x, CHOP_SPOT.y, 54, () => ({ kind: "chop" }));
+        REED_SPOTS.forEach((rp, i) => spot(!insideNow && reedAvailable(flagsNow, i), rp.x, rp.y, 46, () => ({ kind: "reed", idx: i })));
+        spot(!insideNow && thatchAvailable(flagsNow), THATCH_SPOT.x, THATCH_SPOT.y, 54, () => ({ kind: "thatch" }));
+        spot(insideNow === "pustka" && stackAvailable(flagsNow), STACK_SPOT.x, STACK_SPOT.y, 46, () => ({ kind: "stack" }));
         {
           const dog = crittersRef.current.find((c) => c.kind === "dog");
           // with Prokip's gift the animals talk; without, the dog is petted
@@ -2206,7 +2262,7 @@ export function App() {
           : id === "korchma"
             ? drawKorchma(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
             : id === "pustka"
-              ? drawPustka(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              ? drawPustka(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, { roof: flagHas(flagsNow, "pustkaRoof"), fire: flagHas(flagsNow, "pustkaFire"), home: omelkoAtHome(flagsNow) })
               : id === "mlyn"
                 ? drawMlyn(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "duplo"
@@ -2250,6 +2306,16 @@ export function App() {
       if (perelesnykFlies(flagsNow, clockRef.current.minute) && Math.abs(PERELESNYK_AT.x - camX - vw / 2) < vw && Math.abs(PERELESNYK_AT.y - camY - vh / 2) < vh) {
         const near = Math.max(0, Math.min(1, 1 - (Math.hypot(p.x - PERELESNYK_AT.x, p.y - PERELESNYK_AT.y) - 60) / 200));
         drawables.push({ y: PERELESNYK_AT.y + 2, draw: () => drawPerelesnyk(ctx2d, PERELESNYK_AT.x - camX, PERELESNYK_AT.y - camY, now, near) });
+      }
+      // "A roof for Omelko": the chopping block in the pustka's yard and the reeds on the pond's bank
+      if (!insideNow && chopAvailable(flagsNow) && Math.abs(CHOP_SPOT.x - camX - vw / 2) < vw && Math.abs(CHOP_SPOT.y - camY - vh / 2) < vh) {
+        drawables.push({ y: CHOP_SPOT.y, draw: () => drawChopBlock(ctx2d, CHOP_SPOT.x - camX, CHOP_SPOT.y - camY, logsChopped(flagsNow)) });
+      }
+      if (pustkaStage(flagsNow) !== "locked" && !insideNow) {
+        REED_SPOTS.forEach((rp, i) => {
+          if (Math.abs(rp.x - camX - vw / 2) > vw || Math.abs(rp.y - camY - vh / 2) > vh) return;
+          drawables.push({ y: rp.y, draw: () => (reedTaken(flagsNow, i) ? drawReedStubble(ctx2d, rp.x - camX, rp.y - camY) : drawReedClump(ctx2d, rp.x - camX, rp.y - camY, now)) });
+        });
       }
       // (underground, the crowns of the forest outside must not hang over the floor)
       const ugR = insideNow === "zmiieva" || insideNow === "lazna" ? HOUSE_RECTS[insideNow] : null;
@@ -2441,7 +2507,7 @@ export function App() {
       }
       if (!isHutArea(area)) {
         drawDark(ctx2d, darkness(clockRef.current.minute), camX, camY, vw, vh, dpr, now, insideRef.current,
-          perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : [], p);
+          [...(perelesnykFlies(flagsRef.current, clockRef.current.minute) ? [{ x: PERELESNYK_AT.x, y: PERELESNYK_AT.y - 130, r: 150, col: "255,130,50", k: 0.9 }] : []), ...(omelkoAtHome(flagsRef.current) && insideRef.current !== "pustka" ? PUSTKA_WINDOWS : [])], p);
       }
       // the black that covers a trip through the crack, the ladder or the hatch
       if (fadeRef.current > 0.01) {
@@ -2571,9 +2637,11 @@ export function App() {
   const alchemyLvl = craftLevel(brewed);
   const played = flagCount(hudFlags, "played");
   const musicLvl = craftLevel(played);
+  const carpentry = flagCount(hudFlags, "carpentry");
+  const carpentryLvl = carpentryLevel(carpentry);
   const stats = computeStats({
     herbs: hudHerbs, fishTotal, cooked, smithed, brewed,
-    played, flags: hudFlags,
+    played, carpentry, flags: hudFlags,
   });
   const price = soulPrice(stats);
   const carried = carriedWeight(hudFlags);
@@ -2661,6 +2729,8 @@ export function App() {
                                     ? t("cave.prompt.hoard")
                                   : prompt.kind === "pouch"
                                     ? t("cave.prompt.pouch")
+                                  : prompt.kind === "chop" || prompt.kind === "reed" || prompt.kind === "thatch" || prompt.kind === "stack"
+                                    ? t(`pustka.prompt.${prompt.kind}` as TextKey)
                                   : prompt.kind === "vigil"
                                     ? t("ui.promptLabel.19")
                                   : prompt.kind === "sieve"
@@ -2702,6 +2772,7 @@ export function App() {
     { name: t("ui.skillRows.name.3"), level: smithLvl, done: smithed, next: CRAFT_THRESH[smithLvl] ?? null, stat: t("ui.skillRows.stat.3") },
     { name: t("ui.skillRows.name.4"), level: alchemyLvl, done: brewed, next: CRAFT_THRESH[alchemyLvl] ?? null, stat: t("ui.skillRows.stat.4") },
     { name: t("ui.skillRows.name.music"), level: musicLvl, done: played, next: CRAFT_THRESH[musicLvl] ?? null, stat: t("ui.skillRows.stat.music") },
+    { name: t("ui.skillRows.name.carpentry"), level: carpentryLvl, done: carpentry, next: CARPENTRY_THRESH[carpentryLvl] ?? null, stat: t("ui.skillRows.stat.carpentry") },
   ];
   // --- Quest log: every thread, from systems/quests.ts (the same source
   // as the objective line above, so the two always agree).

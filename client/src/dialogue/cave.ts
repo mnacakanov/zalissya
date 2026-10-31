@@ -1,5 +1,6 @@
 import { t, type TextKey } from "../i18n";
 import { flagHas } from "../systems/flags";
+import { omelkoAtHome, pustkaStage } from "../systems/pustka";
 import { knowsSong } from "../systems/songs";
 import { type DialogueTopic, type TopicSet } from "./topics";
 
@@ -28,19 +29,27 @@ export function caveTopicSet(npcId: string, flags: ReadonlySet<string>, firstMee
   const through = flagHas(flags, "lazOpen");
   if (npcId === "omelko") {
     const knows = knowsSong(flags, "marusia");
+    const home = omelkoAtHome(flags);
+    const stage = pustkaStage(flags);
     return {
-      intro: L(firstMeeting ? "cave.omelko.intro" : "cave.omelko.again"),
+      intro: L(home ? (firstMeeting ? "cave.omelko.homeIntro" : "cave.omelko.homeAgain") : firstMeeting ? "cave.omelko.intro" : "cave.omelko.again"),
       topics: [
         topic("who", "cave.omelko.t.who", L("cave.omelko.who.0", "cave.omelko.who.1")),
-        topic("eyes", "cave.omelko.t.eyes", L("cave.omelko.eyes.0", "cave.omelko.eyes.1")),
+        home
+          ? topic("eyes", "cave.omelko.t.homeLife", L("cave.omelko.homeLife.0", "cave.omelko.homeLife.1"))
+          : topic("eyes", "cave.omelko.t.eyes", L("cave.omelko.eyes.0", "cave.omelko.eyes.1")),
         knows
-          ? topic("sing", "cave.omelko.t.singAgain", lulled ? L("cave.omelko.singAgain.lulled") : L("cave.omelko.singAgain.0", "cave.omelko.singAgain.1"))
+          ? topic("sing", "cave.omelko.t.singAgain", lulled && !home ? L("cave.omelko.singAgain.lulled") : L("cave.omelko.singAgain.0", "cave.omelko.singAgain.1"))
           : topic("marusia", "cave.omelko.t.marusia", L("cave.omelko.marusia.0", "cave.omelko.marusia.1"), "marusia"),
         // he only talks of the Zmiy to someone who knows there is one
         ...(flagHas(flags, "zmiyKnown") ? [topic("zmiy", "cave.omelko.t.zmiy", L("cave.omelko.zmiy.0", "cave.omelko.zmiy.1"))] : []),
         // the draught from behind the serpent: he hears it, and he hears who passes
-        topic("tunnel", "cave.omelko.t.tunnel", lulled || through ? L("cave.omelko.tunnel.open.0", "cave.omelko.tunnel.open.1") : L("cave.omelko.tunnel.0", "cave.omelko.tunnel.1")),
+        ...(home ? [] : [topic("tunnel", "cave.omelko.t.tunnel", lulled || through ? L("cave.omelko.tunnel.open.0", "cave.omelko.tunnel.open.1") : L("cave.omelko.tunnel.0", "cave.omelko.tunnel.1"))]),
         topic("kobza", "cave.omelko.t.kobza", L("cave.omelko.kobza.0", "cave.omelko.kobza.1")),
+        // "A roof for Omelko" (systems/pustka.ts): it opens once Stepan's shape has stopped coming
+        ...(stage === "ask" ? [topic("home", "cave.omelko.t.home", L("cave.omelko.home.0", "cave.omelko.home.1"), "omelkoHome")] : []),
+        ...(stage === "permission" || stage === "work" ? [topic("home", "cave.omelko.t.home", L("cave.omelko.homeWait.0", "cave.omelko.homeWait.1"))] : []),
+        ...(stage === "ready" ? [topic("move", "cave.omelko.t.move", L("cave.omelko.move.0", "cave.omelko.move.1"), "omelkoMove")] : []),
       ],
     };
   }

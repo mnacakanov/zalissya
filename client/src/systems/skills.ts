@@ -30,3 +30,15 @@ export function craftLevel(done: number): number {
   }
   return lvl;
 }
+
+// Carpentry: chopping, thatching and the other honest work of a khutir's
+// roofs and stoves. Level n starts at CARPENTRY_THRESH[n-1] acts; it feeds
+// STR beside Smithing (systems/stats.ts).
+export const CARPENTRY_THRESH = [0, 5, 12, 22, 36];
+export function carpentryLevel(done: number): number {
+  let lvl = 1;
+  for (let i = 0; i < CARPENTRY_THRESH.length; i++) {
+    if (done >= (CARPENTRY_THRESH[i] ?? 0)) lvl = i + 1;
+  }
+  return lvl;
+}

@@ -955,7 +955,7 @@ function drawPustkaInterior(c: CanvasRenderingContext2D, x: number, y: number, t
     c.beginPath(); c.ellipse(lx, ly, 3, 1.6, hash2(i, 55) * 3, 0, Math.PI * 2); c.fill();
   }
   // the shaft of light through the roof, with dust turning in it
-  {
+  if (!flagHas(flags, "pustkaRoof")) {
     const lx = x + w * 0.62;
     const g = c.createLinearGradient(lx, y + 40, lx, y + h);
     g.addColorStop(0, "rgba(255,244,210,0.0)");
@@ -1003,7 +1003,8 @@ function drawPustkaInterior(c: CanvasRenderingContext2D, x: number, y: number, t
   }
   // cobwebs in the corners
   c.strokeStyle = "rgba(235,235,230,0.55)"; c.lineWidth = 0.8;
-  for (const [cx, cy, sx, sy] of [[x + WALL, y + BACK_WALL, 1, 1], [x + w - WALL, y + BACK_WALL, -1, 1], [x + WALL, y + h - WALL, 1, -1]] as const) {
+  const webs = flagHas(flags, "pustkaFire") ? [] : ([[x + WALL, y + BACK_WALL, 1, 1], [x + w - WALL, y + BACK_WALL, -1, 1], [x + WALL, y + h - WALL, 1, -1]] as const);
+  for (const [cx, cy, sx, sy] of webs) {
     for (let k = 0; k < 4; k++) {
       const a = (k / 3) * (Math.PI / 2);
       c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * 22 * sx, cy + Math.sin(a) * 22 * sy); c.stroke();
@@ -1036,6 +1037,25 @@ function drawPustkaInterior(c: CanvasRenderingContext2D, x: number, y: number, t
     c.fillStyle = "#8a8070";
     for (const [bx, by] of [[p.x + p.w + 4, p.y + p.h - 2], [p.x + p.w + 10, p.y + p.h + 3]] as const) {
       c.beginPath(); c.ellipse(bx, by, 3.4, 2.2, 0, 0, Math.PI * 2); c.fill();
+    }
+    if (flagHas(flags, "pustkaFire")) {
+      // the wood stacked, the fire breathing in the mouth, the room warmed by it
+      const mx = p.x + p.w - 22;
+      const my = p.y + 22;
+      const glow = c.createRadialGradient(p.x + p.w, p.y + 40, 4, p.x + p.w, p.y + 40, 80);
+      glow.addColorStop(0, "rgba(255,150,60,0.34)"); glow.addColorStop(1, "rgba(255,150,60,0)");
+      c.fillStyle = glow; c.fillRect(p.x - 10, p.y - 30, 170, 140);
+      const fl = 3.4 + Math.sin(t * 0.017) * 1.3 + Math.sin(t * 0.041) * 0.8;
+      c.fillStyle = "#ff8b2e";
+      c.beginPath(); c.ellipse(mx + 13, my + 14, fl + 2, 8, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#ffd76a";
+      c.beginPath(); c.ellipse(mx + 13, my + 15, fl - 1, 4.4, 0, 0, Math.PI * 2); c.fill();
+      for (let i = 0; i < 6; i++) {
+        const lx = p.x + p.w + 14 + (i % 3) * 10;
+        const ly = p.y + p.h - 8 - Math.floor(i / 3) * 9;
+        c.fillStyle = "#8a6238"; rr(c, lx - 5, ly - 5, 10, 10, 2); c.fill();
+        c.fillStyle = "#d4b07a"; c.beginPath(); c.ellipse(lx, ly, 3.4, 3.4, 0, 0, Math.PI * 2); c.fill();
+      }
     }
   }
   // his skrynia, its paint gone, the lid a little open

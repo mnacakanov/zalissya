@@ -2,6 +2,7 @@ import { flagCount, flagHas } from "./flags";
 import { knowsSong } from "./songs";
 import { ostapState } from "./chumaky";
 import { tobaccoStage } from "./tobacco";
+import { logsChopped, pustkaStage, reedsCut, REEDS_NEEDED, WOOD_NEEDED } from "./pustka";
 import { prokipStage, type ProkipStage, vesnaCanForgive } from "./vorozhbyt";
 import { t, type TextKey } from "../i18n";
 
@@ -47,6 +48,12 @@ export const SECTION_TITLES: Record<SectionId, string> = {
 };
 
 type Derived = ReturnType<typeof derive>;
+
+const omelkoHomeText = (d: Derived): string => {
+  const stage = pustkaStage(d.f);
+  if (stage === "work") return t("quest.omelkoHome.work", { logs: logsChopped(d.f), wood: WOOD_NEEDED, reeds: reedsCut(d.f), reedsNeed: REEDS_NEEDED });
+  return t(`quest.omelkoHome.${stage === "locked" || stage === "ask" ? "permission" : stage}` as TextKey);
+};
 
 const prokipOf = (d: Derived): ProkipStage =>
   prokipStage({ flags: d.f, met: d.v.talked.includes("prokip"), heard: d.v.talked.includes("vesna") });
@@ -144,6 +151,14 @@ const QUESTS: QuestDef[] = [
     done: (d) => prokipOf(d) === "done",
     detail: (d) => t(PROKIP_TEXT[prokipOf(d)]),
     objective: (d) => t(PROKIP_TEXT[prokipOf(d)]),
+  },
+  {
+    // "A roof for Omelko" (systems/pustka.ts): opens once Stepan's shape has stopped coming
+    id: "omelko-home", section: "life", title: t("quest.omelkoHome.title"),
+    visible: (d) => ["permission", "work", "ready", "done"].includes(pustkaStage(d.f)),
+    done: (d) => pustkaStage(d.f) === "done",
+    detail: (d) => omelkoHomeText(d),
+    objective: (d) => omelkoHomeText(d),
   },
   {
     // Vesna, cross after the question about the rain (systems/vorozhbyt.ts)
@@ -325,7 +340,7 @@ const QUESTS: QuestDef[] = [
 // (Secret quests are listed too, but never become the objective.)
 const PRIORITY = [
   "chumaky", "meet", "herbs", "evening", "spirits", "dark", "lysa-visit", "viy", "soul", "oldway", "vigil", "tobacco",
-  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "vesna-sorry", "lysa-sabbath",
+  "domovyk", "forge", "fishing", "cooking", "smithing", "alchemy", "prokip", "omelko-home", "vesna-sorry", "lysa-sabbath",
 ];
 
 export function questLog(v: QuestView): QuestLog {
