@@ -1,4 +1,4 @@
-import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, KORCHMA_ROOM, MLYN_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
+import { BACK_WALL, DOOR_GAP, HOUSE_RECTS, type HouseId, DUPLO_ROOM, KORCHMA_ROOM, KURHAN_ROOM, MLYN_ROOM, PECHERA_ROOM, OTAMAN_DOORS, OTAMAN_ROOM, OTAMAN_WALLS, PUSTKA_ROOM, ROOM, WALL } from "../data/houses";
 import { flagHas } from "../systems/flags";
 import { hash2 } from "../world/geometry";
 import { rr } from "./shapes";
@@ -20,6 +20,9 @@ export function drawKhataInterior(
   if (id === "korchma") { drawKorchmaInterior(c, x, y, t); return; }
   if (id === "pustka") { drawPustkaInterior(c, x, y, t, flags); return; }
   if (id === "mlyn") { drawMlynInterior(c, x, y, t); return; }
+  if (id === "duplo") { drawDuploInterior(c, x, y, t); return; }
+  if (id === "kurhan") { drawKurhanInterior(c, x, y, t); return; }
+  if (id === "pechera") { drawPecheraInterior(c, x, y, t); return; }
   const { w, h } = HOUSE_RECTS[id];
   const vesna = id === "hut1";
   const R = (r: { x: number; y: number; w: number; h: number }) => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
@@ -1184,4 +1187,167 @@ function drawMlynInterior(c: CanvasRenderingContext2D, x: number, y: number, t: 
     c.fillStyle = "#e4dac2"; rr(c, x + 104, y + 94, 24, 12, 5); c.fill();
     c.strokeStyle = "rgba(30,20,10,0.7)"; c.lineWidth = 0.8; c.stroke();
   }
+}
+
+// --- The hollow oak (Motrya's) -------------------------------------------------------
+function drawDuploInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.duplo;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  // the floor: the oak's own rings, old and dark
+  c.fillStyle = "#6a4a2c";
+  c.fillRect(x, y, w, h);
+  c.strokeStyle = "rgba(40,26,12,0.45)"; c.lineWidth = 1;
+  for (let r = 6; r < 90; r += 7) { c.beginPath(); c.ellipse(x + w / 2, y + h / 2 + 8, r * 1.2, r * 0.8, 0, 0, Math.PI * 2); c.stroke(); }
+  // walls of living wood, the inner bark ridged
+  c.fillStyle = "#4e3420";
+  c.fillRect(x, y, w, BACK_WALL);
+  c.strokeStyle = "rgba(20,12,6,0.6)";
+  for (let px = x + 6; px < x + w; px += 7) { c.beginPath(); c.moveTo(px, y + 4); c.quadraticCurveTo(px + 2, y + BACK_WALL / 2, px, y + BACK_WALL); c.stroke(); }
+  c.fillStyle = "#3e2a18";
+  c.fillRect(x, y, WALL, h); c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL); c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  // daylight through the hollow
+  c.fillStyle = "rgba(220,240,180,0.25)";
+  c.beginPath(); c.moveTo(x + half, y + h); c.lineTo(x + half + DOOR_GAP, y + h); c.lineTo(x + half + DOOR_GAP - 6, y + h - 40); c.lineTo(x + half + 6, y + h - 40); c.closePath(); c.fill();
+  // herbs, a bat-wing and frog legs hung on a root; an owl on a knot
+  c.strokeStyle = "#2e2014"; c.lineWidth = 1;
+  [["#5d8a3a", 18], ["#8a9678", 28], ["#4a3a2a", 40], ["#b0507a", 50]].forEach(([col, px]) => {
+    c.beginPath(); c.moveTo(x + (px as number), y + 6); c.lineTo(x + (px as number), y + 14); c.stroke();
+    c.fillStyle = col as string;
+    c.beginPath(); c.ellipse(x + (px as number), y + 19, 3, 5, 0, 0, Math.PI * 2); c.fill();
+  });
+  const blink = (t % 6000) > 5800;
+  c.fillStyle = "#8a6a44";
+  c.beginPath(); c.ellipse(x + w - 24, y + 18, 7, 9, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "rgba(20,14,8,0.8)"; c.lineWidth = 0.8; c.stroke();
+  c.fillStyle = blink ? "#6a4a2c" : "#f0c040";
+  c.beginPath(); c.arc(x + w - 27, y + 15, 2, 0, Math.PI * 2); c.arc(x + w - 21, y + 15, 2, 0, Math.PI * 2); c.fill();
+  // her nest of moss and feathers, and the little cauldron
+  const n = R(DUPLO_ROOM.nest);
+  c.fillStyle = "#4e6a30";
+  c.beginPath(); c.ellipse(n.x + n.w / 2, n.y + n.h / 2, n.w / 2, n.h / 2, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "rgba(20,14,8,0.8)"; c.lineWidth = 0.9; c.stroke();
+  c.fillStyle = "#e8e2d0";
+  for (let k = 0; k < 5; k++) { c.beginPath(); c.ellipse(n.x + 8 + k * 7, n.y + 6 + (k % 2) * 6, 3, 1.4, k, 0, Math.PI * 2); c.fill(); }
+  const cb = R(DUPLO_ROOM.cauldron);
+  c.fillStyle = "#2e2a26";
+  c.beginPath(); c.ellipse(cb.x + cb.w / 2, cb.y + cb.h / 2, cb.w / 2, cb.h / 2 - 1, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = `rgba(150,110,200,${0.5 + Math.sin(t * 0.005) * 0.25})`;
+  c.beginPath(); c.ellipse(cb.x + cb.w / 2, cb.y + cb.h / 2 - 2, cb.w / 2 - 3, 2.6, 0, 0, Math.PI * 2); c.fill();
+  // mushrooms by the wall
+  for (const [mx, my] of [[x + 20, y + h - 22], [x + w - 22, y + h - 26]] as const) {
+    c.fillStyle = "#e8e0cc"; c.fillRect(mx - 1, my, 2, 5);
+    c.fillStyle = "#b8402a"; c.beginPath(); c.ellipse(mx, my, 4, 2.6, 0, Math.PI, 0); c.fill();
+  }
+}
+
+// --- The kurhan chamber (Opanas's) ------------------------------------------------
+function drawKurhanInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.kurhan;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  // an earth floor, trodden, with old bones in it
+  c.fillStyle = "#5a4630";
+  c.fillRect(x, y, w, h);
+  for (let i = 0; i < 24; i++) {
+    c.fillStyle = i % 2 ? "rgba(40,30,20,0.3)" : "rgba(120,96,64,0.25)";
+    c.beginPath(); c.ellipse(x + hash2(i, 941) * w, y + hash2(i, 943) * h, 6 + hash2(i, 945) * 8, 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  // earthen walls, roots poking through, timber props
+  c.fillStyle = "#3e3020";
+  c.fillRect(x, y, w, BACK_WALL); c.fillRect(x, y, WALL, h); c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL); c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.strokeStyle = "#7a5a34"; c.lineWidth = 1.2;
+  for (let k = 0; k < 8; k++) {
+    const rx = x + 12 + k * 20;
+    c.beginPath(); c.moveTo(rx, y + WALL); c.quadraticCurveTo(rx + 4, y + WALL + 10, rx - 2, y + BACK_WALL - 2); c.stroke();
+  }
+  c.fillStyle = "#6e4a2a";
+  for (const px of [x + 24, x + w - 30]) c.fillRect(px, y + 4, 6, BACK_WALL);
+  c.fillRect(x + 20, y + 4, w - 46, 5);
+  // the old grave-slab, with a carved sun nobody can read
+  const s = R(KURHAN_ROOM.slab);
+  c.fillStyle = "rgba(20,14,10,0.35)"; rr(c, s.x + 3, s.y + 4, s.w, s.h, 3); c.fill();
+  const g = c.createLinearGradient(s.x, 0, s.x + s.w, 0);
+  g.addColorStop(0, "#9a968a"); g.addColorStop(1, "#5e5a50");
+  c.fillStyle = g; rr(c, s.x, s.y, s.w, s.h, 3); c.fill();
+  c.strokeStyle = "rgba(20,16,12,0.8)"; c.lineWidth = 0.9; c.stroke();
+  c.strokeStyle = "rgba(40,36,30,0.6)";
+  c.beginPath(); c.arc(s.x + s.w / 2, s.y + s.h / 2, 6, 0, Math.PI * 2); c.stroke();
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; c.beginPath(); c.moveTo(s.x + s.w / 2 + Math.cos(a) * 7, s.y + s.h / 2 + Math.sin(a) * 7); c.lineTo(s.x + s.w / 2 + Math.cos(a) * 10, s.y + s.h / 2 + Math.sin(a) * 10); c.stroke(); }
+  // candles on the slab, and a goat's skull
+  for (const cx of [s.x + 8, s.x + s.w - 8]) {
+    c.fillStyle = "#e8e0c8"; c.fillRect(cx - 1.4, s.y - 2, 2.8, 7);
+    const fl = 2 + Math.sin(t * 0.02 + cx) * 0.6;
+    c.fillStyle = "#ffcf5a"; c.beginPath(); c.ellipse(cx, s.y - 4, 1.2, fl, 0, 0, Math.PI * 2); c.fill();
+    const lg = c.createRadialGradient(cx, s.y - 4, 1, cx, s.y - 4, 40);
+    lg.addColorStop(0, "rgba(255,190,90,0.25)"); lg.addColorStop(1, "rgba(255,190,90,0)");
+    c.fillStyle = lg; c.fillRect(cx - 40, s.y - 44, 80, 80);
+  }
+  c.fillStyle = "#e8e2d0";
+  c.beginPath(); c.ellipse(x + 104, y + 82, 6, 4.6, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#cfc6b0"; c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(x + 100, y + 79); c.quadraticCurveTo(x + 94, y + 72, x + 96, y + 68); c.moveTo(x + 108, y + 79); c.quadraticCurveTo(x + 114, y + 72, x + 112, y + 68); c.stroke();
+  c.fillStyle = "#1e1a16"; c.fillRect(x + 101, y + 81, 1.6, 1.6); c.fillRect(x + 105.4, y + 81, 1.6, 1.6);
+  // Opanas's straw bed, a spare kuchma on a peg of root
+  const b = R(KURHAN_ROOM.bed);
+  c.fillStyle = "#c8a858"; rr(c, b.x, b.y, b.w, b.h, 4); c.fill();
+  c.strokeStyle = "rgba(20,14,8,0.8)"; c.lineWidth = 0.9; c.stroke();
+  c.fillStyle = "#2a2428"; c.fillRect(b.x + 8, y + 10, 12, 12);
+  c.fillStyle = "#9a2430"; c.fillRect(b.x + 8, y + 8, 12, 3);
+}
+
+// --- Beelzebub's cave ------------------------------------------------------------------
+function drawPecheraInterior(c: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  const { w, h } = HOUSE_RECTS.pechera;
+  const R = (r: Box): Box => ({ x: x + r.x, y: y + r.y, w: r.w, h: r.h });
+  // rock floor, warm with something underneath
+  const fg = c.createRadialGradient(x + w / 2, y + h / 2, 10, x + w / 2, y + h / 2, w * 0.7);
+  fg.addColorStop(0, "#5a4a52"); fg.addColorStop(1, "#2e2632");
+  c.fillStyle = fg;
+  c.fillRect(x, y, w, h);
+  for (let i = 0; i < 20; i++) {
+    c.fillStyle = "rgba(20,14,22,0.35)";
+    c.beginPath(); c.ellipse(x + hash2(i, 951) * w, y + hash2(i, 953) * h, 6 + hash2(i, 955) * 9, 3, 0, 0, Math.PI * 2); c.fill();
+  }
+  // walls of rock, stalactites dripping from the back
+  c.fillStyle = "#24202c";
+  c.fillRect(x, y, w, BACK_WALL); c.fillRect(x, y, WALL, h); c.fillRect(x + w - WALL, y, WALL, h);
+  const half = (w - DOOR_GAP) / 2;
+  c.fillRect(x, y + h - WALL, half, WALL); c.fillRect(x + w - half, y + h - WALL, half, WALL);
+  c.fillStyle = "#3a3444";
+  for (let k = 0; k < 12; k++) {
+    const sx = x + 10 + k * 14;
+    const len = 8 + hash2(k, 961) * 14;
+    c.beginPath(); c.moveTo(sx - 4, y + BACK_WALL - 4); c.lineTo(sx + 4, y + BACK_WALL - 4); c.lineTo(sx, y + BACK_WALL - 4 + len); c.closePath(); c.fill();
+  }
+  const drip = (t * 0.06) % 30;
+  c.fillStyle = "rgba(200,210,230,0.7)";
+  c.fillRect(x + 66, y + BACK_WALL + 8 + drip, 1.2, 2.4);
+  // the sulphur pool, glowing yellow-green, bubbling
+  const p = R(PECHERA_ROOM.pool);
+  const pg = c.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 2, p.x + p.w / 2, p.y + p.h / 2, p.w);
+  pg.addColorStop(0, "#e8e060"); pg.addColorStop(1, "#6a7a2a");
+  c.fillStyle = pg;
+  c.beginPath(); c.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 2, p.h / 2, 0, 0, Math.PI * 2); c.fill();
+  const gl = c.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 4, p.x + p.w / 2, p.y + p.h / 2, 70);
+  gl.addColorStop(0, "rgba(230,220,90,0.25)"); gl.addColorStop(1, "rgba(230,220,90,0)");
+  c.fillStyle = gl; c.fillRect(p.x - 60, p.y - 60, 140, 140);
+  const bub = (t * 0.003) % 1;
+  c.strokeStyle = `rgba(255,250,200,${1 - bub})`; c.lineWidth = 1;
+  c.beginPath(); c.arc(p.x + 10, p.y + 9, 1 + bub * 4, 0, Math.PI * 2); c.stroke();
+  // the hoard: tribute in gold, and somebody's boot
+  const hd = R(PECHERA_ROOM.hoard);
+  c.fillStyle = "#c9a040";
+  for (let k = 0; k < 9; k++) { c.beginPath(); c.ellipse(hd.x + 4 + (k % 4) * 6, hd.y + 6 + Math.floor(k / 4) * 5, 3, 1.8, 0, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = "#2c2015"; c.fillRect(hd.x + 18, hd.y + 2, 6, 10);
+  // the stone bed, heaped with black fleeces
+  const b = R(PECHERA_ROOM.bed);
+  c.fillStyle = "rgba(10,8,14,0.4)"; rr(c, b.x + 3, b.y + 4, b.w, b.h, 6); c.fill();
+  const bg = c.createLinearGradient(b.x, 0, b.x + b.w, 0);
+  bg.addColorStop(0, "#5e5868"); bg.addColorStop(1, "#2e2a36");
+  c.fillStyle = bg; rr(c, b.x, b.y, b.w, b.h, 6); c.fill();
+  c.strokeStyle = "rgba(14,10,18,0.85)"; c.lineWidth = 1; c.stroke();
+  c.fillStyle = "#1e1820"; rr(c, b.x + 6, b.y + 6, b.w - 12, b.h - 12, 5); c.fill();
 }

@@ -299,3 +299,32 @@ export function drawLysaFlower(c: CanvasRenderingContext2D, sx: number, sy: numb
     c.beginPath(); c.arc(lx + 3, ly - 8, 1.6, 0, Math.PI * 2); c.fill();
   }
 }
+// Beelzebub asleep on his stone bed by day, wrapped in his robe like a bat,
+// snoring so the cave sheds pebbles; one yellow eye opens now and then.
+export function drawBeelzebubAsleep(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
+  const br = Math.sin(t * 0.0012) * 1.6;
+  const INK = "rgba(20,12,16,0.9)";
+  const g = c.createLinearGradient(x - 40, 0, x + 40, 0);
+  g.addColorStop(0, "#4a3450"); g.addColorStop(1, "#24182a");
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(x + 6, y - 8 - br * 0.4, 36, 11 + br * 0.3, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
+  c.fillStyle = "#7a1a2a";
+  c.beginPath(); c.ellipse(x + 10, y - 6, 22, 4, 0, 0, Math.PI); c.fill();
+  // the head on the stone, horns curling
+  c.fillStyle = "#5a3444";
+  c.beginPath(); c.ellipse(x - 34, y - 10, 11, 10, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  for (const s of [-1, 1]) {
+    c.fillStyle = "#e7ddc4";
+    c.beginPath(); c.moveTo(x - 34 + s * 6, y - 18); c.quadraticCurveTo(x - 34 + s * 16, y - 24, x - 34 + s * 14, y - 34); c.quadraticCurveTo(x - 34 + s * 10, y - 22, x - 34 + s * 2, y - 16); c.closePath(); c.fill(); c.stroke();
+  }
+  const eye = (t % 9000) > 8000;
+  c.fillStyle = eye ? "#ffb02e" : "#2a1a20";
+  c.beginPath(); c.ellipse(x - 30, y - 11, 2.2, eye ? 1.6 : 0.6, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#7a7482";
+  c.beginPath(); c.ellipse(x - 30, y - 2, 6, 4, 0.3, 0, Math.PI * 2); c.fill();
+  // the snore: pebbles off the ceiling
+  const ph = (t * 0.0008) % 1;
+  c.fillStyle = `rgba(150,146,160,${1 - ph})`;
+  c.fillRect(x - 6, y - 60 + ph * 40, 2, 2); c.fillRect(x + 14, y - 66 + ph * 50, 1.6, 1.6);
+}

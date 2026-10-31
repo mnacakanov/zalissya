@@ -6,8 +6,8 @@ import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./
 import { BED_SPOT_WORLD, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
 import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, HOUSES, KAPLYTSIA, YARD_PROPS, KURHAN, KURHAN_STEPPE, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
-import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawKurhan, drawMallow, drawMlyn, drawSunflower } from "./render/khutir";
+import { DECOR, FENCES, HOUSES, KAPLYTSIA, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, POND, SOLID, TREES, WELL } from "./data/village";
+import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
 import { MAP_PRICE, mapTopics } from "./dialogue/mapTopics";
@@ -23,8 +23,8 @@ import { makeCritters, stepCritter } from "./systems/critters";
 import { BENCHES, RESIDENTS, type ResidentId, STRAW_BED } from "./data/schedules";
 import { planFor, type Pose, walkToward, type Walker } from "./systems/schedules";
 import { isSabbath } from "./systems/sabbath";
-import { HIDEOUT_IDS, HIDEOUTS, HOLLOW_OAK, KURHAN_PIT, LYSA_CAVE } from "./data/hideouts";
-import { drawBeehive, drawCaveMouth, drawHollowOak, drawKurhanPit, drawBench, drawHenHouse, drawShed, drawStrawBed, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
+import { HIDEOUT_IDS, HIDEOUTS } from "./data/hideouts";
+import { drawBeehive, drawBench, drawHenHouse, drawShed, drawStrawBed, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
 import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
@@ -39,7 +39,7 @@ import { LanguagePicker } from "./ui/LanguagePicker";
 import { MapOverlay } from "./ui/MapOverlay";
 import { questTarget } from "./render/map";
 import { drawKhataInterior } from "./render/khataInterior";
-import { drawBeelzebub, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
+import { drawBeelzebub, drawBeelzebubAsleep, drawLysaFire, drawLysaFlower, drawLysaGround, drawWitch } from "./render/lysa";
 import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
 import { drawDark, drawFog, drawVignette, gradeDay } from "./render/light";
@@ -98,13 +98,10 @@ const RESIDENT_IDS = new Set<string>(RESIDENTS);
 // benches are things you bump into, not walk through
 const BENCH_SOLIDS = [
   ...BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 })),
-  // the hollow oak and the cave's rock (data/hideouts.ts)
-  { x: HOLLOW_OAK.x - 26, y: HOLLOW_OAK.y - 12, w: 52, h: 14 },
-  { x: LYSA_CAVE.x - 44, y: LYSA_CAVE.y - 24, w: 88, h: 24 },
 ];
 // What each walk-in house says when you step in, and its HUD label.
-const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn" };
-const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn" };
+const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka", mlyn: "ui.enterHut.mlyn", duplo: "ui.enterHut.duplo", kurhan: "ui.enterHut.kurhan", pechera: "ui.enterHut.pechera" };
+const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka", mlyn: "ui.hut.mlyn", duplo: "ui.hut.duplo", kurhan: "ui.hut.kurhan", pechera: "ui.hut.pechera" };
 const GRAVE_NPC: Npc = {
   id: "grave", name: t("chumak.grave.name"), pron: "", role: t("chumak.grave.role"),
   x: GRAVE.x, y: GRAVE.y, tunic: "#24201c", hair: "#a29a8c", style: "elder",
@@ -203,7 +200,7 @@ export function App() {
   // visible each khata's roof is (1 = closed, 0 = lifted away)
   const [hudInside, setHudInside] = useState<HouseId | null>(null);
   const insideRef = useRef<HouseId | null>(null);
-  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1 });
+  const roofAlphaRef = useRef<Record<HouseId, number>>({ hut0: 1, hut1: 1, otaman: 1, korchma: 1, pustka: 1, mlyn: 1, duplo: 1, kurhan: 1, pechera: 1 });
   const [panelTab, setPanelTab] = useState<"stats" | "skills" | "quests">("stats");
   const [hudClock, setHudClock] = useState<Clock>({ day: 1, minute: START_MINUTE });
   const [hudFight, setHudFight] = useState<{ nerve: number; max: number; t: number; gaze: FightState["gaze"]; ready: boolean } | null>(null);
@@ -1264,11 +1261,6 @@ export function App() {
         );
         return;
       }
-      case "cave": {
-        // Beelzebub's day-bed on the slope (data/hideouts.ts)
-        showToast(t(isSabbath(clockRef.current.minute) ? "cave.night" : "cave.day"));
-        return;
-      }
       case "petDog": {
         // the otaman's dog has opinions about kobzars (systems/critters.ts)
         const dog = crittersRef.current.find((c) => c.kind === "dog");
@@ -1700,10 +1692,10 @@ export function App() {
       // is empty and its people are hidden about the land (data/hideouts.ts)
       const sabbath = isSabbath(clockRef.current.minute);
       const hiders = sabbath ? [] : LYSA_CHARS.filter((c) => HIDEOUT_IDS.has(c.id)).map((c) => ({ ...c, ...HIDEOUTS[c.id as keyof typeof HIDEOUTS] }));
-      const lysaChars = [...(sabbath ? LYSA_CHARS : []), ...residents.filter((r) => onLysa(r.x, r.y))];
+      const lysaChars = [...(sabbath ? LYSA_CHARS : []), ...residents.filter((r) => onLysa(r.x, r.y)), ...hiders.filter((h) => onLysa(h.x, h.y))];
       const villageChars = [
         ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && sabbath) && !RESIDENT_IDS.has(c.id)),
-        ...hiders,
+        ...hiders.filter((h) => !onLysa(h.x, h.y)),
         ...residents.filter((r) => !onLysa(r.x, r.y)),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
@@ -1728,7 +1720,6 @@ export function App() {
           const d = Math.hypot(x - p.x, y - p.y);
           if (d < reach && d <= best + 14) { best = d; nextPrompt = make(); }
         };
-        lspot(LYSA_CAVE.x, LYSA_CAVE.y + 10, 64, () => ({ kind: "cave" }));
         if (sabbath && !flagHas(flagsNow, "lysaOffering")) {
           lspot(LYSA_WORLD.offer.x, LYSA_WORLD.offer.y, 62, () => ({ kind: "offering" }));
         }
@@ -1892,6 +1883,12 @@ export function App() {
               ? drawPustka(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
               : id === "mlyn"
                 ? drawMlyn(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              : id === "duplo"
+                ? drawDuplo(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              : id === "kurhan"
+                ? drawKurhanMound(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha)
+              : id === "pechera"
+                ? drawPechera(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, alpha, !isSabbath(clockRef.current.minute))
             : drawKhataBig(ctx2d, r.x - camX, r.y - camY, r.w, r.h, now, r.x, alpha) });
       }
       for (const h of HOUSES) {
@@ -1899,7 +1896,7 @@ export function App() {
       }
       drawables.push({ y: KAPLYTSIA.y + KAPLYTSIA.h, draw: () => drawKaplytsia(ctx2d, KAPLYTSIA.x - camX, KAPLYTSIA.y - camY, KAPLYTSIA.w, KAPLYTSIA.h, now) });
       drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now, -1) });
-      for (const k of [KURHAN, KURHAN_STEPPE]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
+      for (const k of [KURHAN]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {
         if (d.x < camX - 40 || d.x > camX + vw + 40 || d.y < camY - 10 || d.y > camY + vh + 80) continue;
         const dx = d.x - camX;
@@ -1919,9 +1916,6 @@ export function App() {
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
-      if (Math.abs(LYSA_CAVE.x - p.x) < vw && Math.abs(LYSA_CAVE.y - p.y) < vh) {
-        drawables.push({ y: LYSA_CAVE.y, draw: () => drawCaveMouth(ctx2d, LYSA_CAVE.x - camX, LYSA_CAVE.y - camY, now, sabbath) });
-      }
       for (const npc of [...villageChars, ...lysaChars, ...(sabbath ? LYSA_DANCERS : [])]) {
         const pos = charPos(npc, now);
         drawables.push({
@@ -1934,7 +1928,7 @@ export function App() {
             else if (npc.style === "chort") drawChort(ctx2d, sx, sy, now);
             else if (npc.style === "bolotianyk") drawBolotianyk(ctx2d, sx, sy, now);
             else if (npc.style === "viy") drawViy(ctx2d, sx, sy, now);
-            else if (npc.style === "beelzebub") drawBeelzebub(ctx2d, sx, sy, now);
+            else if (npc.style === "beelzebub") (sabbath ? drawBeelzebub : drawBeelzebubAsleep)(ctx2d, sx, sy, now);
             else if (npc.style === "witch" || npc.style === "warlock") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false, !sabbath && HIDEOUT_IDS.has(npc.id), npc.style === "warlock");
             else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true, false, Number(npc.id.slice(-1)) % 2 === 1);
             else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
@@ -1952,7 +1946,7 @@ export function App() {
         // name tag — each kind floats at its own height (Viy's is a warning)
         const rst = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
         const posed = rst && !rst.moving ? rst.pose : "stand";
-        const tagLift = posed === "sleep" ? 24 : posed === "bathe" ? 34 : posed === "sit" ? 56 : npc.id === "viy" ? 168 : npc.style === "beelzebub" ? 96 : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
+        const tagLift = posed === "sleep" ? 24 : posed === "bathe" ? 34 : posed === "sit" ? 56 : npc.id === "viy" ? 168 : npc.style === "beelzebub" ? (sabbath ? 96 : 44) : npc.style === "witch" ? 64 : npc.style === "lisovyk" ? 122 : npc.style === "domovyk" ? 48 : npc.style === "sick" ? 30 : npc.style === "bolotianyk" ? 58 : 66;
         const tagText = npc.id === "viy" ? t("ui.tagText.0") : npc.name;
         if (npc.style !== "dancer") drawables.push({
           y: pos.y + 1,
@@ -2008,8 +2002,6 @@ export function App() {
             },
           });
         }
-        if (Math.abs(HOLLOW_OAK.x - p.x) < vw && Math.abs(HOLLOW_OAK.y - p.y) < vh) drawables.push({ y: HOLLOW_OAK.y, draw: () => drawHollowOak(ctx2d, HOLLOW_OAK.x - camX, HOLLOW_OAK.y - camY) });
-        if (Math.abs(KURHAN_PIT.x - p.x) < vw && Math.abs(KURHAN_PIT.y - p.y) < vh) drawables.push({ y: KURHAN_PIT.y - 30, draw: () => drawKurhanPit(ctx2d, KURHAN_PIT.x - camX, KURHAN_PIT.y - camY) });
         for (const b of BENCHES) {
           if (Math.abs(b.x - p.x) > vw || Math.abs(b.y - p.y) > vh) continue;
           drawables.push({ y: b.y - 6, draw: () => drawBench(ctx2d, b.x - camX, b.y - camY) });
@@ -2258,8 +2250,6 @@ export function App() {
                                     ? t("ui.promptLabel.playKorchma")
                                   : prompt.kind === "pustkaChest"
                                     ? t("ui.promptLabel.pustkaChest")
-                                  : prompt.kind === "cave"
-                                    ? t("ui.promptLabel.cave")
                                   : prompt.kind === "petDog"
                                     ? t("ui.promptLabel.petDog")
                                   : prompt.kind === "grave"

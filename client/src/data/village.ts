@@ -59,7 +59,7 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // (and a clearing round the old hollow oak in the south forest, where
   // Motrya sleeps by day: data/hideouts.ts)
   const builtOn = (x: number, y: number) =>
-    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA, { x: 900, y: 1790, w: 160, h: 110 }].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
+    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA, { x: 880, y: 1760, w: 200, h: 150 }].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
   for (let i = TREES.length - 1; i >= 0; i--) {
     const tr = TREES[i];
     if (tr && builtOn(tr.x, tr.y)) TREES.splice(i, 1);
@@ -76,7 +76,9 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
 // place for the map)
 export const WINDMILL = { x: 405, y: 980 };
 export const KURHAN = { x: 1600, y: 800 };
-export const KURHAN_STEPPE = { x: 2150, y: 520 };
+// (the steppe kurhan is walk-in now, a little off the trail: data/houses.ts
+// HOUSE_RECTS.kurhan; this is its place for the map)
+export const KURHAN_STEPPE = { x: 2165, y: 360 };
 
 // Yard plants (no collision): sunflowers, mallows, and feather grass on the
 // steppe side.
@@ -148,5 +150,4 @@ export const SOLID: Rect[] = [
   ...TREES.map((t) => ({ x: t.x - 10, y: t.y - 8, w: 20, h: 14 })),
   ...FENCES,
   { x: KURHAN.x - 56, y: KURHAN.y - 22, w: 112, h: 26 },
-  { x: KURHAN_STEPPE.x - 56, y: KURHAN_STEPPE.y - 22, w: 112, h: 26 },
 ];

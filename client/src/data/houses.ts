@@ -21,7 +21,10 @@ import { type Rect } from "../world/geometry";
 //   pustka — the abandoned khata of Taras Dovhyi by Viy's hollow (PUSTKA_ROOM)
 //   mlyn — the windmill on the rise by the old millstone (MLYN_ROOM), where
 //     Solokha sits out the day on a flour sack
-export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn";
+//   duplo, kurhan, pechera — the sabbath's day hiding places, walk-in too
+//     (data/hideouts.ts): the hollow of the old oak, the chamber dug into the
+//     steppe kurhan, and Beelzebub's cave on Lysa Hora
+export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // the khutir stands in a horseshoe round the maidan, open to the south
@@ -33,6 +36,9 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   korchma: { x: 1830, y: 1000, w: 350, h: 210 },
   pustka: { x: 1084, y: 140, w: 210, h: 176 },
   mlyn: { x: 330, y: 900, w: 150, h: 130 },
+  duplo: { x: 925, y: 1790, w: 110, h: 100 },
+  kurhan: { x: 2080, y: 300, w: 170, h: 120 },
+  pechera: { x: 3660, y: 240, w: 180, h: 136 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 
@@ -113,7 +119,34 @@ export const MLYN_ROOM = {
 // Where to stand to open the skrynia (in the world).
 export const PUSTKA_CHEST = { x: 1084 + 123, y: 140 + 76 };
 
+// The hollow of the old oak in the south forest: a tiny round room inside
+// the trunk, Motrya's nest of moss and feathers at the back, her little
+// cauldron by the wall. Footprint 110×100, the doorway (the hollow) at
+// x 32…78.
+export const DUPLO_ROOM = {
+  nest: { x: 54, y: BACK_WALL, w: 42, h: 22 },
+  cauldron: { x: 16, y: 38, w: 18, h: 16 },
+} as const satisfies Record<string, Rect>;
+// The chamber dug into the steppe kurhan, under its stone baba: an old
+// grave-slab, roots and timber props, and Opanas's straw bed. Footprint
+// 170×120, the timbered entrance at x 62…108.
+export const KURHAN_ROOM = {
+  slab: { x: 30, y: BACK_WALL + 2, w: 64, h: 22 },
+  bed: { x: 118, y: BACK_WALL + 2, w: 38, h: 30 },
+} as const satisfies Record<string, Rect>;
+// Beelzebub's cave on Lysa Hora's north-east slope: his stone bed, a pool
+// of something hot that smells of sulphur, a heap of tribute. Footprint
+// 180×136, the mouth at x 67…113.
+export const PECHERA_ROOM = {
+  bed: { x: 40, y: BACK_WALL + 2, w: 96, h: 34 },
+  pool: { x: 140, y: 80, w: 26, h: 22 },
+  hoard: { x: 16, y: 84, w: 26, h: 18 },
+} as const satisfies Record<string, Rect>;
+
 function furniture(id: HouseId): Rect[] {
+  if (id === "duplo") return Object.values(DUPLO_ROOM);
+  if (id === "kurhan") return Object.values(KURHAN_ROOM);
+  if (id === "pechera") return Object.values(PECHERA_ROOM);
   if (id === "korchma") return Object.values(KORCHMA_ROOM);
   if (id === "pustka") return Object.values(PUSTKA_ROOM);
   if (id === "mlyn") return Object.values(MLYN_ROOM);

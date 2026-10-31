@@ -96,6 +96,7 @@ function windowLights(id: HouseId): Light[] {
     ];
     case "pustka": return [];
     case "mlyn": return []; // nobody grinds by night (that anyone admits to)
+    case "duplo": case "kurhan": case "pechera": return [];
   }
 }
 

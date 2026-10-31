@@ -110,7 +110,7 @@ export function drawWorldMap(c: CanvasRenderingContext2D, w: number, h: number, 
   c.fillStyle = "#e7853a";
   c.beginPath(); c.arc(X(LYSA_WORLD.summit.x), Y(LYSA_WORLD.summit.y), Math.max(2, 26 * s), 0, Math.PI * 2); c.fill();
   // khaty, windmill, kurhany
-  for (const ho of [...HOUSES, ...Object.values(HOUSE_RECTS).map((r) => ({ ...r, y: r.y + 30, h: r.h - 30 }))]) {
+  for (const ho of [...HOUSES, ...Object.entries(HOUSE_RECTS).filter(([id]) => !["duplo", "kurhan", "pechera"].includes(id)).map(([, r]) => ({ ...r, y: r.y + 30, h: r.h - 30 }))]) {
     c.fillStyle = "#f6f1e6"; c.fillRect(X(ho.x), Y(ho.y + 20), ho.w * s, (ho.h - 20) * s);
     c.fillStyle = "#a8854a"; c.fillRect(X(ho.x - 8), Y(ho.y - 10), (ho.w + 16) * s, 34 * s);
   }

@@ -436,3 +436,12 @@ Solokha said she hides in the mill, but the windmill had no inside, so she stood
 - **Inside:** the walls and roof lift away and the sails grow faint overhead. There are the millstones in their wooden case under the hopper, with flour spilling out, the great cog-wheel turning on the back wall, a grain bin heaped with grain, slumped sacks of flour, a ladder to the loft, and flour dust turning in the shaft of light from the little window.
 - **Solokha** sits out the day on a flour sack inside.
 - **Nearby:** the cow's pasture moved a little west to make room, and a herb patch that the new walls covered moved beside it.
+
+## Every hiding place is a place
+
+After the windmill, the owner asked that all the sabbath's day hiding places be real, down to the hollow in the tree. Each is now a walk-in building like the khaty (`data/houses.ts`): what stands over the room fades away when the kobzar steps in.
+
+- **The hollow oak** (`duplo`) stands in a clearing of the south forest: a vast trunk with spreading roots under a heavy crown, and the hollow is the door. Inside is a tiny round room on the oak's own rings, with Motrya's nest of moss and feathers, her little cauldron bubbling violet, herbs and frog legs drying on a root, mushrooms, and an owl that blinks.
+- **The steppe kurhan** (`kurhan`) is a grassy mound with its stone baba on top and a timbered entrance. It moved a little off the Lysa Hora trail so it blocks nobody's way. Underneath is a cold earthen chamber with roots and timber props, an old grave-slab carved with a sun and two candles burning on it, a goat's skull, and Opanas's straw bed with a spare kuchma on a peg of root.
+- **Beelzebub's cave** (`pechera`) is a rock outcrop on Lysa Hora's slope, its mouth breathing warm yellow air while he is home. Inside, stalactites drip, a sulphur pool glows, there is a hoard of tribute (and somebody's boot), and he sleeps by day on a stone bed heaped with black fleeces. He can be woken, briefly: "Come when it's dark."
+- **Footpaths:** each place got its footpath like every door. The old look-into-the-cave prompt is gone, since you simply walk in.

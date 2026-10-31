@@ -815,3 +815,129 @@ export function drawMlyn(c: CanvasRenderingContext2D, x: number, y: number, w: n
   c.beginPath(); c.arc(hubX, hubY, 6, 0, Math.PI * 2); c.fill();
   c.restore();
 }
+
+// --- The sabbath's hiding places, from outside (data/hideouts.ts) ---------------
+// Each is a walk-in building: what stands over the room fades when the
+// kobzar is inside (alpha), like a khata's roof.
+
+// The old hollow oak in the south forest: a vast trunk whose hollow is the
+// door, under a heavy crown. Motrya sleeps inside by day.
+export function drawDuplo(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  void t;
+  const INK = "rgba(24,18,10,0.85)";
+  const cx = x + w / 2;
+  c.save();
+  c.globalAlpha = alpha;
+  c.fillStyle = "rgba(16,28,10,0.35)";
+  c.beginPath(); c.ellipse(cx + 16, y + h + 6, w * 0.9, 20, 0, 0, Math.PI * 2); c.fill();
+  // roots spreading into the ground
+  c.strokeStyle = "#4e3620"; c.lineCap = "round";
+  for (const [ex, ey, lw] of [[-70, 10, 9], [-40, 16, 7], [62, 12, 9], [34, 18, 6]] as const) {
+    c.lineWidth = lw + 2; c.strokeStyle = INK;
+    c.beginPath(); c.moveTo(cx + ex * 0.3, y + h - 8); c.quadraticCurveTo(cx + ex * 0.7, y + h, cx + ex, y + h + ey); c.stroke();
+    c.lineWidth = lw; c.strokeStyle = "#5d4228";
+    c.beginPath(); c.moveTo(cx + ex * 0.3, y + h - 8); c.quadraticCurveTo(cx + ex * 0.7, y + h, cx + ex, y + h + ey); c.stroke();
+  }
+  c.lineCap = "butt";
+  // the trunk, wider than a khata's door is tall, covering the room
+  const g = c.createLinearGradient(x, 0, x + w, 0);
+  g.addColorStop(0, "#7a5a3a"); g.addColorStop(0.5, "#5d4228"); g.addColorStop(1, "#3a2818");
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - 4, y + h); c.quadraticCurveTo(x - 2, y + h * 0.4, x + 10, y - 40);
+  c.lineTo(x + w - 10, y - 40); c.quadraticCurveTo(x + w + 2, y + h * 0.4, x + w + 4, y + h); c.closePath(); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+  c.strokeStyle = "rgba(30,20,10,0.4)"; c.lineWidth = 1.2;
+  for (let k = -3; k <= 3; k++) { c.beginPath(); c.moveTo(cx + k * 13, y + h - 4); c.quadraticCurveTo(cx + k * 11, y + h * 0.4, cx + k * 9, y - 36); c.stroke(); }
+  // the hollow: the way in
+  c.fillStyle = "#120c0a";
+  c.beginPath(); c.ellipse(cx, y + h - 26, 20, 28, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#3e2a18"; c.lineWidth = 3; c.stroke();
+  // the crown, dark and heavy over everything
+  const lobes: Array<[number, number, number]> = [[0, -84, 62], [-62, -60, 46], [62, -62, 48], [-34, -112, 44], [36, -116, 44], [0, -44, 46]];
+  c.fillStyle = "rgba(24,32,14,0.8)";
+  for (const [lx, ly, r] of lobes) { c.beginPath(); c.arc(cx + lx, y + ly, r + 1.2, 0, Math.PI * 2); c.fill(); }
+  const cg = c.createRadialGradient(cx - 30, y - 120, 10, cx, y - 70, 110);
+  cg.addColorStop(0, "#4e7a32"); cg.addColorStop(1, "#1c3414");
+  c.fillStyle = cg;
+  for (const [lx, ly, r] of lobes) { c.beginPath(); c.arc(cx + lx, y + ly, r, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = "#8aa860";
+  c.beginPath(); c.arc(cx + 44, y - 80, 9, 0, Math.PI * 2); c.fill(); // mistletoe
+  c.restore();
+}
+
+// The steppe kurhan: a grassy mound with its stone baba on top and a
+// timbered entrance dug into its south side. Opanas lives under it by day.
+export function drawKurhanMound(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  void t;
+  const INK = "rgba(24,20,10,0.8)";
+  const cx = x + w / 2;
+  c.save();
+  c.globalAlpha = alpha;
+  c.fillStyle = "rgba(30,40,14,0.3)";
+  c.beginPath(); c.ellipse(cx + 8, y + h + 4, w * 0.6, 14, 0, 0, Math.PI * 2); c.fill();
+  // the mound, dry steppe grass over old earth
+  const g = c.createRadialGradient(cx - 30, y + 10, 10, cx, y + h * 0.6, w * 0.7);
+  g.addColorStop(0, "#b8b070"); g.addColorStop(0.6, "#8e8a50"); g.addColorStop(1, "#6a6a3a");
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(cx, y + h * 0.6, w * 0.58, h * 0.62, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
+  c.strokeStyle = "rgba(90,80,40,0.5)"; c.lineWidth = 1;
+  for (let k = 0; k < 26; k++) {
+    const a = (k / 26) * Math.PI * 2;
+    const px = cx + Math.cos(a) * w * 0.45 * (0.6 + 0.4 * ((k * 37) % 7) / 7);
+    const py = y + h * 0.6 + Math.sin(a) * h * 0.45 * 0.8;
+    c.beginPath(); c.moveTo(px, py); c.lineTo(px + 2, py - 8); c.stroke();
+  }
+  // the timbered entrance
+  c.fillStyle = "#1a1410";
+  c.beginPath(); c.moveTo(cx - 22, y + h); c.lineTo(cx - 22, y + h - 30); c.quadraticCurveTo(cx, y + h - 40, cx + 22, y + h - 30); c.lineTo(cx + 22, y + h); c.closePath(); c.fill();
+  c.fillStyle = "#6e4a2a";
+  c.fillRect(cx - 26, y + h - 34, 6, 34); c.fillRect(cx + 20, y + h - 34, 6, 34); c.fillRect(cx - 28, y + h - 38, 56, 6);
+  // the stone baba on top, weathered, hands on her belly
+  const bx = cx;
+  const by = y + 26;
+  const sg = c.createLinearGradient(bx - 10, 0, bx + 10, 0);
+  sg.addColorStop(0, "#b8b4a8"); sg.addColorStop(1, "#6e6a60");
+  c.fillStyle = sg;
+  c.beginPath(); c.moveTo(bx - 9, by); c.lineTo(bx - 8, by - 34); c.quadraticCurveTo(bx, by - 46, bx + 8, by - 34); c.lineTo(bx + 9, by); c.closePath(); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  c.strokeStyle = "rgba(40,36,30,0.6)";
+  c.beginPath(); c.moveTo(bx - 6, by - 14); c.lineTo(bx + 6, by - 14); c.moveTo(bx - 3, by - 30); c.lineTo(bx - 1, by - 30); c.moveTo(bx + 1, by - 30); c.lineTo(bx + 3, by - 30); c.stroke();
+  c.restore();
+}
+
+// Beelzebub's cave: a rock outcrop on the slope, its black mouth breathing
+// warm, yellow air when he is home.
+export function drawPechera(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, t: number, alpha: number, home: boolean): void {
+  if (alpha <= 0.01) return;
+  const INK = "rgba(18,14,22,0.85)";
+  const cx = x + w / 2;
+  c.save();
+  c.globalAlpha = alpha;
+  c.fillStyle = "rgba(10,8,16,0.4)";
+  c.beginPath(); c.ellipse(cx + 10, y + h + 6, w * 0.62, 14, 0, 0, Math.PI * 2); c.fill();
+  // the outcrop: piled slabs of grey-violet rock
+  const slabs: Array<[number, number, number, number]> = [[0, 40, w * 0.56, h * 0.62], [-w * 0.3, 70, w * 0.3, h * 0.42], [w * 0.32, 66, w * 0.3, h * 0.44], [-10, -2, w * 0.36, h * 0.34]];
+  for (const [ox, oy, rx, ry] of slabs) {
+    const g = c.createLinearGradient(cx + ox - rx, 0, cx + ox + rx, 0);
+    g.addColorStop(0, "#9894a2"); g.addColorStop(0.5, "#6e6a7a"); g.addColorStop(1, "#3e3a4a");
+    c.fillStyle = g;
+    c.beginPath(); c.ellipse(cx + ox, y + oy, rx, ry, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 1.1; c.stroke();
+  }
+  c.strokeStyle = "rgba(20,16,26,0.5)"; c.lineWidth = 1;
+  for (let k = 0; k < 6; k++) { c.beginPath(); c.moveTo(cx - 60 + k * 24, y + 20 + (k % 2) * 18); c.lineTo(cx - 50 + k * 24, y + 46 + (k % 3) * 10); c.stroke(); }
+  // the mouth
+  c.fillStyle = "#0e0a10";
+  c.beginPath(); c.moveTo(cx - 24, y + h); c.quadraticCurveTo(cx - 24, y + h - 40, cx, y + h - 46); c.quadraticCurveTo(cx + 24, y + h - 40, cx + 24, y + h); c.closePath(); c.fill();
+  if (home) {
+    const br = 0.3 + Math.sin(t * 0.0012) * 0.2;
+    const gl = c.createRadialGradient(cx, y + h - 14, 2, cx, y + h - 14, 28);
+    gl.addColorStop(0, `rgba(255,170,60,${br})`); gl.addColorStop(1, "rgba(255,170,60,0)");
+    c.fillStyle = gl; c.fillRect(cx - 28, y + h - 46, 56, 46);
+  }
+  c.restore();
+}
