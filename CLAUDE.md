@@ -124,6 +124,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
 ## Workflow
 
 - `main` is always playable, and every push to it deploys to Pages (CI builds and commits `docs/index.html`). For now the owner allows Claude sessions to merge their branch straight into `main` (fast-forward, no PR) once typecheck, tests, build and a browser smoke test pass. Collaborators use PRs.
+- **Reaching the Claude session:** it watches the draft PR "Claude inbox" (branch `claude/inbox`; don't merge or close it). `.github/workflows/claude-inbox.yml` comments there when new art lands in `godot-demo/styles/` or `art/`, when an issue opens, or when a comment signed `**Harry:**` is posted on any issue, and that wakes the session. To ping it directly, comment on the inbox PR.
 - Branch names: `feat/<thing>`, `fix/<thing>`, `content/<thing>`, `refactor/<thing>`. Claude sessions use the `claude/...` branch they are given.
 - Keep each PR small and to one topic. CI (typecheck, tests, Pages build) must be green before you merge. Squash-merge.
 - Before you open a PR, smoke-test the Pages build in a browser: walk, talk, gather, save, reload. When you touch time or the vigil, try a night as well.

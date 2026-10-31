@@ -1,0 +1,53 @@
+# The doorbell between collaborators: a Claude Code session watches one
+# open draft PR, the "Claude inbox" (head branch claude/inbox), and every
+# comment on it wakes that session. This workflow rings it:
+#   · new art pushed to main (godot-demo/styles/, art/), unless the commits
+#     are the watching session's own or the CI publish commits;
+#   · a comment signed "**Harry:**" on any other issue or PR;
+#   · a new issue.
+# Nobody needs to remember to ping. Comments are posted by
+# github-actions with GITHUB_TOKEN, so they trigger no further workflows.
+name: Claude inbox
+
+on:
+  push:
+    branches: [main]
+    paths: ["godot-demo/styles/**", "art/**"]
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  ring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const open = await github.rest.pulls.list({ owner, repo, state: "open", head: `${owner}:claude/inbox` });
+            if (!open.data.length) { core.info("no open inbox PR"); return; }
+            const inbox = open.data[0].number;
+            let body = null;
+            if (context.eventName === "push") {
+              const mine = /Claude-Session: https:\/\/claude\.ai\/code\/session_01QAx2xxcBMd6sQaRaJkqN3o/;
+              const commits = (context.payload.commits || []).filter((c) => !mine.test(c.message) && !/^Publish /.test(c.message));
+              if (!commits.length) return;
+              body = "New art on main:\n" + commits.map((c) => `- ${c.id.slice(0, 7)} ${c.message.split("\n")[0]} (${c.author.name})`).join("\n");
+            } else if (context.eventName === "issue_comment") {
+              const n = context.payload.issue.number;
+              const c = context.payload.comment;
+              if (n === inbox) return;
+              if (!/^\*\*Harry:\*\*/.test((c.body || "").trim())) return;
+              body = `Harry commented on #${n} (${context.payload.issue.title}): ${c.html_url}`;
+            } else if (context.eventName === "issues") {
+              const i = context.payload.issue;
+              body = `New issue #${i.number}: ${i.title} ${i.html_url}`;
+            }
+            if (body) await github.rest.issues.createComment({ owner, repo, issue_number: inbox, body });
