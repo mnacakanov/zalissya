@@ -108,6 +108,8 @@ Transliteration rules and the English/Ukrainian split are in `CLAUDE.md` (Rule 1
 
 ## 4. The art style
 
+> **New direction:** the game's art is moving to AI-generated ink-and-watercolour assets (Muse). For anything generated, follow [`ART_STYLE.md`](ART_STYLE.md). This section describes the current procedural drawing, which stays until each piece is replaced.
+
 The owner chose **smooth, painted, storybook** art, not pixel art. Everything is drawn with Canvas 2D calls; there are no image files.
 
 **The look in one sentence:** soft painted shapes with a light-to-dark gradient across them, a thin warm-black ink outline, a soft contact shadow underneath, and colour only where people would put it.
