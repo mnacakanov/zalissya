@@ -287,6 +287,26 @@ export function App() {
   const canStart = saveQuery.isSuccess || saveQuery.isError;
 
   // --- feedback + flags ------------------------------------------------------
+  // The toast sits just under the HUD, never over it: on a phone the HUD
+  // card and its buttons wrap to two or three rows, so its height is
+  // measured, not guessed.
+  const hudRef = useRef<HTMLDivElement | null>(null);
+  const [hudBottom, setHudBottom] = useState(96);
+  useEffect(() => {
+    const el = hudRef.current;
+    if (!el) return;
+    const measure = () => {
+      // the HUD box spans the width; its tallest child sets the bottom
+      let bottom = el.getBoundingClientRect().top;
+      for (const c of Array.from(el.children)) bottom = Math.max(bottom, c.getBoundingClientRect().bottom);
+      setHudBottom(Math.round(bottom));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    for (const c of Array.from(el.children)) ro.observe(c);
+    return () => ro.disconnect();
+  }, [started]);
   // Messages that must not be lost under another one (dawn news after the
   // waking line) wait here and show when the current toast ends.
   const toastQueueRef = useRef<string[]>([]);
@@ -2415,7 +2435,7 @@ export function App() {
               objective, and urgent warnings only. Skill levels, stat
               totals, carrying and keepsakes all live in the Character
               sheet; the full thread list lives in Quests. */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
+          <div ref={hudRef} className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-3 pt-safe">
             <div className="mt-2 max-w-[250px] rounded-xl bg-[#1c1409]/62 px-3 py-2 text-[#f3e9d2] backdrop-blur-[2px]">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cbb27a]">
                 {hudArea === "lysa" ? t("ui.misc.5") : hudInside ? t(HOUSE_LABEL[hudInside]) : t("ui.zalissya")}
@@ -2617,7 +2637,7 @@ export function App() {
 
           {/* Toast — catches, keepsakes, and consequences */}
           {toast && (
-            <div className="pointer-events-none absolute inset-x-0 top-24 z-20 flex justify-center px-4">
+            <div className="pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4" style={{ top: hudBottom + 8 }}>
               <p className="max-w-md rounded-xl bg-[#1c1409]/82 px-4 py-2.5 text-center font-serif text-sm font-semibold text-[#f3e9d2] shadow-xl backdrop-blur-[2px]">
                 {toast}
               </p>
