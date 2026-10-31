@@ -93,7 +93,7 @@ body {
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <link rel="manifest" href="index.manifest.json">
-
+<script>/* a new build takes over at once, instead of waiting for every window of the app to close */if('serviceWorker' in navigator){navigator.serviceWorker.getRegistration().then(function(reg){if(!reg)return;var go=function(w){if(w&&navigator.serviceWorker.controller)w.postMessage('update');};go(reg.waiting);reg.addEventListener('updatefound',function(){var w=reg.installing;if(w)w.addEventListener('statechange',function(){if(w.state==='installed')go(w);});});reg.update();});}</script>
 	</head>
 	<body>
 		<canvas id="canvas">
