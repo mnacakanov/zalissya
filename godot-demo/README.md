@@ -28,14 +28,21 @@ a gamepad.
 - **Talking.** Talk to Prokip with E, A or the "Говорити" button.
 - **Day and night.** N, Y or the button.
 - **Debug.** F3 or "Контури" shows the footprint, the walls and the solids.
-- **The art.** Drop it into `styles/<style>/` under the names in `FILES`
-  (`hut_exterior.png`, `hut_interior.png`, `kobzar.png`, `npc_prokip.png`,
-  `cow.png`, `bench.png`, `horod.png`, …).
-  - Anything missing falls back to a placeholder. The BG2 and
-    Pillars-lite hut borrows `art/reference/prokip-hut-iso.png`; the Drova
-    hut is the baked khata from the old demo; the people use the old
-    frames.
-  - Run `tools/normals.py` over the Pillars-lite PNGs whenever they change.
+- **The art** is Harry's sets (issue #2) in `styles/<style>/`.
+  `layout.json` places each piece in its own pixels from the PNG's
+  bottom-centre anchor:
+  - the exterior's ground corners `[left, front, right]` and `scale`;
+  - the interior's own corners, so it is fitted onto the exterior by an
+    affine transform (the interiors were drawn at slightly different
+    angles and sizes);
+  - the pich, Prokip's spot and the furniture solids;
+  - `metre` (sprite px per metre, from the door), so people, the cow and
+    the bench stand at real heights.
+- **Drova's interior** came glued to the horod; it is cut into
+  `derived_room.png` and `derived_horod.png`, with
+  `hut_interior_bed.png` placed in the room.
+- **Pillars-lite normals.** Run `tools/normals.py` over the Pillars-lite
+  PNGs whenever they change.
 - **The old khutir demo** is one button away ("Старе демо" / "Стилі").
 
 ## The khutir demo: what it shows

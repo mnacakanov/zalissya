@@ -1,30 +1,20 @@
 {
-  "_note": "Estimated until the Pillars-lite set lands; same isometric camera as BG2.",
+  "_note": "See styles/bg2/layout.json for what the numbers mean.",
   "camera": "iso",
+  "metre": 88,
+  "scale": 0.73,
   "hut": {
-    "scale": 0.62,
-    "footprint": [
-      [
-        -372,
-        -185
-      ],
-      [
-        223,
-        -50
-      ],
-      [
-        444,
-        -208
-      ],
-      [
-        -151,
-        -343
-      ]
-    ],
-    "door": [
-      0.41,
-      0.61
-    ],
-    "placeholder": "res://styles/bg2/placeholder_hut_exterior.png"
-  }
+    "exterior": {"file": "hut_exterior", "footprint": [[-283, -116], [5, -19], [292, -125]]},
+    "interior": {
+      "file": "hut_interior",
+      "footprint": [[-289, -125], [14, -16], [311, -130]],
+      "pich": [-160, -151],
+      "prokip": [-80, -105],
+      "solids": [[66, -217, 90, 40], [132, -144, 110, 50]]
+    },
+    "door": [0.40, 0.63]
+  },
+  "horod": {"file": "horod", "metres": 5.5},
+  "skull_stake": {"file": "skull_stake", "metres": 1.7},
+  "heights": {"kobzar": 1.75, "npc_prokip": 1.72, "cow": 1.45, "bench": 0.55}
 }
