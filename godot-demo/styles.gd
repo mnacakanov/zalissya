@@ -158,6 +158,7 @@ func _set_style(name: String) -> void:
 	_build_ground()
 	_build_hut()
 	_build_props()
+	_build_roads()
 	_build_people()
 	_build_light()
 	debug_layer = Node2D.new()
@@ -177,32 +178,76 @@ func _set_style(name: String) -> void:
 
 
 func _build_ground() -> void:
-	# a painted-looking ground from noise, tinted per style
-	var noise := FastNoiseLite.new()
-	noise.seed = 7
-	noise.frequency = 0.012 if style != "drova" else 0.05
-	var nt := NoiseTexture2D.new()
-	nt.width = 256 if style != "drova" else 96
-	nt.height = nt.width
-	nt.seamless = true
-	nt.noise = noise
-	var g := Gradient.new()
-	match style:
-		"drova":
-			g.set_color(0, Color("3a4a2a")); g.set_color(1, Color("5a6a3a"))
-		"pillars":
-			g.set_color(0, Color("5a6a40")); g.set_color(1, Color("8e9a68"))
-		_:
-			g.set_color(0, Color("76835a")); g.set_color(1, Color("aeac82"))
-	nt.color_ramp = g
+	# Harry's seamless grass, tiled across the scene (a tile is about 6 m);
+	# the noise is only a fallback for a style without it
+	var grass := _tex("ground_grass")
 	var spr := Sprite2D.new()
-	spr.texture = nt
 	spr.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	spr.region_enabled = true
-	var tile := 4.0 if style != "drova" else 2.0
-	spr.region_rect = Rect2(0, 0, 2600 / tile, 2000 / tile)
-	spr.scale = Vector2(tile, tile)
+	if grass != null:
+		spr.texture = grass
+		var tile := 6.0 * metre / grass.get_width()
+		spr.scale = Vector2(tile, tile)
+		spr.region_rect = Rect2(0, 0, 2800 / tile, 2200 / tile)
+	else:
+		var noise := FastNoiseLite.new()
+		noise.seed = 7
+		noise.frequency = 0.012
+		var nt := NoiseTexture2D.new()
+		nt.width = 256
+		nt.height = 256
+		nt.seamless = true
+		nt.noise = noise
+		var g := Gradient.new()
+		g.set_color(0, Color("76835a")); g.set_color(1, Color("aeac82"))
+		nt.color_ramp = g
+		spr.texture = nt
+		spr.scale = Vector2(4, 4)
+		spr.region_rect = Rect2(0, 0, 700, 550)
 	ground.add_child(spr)
+
+
+## A road or a path: the outline of a band along the points, filled with
+## its texture lying flat in world space like the grass (a tile is about
+## 6 m), its edge feathered by a wider, fainter band underneath, so it lies
+## in the grass rather than on it.
+func _strip(name: String, pts: PackedVector2Array, width: float, tile_m := 6.0, rot := 0.0) -> void:
+	var tex := _tex(name)
+	if tex == null:
+		return
+	for pass_i in 2:
+		var half := width * (0.68 if pass_i == 0 else 0.5)
+		for outline in Geometry2D.offset_polyline(pts, half, Geometry2D.JOIN_ROUND, Geometry2D.END_ROUND):
+			var poly := Polygon2D.new()
+			poly.polygon = outline
+			poly.texture = tex
+			poly.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+			poly.texture_scale = Vector2.ONE * (tex.get_width() / (tile_m * metre))
+			poly.texture_rotation = rot
+			poly.color = Color(1, 1, 1, 0.45 if pass_i == 0 else 1.0)
+			ground.add_child(poly)
+			ground.move_child(poly, ground.get_child_count() - 1 if ground.get_child_count() <= 2 else 1 + pass_i)
+
+
+## The cart road runs past the front of the hut, parallel to its door wall;
+## a footpath leaves it for the door, and another for the horod.
+func _build_roads() -> void:
+	var along := (footprint[1] - footprint[0]).normalized()
+	var outward: Vector2 = world.get_meta("outward")
+	var mid := door + outward * 5.0 * metre
+	var road := PackedVector2Array()
+	for i in range(-6, 7):
+		var t := i * 3.0 * metre
+		# a gentle wander, so it isn't ruled
+		road.append(mid + along * t + outward * sin(i * 0.9) * 0.6 * metre)
+	# (Harry's road texture runs its ruts top to bottom: turn them along the road)
+	_strip("ground_road", road, 2.6 * metre, 5.0, PI / 2 - along.angle())
+	var to_door := PackedVector2Array([mid, mid.lerp(door, 0.5) + along * 0.3 * metre, door + outward * 0.2 * metre])
+	_strip("ground_path", to_door, 1.1 * metre)
+	var horod: Vector2 = footprint[2] + Vector2(2.6, 3.2) * metre
+	var from := mid + along * 6.0 * metre
+	var to_horod := PackedVector2Array([from, from.lerp(horod, 0.5) - outward * 0.5 * metre, horod + Vector2(0, -0.8 * metre)])
+	_strip("ground_path", to_horod, 1.0 * metre)
 
 
 func _build_hut() -> void:
