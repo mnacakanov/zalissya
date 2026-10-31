@@ -6,7 +6,7 @@ import { drawCraneWell, drawKhata, drawTyn } from "./khutir";
 import { BOBBER, BREW_SPOT, CRUST_SPOT, type HerbDef } from "../data/items";
 import { FIRE, GARDEN, POND, pondEdge, pondShore, type TreeKind, WELL } from "../data/village";
 import { drawLand } from "./land";
-import { BOLOTO_PATH } from "../data/land";
+import { BOLOTO_PATH, PROKIP_PATH } from "../data/land";
 import { rr } from "./shapes";
 import { drawFolk, type FolkOpts } from "./people";
 import { drawTreeSprite } from "./trees";
@@ -127,10 +127,7 @@ function roads(): Road[] {
   r.push({ pts: linePts([[328, 556], [328, 616]], 5), w: 40, seed: seed++, ruts: false });
   // the path nobody keeps: off the chumak road past the bridge, east through
   // the forest to Did Prokip's door (data/houses.ts HOUSE_RECTS.prokip)
-  r.push({ pts: [
-    ...bezierPts([2262, 1960], [2480, 2010], [2700, 2120], [2950, 2080], 5),
-    ...bezierPts([2950, 2080], [3120, 2050], [3240, 2090], [3310, 2052], 5),
-  ], w: 20, seed: seed++, ruts: false });
+  r.push({ pts: PROKIP_PATH.flatMap(([a = [], b = [], c2 = [], d = []]) => bezierPts(a, b, c2, d, 5)), w: 20, seed: seed++, ruts: false });
   roadsCache = r;
   return r;
 }

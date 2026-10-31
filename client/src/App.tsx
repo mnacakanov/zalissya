@@ -441,6 +441,13 @@ export function App() {
         playerRef.current.x = c0.x;
         playerRef.current.y = c0.y;
       }
+      // Did Prokip's khatka moved east, off the tunnel's ridge: a save made
+      // in or by the old one (x 3200–3420, y 1880–2090) wakes in the new one
+      if (area === "village" && s.x >= 3200 && s.x <= 3420 && s.y >= 1880 && s.y <= 2090) {
+        const c0 = HOUSE_CENTER("prokip");
+        playerRef.current.x = c0.x;
+        playerRef.current.y = c0.y;
+      }
       // The khutir was rebuilt around the maidan: a save standing where a
       // wall or a chapel now is starts again on the road south of the fire.
       else if (area === "village" && SOLID.some((b) => circleRectCollide(playerRef.current.x, playerRef.current.y - 6, PLAYER_R, b))) {

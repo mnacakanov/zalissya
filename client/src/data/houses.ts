@@ -50,9 +50,9 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   pechera: { x: 3660, y: 240, w: 180, h: 136 },
   // between the otaman's porch and the fire, its door facing the fire
   kaplytsia: { x: 770, y: 380, w: 140, h: 124 },
-  // far out: over the chumak bridge and east through the forest, where
-  // "decent people don't walk" (Vesna)
-  prokip: { x: 3200, y: 1880, w: 220, h: 170 },
+  // far out: over the chumak bridge and east through the forest, past the
+  // end of the tunnel's ridge, where "decent people don't walk" (Vesna)
+  prokip: { x: 3680, y: 1840, w: 220, h: 170 },
   // south of the river, east of the old oak, clear of the bridge road and the
   // tobacco field: a rocky hill with its mouth to the south
   zmiieva: { x: 1150, y: 1740, w: 760, h: 460 },

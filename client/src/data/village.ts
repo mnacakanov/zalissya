@@ -102,8 +102,11 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
     { x: zm.x + zm.w / 2 - 110, y: zm.y + zm.h, w: 220, h: 150 },
     { x: lz.x, y: lz.y + lz.h, w: lz.w, h: 120 },
   ];
+  // and a little yard before Did Prokip's door, so no crown hides it
+  const pk = HOUSE_RECTS.prokip;
+  const PROKIP_YARD = { x: pk.x - 70, y: pk.y + pk.h, w: pk.w + 100, h: 150 };
   const builtOn = (x: number, y: number) =>
-    [...Object.values(HOUSE_RECTS), ...HOUSES, { x: 880, y: 1760, w: 200, h: 150 }, ...CAVE_CLEARINGS].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
+    [...Object.values(HOUSE_RECTS), ...HOUSES, { x: 880, y: 1760, w: 200, h: 150 }, ...CAVE_CLEARINGS, PROKIP_YARD].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
   for (let i = TREES.length - 1; i >= 0; i--) {
     const tr = TREES[i];
     // (and no tree stands in the pond: willows lean over it from the bank)

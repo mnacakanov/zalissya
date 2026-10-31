@@ -83,6 +83,30 @@ function nearBolotoPath(x: number, y: number): boolean {
   return false;
 }
 
+// the path nobody keeps: off the chumak road past its bridge, east through
+// the forest to Did Prokip's door (data/houses.ts HOUSE_RECTS.prokip). Two
+// bezier legs; no tree stands within reach of it, or you could not get by
+// (tree trunks are solid: data/village.ts SOLID).
+// It runs between the river and the tunnel's ridge (HOUSE_RECTS.lazna), then
+// round the ridge's east end and up to the door from the south.
+export const PROKIP_PATH: number[][][] = [
+  [[2262, 1910], [2600, 1860], [3000, 1900], [3350, 1880]],
+  [[3350, 1880], [3660, 1860], [3600, 2090], [3790, 2034]],
+];
+function nearProkipPath(x: number, y: number): boolean {
+  for (const P of PROKIP_PATH) {
+    for (let i = 0; i <= 40; i++) {
+      const u = i / 40;
+      const v = 1 - u;
+      const bx = v * v * v * (P[0]?.[0] ?? 0) + 3 * v * v * u * (P[1]?.[0] ?? 0) + 3 * v * u * u * (P[2]?.[0] ?? 0) + u * u * u * (P[3]?.[0] ?? 0);
+      const by = v * v * v * (P[0]?.[1] ?? 0) + 3 * v * v * u * (P[1]?.[1] ?? 0) + 3 * v * u * u * (P[2]?.[1] ?? 0) + u * u * u * (P[3]?.[1] ?? 0);
+      // a little more room below the path: a crown hangs over what is behind it
+      if (Math.abs(x - bx) < 46 && y - by > -40 && y - by < 64) return true;
+    }
+  }
+  return false;
+}
+
 // --- forests ----------------------------------------------------------------
 // Dense, but with gaps to walk through; the Lisovyk would approve.
 export type ForestTree = { x: number; y: number; kind: "pine" | "birch" | "oak"; s: number };
@@ -105,7 +129,7 @@ export const FOREST_TREES: ForestTree[] = [];
         if (BRIDGES.some((b) => Math.abs(x - b.x) < 90) && y < 2000) continue;
         // nor in the bog, nor on the path to it (a few dead birches stand
         // in it, drawn with the bog)
-        if (((x - BOLOTO.x) / (BOLOTO.rx + 30)) ** 2 + ((y - BOLOTO.y) / (BOLOTO.ry + 30)) ** 2 < 1 || nearBolotoPath(x, y)) continue;
+        if (((x - BOLOTO.x) / (BOLOTO.rx + 30)) ** 2 + ((y - BOLOTO.y) / (BOLOTO.ry + 30)) ** 2 < 1 || nearBolotoPath(x, y) || nearProkipPath(x, y)) continue;
         const k = hash2(gx * 3, gy * 7);
         const kind = k < r.pines ? "pine" : k < r.pines + 0.3 ? "oak" : "birch";
         FOREST_TREES.push({ x, y, kind, s: 0.9 + hash2(x, y) * 0.45 });
