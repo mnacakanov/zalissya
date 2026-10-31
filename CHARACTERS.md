@@ -38,7 +38,7 @@ One short entry per character, so that everything written about them agrees. **C
 ## The korchma on the chumak road
 
 ### Odarka (Одарка), the shynkarka
-- **Age:** not set; a grown married woman (a married woman's kerchief, dark hair).
+- **Age:** about thirty (owner decision). The math: Hetmanate village women married at about 19 (Serdiuk's parish data, 18th century), a few years of marriage before Stepan rode to the Sich, then seven years of waiting. A married woman's kerchief, dark hair. Older and steadier than Vesna; not old.
 - **Voice:** sharp-tongued, counts everything.
 - **Hurts:** her husband **Stepan** rode to the Sich seven years ago, "back by Pokrova", and never came back. She never collects Okhrim's debt, hoping someone feeds Stepan the same way. The **perelesnyk** comes to her in Stepan's shape.
 
