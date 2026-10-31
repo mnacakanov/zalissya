@@ -34,6 +34,11 @@ var stick_origin := Vector2.ZERO
 var stick_ui: Control
 var fps_hist: Array[float] = []
 var cam: Camera2D
+var shade: CanvasModulate
+var sun: DirectionalLight2D
+var lamps: Array[PointLight2D] = []   # each with meta "hut" (-1: outdoors)
+var fire: PointLight2D
+var night := false
 
 
 func _ready() -> void:
@@ -72,6 +77,7 @@ func _ready() -> void:
 		s.position = P(p.at[0], p.at[1])
 		world.add_child(s)
 	_build_player()
+	_build_light()
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
@@ -268,7 +274,10 @@ func _build_khata(b: Dictionary) -> void:
 	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
 	name_l.visible = false
 	inner.add_child(name_l)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l})
+	var door := foot[0].lerp(foot[1], (d0 + d1) / 2.0)
+	var outward := (foot[0] - foot[3]).normalized()   # out of the south wall
+	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
+		"pich": cs.position, "door": door + outward * 0.6 * metre})
 
 
 ## a building with its own art (not walk-in): the PNG's footprint
@@ -326,7 +335,7 @@ func _build_placeholder(b: Dictionary) -> void:
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
 		walls.add_child(cp)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false})
+	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "id": b.id})
 
 
 func _wall(a: Vector2, b: Vector2) -> void:
@@ -336,6 +345,80 @@ func _wall(a: Vector2, b: Vector2) -> void:
 	seg.b = b
 	cs.shape = seg
 	walls.add_child(cs)
+
+
+# --- light: Pillars-lite's own, the sun raking the normal-mapped art by day,
+# lamps and the fire by night -----------------------------------------------------------
+func _light_tex() -> GradientTexture2D:
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 1, 1))
+	g.set_color(1, Color(1, 1, 1, 0))
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	t.width = 256
+	t.height = 256
+	return t
+
+
+func _lamp(at: Vector2, size: float, col: Color, hut: int) -> PointLight2D:
+	var l := PointLight2D.new()
+	l.texture = _light_tex()
+	l.position = at
+	l.texture_scale = size * 1.6
+	l.color = col
+	l.height = 40.0
+	l.set_meta("hut", hut)
+	l.enabled = false
+	add_child(l)
+	lamps.append(l)
+	return l
+
+
+func _build_light() -> void:
+	shade = CanvasModulate.new()
+	add_child(shade)
+	sun = DirectionalLight2D.new()
+	sun.rotation = deg_to_rad(45)   # from the upper left
+	sun.height = 0.6
+	sun.energy = 0.35
+	sun.color = Color(1.0, 0.92, 0.75)
+	add_child(sun)
+	for i in buildings.size():
+		var b: Dictionary = buildings[i]
+		if b.has("pich"):
+			# inside: the pich's glow and the room, lit while you are in the hut
+			_lamp(b.pich, 1.0, Color(1.0, 0.6, 0.3), i)
+			_lamp(_centroid(b.foot), 1.3, Color(1.0, 0.7, 0.4), i)
+			# outside: a lamp by the door
+			_lamp(b.door + Vector2(0, -1.4 * metre), 0.8, Color(1.0, 0.78, 0.45), -1)
+		elif b.get("id", "") == "vatra":
+			fire = _lamp(_centroid(b.foot) + Vector2(0, -0.6 * metre), 2.4, Color(1.0, 0.62, 0.3), -1)
+	_set_night(false)
+
+
+func _centroid(poly: PackedVector2Array) -> Vector2:
+	var c := Vector2.ZERO
+	for p in poly:
+		c += p
+	return c / poly.size()
+
+
+func _update_lamps() -> void:
+	for l in lamps:
+		var hut: int = l.get_meta("hut")
+		var lit := night and (hut < 0 or hut == inside_of)
+		l.enabled = lit
+		l.energy = (1.1 if hut >= 0 else 0.8) if lit else 0.0
+
+
+func _set_night(on: bool) -> void:
+	night = on
+	shade.color = Color(0.3, 0.33, 0.52) if on else Color(1, 1, 1)
+	sun.enabled = not on
+	_update_lamps()
 
 
 # --- the kobzar -----------------------------------------------------------------------
@@ -420,6 +503,10 @@ func _build_ui() -> void:
 	b_dbg.text = "Контури"
 	b_dbg.pressed.connect(_toggle_debug)
 	row.add_child(b_dbg)
+	var b_night := Button.new()
+	b_night.text = "День / ніч"
+	b_night.pressed.connect(func(): _set_night(not night))
+	row.add_child(b_night)
 	for z in [["−", 0.8], ["+", 1.25]]:
 		var bz := Button.new()
 		bz.text = z[0]
@@ -432,7 +519,7 @@ func _build_ui() -> void:
 	row.add_child(b_st)
 	hud_info = _label()
 	top.add_child(hud_info)
-	var hint := _label("WASD / стрілки / стік / тягни пальцем · F3: контури й назви · −/= або коліщатко: масштаб")
+	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · F3: контури й назви · −/= або коліщатко: масштаб")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(width, 0)
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
@@ -492,8 +579,11 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
 			KEY_F3: _toggle_debug()
+			KEY_N: _set_night(not night)
 			KEY_MINUS: _zoom(0.8)
 			KEY_EQUAL: _zoom(1.25)
+	elif event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_Y:
+		_set_night(not night)
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN: _zoom(0.9)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP: _zoom(1.1)
@@ -531,15 +621,20 @@ func _process(delta: float) -> void:
 		if b.has("fade"):
 			var target := 0.0 if now_in == i else 1.0
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
-	inside_of = now_in
+	if now_in != inside_of:
+		inside_of = now_in
+		_update_lamps()
+	if fire != null and fire.enabled:
+		var t := Time.get_ticks_msec() * 0.001
+		fire.energy = 1.0 + 0.12 * sin(t * 9.0) + 0.08 * sin(t * 23.0 + 1.0)
 	fps_hist.append(Engine.get_frames_per_second())
 	if fps_hist.size() > 120:
 		fps_hist.pop_front()
 	var g := player.position
 	# (back from scene px to metres, for placing things)
 	var m := Transform2D(east, -north, Vector2.ZERO).affine_inverse() * g
-	hud_info.text = "Залісся · майдан · %d fps (low %d) · %.1f, %.1f м%s" % [
-		Engine.get_frames_per_second(), int(fps_hist.min()), m.x, m.y,
+	hud_info.text = "Залісся · майдан · %d fps (low %d) · %s · %.1f, %.1f м%s" % [
+		Engine.get_frames_per_second(), int(fps_hist.min()), "ніч" if night else "день", m.x, m.y,
 		(" · " + data.buildings[inside_of].get("name", "")) if inside_of >= 0 else ""]
 
 

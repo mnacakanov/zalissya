@@ -6,6 +6,12 @@ watercolour of [`ART_STYLE.md`](../../ART_STYLE.md). It is the Godot demo's
 main scene, live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 The style test is behind the "Тест стилів" button.
 
+The light is Pillars-lite's own:
+- by day, a sun rakes the normal-mapped art;
+- by night (N, Y or "День / ніч"), the fire burns and flickers, and a lamp
+  hangs by every khata's door;
+- the pich and the room light up while the kobzar is in that hut.
+
 The maidan is built entirely from **one data file, `maidan.json`**. You can
 add, move or replace buildings there without touching code.
 
