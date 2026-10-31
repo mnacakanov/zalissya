@@ -4,9 +4,9 @@ import { save } from "./api";
 import { JOYSTICK_ALLOWED, SafeAreaTopScrim } from "./platform/target";
 import { ALL_CHARS, charPos, LYSA_CHARS, LYSA_DANCERS, NPCS, type Npc } from "./data/characters";
 import { BED_SPOT_WORLD, doorOf, HOUSE_CENTER, HOUSE_IDS, HOUSE_RECTS, houseAt, type HouseId, PICH_SPOT, PUSTKA_CHEST } from "./data/houses";
-import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
+import { BOBBER, BREW_SPOT, COOK_SPOT, CRUST_SPOT, KABYTSIA, FISH_CATCH, FISH_SPOT, FORGE_SPOT, HERB_SPOTS, HERBS, IRON_SPOTS, WISH_LINES } from "./data/items";
 import { LYSA_ORIGIN, LYSA_WORLD } from "./data/lysa";
-import { DECOR, FENCES, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
+import { DECOR, FENCES, FIRE, HOUSES, YARD_PROPS, KURHAN, OTAMAN_FLAGPOLE, inPondShape, pondEdge, SOLID, TREES, WELL } from "./data/village";
 import { drawKaplytsia, drawKhataBig, drawKorchma, drawKorohva, drawKovyla, drawOtamanKhata, drawPustka, drawDuplo, drawKurhan, drawKurhanMound, drawMallow, drawMlyn, drawPechera, drawProkipKhatka, drawSunflower } from "./render/khutir";
 import { linesFor, linesForLysa } from "./dialogue/lines";
 import { songTopics } from "./dialogue/songTopics";
@@ -56,7 +56,7 @@ import { CAM, rr } from "./render/shapes";
 import { drawVigil, drawVigilOverlay } from "./render/viyFight";
 import { drawDark, drawFog, drawVignette, gradeDay } from "./render/light";
 import { drawBolotianyk, drawChort, drawDomovyk, drawLisovyk, drawPerelesnyk, drawViy } from "./render/spirits";
-import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
+import { drawBrewBench, drawChicken, drawCrust, drawFence, drawFire, drawKabytsia, drawFishing, drawGround, drawHerbPatch, drawHouse, drawPerson, drawTree, drawTreeShadows, drawWell } from "./render/village";
 import { carriedWeight, carryCap, satchelWeight } from "./systems/carry";
 import { flagCount, flagHas } from "./systems/flags";
 import { type QuestItem, questLog } from "./systems/quests";
@@ -2070,7 +2070,8 @@ export function App() {
         spot(true, COOK_SPOT.x, COOK_SPOT.y, 60, () => ({ kind: "cook" }));
         spot(true, FORGE_SPOT.x, FORGE_SPOT.y, 60, () => ({ kind: "smith" }));
         spot(true, BREW_SPOT.x, BREW_SPOT.y, 60, () => ({ kind: "brew" }));
-        spot(true, PLAY_SPOT.x, PLAY_SPOT.y, 54, () => ({ kind: "play" }));
+        // play from any side of the fire (the fire itself is solid)
+        spot(true, FIRE.x + FIRE.w / 2, FIRE.y + FIRE.h / 2, 84, () => ({ kind: "play" }));
         spot(houseAt(p.x, p.y) === "korchma", KORCHMA_PLAY.x, KORCHMA_PLAY.y, 40, () => ({ kind: "playKorchma" }));
         spot(houseAt(p.x, p.y) === "pustka", PUSTKA_CHEST.x, PUSTKA_CHEST.y, 34, () => ({ kind: "pustkaChest" }));
         {
@@ -2225,6 +2226,7 @@ export function App() {
       for (const h of HOUSES) {
         drawables.push({ y: h.y + h.h, draw: () => drawHouse(ctx2d, h, camX, camY, now) });
       }
+      drawables.push({ y: KABYTSIA.y + 2, draw: () => drawKabytsia(ctx2d, KABYTSIA.x - camX, KABYTSIA.y - camY, now) });
       drawables.push({ y: OTAMAN_FLAGPOLE.y + 8, draw: () => drawKorohva(ctx2d, OTAMAN_FLAGPOLE.x + 4 - camX, OTAMAN_FLAGPOLE.y + 6 - camY, now, -1) });
       for (const k of [KURHAN]) drawables.push({ y: k.y, draw: () => drawKurhan(ctx2d, k.x - camX, k.y - camY) });
       for (const d of DECOR) {

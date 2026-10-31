@@ -2,7 +2,7 @@ import { CART, GRAVE } from "../data/chumaky";
 import { DOMOVYK_HOME, doorOf, HOUSE_RECTS, PICH_SPOT } from "../data/houses";
 import { BOLOTO, BOLOTO_POOLS, BRIDGES, FIELDS, GARDENS, HEMP_SPOT, RIVER_HALF, riverY, TOBACCO_SPOTS } from "../data/land";
 import { LYSA_ORIGIN, LYSA_WORLD } from "../data/lysa";
-import { BREW_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
+import { BREW_SPOT, COOK_SPOT, FISH_SPOT, FORGE_SPOT, IRON_SPOTS } from "../data/items";
 import { HOUSES, KURHAN, KURHAN_STEPPE, POND, pondShore, TREES, WELL, WINDMILL } from "../data/village";
 import { t, type TextKey } from "../i18n";
 import { chumakyPresent } from "../systems/chumaky";
@@ -38,7 +38,7 @@ export function questTarget(activeId: string | null, flags: ReadonlySet<string>)
     case "domovyk": return PICH_SPOT;
     case "forge": return flagCount(flags, "iron") >= 3 ? FORGE_SPOT : IRON_SPOTS[0] ?? null;
     case "soul": case "fishing": return FISH_SPOT;
-    case "cooking": return { x: 840, y: 672 };
+    case "cooking": return COOK_SPOT;
     case "smithing": return FORGE_SPOT;
     case "alchemy": return BREW_SPOT;
     case "lysa-visit": case "lysa-sabbath": return LYSA_WORLD.summit;

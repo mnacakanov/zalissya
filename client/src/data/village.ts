@@ -1,5 +1,6 @@
 import { hash2, type Rect } from "../world/geometry";
 import { FOREST_TREES } from "./land";
+import { KABYTSIA } from "./items";
 import { HOUSE_IDS, HOUSE_RECTS, houseSolids } from "./houses";
 
 // --- World layout -----------------------------------------------------------
@@ -191,6 +192,8 @@ export const SOLID: Rect[] = [
   }),
   WELL,
   FIRE,
+  // the kabytsia, Vesna's summer hearth (data/items.ts)
+  { x: KABYTSIA.x - 16, y: KABYTSIA.y - 8, w: 32, h: 12 },
   // Viy's bulk — the boss sleeps in the north-east hollow; you cannot walk
   // through him (and you would not want to).
   { x: 1352, y: 196, w: 136, h: 84 },

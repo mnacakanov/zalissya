@@ -883,6 +883,9 @@ export function drawWell(c: CanvasRenderingContext2D, camX: number, camY: number
   drawCraneWell(c, WELL.x - camX, WELL.y - camY, t);
 }
 
+// The fire on the maidan: crossed logs in a ring of stones, the two log
+// benches either side. No pot: this fire is for gathering and songs (the
+// cooking is done at Vesna's kabytsia, drawKabytsia).
 export function drawFire(c: CanvasRenderingContext2D, camX: number, camY: number, t: number) {
   const x = FIRE.x - camX + 34;
   const y = FIRE.y - camY + 26;
@@ -911,25 +914,6 @@ export function drawFire(c: CanvasRenderingContext2D, camX: number, camY: number
   c.fillStyle = "#7a4a24";
   rr(c, x - 74, y - 4, 34, 9, 4); c.fill();
   rr(c, x + 40, y - 4, 34, 9, 4); c.fill();
-  // The cooking pot: an iron tripod and a hanging kettle over the flames —
-  // karas soup has a home now (Cooking skill, 1 fish + 1 herb).
-  c.strokeStyle = "#3c3630";
-  c.lineWidth = 2.4;
-  c.beginPath(); c.moveTo(x - 17, y + 7); c.lineTo(x, y - 27); c.stroke();
-  c.beginPath(); c.moveTo(x + 17, y + 7); c.lineTo(x, y - 27); c.stroke();
-  c.beginPath(); c.moveTo(x, y - 27); c.lineTo(x, y - 19); c.stroke();
-  c.fillStyle = "#2e2a26";
-  c.beginPath(); c.ellipse(x, y - 13, 11.5, 8, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#6e7a3a";
-  c.beginPath(); c.ellipse(x, y - 16.4, 9.4, 3.6, 0, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#f28c1e";
-  c.beginPath(); c.arc(x - 3.4, y - 16.8, 1.7, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#f5f2e6";
-  c.beginPath(); c.arc(x + 3.8, y - 16.2, 1.5, 0, Math.PI * 2); c.fill();
-  // a wisp of soup steam
-  const st = (t * 0.0004) % 1;
-  c.fillStyle = `rgba(240,238,232,${0.4 * (1 - st)})`;
-  c.beginPath(); c.arc(x + Math.sin(st * 5) * 2.4, y - 22 - st * 15, 2.4 + st * 3.4, 0, Math.PI * 2); c.fill();
 }
 
 // Vesna's alchemy bench: a drying rack hung with herb bundles over a
@@ -1113,4 +1097,46 @@ export function drawChicken(c: CanvasRenderingContext2D, x: number, y: number, p
   c.beginPath(); c.moveTo(sx + 10.8, hy - 0.4); c.lineTo(sx + 13.6, hy + 0.8); c.lineTo(sx + 10.8, hy + 2); c.closePath(); c.fill();
   c.fillStyle = "#2e2018";
   c.fillRect(sx + 7.8, hy - 1, 1.4, 1.4);
+}
+// The kabytsia: a low clay summer hearth, whitewashed and painted with a
+// red-and-ochre zigzag, its mouth to the south with embers in it, and a
+// clay pot (horshchyk) of soup on top, steaming.
+export function drawKabytsia(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
+  const INK = "rgba(34,22,14,0.85)";
+  c.fillStyle = "rgba(30,50,20,0.28)";
+  c.beginPath(); c.ellipse(x, y + 4, 24, 7, 0, 0, Math.PI * 2); c.fill();
+  // the clay body: a squat horseshoe
+  const g = c.createLinearGradient(x - 18, 0, x + 18, 0);
+  g.addColorStop(0, "#f4ecdc"); g.addColorStop(0.6, "#e6dcc6"); g.addColorStop(1, "#bfb39a");
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - 18, y + 2); c.lineTo(x - 18, y - 16); c.quadraticCurveTo(x - 18, y - 24, x - 10, y - 24);
+  c.lineTo(x + 10, y - 24); c.quadraticCurveTo(x + 18, y - 24, x + 18, y - 16); c.lineTo(x + 18, y + 2); c.closePath();
+  c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke();
+  // the painted band
+  c.strokeStyle = "#b0302a"; c.lineWidth = 1.4;
+  c.beginPath();
+  for (let i = 0; i <= 8; i++) { const zx = x - 16 + i * 4; const zy = y - 18 + (i % 2) * 3; if (i) c.lineTo(zx, zy); else c.moveTo(zx, zy); }
+  c.stroke();
+  // the mouth, embers glowing in it
+  c.fillStyle = "#2a1c12";
+  c.beginPath(); c.moveTo(x - 7, y + 2); c.lineTo(x - 7, y - 6); c.quadraticCurveTo(x, y - 13, x + 7, y - 6); c.lineTo(x + 7, y + 2); c.closePath(); c.fill();
+  const fl = 0.6 + Math.sin(t * 0.011 + x) * 0.2 + Math.sin(t * 0.029) * 0.1;
+  c.fillStyle = `rgba(255,140,40,${fl})`;
+  c.beginPath(); c.ellipse(x, y - 1, 5, 2.6, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = `rgba(255,220,120,${fl * 0.8})`;
+  c.beginPath(); c.ellipse(x, y - 1.5, 2.4, 1.4, 0, 0, Math.PI * 2); c.fill();
+  // the clay pot on top
+  const pg = c.createLinearGradient(x - 9, 0, x + 9, 0);
+  pg.addColorStop(0, "#b8743a"); pg.addColorStop(1, "#7a4420");
+  c.fillStyle = pg;
+  c.beginPath(); c.ellipse(x, y - 30, 9, 8, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke();
+  c.fillStyle = "#5a3418";
+  c.beginPath(); c.ellipse(x, y - 37, 6, 2, 0, 0, Math.PI * 2); c.fill();
+  // steam, its phase from the world (x) so it never slides
+  for (let i = 0; i < 2; i++) {
+    const st = (t * 0.0004 + i * 0.5 + x * 0.001) % 1;
+    c.fillStyle = `rgba(240,238,232,${0.4 * (1 - st)})`;
+    c.beginPath(); c.arc(x + Math.sin(st * 5 + i) * 3, y - 42 - st * 18, 2.4 + st * 3.6, 0, Math.PI * 2); c.fill();
+  }
 }

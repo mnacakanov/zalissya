@@ -29,9 +29,12 @@ export const FISH_SPOT = { x: 1150, y: 1080 };
 export const BOBBER = { x: 1235, y: 1062 };
 // A crust of bread waits by the campfire for whoever thinks of the Domovyk.
 export const CRUST_SPOT = { x: 772, y: 660 };
-// The cooking fire's south side — stand here to work the pot that now
-// hangs over the campfire. Soup wants 1 fish + 1 herb from the satchel.
-export const COOK_SPOT = { x: 840, y: 672 };
+// The kabytsia: a little clay summer hearth under the sky, south of
+// Vesna's khata on the path to the pond (the fire on the maidan is for
+// gathering and songs, not for pots). Stand beside it to cook: soup
+// wants 1 fish + 1 herb from the satchel.
+export const KABYTSIA = { x: 1200, y: 716 };
+export const COOK_SPOT = { x: KABYTSIA.x + 34, y: KABYTSIA.y + 12 };
 // Radek's anvil, inside the forge — workable once the forge is lit
 // (the "horseshoe" flag). Hammering has a short cooldown between pieces.
 export const FORGE_SPOT = { x: 300, y: 590 };
