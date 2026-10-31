@@ -62,12 +62,12 @@ One short entry per character, so that everything written about them agrees. **C
 - **Ostap:** the youngest chumak, a lad; burning with marsh fever on day 2.
 
 ### Taras Dovhyi (Тарас Довгий), never seen
-- Planted the tobacco field, rode to the Sich, never came back. His empty khata (the pustka) keeps his letter.
+- Planted the tobacco field, rode to the Sich, never came back: five Pokrovas ago, so the pustka has stood empty five years. His empty hut keeps his letter.
 
 ## The Serpent's Cave and the tunnel
 
 - **Omelko (Омелько):** a blind old kobzar in the cave's east nook; hears who you are in your step; calls you "brother". Once the player mends Taras's khata ("A roof for Omelko") he moves out of the cave and lives there.
-- **Zmiy (Змій):** the old serpent asleep on a dowry-hoard in the west lair. Old and tired, dry humour ("I haven't eaten anyone in a hundred years. You're not tasty."). Sung to sleep with a sad song.
+- **Zmiy (Змій):** the old serpent asleep on a dowry-hoard in the west lair. Old and tired, dry humour ("I haven't eaten anyone in two hundred years. You're not tasty."). Sung to sleep with a sad song.
 - **Vohnyk (Вогник):** a little wandering flame over the pool; bright, vain, forgets its own name.
 - **Sydir (Сидір):** a chumak turned smuggler, camping in the tunnel; carries salt past other men's tollgates.
 

@@ -707,7 +707,7 @@ export function drawKaplytsia(c: CanvasRenderingContext2D, x: number, y: number,
   c.restore();
 }
 
-// Taras Dovhyi's pustka: a khata nobody has whitewashed in seven years.
+// Taras Dovhyi's pustka: a khata nobody has whitewashed in five years.
 // The same khata as the others underneath (drawKhataBig), gone grey, the
 // clay showing through, the windows boarded, the door hanging ajar, a hole
 // rotted through the thatch, and weeds up to the sill.

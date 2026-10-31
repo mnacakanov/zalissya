@@ -17,7 +17,7 @@ These are real defects the owner has chosen to leave for now. Keep them in every
 - **`as TextKey` casts** (about 30) remain. `keys.test.ts` now fails CI if a literal key is missing or dead, which replaces the compiler's check for literal keys; dynamic keys still need a look when added.
 - **Opaque key names.** About 80 `ui.misc.N` keys and about 500 keys ending `.0` sit beside named keys. Renaming touches every file; do it per area, not in one commit.
 - **Template-era names.** The `space.json` slug, root `package.json` name and `client/index.html` were renamed to `zalissya` (the Muse project was told in the same step; it is a separate copy and only picks this up when you sync it). Still open: unused root dependencies (`recharts`, `zod` outside the server) and `packageManager` (bun 1.3.10 vs 1.4.4 in CI) need the owner's word, since the Muse platform may rely on them.
-- **Timeline echoes to confirm with the owner.** Okhrim's kurin no longer names Khotyn ("in the old wars"; owner decision, so the game fixes no year: do not add named battles or dates). Still to confirm: "Seven years" is shared by Taras, Stepan and the empty hut; "a hundred winters" by Domovyk, Lisovyk, Zmiy and Omelko. Decide whether these are echoes or copy-paste.
+- **Repeated numbers: decided (owner, 2026-10-31).** Varied on purpose: Stepan and Odarka 7 years; Taras and the empty pustka 5; Domovyk a hundred winters, Lisovyk three hundred, Zmiy two hundred; Omelko fifty years on the fairs, Sydir thirty-five, Hnat thirty, Prokip forty. Keep the numbers different when adding characters (see the fact table). Okhrim's kurin no longer names Khotyn ("in the old wars"): the game fixes no year, so do not add named battles or dates.
 - **Sunflowers** stay as yard decoration (owner decision, 2026-10-31), though they are a little late for the Hetmanate era. Solokha's seeds were changed to pumpkin seeds. Do not re-report the plants.
 
 ## 0. Ground rules
@@ -74,13 +74,13 @@ Check:
 | Fact | Where | Source of truth |
 |---|---|---|
 | Odarka about 30; Stepan rode to the Sich 7 years ago, "back by Pokrova" | korchma.odarka.*, prokip.perelesnyk.1, perelesnyk.* | CHARACTERS.md |
-| Taras Dovhyi gone 7 Pokrovas; pustka empty 7 years | pustka.*, cave.omelko.home.1 | CHARACTERS.md |
+| Taras Dovhyi gone 5 Pokrovas; pustka empty 5 years | pustka.* | CHARACTERS.md |
 | Myroslav was 7 when the caravan came; "nine houses of forty"; "forty souls" now | chumak.otaman.* | CHARACTERS.md |
 | Okhrim: kurin of 140, alone returned; chalk debt "three winters"; counts to 140 each evening | korchma.okhrim.*, korchma.odarka.okhrim.0, schedule.woken.okhrim | CHARACTERS.md |
 | Chumaky arrive at dawn of day 2; Ostap dies at the next dawn if unresolved; caravan leaves a dawn after resolution | systems/chumaky.ts | code |
 | Clock: start 08:00, dawn 06:00, dusk 20:00, night 21:00-04:00, sabbath 20:30-04:00, evening songs 18:00-23:30 | systems/time.ts, sabbath.ts, songs.ts | code |
-| Years of road/work: Hnat 30, Sydir 40, Omelko 40, Prokip's sieve 40 | chumak.gnat.*, cave.*, prokip.* | n/a (check for contradictions) |
-| "A hundred winters/years": Domovyk, Lisovyk, Zmiy, Omelko | line.domovyk.0, viy.lisovyk.*, cave.zmiy.* | n/a |
+| Years of road/work: Hnat 30, Sydir 35, Omelko 50, Prokip's sieve 40 | chumak.gnat.*, cave.*, prokip.* | n/a (check for contradictions) |
+| Ages of the old ones: Domovyk 100 winters, Lisovyk 300, Zmiy 200 (also Omelko's "two hundred years he heard flattery") | line.domovyk.0, viy.lisovyk.*, cave.zmiy.*, cave.omelko.singAgain.1 | n/a |
 
 ### Browser pass (do not skip: the typecheck cannot see render errors)
 
