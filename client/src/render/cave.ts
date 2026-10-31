@@ -152,7 +152,7 @@ export function drawCaveHill(c: Ctx, x: number, y: number, w: number, h: number,
 }
 
 // --- outside: the ridge over the tunnel --------------------------------------------------
-// Nothing to find here, and it is meant to look it: a low bare ridge in the forest.
+// Nothing to find here, and it is meant to look it: a low bare ridge on the steppe.
 export function drawLaznaRidge(c: Ctx, x: number, y: number, w: number, h: number, alpha: number): void {
   if (alpha <= 0.01) return;
   const cv = bake("ridge", w + PAD * 2, h + PAD * 2, (g) => {

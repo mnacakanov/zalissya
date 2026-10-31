@@ -32,7 +32,7 @@ import { type Rect } from "../world/geometry";
 //   lazna — the hidden tunnel (лаз) from the cave to under the kaplytsia. It
 //     is an underground place with no door: you only arrive by the crack, the
 //     ladder or the chapel hatch (data/cave.ts), and from outside it is a bare
-//     rock ridge in the south-east forest (LAZNA_ROOM)
+//     rock ridge on the steppe east of the chumak road (LAZNA_ROOM)
 export type HouseId = "hut0" | "hut1" | "otaman" | "korchma" | "pustka" | "mlyn" | "duplo" | "kurhan" | "pechera" | "kaplytsia" | "prokip" | "zmiieva" | "lazna";
 
 export const HOUSE_RECTS: Record<HouseId, Rect> = {
@@ -56,8 +56,10 @@ export const HOUSE_RECTS: Record<HouseId, Rect> = {
   // south of the river, east of the old oak, clear of the bridge road and the
   // tobacco field: a rocky hill with its mouth to the south
   zmiieva: { x: 1150, y: 1740, w: 760, h: 460 },
-  // a bare ridge in the south-east forest; its inside is the tunnel
-  lazna: { x: 2380, y: 1960, w: 1200, h: 300 },
+  // a bare ridge on the steppe east of the chumak road, north of the river (so
+  // it never stands in Did Prokip's forest, far to the south-east); its inside
+  // is the tunnel
+  lazna: { x: 2400, y: 1180, w: 1200, h: 300 },
 };
 export const HOUSE_IDS = Object.keys(HOUSE_RECTS) as HouseId[];
 

@@ -95,7 +95,7 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // (and a clearing round the old hollow oak in the south forest, where
   // Motrya sleeps by day: data/hideouts.ts)
   // (a tree's crown hangs over what lies behind it: keep the lane in front of the
-  // Serpent's Cave's mouth clear, and the forest off the tunnel ridge's south face)
+  // Serpent's Cave's mouth clear, and the trees off the tunnel ridge's south face)
   const zm = HOUSE_RECTS.zmiieva;
   const lz = HOUSE_RECTS.lazna;
   const CAVE_CLEARINGS = [
