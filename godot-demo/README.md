@@ -17,6 +17,11 @@ a gamepad.
 | **Pillars-lite** | isometric | colour plates with normal maps (`<name>_n.png`, from `tools/normals.py`), a `DirectionalLight2D` sun by day, lamps that rake the relief at night |
 | **BG2 / IWD** | isometric | painted plates, the light baked in, a tint and lamp glows at night |
 
+**The owner's choice: Pillars-lite** (2026-10-31): the Pillars camera
+angle with the art drawn in `ART_STYLE.md`'s ink and watercolour (Harry's
+redrawn hut, 765e7b3), lit by the normal-mapped sun and lamps. The other two
+styles stay in the demo for reference.
+
 - **The walkable hut.** The hut's footprint (`styles/<style>/layout.json`,
   in sprite pixels from the PNG's bottom-centre anchor, times `scale`)
   makes the walls, with a gap at the door.
