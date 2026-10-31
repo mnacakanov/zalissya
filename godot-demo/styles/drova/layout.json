@@ -1,20 +1,20 @@
 {
-  "_note": "See styles/bg2/layout.json. Harry's Drova hut and interior came isometric, so this style keeps the isometric layout and differs in rendering (pixel art: nearest filter, pixel snap). The interior is derived_room.png (cut from hut_interior_and_horod_TOUCHING.png, the horod half is derived_horod.png) with hut_interior_bed.png placed in it.",
-  "camera": "iso",
-  "metre": 74,
-  "scale": 0.81,
+  "_note": "Harry's Drova set (Request 2, #4): true top-down pixel art at 32 px per metre, drawn at a whole 2× (scale) with the nearest filter, so every texel stays square. Footprint [front-left, front-right, back-right] in sprite px from the bottom-centre anchor; the door is in the front wall. Exterior and interior share one canvas and footprint.",
+  "camera": "topdown",
+  "pixel": true,
+  "metre": 32,
+  "scale": 2,
   "hut": {
-    "exterior": {"file": "hut_exterior", "footprint": [[-255, -145], [98, -25], [265, -150]]},
+    "exterior": {"file": "hut_exterior", "footprint": [[-96, -6], [96, -6], [96, -121]]},
     "interior": {
-      "file": "derived_room",
-      "footprint": [[-330, -150], [0, -30], [135, -205]],
-      "pich": [-190, -165],
-      "prokip": [-120, -110],
-      "extra": [{"file": "hut_interior_bed", "at": [55, -118], "scale": 0.38}],
-      "solids": [[55, -150, 190, 70]]
+      "file": "hut_interior",
+      "footprint": [[-96, -6], [96, -6], [96, -121]],
+      "pich": [60, -34],
+      "prokip": [34, -36],
+      "solids": [[-48, -99, 43, 50], [7, -83, 42, 55], [-66, -43, 30, 55], [37, -85, 13, 31]]
     },
-    "door": [0.47, 0.68]
+    "door": [0.42, 0.6]
   },
-  "horod": {"file": "derived_horod", "metres": 5.5},
+  "horod": {"file": "horod", "metres": 4.0},
   "heights": {"kobzar": 1.75, "npc_prokip": 1.72, "cow": 1.45, "bench": 0.55}
 }

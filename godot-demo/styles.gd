@@ -134,7 +134,8 @@ func _fit(src: PackedVector2Array, dst: PackedVector2Array) -> Transform2D:
 func _set_style(name: String) -> void:
 	var t0 := Time.get_ticks_usec()
 	var was_inside := inside
-	var was_at := player.position if player != null else Vector2.INF
+	# where he stands, in metres from the door (each style has its own scale)
+	var was_at := (player.position - door) / metre if player != null else Vector2.INF
 	for n in [ground, world, walls, debug_layer, shade, sun]:
 		if n != null:
 			n.queue_free()
@@ -176,7 +177,7 @@ func _set_style(name: String) -> void:
 	if was_inside:
 		player.position = (door + _centroid(footprint)) / 2
 	elif was_at != Vector2.INF:
-		player.position = was_at
+		player.position = door + was_at * metre
 	_set_night(night)
 	for s in style_buttons:
 		style_buttons[s].button_pressed = s == style
@@ -192,7 +193,7 @@ func _build_ground() -> void:
 	spr.region_enabled = true
 	if grass != null:
 		spr.texture = grass
-		var tile := 6.0 * metre / grass.get_width()
+		var tile: float = k if layout.get("pixel", false) else 6.0 * metre / grass.get_width()
 		spr.scale = Vector2(tile, tile)
 		spr.region_rect = Rect2(0, 0, 2800 / tile, 2200 / tile)
 	else:
@@ -228,7 +229,7 @@ func _strip(name: String, pts: PackedVector2Array, width: float, tile_m := 6.0, 
 			poly.polygon = outline
 			poly.texture = tex
 			poly.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-			poly.texture_scale = Vector2.ONE * (tex.get_width() / (tile_m * metre))
+			poly.texture_scale = Vector2.ONE * ((1.0 / k) if layout.get("pixel", false) else tex.get_width() / (tile_m * metre))
 			poly.texture_rotation = rot
 			poly.color = Color(1, 1, 1, 0.45 if pass_i == 0 else 1.0)
 			ground.add_child(poly)
@@ -358,7 +359,9 @@ func _build_props() -> void:
 		world.add_child(sk)
 	# the horod: flat on the ground, beyond the hut's right corner
 	var hr := _sprite(layout.horod.file, 1.0)
-	if hr.texture != null:
+	if hr.texture != null and layout.get("pixel", false):
+		hr.scale = Vector2(k, k)
+	elif hr.texture != null:
 		hr.scale = Vector2.ONE * (layout.horod.metres * metre / hr.texture.get_width())
 	var horod := Node2D.new()
 	horod.position = footprint[2] + Vector2(2.6, 3.2) * metre
@@ -418,7 +421,7 @@ func _build_walk(metres: float) -> void:
 	anim_kind = ""
 	var sf := SpriteFrames.new()
 	var cell_h := 0.0
-	var sheet := _tex("kobzar_walk")
+	var sheet: Texture2D = _tex("kobzar_walk") if ResourceLoader.exists("res://styles/%s/kobzar_walk.png" % style) else null
 	if sheet != null:
 		var cw := sheet.get_width() / 6.0
 		var ch := sheet.get_height() / 4.0
