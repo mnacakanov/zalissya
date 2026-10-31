@@ -56,8 +56,10 @@ export const TREES: Array<{ x: number; y: number; kind: TreeKind; s: number }> =
   // the forests beyond the fields and the river (data/land.ts)
   TREES.push(...FOREST_TREES);
   // nothing grows through a roof or on the maidan's chapel
+  // (and a clearing round the old hollow oak in the south forest, where
+  // Motrya sleeps by day: data/hideouts.ts)
   const builtOn = (x: number, y: number) =>
-    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
+    [...Object.values(HOUSE_RECTS), ...HOUSES, KAPLYTSIA, { x: 900, y: 1790, w: 160, h: 110 }].some((r) => x > r.x - 34 && x < r.x + r.w + 34 && y > r.y - 50 && y < r.y + r.h + 24);
   for (let i = TREES.length - 1; i >= 0; i--) {
     const tr = TREES[i];
     if (tr && builtOn(tr.x, tr.y)) TREES.splice(i, 1);

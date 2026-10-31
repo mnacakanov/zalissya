@@ -159,10 +159,28 @@ export function drawLysaGround(c: CanvasRenderingContext2D, camX: number, camY: 
   }
 }
 
-export function drawLysaFire(c: CanvasRenderingContext2D, camX: number, camY: number, t: number) {
+export function drawLysaFire(c: CanvasRenderingContext2D, camX: number, camY: number, t: number, lit = true) {
   // The sabbath bonfire — the village campfire's wicked older brother.
   const x = LYSA_SUMMIT.x - camX;
   const y = LYSA_SUMMIT.y - camY + 14;
+  if (!lit) {
+    // by day: a black ring of stones, cold ash, a last thread of smoke
+    c.fillStyle = "rgba(30,26,30,0.55)";
+    c.beginPath(); c.ellipse(x, y, 34, 12, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#55555f";
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      c.beginPath(); c.ellipse(x + Math.cos(a) * 40, y + Math.sin(a) * 14, 7, 5, a, 0, Math.PI * 2); c.fill();
+    }
+    c.strokeStyle = "#1e1a1a"; c.lineWidth = 6;
+    c.beginPath(); c.moveTo(x - 22, y + 4); c.lineTo(x + 18, y - 4); c.stroke();
+    c.fillStyle = "#8a2a1a";
+    for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(x - 8 + i * 6, y - 1 + (i % 2) * 2, 1.4, 0, Math.PI * 2); c.fill(); }
+    const ph = (t * 0.0003) % 1;
+    c.fillStyle = `rgba(200,196,190,${0.35 * (1 - ph)})`;
+    c.beginPath(); c.arc(x + Math.sin(ph * 5) * 4, y - 10 - ph * 40, 3 + ph * 6, 0, Math.PI * 2); c.fill();
+    return;
+  }
   const glow = c.createRadialGradient(x, y - 10, 10, x, y - 10, 190);
   glow.addColorStop(0, "rgba(255,150,50,0.5)");
   glow.addColorStop(0.55, "rgba(160,70,140,0.16)");
@@ -195,9 +213,10 @@ export function drawLysaFire(c: CanvasRenderingContext2D, camX: number, camY: nu
 
 // The witches and the dancers are people, in the people's storybook hand
 // (render/people.ts, style "witch"); the dancers dance with arms up.
-export function drawWitch(c: CanvasRenderingContext2D, x: number, y: number, tunic: string, hair: string, t: number, dancing: boolean) {
+export function drawWitch(c: CanvasRenderingContext2D, x: number, y: number, tunic: string, hair: string, t: number, dancing: boolean, sitting = false, warlock = false) {
   const phase = t * 0.012 + (x + CAM.x) * 0.3;
-  drawFolk(c, x, y, { tunic, hair, style: "witch", moving: dancing, phase, face: 0, t, ...(dancing ? { pose: "dance" as const } : {}) });
+  const pose = dancing ? { pose: "dance" as const } : sitting ? { pose: "sit" as const } : {};
+  drawFolk(c, x, y, { tunic, hair, style: warlock ? "warlock" : "witch", moving: dancing, phase, face: 0, t, ...pose });
 }
 
 // Beelzebub presiding: broad, horned, enthroned — twice a mortal's width,

@@ -22,7 +22,9 @@ import { korchmaMood, SUPPER_PRICE } from "./systems/korchma";
 import { makeCritters, stepCritter } from "./systems/critters";
 import { BENCHES, RESIDENTS, type ResidentId, STRAW_BED } from "./data/schedules";
 import { planFor, type Pose, walkToward, type Walker } from "./systems/schedules";
-import { drawBeehive, drawBench, drawHenHouse, drawShed, drawStrawBed, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
+import { isSabbath } from "./systems/sabbath";
+import { HIDEOUT_IDS, HIDEOUTS, HOLLOW_OAK, KURHAN_PIT, LYSA_CAVE } from "./data/hideouts";
+import { drawBeehive, drawCaveMouth, drawHollowOak, drawKurhanPit, drawBench, drawHenHouse, drawShed, drawStrawBed, drawCow, drawDog, drawFlyingStork, drawGoose, drawHaystack, drawHayCart, drawHorse, drawLaundry, drawSmallLife, drawStorkNest } from "./render/animals";
 import { CAMP_SOLID, CART, GNAT, GRAVE, OSTAP, OSTAP_WELL, OXEN } from "./data/chumaky";
 import { drawCart, drawGrave, drawOx, drawSickChumak } from "./render/chumaky";
 import { chumakDawn, chumakyPresent, healByDefiance, healByPersuasion, ostapState, PERSUADE_CHA } from "./systems/chumaky";
@@ -94,7 +96,12 @@ const RESIDENT_BASE: Record<ResidentId, Npc> = {
 };
 const RESIDENT_IDS = new Set<string>(RESIDENTS);
 // benches are things you bump into, not walk through
-const BENCH_SOLIDS = BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 }));
+const BENCH_SOLIDS = [
+  ...BENCHES.map((b) => ({ x: b.x - 20, y: b.y - 6, w: 40, h: 8 })),
+  // the hollow oak and the cave's rock (data/hideouts.ts)
+  { x: HOLLOW_OAK.x - 26, y: HOLLOW_OAK.y - 12, w: 52, h: 14 },
+  { x: LYSA_CAVE.x - 44, y: LYSA_CAVE.y - 24, w: 88, h: 24 },
+];
 // What each walk-in house says when you step in, and its HUD label.
 const HOUSE_ENTER: Record<HouseId, TextKey> = { hut0: "ui.enterHut.0", hut1: "ui.enterHut.1", otaman: "ui.enterHut.2", korchma: "ui.enterHut.korchma", pustka: "ui.enterHut.pustka" };
 const HOUSE_LABEL: Record<HouseId, TextKey> = { hut0: "ui.misc.6", hut1: "ui.misc.7", otaman: "ui.hut.otaman", korchma: "ui.hut.korchma", pustka: "ui.hut.pustka" };
@@ -920,6 +927,15 @@ export function App() {
         // Chort, who does no soul-business on the mountain (sabbath rules).
         // Conversations there are topic menus too; Beelzebub's blessing
         // is reached through his "Receive the blessing" topic.
+        // the sabbath's people found in their day hiding places (data/hideouts.ts)
+        if (HIDEOUT_IDS.has(p.npc.id) && !isSabbath(clockRef.current.minute)) {
+          openDialogue(p.npc, [t(`hide.${p.npc.id}.0` as TextKey), t(`hide.${p.npc.id}.1` as TextKey)]);
+          return;
+        }
+        if (p.npc.id === "opanas") {
+          openDialogue(p.npc, [t("lysa.opanas.0"), t("lysa.opanas.1")]);
+          return;
+        }
         // residents abroad at night have their own word for the kobzar
         if (RESIDENT_IDS.has(p.npc.id) && areaRef.current === "lysa") {
           openDialogue(p.npc, [t(`schedule.lysa.${p.npc.id}` as TextKey)]);
@@ -1248,6 +1264,11 @@ export function App() {
         );
         return;
       }
+      case "cave": {
+        // Beelzebub's day-bed on the slope (data/hideouts.ts)
+        showToast(t(isSabbath(clockRef.current.minute) ? "cave.night" : "cave.day"));
+        return;
+      }
       case "petDog": {
         // the otaman's dog has opinions about kobzars (systems/critters.ts)
         const dog = crittersRef.current.find((c) => c.kind === "dog");
@@ -1564,7 +1585,7 @@ export function App() {
               setFlag("visitedLysa");
               showToast(t("ui.frame.4"));
             } else {
-              showToast(t("ui.frame.5"));
+              showToast(t(isSabbath(clockRef.current.minute) ? "ui.frame.5" : "lysa.day.empty"));
             }
           }
           dirtyRef.current = true;
@@ -1667,8 +1688,7 @@ export function App() {
       const camp = chumakyPresent(flagsNow);
       const ostapNow = ostapState(flagsNow);
       // The Chort keeps two addresses: the millstone by day, the sabbath
-      // on Lysa Hora by night.
-      const night = isNight(clockRef.current.minute);
+      // on Lysa Hora in its hours (below).
       // the residents, where their day has taken them (systems/schedules.ts)
       const onLysa = (x: number, y: number) => x > LYSA_BORDER_X && y < LYSA_BORDER_Y;
       const residents = RESIDENTS.map((id) => {
@@ -1676,9 +1696,14 @@ export function App() {
         const st = residentsRef.current[id];
         return st ? { ...base, x: st.x, y: st.y } : base;
       });
-      const lysaChars = [...(night ? LYSA_CHARS : LYSA_CHARS.filter((c) => c.id !== "chort")), ...residents.filter((r) => onLysa(r.x, r.y))];
+      // the sabbath keeps its hours (systems/sabbath.ts): by day the summit
+      // is empty and its people are hidden about the land (data/hideouts.ts)
+      const sabbath = isSabbath(clockRef.current.minute);
+      const hiders = sabbath ? [] : LYSA_CHARS.filter((c) => HIDEOUT_IDS.has(c.id)).map((c) => ({ ...c, ...HIDEOUTS[c.id as keyof typeof HIDEOUTS] }));
+      const lysaChars = [...(sabbath ? LYSA_CHARS : []), ...residents.filter((r) => onLysa(r.x, r.y))];
       const villageChars = [
-        ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && night) && !RESIDENT_IDS.has(c.id)),
+        ...ALL_CHARS.filter((c) => !(c.id === "viy" && flagHas(flagsNow, "viySealed")) && !(c.id === "chort" && sabbath) && !RESIDENT_IDS.has(c.id)),
+        ...hiders,
         ...residents.filter((r) => !onLysa(r.x, r.y)),
         ...(camp ? [GNAT, ...(ostapNow === "sick" ? [OSTAP] : ostapNow === "healed" ? [OSTAP_WELL] : [])] : []),
       ];
@@ -1703,10 +1728,11 @@ export function App() {
           const d = Math.hypot(x - p.x, y - p.y);
           if (d < reach && d <= best + 14) { best = d; nextPrompt = make(); }
         };
-        if (!flagHas(flagsNow, "lysaOffering")) {
+        lspot(LYSA_CAVE.x, LYSA_CAVE.y + 10, 64, () => ({ kind: "cave" }));
+        if (sabbath && !flagHas(flagsNow, "lysaOffering")) {
           lspot(LYSA_WORLD.offer.x, LYSA_WORLD.offer.y, 62, () => ({ kind: "offering" }));
         }
-        if (flagHas(flagsNow, "lysaOffering") && !flagHas(flagsNow, "lysaDanced")) {
+        if (sabbath && flagHas(flagsNow, "lysaOffering") && !flagHas(flagsNow, "lysaDanced")) {
           lspot(LYSA_WORLD.dance.x, LYSA_WORLD.dance.y, 66, () => ({ kind: "dance" }));
         }
       } else if (fishingRef.current?.phase === "bite") {
@@ -1826,7 +1852,7 @@ export function App() {
       if (lx < vw && lx + LYSA_W > 0 && ly < vh && ly + LYSA_H > 0) {
         // (its rock, crown and trail are in the world's ground: render/village.ts)
         drawLysaGround(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, vw, vh, now, flagHas(flagsNow, "lysaOffering"));
-        drawLysaFire(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, now);
+        drawLysaFire(ctx2d, camX - LYSA_ORIGIN.x, camY - LYSA_ORIGIN.y, now, isSabbath(clockRef.current.minute));
         lysaPatchesRef.current.forEach((patch) => drawLysaFlower(ctx2d, patch.x, patch.y, camX, camY, now, !patch.taken));
       }
       drawWell(ctx2d, camX, camY, now);
@@ -1892,7 +1918,10 @@ export function App() {
         drawables.push({ y: tr.y, draw: () => drawTree(ctx2d, tr, camX, camY, now) });
       }
       }
-      for (const npc of [...villageChars, ...lysaChars, ...LYSA_DANCERS]) {
+      if (Math.abs(LYSA_CAVE.x - p.x) < vw && Math.abs(LYSA_CAVE.y - p.y) < vh) {
+        drawables.push({ y: LYSA_CAVE.y, draw: () => drawCaveMouth(ctx2d, LYSA_CAVE.x - camX, LYSA_CAVE.y - camY, now, sabbath) });
+      }
+      for (const npc of [...villageChars, ...lysaChars, ...(sabbath ? LYSA_DANCERS : [])]) {
         const pos = charPos(npc, now);
         drawables.push({
           y: pos.y,
@@ -1905,8 +1934,8 @@ export function App() {
             else if (npc.style === "bolotianyk") drawBolotianyk(ctx2d, sx, sy, now);
             else if (npc.style === "viy") drawViy(ctx2d, sx, sy, now);
             else if (npc.style === "beelzebub") drawBeelzebub(ctx2d, sx, sy, now);
-            else if (npc.style === "witch") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false);
-            else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true);
+            else if (npc.style === "witch" || npc.style === "warlock") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, false, !sabbath && HIDEOUT_IDS.has(npc.id), npc.style === "warlock");
+            else if (npc.style === "dancer") drawWitch(ctx2d, sx, sy, npc.tunic, npc.hair, now, true, false, Number(npc.id.slice(-1)) % 2 === 1);
             else if (npc.style === "sick") drawSickChumak(ctx2d, sx, sy, npc.tunic, npc.hair, now);
             else {
               const st = RESIDENT_IDS.has(npc.id) ? residentsRef.current[npc.id as ResidentId] : undefined;
@@ -1978,6 +2007,8 @@ export function App() {
             },
           });
         }
+        if (Math.abs(HOLLOW_OAK.x - p.x) < vw && Math.abs(HOLLOW_OAK.y - p.y) < vh) drawables.push({ y: HOLLOW_OAK.y, draw: () => drawHollowOak(ctx2d, HOLLOW_OAK.x - camX, HOLLOW_OAK.y - camY) });
+        if (Math.abs(KURHAN_PIT.x - p.x) < vw && Math.abs(KURHAN_PIT.y - p.y) < vh) drawables.push({ y: KURHAN_PIT.y - 30, draw: () => drawKurhanPit(ctx2d, KURHAN_PIT.x - camX, KURHAN_PIT.y - camY) });
         for (const b of BENCHES) {
           if (Math.abs(b.x - p.x) > vw || Math.abs(b.y - p.y) > vh) continue;
           drawables.push({ y: b.y - 6, draw: () => drawBench(ctx2d, b.x - camX, b.y - camY) });
@@ -2226,6 +2257,8 @@ export function App() {
                                     ? t("ui.promptLabel.playKorchma")
                                   : prompt.kind === "pustkaChest"
                                     ? t("ui.promptLabel.pustkaChest")
+                                  : prompt.kind === "cave"
+                                    ? t("ui.promptLabel.cave")
                                   : prompt.kind === "petDog"
                                     ? t("ui.promptLabel.petDog")
                                   : prompt.kind === "grave"

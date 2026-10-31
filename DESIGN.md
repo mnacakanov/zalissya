@@ -413,3 +413,17 @@ The residents now live by the clock (`systems/schedules.ts`, with tests; places 
 - **Poses:** walking, standing, sitting, sleeping under a blanket, bathing to the chest.
 - **Waking sleepers:** a sleeper can be woken. They grumble, then talk as usual, so no story step is ever locked behind the night.
 - **Animals:** they keep nights too. The cow goes to her new shed and lies down, the geese settle on the pond's north shore, the hens sit in a row by their new hen-house, and the dog sleeps by the porch.
+
+## The sabbath keeps its hours, and not only witches keep it
+
+The owner pointed out that a sabbath is an evening thing, and that warlocks belong there as well as witches.
+
+- **Hours:** Lysa Hora's sabbath now gathers at dusk and breaks up before the cocks crow, 20:30–04:00 (`systems/sabbath.ts`, tested).
+- **The summit by day:** it is empty: cold ash, a black ring of stones, a last thread of smoke, a forgotten broom. The offering, the hopak and Beelzebub's blessing wait for the sabbath.
+- **Day hiding places** (`data/hideouts.ts`), each findable, each with a line or two:
+  - Solokha sits on the windmill's step by day, "a widow like any widow";
+  - Motrya sleeps in the hollow of an old oak in a clearing of the south forest;
+  - Opanas, a new warlock in a tall black sheepskin kuchma with a goat's beard, sits in a pit dug under the steppe kurhan's stone baba;
+  - Beelzebub snores in a cave on the mountain's north-east slope: you can look in, feel the warm sulphur breath, and back away;
+  - the Chort keeps his old day-place by the millstone.
+- **Warlocks:** besides Opanas, half the sabbath dancers are warlocks, dancing with their arms up beside the witches.

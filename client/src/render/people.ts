@@ -18,7 +18,7 @@ import { CAM, rr } from "./shapes";
 //   shynkarka — Odarka: a married woman's kerchief, a white apron
 //   kozak     — Okhrim: a red zhupan, the oseledets, moustaches to the chest
 
-export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch";
+export type FolkStyle = "player" | "elder" | "herbalist" | "smith" | "shynkarka" | "kozak" | "chumak" | "witch" | "warlock";
 
 export type FolkOpts = {
   tunic: string; hair: string; style: FolkStyle;
@@ -40,7 +40,8 @@ type Costume = {
   pants?: string; boots: string;
   skirt?: string; skirt2?: string; apron?: string;
   sash?: string; leather?: string;
-  kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch";
+  kobza?: boolean; hat?: "brryl" | "cap" | "khustka" | "witch" | "kuchma";
+  goatee?: boolean;
   loose?: boolean;
   oseledets?: boolean; moust?: string; longMoust?: boolean; pipe?: boolean;
   vinok?: boolean; braid?: boolean;
@@ -70,6 +71,11 @@ function costumeFor(o: FolkOpts): Costume {
       // a vidma of Lysa Hora: dark skirt, loose hair, the pointed hat
       return { kind: "f", skin: "#e2b894", hair: o.hair, shirt: "#e8dfcc", emb: "#5a2a5a", vest: "#241f2c",
         skirt: o.tunic, skirt2: "#141018", apron: darken(o.tunic, 0.7), boots: "#241a1c", hat: "witch", loose: true };
+    case "warlock":
+      // a vidmak: a man like any man, but in a long dark svytka, a tall
+      // black sheepskin kuchma with a red top, and a goat's beard
+      return { kind: "m", skin: "#d6b08a", hair: o.hair, shirt: "#cfc6b4", emb: "#5a2a5a", coat: o.tunic, trim: "#7a2a5a", coatLen: 0.14,
+        pants: "#241f2c", boots: "#1a1418", sash: "#5a2a5a", hat: "kuchma", moust: o.hair, goatee: true };
     case "kozak":
       return { kind: "m", skin: "#dcae86", hair: o.hair, shirt: "#efe6d4", emb: "#b0302a", coat: o.tunic, trim: "#c9a040", coatLen: 0.24,
         pants: "#2c4a8a", boots: "#4a2a14", sash: "#3a5a8a", oseledets: true, moust: o.hair, longMoust: true };
@@ -315,6 +321,15 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
     c.fillStyle = "#24242a";
     c.beginPath(); c.ellipse(x + fx * 2, headCy - hh * 0.26, hh * 0.36, hh * 0.08, 0, 0, Math.PI * 2); c.fill();
   }
+  if (C.hat === "kuchma") {
+    // the tall black sheepskin hat, its red cloth top flopped to one side
+    c.fillStyle = paint("#2a2428", x - hh * 0.46, hh * 0.92);
+    rr(c, x - hh * 0.46, headCy - hh * 1.25, hh * 0.92, hh * 0.92, hh * 0.22); c.fill(); ink();
+    c.fillStyle = "rgba(90,80,86,0.6)";
+    for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(x - hh * 0.3 + (i % 3) * hh * 0.3, headCy - hh * (1.05 - Math.floor(i / 3) * 0.32), hh * 0.08, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = "#9a2430";
+    c.beginPath(); c.moveTo(x - hh * 0.3, headCy - hh * 1.22); c.quadraticCurveTo(x + hh * 0.2, headCy - hh * 1.5, x + hh * 0.6, headCy - hh * 1.0); c.lineTo(x + hh * 0.3, headCy - hh * 1.2); c.closePath(); c.fill(); ink();
+  }
   if (C.hat === "witch") {
     // the honest silhouette of a vidma: a broad brim and a crooked point
     c.fillStyle = paint("#241f2c", x - hh * 0.9, hh * 1.8);
@@ -366,6 +381,10 @@ export function drawFolk(c: CanvasRenderingContext2D, x: number, y: number, o: F
       c.quadraticCurveTo(x + s * hh * 0.3 + fx, headCy + hh * 0.2, x + s * hh * 0.34 + fx, headCy + hh * drop);
       c.quadraticCurveTo(x + s * hh * 0.18 + fx, headCy + hh * 0.36, x + fx, headCy + hh * 0.3); c.fill();
     }
+  }
+  if (C.goatee) {
+    c.fillStyle = C.hair;
+    c.beginPath(); c.moveTo(x - hh * 0.1 + fx, headCy + hh * 0.36); c.lineTo(x + hh * 0.1 + fx, headCy + hh * 0.36); c.lineTo(x + fx, headCy + hh * 0.8); c.closePath(); c.fill();
   }
   // the otaman's lyulka, smoking
   if (C.pipe) {

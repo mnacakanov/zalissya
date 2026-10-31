@@ -27,7 +27,7 @@ client/src/
   world/             areas.ts (sizes, spawns, trail), geometry.ts (Rect, clamp, collision, hash2)
   data/              village / lysa / houses (walk-in khaty) layouts, schedules (beds, benches, places of work), items (herbs, spots, catch), characters (+ charPos)
   dialogue/          lines.ts (per-character scripts), topics.ts (topic menus), songTopics.ts (who teaches which song), chumaky.ts (the caravan conversations), viyNight.ts (Viy's night storyline)
-  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), korchma (its evening moods), critters (the dog, geese, cow, horse; their nights), schedules (the residents' day: where to be, walking through doors), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
+  systems/           flags, skills, stats, carry, time (day/night), songs (the kobza, evening moods), chumaky (the caravan dilemma), korchma (its evening moods), critters (the dog, geese, cow, horse; their nights), schedules (the residents' day: where to be, walking through doors), sabbath (its hours), tobacco (the otaman's pipe), viyFight (the vigil), quests (quest log) + *.test.ts
   render/            canvas drawing: people (every human figure, storybook style, costumes by style), animals (critters, storks, butterflies, fireflies, bats, yard things), trees (sprites), village (ground baked once into a texture), light (time-of-day grade, fog, night with light holes), spirits, lysa, khutir, khataInterior, viyFight (vigil), shapes
   input/             PadButton (Muse D-pad cell), Joystick (Pages: floating, appears under the thumb), gamepad.ts (controllers, Steam Deck)
   ui/                types.ts (Prompt, Dialogue…), LanguagePicker.tsx, MapOverlay.tsx (the world map, an item: flag `map`, from Hnat or bought from the Chort — dialogue/mapTopics.ts; drawing in render/map.ts, quest stars in questTarget)
@@ -133,7 +133,7 @@ Inside Muse: `bun run typecheck` and `bun run build` from the repo root.
   - The little north-east hut is the pustka, the empty khata of Taras Dovhyi (who planted the tobacco field and never came back from the Sich), walk-in, by Viy's hollow; his skrynia holds a letter (`PUSTKA_ROOM`, flag `dovhyiLetter`). The korchma on the chumak road is walk-in too (`KORCHMA_ROOM`). Every house in `HOUSE_RECTS` gets walls and furniture in `SOLID`.
 - **Characters**: Myroslav (starosta), Vesna (znakharka), Radek (smith). In the korchma on the chumak road: Odarka (the shynkarka) and Okhrim (an old Zaporozhian) — `data/korchma.ts`, `dialogue/korchma.ts`, `systems/korchma.ts`.
   - Spirits: Domovyk, Lisovyk, Chort, Bolotianyk, and Viy, the boss, sealed by the vigil.
-  - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, and the dancers.
+  - On Lysa Hora: Beelzebub, the witches Solokha and Motrya, the warlock Opanas, and the dancers (witches and warlocks). The sabbath keeps its hours, 20:30–04:00 (`systems/sabbath.ts`); by day they hide: Solokha on the windmill's step, Motrya in the hollow oak in the south forest, Opanas in a pit under the steppe kurhan's stone baba, Beelzebub snoring in a cave on the slope (`data/hideouts.ts`).
 - **Systems**:
   - topic-based dialogue, 5 skills, 6 derived stats, carry weight (6 + 2×STR)
   - fishing bite minigame, cooking, smithing, two alchemy tiers

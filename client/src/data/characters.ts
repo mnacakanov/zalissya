@@ -13,7 +13,7 @@ export type Npc = {
   y: number;
   tunic: string;
   hair: string;
-  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak";
+  style: "elder" | "herbalist" | "smith" | "domovyk" | "lisovyk" | "viy" | "chort" | "bolotianyk" | "witch" | "beelzebub" | "dancer" | "chumak" | "sick" | "shynkarka" | "kozak" | "warlock";
 };
 
 export const NPCS: Npc[] = [
@@ -58,10 +58,13 @@ export const LYSA_CHARS: Npc[] = [
   { id: "chort", name: t("char.chort.name.1"), pron: t("char.chort.pron.1"), role: t("char.chort.role.1"), x: LYSA_ORIGIN.x + 770, y: LYSA_ORIGIN.y + 330, tunic: "#7e2430", hair: "#2b2320", style: "chort" },
   { id: "solokha", name: t("char.solokha.name.0"), pron: t("char.solokha.pron.0"), role: t("char.solokha.role.0"), x: LYSA_ORIGIN.x + 545, y: LYSA_ORIGIN.y + 330, tunic: "#4a2c5a", hair: "#c8c2b8", style: "witch" },
   { id: "motrya", name: t("char.motrya.name.0"), pron: t("char.motrya.pron.0"), role: t("char.motrya.role.0"), x: LYSA_ORIGIN.x + 520, y: LYSA_ORIGIN.y + 480, tunic: "#2c4a5a", hair: "#3a2a1a", style: "witch" },
+  // the warlock: not only witches keep the sabbath
+  { id: "opanas", name: t("char.opanas.name"), pron: t("char.opanas.pron"), role: t("char.opanas.role"), x: LYSA_ORIGIN.x + 780, y: LYSA_ORIGIN.y + 470, tunic: "#2a2430", hair: "#3a3238", style: "warlock" },
 ];
 
-// The dancing witches — presences, not conversations. They circle the
-// bonfire all night; charPos() walks them round it.
+// The dancers, witches and warlocks by turns — presences, not
+// conversations. They circle the bonfire all night; charPos() walks them
+// round it. The odd ones are warlocks (App draws them so).
 export const LYSA_DANCERS: Npc[] = [0, 1, 2, 3].map((i) => ({
   id: `dancer${i}`,
   name: t("char.LYSA_DANCERS.name.0"),
