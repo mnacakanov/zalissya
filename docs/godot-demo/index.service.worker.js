@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1793477580|1946050';
+const CACHE_VERSION = '1793477902|1751936';
 /** @type {string} */
 const CACHE_PREFIX = 'Залісся демо-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
@@ -21,7 +21,7 @@ const CACHEABLE_FILES = ["index.wasm","index.pck"];
 const FULL_CACHE = CACHED_FILES.concat(CACHEABLE_FILES);
 
 self.addEventListener('install', (event) => {
-	event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CACHED_FILES)));
+	event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CACHED_FILES.map((f) => new Request(f, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (event) => {
@@ -72,7 +72,7 @@ async function fetchAndCache(event, cache, isCacheable) {
 	let response = await event.preloadResponse;
 	if (response == null) {
 		// Or, go over network.
-		response = await self.fetch(event.request);
+		response = await self.fetch(event.request.mode === 'navigate' ? event.request : new Request(event.request, { cache: 'no-cache' }));
 	}
 
 	if (ENSURE_CROSSORIGIN_ISOLATION_HEADERS) {
