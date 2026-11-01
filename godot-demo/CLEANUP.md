@@ -66,11 +66,15 @@ map, save and reload.
 
 ## Pass 2: one of each (shared modules)
 
-- [ ] **2.1 One UI kit** (`ui_kit.gd`, static funcs): the parchment style,
+- [x] **2.1 One UI kit** (`ui_kit.gd`, static funcs): the parchment style,
   the two buttons (dark, light), the wrapped label, `plain()` (no emoji, the
   web font lacks them). Today: `hud._style`, `sheet._parch/_btn/_text`,
   `map._parch/_btn` (a copy), inline StyleBoxes in `evening.gd`, `work.gd`;
   `_plain` in herbs (a different variant), evening, sheet, work.
+  *Done: `ui_kit.gd` (static: the colours, `box`, `window`, `button`,
+  `choice`, `plain`); the song menu and work's questions now use the talk's
+  choice buttons, one under another. `hud._style` stays as a thin wrapper
+  (its card and toast are wider than tall).*
 - [x] **2.2 One rules file** (`rules.gd`): the skill thresholds (Herbalism,
   Fishing, Craft, Carpentry), the level lookup, the stats and carry weight.
   Today: `THRESH` tables and a `_lvl` in herbs, evening, sheet, work; stats

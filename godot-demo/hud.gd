@@ -17,6 +17,7 @@ extends Node
 ## (game_state.gd), so a reload goes on where you were.
 ## Kept in a script of its own beside maidan.gd; the maidan makes it.
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const MS_PER_MINUTE := 400.0      # client/src/systems/time.ts: MS_PER_GAME_MINUTE
 const START_MINUTE := 8 * 60
 const NIGHT_FROM := 21 * 60
@@ -96,15 +97,9 @@ func setup(maidan: Node2D, the_people: Node, the_state: Node) -> void:
 
 
 func _style(bg: Color, border := Color(0, 0, 0, 0), radius := 12) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(radius)
-	sb.set_content_margin_all(10)
-	sb.content_margin_left = 14
+	var sb := UI.box(bg, radius, 10, border)
+	sb.content_margin_left = 14   # (the HUD card and the toast: a little wider than tall)
 	sb.content_margin_right = 14
-	if border.a > 0:
-		sb.set_border_width_all(2)
-		sb.border_color = border
 	return sb
 
 
@@ -354,15 +349,6 @@ func _objective() -> String:
 	return t("quest.spirits.1", {"metSpirits": int(people != null and people.met.has("domovyk")) + int(people != null and people.met.has("lisovyk"))})
 
 
-## the font has no emoji: words only (the 2D game's place names carry one)
-func plain(s: String) -> String:
-	var out := ""
-	for c in s:
-		if c.unicode_at(0) < 0x2190:
-			out += c
-	return out.strip_edges()
-
-
 ## where he is: the khutir, or the house he stands in (ui.hut.<id>)
 func _where() -> String:
 	if m.inside_of < 0 or m.inside_of >= m.buildings.size():
@@ -372,7 +358,7 @@ func _where() -> String:
 	if b.has("src"):
 		id = m.data.buildings[b.src.i].get("id", "")
 	var key := "ui.hut." + id
-	return plain(t(key)) if words.has(key) else t("ui.zalissya")
+	return UI.plain(t(key)) if words.has(key) else t("ui.zalissya")
 
 
 func _refresh() -> void:

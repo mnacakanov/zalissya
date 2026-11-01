@@ -11,6 +11,7 @@ extends Node
 ## Opened by the HUD's two buttons, C (character), J (quests), or a gamepad's
 ## Start / Back; closed by Esc, B or the cross.
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const Rules := preload("res://rules.gd")   # the numbers: skills, stats, carry
 const ICON := {"meals": "items/kulish", "herbStock": "herbs/kropyva"}   # styles/<style>/…, a picture by its row
 const USE := {"meals": "ui.satchel.act.eat", "potions": "ui.satchel.act.drink", "strongPotions": "ui.satchel.act.drink"}
@@ -45,15 +46,6 @@ func t(key: String, params := {}) -> String:
 	return hud.t(key, params)
 
 
-## the font has no emoji: words only (the 2D game's labels carry a few)
-func _plain(s: String) -> String:
-	var out := ""
-	for c in s:
-		if c.unicode_at(0) < 0x2190:
-			out += c
-	return out.strip_edges()
-
-
 # --- the window ------------------------------------------------------------------------------
 ## the stats, the carry weight and its cap (rules.gd), for whoever asks the sheet
 func stats() -> Dictionary:
@@ -68,26 +60,6 @@ func cap(s: Dictionary) -> int:
 	return Rules.cap(s)
 
 
-func _parch(bg: Color, radius := 14) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(radius)
-	sb.set_content_margin_all(12)
-	return sb
-
-
-func _btn(text: String, on: bool) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.focus_mode = Control.FOCUS_NONE
-	var bg := Color(0.478, 0.29, 0.169) if on else Color(0.886, 0.827, 0.682)
-	for st in ["normal", "hover", "pressed"]:
-		b.add_theme_stylebox_override(st, _parch(bg.darkened(0.1 if st == "pressed" else 0.0), 8))
-	b.add_theme_color_override("font_color", Color(0.953, 0.914, 0.824) if on else Color(0.36, 0.27, 0.19))
-	b.add_theme_color_override("font_hover_color", Color(0.953, 0.914, 0.824) if on else Color(0.2, 0.14, 0.1))
-	return b
-
-
 ## the HUD's two buttons, top right, as the 2D game has them
 func _build_buttons() -> void:
 	buttons = HBoxContainer.new()
@@ -98,7 +70,7 @@ func _build_buttons() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	ui.add_child(buttons)
 	for b in [["ui.misc.13", "stats"], ["ui.misc.15", "quests"]]:
-		var btn := _btn(t(b[0]), true)
+		var btn := UI.button(t(b[0]), true)
 		btn.modulate.a = 0.92
 		btn.pressed.connect(func(): open(b[1]))
 		buttons.add_child(btn)
@@ -106,10 +78,7 @@ func _build_buttons() -> void:
 
 func _build_panel() -> void:
 	panel = PanelContainer.new()
-	var sb := _parch(Color(0.953, 0.914, 0.824), 18)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.85, 0.77, 0.57)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UI.window(18))
 	panel.visible = false
 	ui.add_child(panel)
 	var col := VBoxContainer.new()
@@ -122,7 +91,7 @@ func _build_panel() -> void:
 	title_l.add_theme_color_override("font_color", Color(0.2, 0.14, 0.1))
 	title_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title_l)
-	var close := _btn(t("ui.misc.71"), false)
+	var close := UI.button(t("ui.misc.71"), false)
 	close.pressed.connect(close_sheet)
 	head.add_child(close)
 	var row := HFlowContainer.new()   # (the tabs wrap on a narrow phone)
@@ -130,7 +99,7 @@ func _build_panel() -> void:
 	row.add_theme_constant_override("v_separation", 6)
 	col.add_child(row)
 	for tb in [["ui.misc.74", "stats"], ["ui.misc.76", "skills"], ["ui.tab.satchel", "satchel"], ["ui.misc.78", "quests"]]:
-		var b := _btn(t(tb[0]), false)
+		var b := UI.button(t(tb[0]), false)
 		b.set_meta("tab", tb[1])
 		b.set_meta("key", tb[0])
 		b.pressed.connect(func(): open(tb[1]))
@@ -191,7 +160,7 @@ func open(which: String) -> void:
 	title_l.text = t("ui.quests") if tab == "quests" else t("ui.character")
 	for b in tabs:
 		var on: bool = b.get_meta("tab") == tab
-		var fresh := _btn(t(b.get_meta("key")), on)
+		var fresh := UI.button(t(b.get_meta("key")), on)
 		for st in ["normal", "hover", "pressed"]:
 			b.add_theme_stylebox_override(st, fresh.get_theme_stylebox(st))
 		b.add_theme_color_override("font_color", fresh.get_theme_color("font_color"))
@@ -223,7 +192,7 @@ func _text(s: String, size := 15, col := Color(0.2, 0.14, 0.1), bold := false) -
 func _card(icon: String = "") -> VBoxContainer:
 	var pc := PanelContainer.new()
 	pc.mouse_filter = Control.MOUSE_FILTER_PASS   # (a finger dragging on a card scrolls the list)
-	pc.add_theme_stylebox_override("panel", _parch(Color(0.906, 0.851, 0.725), 10))
+	pc.add_theme_stylebox_override("panel", UI.box(UI.CARD, 10))
 	body.add_child(pc)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
@@ -269,7 +238,7 @@ func _fill() -> void:
 		"skills":
 			for r in Rules.skills(state, t):
 				var v := _card()
-				v.add_child(_text("%s · %s · %s" % [r.name, t("ui.skills.level", {"level": r.level}), _plain(t("ui.skills.feeds", {"stat": r.stat}))], 16, Color(0.2, 0.14, 0.1), true))
+				v.add_child(_text("%s · %s · %s" % [r.name, t("ui.skills.level", {"level": r.level}), UI.plain(t("ui.skills.feeds", {"stat": r.stat}))], 16, Color(0.2, 0.14, 0.1), true))
 				var bar := ProgressBar.new()
 				bar.show_percentage = false
 				bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -300,16 +269,16 @@ func _fill() -> void:
 				if rows.is_empty():
 					continue
 				any = true
-				body.add_child(_text(_plain(t(g[0])), 14, Color(0.48, 0.29, 0.17), true))
+				body.add_child(_text(UI.plain(t(g[0])), 14, Color(0.48, 0.29, 0.17), true))
 				for r in rows:
 					var v := _card(ICON.get(r[0][0], ""))
-					v.add_child(_text("%s × %d" % [_plain(t(r[0][1])), r[1]], 16))
+					v.add_child(_text("%s × %d" % [UI.plain(t(r[0][1])), r[1]], 16))
 					var unit: int = Rules.UNIT_WEIGHT.get(r[0][0], 0)
 					v.add_child(_text(t("ui.satchel.weightless") if unit == 0 else t("ui.satchel.rowWeight", {"unit": unit, "total": unit * r[1]}), 13, dim))
 					var act: String = USE.get(r[0][0], "")
 					if act != "" and work != null:
 						var id: String = r[0][0]
-						var ub := _btn(t(act), true)
+						var ub := UI.button(t(act), true)
 						ub.size_flags_horizontal = Control.SIZE_SHRINK_END
 						ub.pressed.connect(func():
 							work.use(id)

@@ -13,6 +13,7 @@ extends Node
 ## or the Chort's). Nobody here can hand it over yet, so NEEDS_ITEM is off
 ## until they can; then "map.none" says who has one.
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const NEEDS_ITEM := false
 const NEAR_SPAN := 70.0   # metres across, zoomed in
 
@@ -43,42 +44,19 @@ func metres(p: Vector2) -> Vector2:
 	return m.M(p)
 
 
-func _parch(bg: Color, radius := 14) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(radius)
-	sb.set_content_margin_all(12)
-	return sb
-
-
-func _btn(text: String, on: bool) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.focus_mode = Control.FOCUS_NONE
-	var bg := Color(0.478, 0.29, 0.169) if on else Color(0.886, 0.827, 0.682)
-	for st in ["normal", "hover", "pressed"]:
-		b.add_theme_stylebox_override(st, _parch(bg.darkened(0.1 if st == "pressed" else 0.0), 8))
-	b.add_theme_color_override("font_color", Color(0.953, 0.914, 0.824) if on else Color(0.36, 0.27, 0.19))
-	b.add_theme_color_override("font_hover_color", Color(0.953, 0.914, 0.824) if on else Color(0.2, 0.14, 0.1))
-	return b
-
-
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 8
 	add_child(layer)
 	# the HUD's button, beside Персонаж and Завдання (sheet.gd)
 	if hud.sheet != null and hud.sheet.buttons != null:
-		map_btn = _btn(hud.t("map.button"), true)
+		map_btn = UI.button(hud.t("map.button"), true)
 		map_btn.modulate.a = 0.92
 		map_btn.pressed.connect(toggle)
 		hud.sheet.buttons.add_child(map_btn)
 		hud.sheet.buttons.move_child(map_btn, 0)
 	panel = PanelContainer.new()
-	var sb := _parch(Color(0.953, 0.914, 0.824), 18)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.85, 0.77, 0.57)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UI.window(18))
 	panel.visible = false
 	layer.add_child(panel)
 	var col := VBoxContainer.new()
@@ -94,12 +72,12 @@ func _build_ui() -> void:
 	title_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title_l.clip_text = true
 	head.add_child(title_l)
-	zoom_btn = _btn("", false)
+	zoom_btn = UI.button("", false)
 	zoom_btn.pressed.connect(func():
 		zoom = "near" if zoom == "world" else "world"
 		_refresh())
 	head.add_child(zoom_btn)
-	var close := _btn(hud.t("ui.misc.71"), false)
+	var close := UI.button(hud.t("ui.misc.71"), false)
 	close.pressed.connect(close_map)
 	head.add_child(close)
 	canvas = Control.new()

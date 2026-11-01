@@ -11,6 +11,7 @@ extends Node2D
 ## styles/<style>/herbs/<kind>.png; a herb with no picture yet is drawn as a
 ## small cluster of its flowers.
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const KINDS := ["kropyva", "polyn", "kalendula", "zvirobiy", "dereviy"]
 # items.ts: each herb's glow and flower colours, and its name's key
 const GLOW := {"kropyva": Color8(120, 220, 110), "polyn": Color8(200, 205, 190), "kalendula": Color8(255, 150, 50),
@@ -106,15 +107,6 @@ func _name(kind: String) -> String:
 	return hud.t(NAME_KEY[kind])
 
 
-## the font has no emoji: words only
-func _plain(s: String) -> String:
-	var out := ""
-	for c in s:
-		if c.unicode_at(0) < 0x2190 or (c.unicode_at(0) >= 0x0400 and c.unicode_at(0) < 0x0500):
-			out += c
-	return out.strip_edges()
-
-
 func _pick(i: int) -> void:
 	if i < 0 or i >= spots.size() or spots[i].regrow > 0.0:
 		return
@@ -122,16 +114,16 @@ func _pick(i: int) -> void:
 	var herbs: int = int(state.data.herbs)
 	var wis: int = Rules.stats(state, hud.t).wis.total   # (Herbalism, plus a tonic or a keepsake)
 	if s.kind == "zvirobiy" and wis < 2:
-		hud.show_toast(_plain(hud.t("ui.gather.0", {"wisNow": wis})))
+		hud.show_toast(UI.plain(hud.t("ui.gather.0", {"wisNow": wis})))
 		return
 	state.data.herbs = herbs + 1
 	state.dirty = true
 	state.bump("herbStock")
 	var lvl := Rules.level(Rules.HERB_THRESH, herbs + 1)
 	if lvl > Rules.level(Rules.HERB_THRESH, herbs):
-		hud.show_toast(_plain(hud.t("ui.gather.1", {"name": _name(s.kind), "herbLevel": lvl, "wis": Rules.stats(state, hud.t).wis.total})))
+		hud.show_toast(UI.plain(hud.t("ui.gather.1", {"name": _name(s.kind), "herbLevel": lvl, "wis": Rules.stats(state, hud.t).wis.total})))
 	else:
-		hud.show_toast(_plain(hud.t("ui.gather.3", {"name": _name(s.kind), "herbLevel": lvl, "flagCount": state.count("herbStock")})))
+		hud.show_toast(UI.plain(hud.t("ui.gather.3", {"name": _name(s.kind), "herbLevel": lvl, "flagCount": state.count("herbStock")})))
 	s.regrow = REGROW
 	s.node.visible = false
 	s.glow.visible = false
@@ -161,7 +153,7 @@ func _process(delta: float) -> void:
 		near = -1
 	pick_btn.visible = near >= 0
 	if near >= 0:
-		pick_btn.text = _plain(hud.t("ui.promptLabel.4", {"herb": _name(spots[near].kind)}))
+		pick_btn.text = UI.plain(hud.t("ui.promptLabel.4", {"herb": _name(spots[near].kind)}))
 
 
 func _unhandled_input(event: InputEvent) -> void:

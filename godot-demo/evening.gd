@@ -13,6 +13,7 @@ extends Node
 ##     otaman and Radek each teach a song (a topic in their talk).
 ## All the words are the 2D game's (ui.play.*, ui.mood.*, song.*).
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const SONGS := {"holota": "neutral", "kolyskova": "neutral", "voly": "neutral", "dunai": "neutral",
 	"hopak": "happy", "zhentsi": "happy", "rozpriahaite": "happy", "pidmanula": "happy", "hrytsiu": "happy",
 	"polechko": "sad", "burya": "sad", "marusia": "sad"}
@@ -85,15 +86,6 @@ func _mood() -> Array:
 	return ["neutral", "ordinary"]
 
 
-## the font has no emoji: words only
-func _plain(s: String) -> String:
-	var out := ""
-	for c in s:
-		if c.unicode_at(0) < 0x2190:
-			out += c
-	return out.strip_edges()
-
-
 # --- the window ------------------------------------------------------------------------------
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -109,13 +101,7 @@ func _build_ui() -> void:
 	layer.add_child(btn)
 	panel = PanelContainer.new()
 	panel.visible = false
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.953, 0.914, 0.824)
-	sb.set_corner_radius_all(16)
-	sb.set_content_margin_all(14)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.85, 0.77, 0.57)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UI.window())
 	layer.add_child(panel)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
@@ -148,13 +134,10 @@ func _layout() -> void:
 
 
 func _choice(text: String, cb: Callable) -> void:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var b := UI.choice(text)
 	b.pressed.connect(cb)
 	choices.add_child(b)
-	if choices.get_child_count() == 1:
+	if choices.get_child_count() == 1 and b.focus_mode != Control.FOCUS_NONE:
 		(func(): if is_instance_valid(b) and b.is_inside_tree(): b.grab_focus()).call_deferred()
 
 
@@ -189,7 +172,7 @@ func _sit() -> void:
 	_show(hud.t("ui.play.first" if first else "ui.play.prompt") + "\n\n" + hud.t("ui.mood." + mood[1]))
 	for id in SONGS:
 		if knows(id):
-			_choice(_plain(hud.t("song.name." + id)), func(): _play(id))
+			_choice(UI.plain(hud.t("song.name." + id)), func(): _play(id))
 
 
 func _play(id: String) -> void:
@@ -203,7 +186,7 @@ func _play(id: String) -> void:
 		state.bump("meals")
 	var lvl := Rules.level(Rules.CRAFT_THRESH, after_n)
 	var say: String = hud.t("ui.play.clash." + ev) if rec == "clash" else hud.t("ui.play.audience." + id)
-	var tail: String = hud.t("ui.play." + rec, {"song": _plain(hud.t("song.name." + id)), "level": lvl})
+	var tail: String = hud.t("ui.play." + rec, {"song": UI.plain(hud.t("song.name." + id)), "level": lvl})
 	if lvl > before:
 		tail += " " + hud.t("ui.play.levelUpTail", {"cha": Rules.stats(state, hud.t).cha.total})
 	_show(say + "\n\n" + tail)
@@ -230,7 +213,7 @@ func _process(_d: float) -> void:
 		and (hud.people == null or (hud.people.talking < 0 and hud.people.near < 0))
 	btn.visible = near
 	if near:
-		btn.text = _plain(hud.t("ui.promptLabel.play"))
+		btn.text = UI.plain(hud.t("ui.promptLabel.play"))
 
 
 func _unhandled_input(event: InputEvent) -> void:

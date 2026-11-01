@@ -17,6 +17,7 @@ extends Node2D
 ## Kept in a script of its own, so the maidan's code and this can change
 ## side by side. The maidan makes it in _ready: people.setup(self).
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const DATA := "res://zalissya/people.json"
 const TALK_R := 1.8   # metres: near enough to talk
 
@@ -177,7 +178,7 @@ func _build_ui() -> void:
 	# another, each a full-width button a thumb can find
 	panel = PanelContainer.new()
 	panel.visible = false
-	panel.add_theme_stylebox_override("panel", _parch(PARCH, 16, Color(0.85, 0.77, 0.57)))
+	panel.add_theme_stylebox_override("panel", UI.window(16))
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
@@ -194,20 +195,6 @@ func _build_ui() -> void:
 	box.add_child(choices)
 	layer.add_child(panel)
 	get_viewport().size_changed.connect(_layout)
-
-
-const PARCH := Color(0.953, 0.914, 0.824)
-
-
-func _parch(bg: Color, radius := 10, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(radius)
-	sb.set_content_margin_all(14)
-	if border.a > 0:
-		sb.set_border_width_all(2)
-		sb.border_color = border
-	return sb
 
 
 ## the sheet's width and its place: it stands on the bottom of the screen and
@@ -303,28 +290,11 @@ func _ask(ti: int) -> void:
 
 
 func _button(text: String, cb: Callable) -> void:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.custom_minimum_size = Vector2(0, 44)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		var sb := _parch(Color(0.886, 0.827, 0.682).darkened(0.08 if st == "pressed" else 0.0), 8)
-		sb.content_margin_top = 8
-		sb.content_margin_bottom = 8
-		if st == "focus":   # (the keyboard's and the gamepad's choice: a brown rim)
-			sb.bg_color = Color(0, 0, 0, 0)
-			sb.set_border_width_all(2)
-			sb.border_color = Color(0.478, 0.29, 0.169)
-		b.add_theme_stylebox_override(st, sb)
-	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		b.add_theme_color_override(c, Color(0.24, 0.17, 0.11))
+	var b := UI.choice(text)
 	b.pressed.connect(cb)
 	choices.add_child(b)
 	_layout()
-	if DisplayServer.is_touchscreen_available():
-		b.focus_mode = Control.FOCUS_NONE   # (on a phone the rim is only noise)
-	elif choices.get_child_count() == 1:
+	if b.focus_mode != Control.FOCUS_NONE and choices.get_child_count() == 1:
 		# (for the keyboard and the gamepad: the first choice takes the focus)
 		(func(): if is_instance_valid(b) and b.is_inside_tree(): b.grab_focus()).call_deferred()
 

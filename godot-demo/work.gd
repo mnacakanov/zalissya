@@ -17,6 +17,7 @@ extends Node
 ## The meal, the tonics and the bath end at dawn (time.ts UNTIL_DAWN_FLAGS).
 ## All the words are the 2D game's.
 
+const UI := preload("res://ui_kit.gd")   # the parchment look, plain()
 const Rules := preload("res://rules.gd")   # skill levels, stats, carry
 const UNTIL_DAWN := ["wellfed", "tonic", "strongtonic", "rested", "bathed"]
 const DAWN := 6 * 60
@@ -33,7 +34,7 @@ var herbs: Node
 var btn: Button
 var ask_panel: PanelContainer
 var ask_text: Label
-var ask_row: HFlowContainer
+var ask_row: VBoxContainer
 
 var spots := {}             # kind -> where to stand (scene px)
 var water_c := Vector2.ZERO # the pond (metres): centre and radii
@@ -82,17 +83,8 @@ func t(key: String, params := {}) -> String:
 	return hud.t(key, params)
 
 
-## the font has no emoji: words only
-func _plain(s: String) -> String:
-	var out := ""
-	for c in s:
-		if c.unicode_at(0) < 0x2190:
-			out += c
-	return out.strip_edges()
-
-
 func _toast(s: String) -> void:
-	hud.show_toast(_plain(s))
+	hud.show_toast(UI.plain(s))
 
 
 func _stats() -> Dictionary:
@@ -118,13 +110,7 @@ func _build_ui() -> void:
 	layer.add_child(btn)
 	ask_panel = PanelContainer.new()
 	ask_panel.visible = false
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.953, 0.914, 0.824)
-	sb.set_corner_radius_all(16)
-	sb.set_content_margin_all(14)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.85, 0.77, 0.57)
-	ask_panel.add_theme_stylebox_override("panel", sb)
+	ask_panel.add_theme_stylebox_override("panel", UI.window())
 	layer.add_child(ask_panel)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
@@ -133,9 +119,8 @@ func _build_ui() -> void:
 	ask_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ask_text.add_theme_color_override("font_color", Color(0.2, 0.14, 0.1))
 	col.add_child(ask_text)
-	ask_row = HFlowContainer.new()
-	ask_row.add_theme_constant_override("h_separation", 8)
-	ask_row.add_theme_constant_override("v_separation", 8)
+	ask_row = VBoxContainer.new()   # (the choices one under another, as in a talk)
+	ask_row.add_theme_constant_override("separation", 6)
 	col.add_child(ask_row)
 
 
@@ -144,10 +129,9 @@ func _ask(text: String, options: Array) -> void:
 	for c in ask_row.get_children():
 		ask_row.remove_child(c)
 		c.queue_free()
-	ask_text.text = _plain(text)
+	ask_text.text = UI.plain(text)
 	for o in options:
-		var b := Button.new()
-		b.text = _plain(o[0])
+		var b := UI.choice(UI.plain(o[0]))
 		b.pressed.connect(func():
 			_close_ask()
 			o[1].call())
@@ -156,12 +140,13 @@ func _ask(text: String, options: Array) -> void:
 	var w := minf(560.0, vw.x - 24.0)
 	ask_panel.custom_minimum_size = Vector2(w, 0)
 	ask_text.custom_minimum_size = Vector2(w - 28.0, 0)
+	ask_row.custom_minimum_size = Vector2(w - 28.0, 0)   # (wrapped choices measure their height by it)
 	ask_panel.position = Vector2((vw.x - w) / 2.0, vw.y * 0.34)
 	ask_panel.visible = true
 	ask_panel.reset_size()
 	(func(): if ask_panel.visible: ask_panel.reset_size()).call_deferred()
 	m.fading = true
-	(func(): if ask_row.get_child_count() > 0: ask_row.get_child(0).grab_focus()).call_deferred()
+	(func(): if ask_row.get_child_count() > 0 and ask_row.get_child(0).focus_mode != Control.FOCUS_NONE: ask_row.get_child(0).grab_focus()).call_deferred()
 
 
 func _close_ask() -> void:
@@ -471,6 +456,8 @@ func _process(_d: float) -> void:
 	# walking off the plank ends the fishing
 	if fishing != "" and m.player.position.distance_to(cast_from) > 0.4 * m.metre:
 		fishing = ""
+	if ask_panel.visible:
+		ask_panel.reset_size()   # (it fits what it says now, not the last, longer question)
 	if float_node != null:
 		float_node.visible = fishing != ""
 		if fishing != "":
@@ -488,7 +475,7 @@ func _process(_d: float) -> void:
 				near = ""
 	btn.visible = near != "" and near != "waiting"
 	if btn.visible:
-		btn.text = _plain(_label(near))
+		btn.text = UI.plain(_label(near))
 
 
 func _unhandled_input(event: InputEvent) -> void:
