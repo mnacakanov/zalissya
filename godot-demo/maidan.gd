@@ -84,7 +84,12 @@ func _ready() -> void:
 		if s.texture != null:
 			s.scale = Vector2.ONE * (float(p.get("metres", 1.0)) * metre / s.texture.get_height())
 		s.position = P(p.at[0], p.at[1])
-		world.add_child(s)
+		# a flat thing you walk on (a jetty, lilies on the water) lies on the
+		# ground under everyone, not sorted among them by its foot
+		if p.get("flat", false):
+			ground.add_child(s)
+		else:
+			world.add_child(s)
 	_build_player()
 	_build_light()
 	# the people of the maidan (people.gd: where they stand, talking to them)
@@ -219,9 +224,23 @@ func _build_ground() -> void:
 			# (the walkable edge sits a little inside the drawn one: you can
 			# stand at the waterline, not on it)
 			var inner := _oval(a.center, [a.radius[0] - 0.5, a.radius[1] - 0.5], float(a.get("wobble", 0.06)))
-			var cp := CollisionPolygon2D.new()
-			cp.polygon = inner
-			walls.add_child(cp)
+			# a jetty or a ford ("walks": outlines in metres) is cut out of it,
+			# so you can walk out over the water to its end
+			var pieces: Array = [inner]
+			for w in data.get("walks", []):
+				var wp := PackedVector2Array()
+				for q in w.points:
+					wp.append(P(q[0], q[1]))
+				var next: Array = []
+				for piece in pieces:
+					for c in Geometry2D.clip_polygons(piece, wp):
+						if not Geometry2D.is_polygon_clockwise(c):
+							next.append(c)
+				pieces = next
+			for piece in pieces:
+				var cp := CollisionPolygon2D.new()
+				cp.polygon = piece
+				walls.add_child(cp)
 	for r in data.get("roads", []):
 		_strip("ground_road" if r.get("kind", "road") == "road" else "ground_path", r.points, r.width, 5.0)
 	for r in data.get("paths", []):
