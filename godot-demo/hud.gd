@@ -235,8 +235,10 @@ func _is_night(mi: int) -> bool:
 func _process(delta: float) -> void:
 	if title_card != null:
 		return
-	# time stops while editing and while talking (as in the 2D game)
-	var stopped: bool = m.editing or (people != null and people.talking >= 0) or (sheet != null and sheet.is_open())
+	# time stops while editing, talking, or with any window open: the sheet,
+	# the map, the song menu, work's questions all set m.fading (as the 2D
+	# game stops it in dialogue and sheets)
+	var stopped: bool = m.editing or m.fading or (people != null and people.talking >= 0)
 	if not stopped:
 		clock_ms += delta * 1000.0
 		while clock_ms >= MS_PER_MINUTE:
