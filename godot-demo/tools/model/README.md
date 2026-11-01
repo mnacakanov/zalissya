@@ -95,7 +95,8 @@ a minute.
   `vulyky` (log beehives), `sushka` (Vesna's herb rack), `khrest` (the
   wayside cross), `dorohovkaz` (signpost), `viz` (hay cart), `maza` (a
   chumak's ox-cart), `kolodka` (chopping block), `diizhka` (water barrel
-  and wheel). `wheel.js` is the shared cart wheel.
+  and wheel), `plug` (plough), `kozly` (sawhorse), `tochylo` (grindstone),
+  `hlechyky` (a bench of clay pots). `wheel.js` is the shared cart wheel.
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.
