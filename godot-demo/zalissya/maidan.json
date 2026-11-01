@@ -63,6 +63,9 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-11.3, -5.2], "metres": 0.93},
+    {"file": "props/chornobryvtsi/chornobryvtsi", "at": [17.8, 1.9], "metres": 0.93},
+    {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-1.6, -13.2], "metres": 0.93},
     {"file": "props/pes/pes", "at": [4.2, -12.4], "metres": 1.0},
     {"file": "props/buzok/buzok", "at": [-6.5, -19.6], "metres": 2.5},
     {"file": "props/buzok/buzok", "at": [17.6, -11.2], "metres": 2.5},
