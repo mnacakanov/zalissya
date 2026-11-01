@@ -66,6 +66,8 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/kin/kin", "at": [-11.0, 4.6], "metres": 2.0},
+    {"file": "props/leleka/leleka", "at": [7.2, -21.2], "metres": 6.0},
     {"file": "props/kladka/kladka", "at": [-12.06, 35.46], "metres": 2.99},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-11.3, -5.2], "metres": 0.93},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [17.8, 1.9], "metres": 0.93},
