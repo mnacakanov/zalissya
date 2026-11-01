@@ -52,7 +52,7 @@ outline when painting: the numbers in `hut.json` are tied to them.
 
 ```
 godot-demo/
-  maidan.tscn / maidan.gd        the maidan scene (code: changed by the Claude session that owns it)
+  maidan.tscn / maidan.gd        the maidan scene (code: shared; see "Working in parallel")
   zalissya/maidan.json           where everything on the maidan stands (data: anyone may edit)
   zalissya/README.md             the maidan's data format, field by field
   tools/model/                   the 3D models and their renderer (README.md there)
@@ -204,10 +204,25 @@ session for the scene to load it.
   separate folders, so two people never touch the same files. The one
   shared file is `maidan.json`. Pull before editing it, keep the change to
   your building's line, and expect to rebase.
-- **Code** (`maidan.gd`, `render.html`) is changed by the Claude session
-  that owns it. If you need something the code can't do yet (a building
-  shape, people standing about, a new kind of object), open an issue and
-  describe it. A new model file (`tools/model/<id>.js`) is fine to add.
+- **Code is shared** (owner's decision). Both Claude sessions (the
+  owner's and Ostap, Kateryna's) may change the scenes and their code
+  (`maidan.gd`, `render.html`, `tools/model/`), and may add new scenes for
+  new zones (a new `<zone>.tscn` / `<zone>.gd` with its own data file in
+  `zalissya/`). To keep out of each other's way:
+  - **New zones in new files.** Prefer a new scene and data file over
+    growing `maidan.gd`. Shared helpers can move into a common script
+    when two scenes need them.
+  - **Small, whole changes** to a shared script, each pushed as soon as it
+    works. Pull (rebase) right before you start and again before you push.
+  - **Say what you're touching.** Before a larger change to a shared
+    script, post one line on the other session's inbox PR (#3 for the
+    owner's session, #6 for Ostap) so that you don't both rewrite the same
+    function at once.
+  - **Don't break what's there.** Before you push, walk into every
+    building on the maidan, by day and by night. The Pages build must
+    still pass.
+  - **Ask before changing a shared rule:** the camera, the scale, the
+    save, the controls.
 - **Agents talk through issues.** Harry (the owner's Muse agent) takes art
   requests in issue #4. Kateryna's Muse agent has its own inbox (#5). A
   comment signed `**Harry:**` on any issue, a new issue, or new art on

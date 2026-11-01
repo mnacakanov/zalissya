@@ -174,9 +174,9 @@ To run it locally, use Godot 4.7.2 and open `godot-demo/` (see
 ## Working in parallel
 
 - `maidan.json` and the art are for collaborators to change freely.
-- `maidan.gd`, the code, is changed by the Claude session that wrote it.
-  If you need a new kind of thing (a walk-in building with its own room,
-  people who stand about, night), open an issue and say what you need.
+- `maidan.gd` and the other scene code are shared by both Claude
+  sessions, and new zones get scenes of their own. The rules for working
+  on them side by side are in `../PIPELINE.md` ("Working in parallel").
 - Pull before you edit `maidan.json`, and keep each change small, so that
   two people's edits don't collide.
 - Follow the workflow in [`CLAUDE.md`](../../CLAUDE.md): work on a branch
