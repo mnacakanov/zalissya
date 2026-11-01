@@ -504,7 +504,7 @@ func _build_sprite(b: Dictionary) -> void:
 		cp.polygon = foot
 		walls.add_child(cp)
 	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l,
-		"fade": spr, "rect": _sprite_rect(spr)})
+		"id": b.id, "fade": spr, "rect": _sprite_rect(spr)})
 
 
 ## a thing with no art yet: a plain block of its real size, with its name

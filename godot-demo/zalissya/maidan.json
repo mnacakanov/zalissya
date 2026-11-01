@@ -20,9 +20,9 @@
     {"id": "komora", "name": "Комора", "kind": "khata", "at": [-17, -19.5], "facing": "south"},
     {"id": "lyokh", "name": "Льох", "kind": "khata", "at": [24, -20], "facing": "north"},
     {"id": "kaplytsia", "name": "Каплиця", "kind": "khata", "at": [0, -7.5], "facing": "south"},
-    {"id": "krynytsia", "name": "Криниця", "kind": "placeholder", "at": [5, -4.5], "size": [1.6, 1.6], "height": 1.0},
-    {"id": "vatra", "name": "Ватра", "kind": "placeholder", "at": [0, 0], "size": [1.8, 1.2], "height": 0.4},
-    {"id": "kuznia", "name": "Кузня Радека", "kind": "placeholder", "at": [-15.5, 0], "size": [3, 4.5], "height": 3.0, "facing": "east"}
+    {"id": "krynytsia", "name": "Криниця", "kind": "sprite", "file": "huts/krynytsia/hut_exterior", "at": [5, -4.5], "size": [1.6, 1.6], "footprint": [[-213,-70],[-103,-32],[1,-71]]},
+    {"id": "vatra", "name": "Ватра", "kind": "sprite", "file": "huts/vatra/hut_exterior", "at": [0, 0], "size": [1.8, 1.2], "footprint": [[-99,-40],[24,3],[102,-27]]},
+    {"id": "kuznia", "name": "Кузня Радека", "kind": "khata", "at": [-15.5, 0], "facing": "east"}
   ],
   "props": []
 }

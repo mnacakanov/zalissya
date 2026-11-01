@@ -1,0 +1,31 @@
+{
+ "canvas": [
+  164,
+  166
+ ],
+ "px_per_metre": 94.57616791914754,
+ "hut": {
+  "size": [
+   1.8,
+   1.2
+  ],
+  "exterior": {
+   "file": "hut_exterior",
+   "footprint": [
+    [
+     -99,
+     -40
+    ],
+    [
+     24,
+     3
+    ],
+    [
+     102,
+     -27
+    ]
+   ]
+  },
+  "interior": null
+ }
+}

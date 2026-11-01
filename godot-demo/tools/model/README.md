@@ -82,6 +82,13 @@ a minute.
 - `lyokh.js` is a cellar on its own (a pohrib): walked into like a hut,
   its pit shown at its true depth, steps you walk down. It is a sunken
   room, `"sunken": true` with `heights` in its plan.
+- `kaplytsia.js` is the log chapel at the head of the maidan, with a
+  pear-shaped wooden dome. It faces south.
+- `kuznia.js` is Radek's forge: sooty clay walls, the horn, the mikh, the
+  anvil. It faces east, its double door open on the road.
+- `krynytsia.js` (the crane well) and `vatra.js` (the fire, its tahan and
+  kazan) are things you walk round, not into: `NO_INTERIOR`, used in
+  `maidan.json` as `"kind": "sprite"`.
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.
