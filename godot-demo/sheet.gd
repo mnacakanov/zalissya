@@ -366,6 +366,7 @@ func _fill() -> void:
 			var known := [
 				["meet", "quest.meet.title.0", "quest.meet.0", {"metVillagers": hud._met()}],
 				["herbs", "quest.herbs.title.0", "quest.herbs.0", {"min": mini(int(state.data.herbs), 5)}],
+				["evening", "quest.evening.title", "quest.evening.done", {"played": state.count("played")}],
 			]
 			var done := 0
 			for q in known:

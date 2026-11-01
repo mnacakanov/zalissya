@@ -29,6 +29,7 @@ var m: Node2D
 var people: Node
 var state: Node                   # game_state.gd: flags, talked, the save
 var sheet: Node                   # sheet.gd: the character sheet (time stops while it is open)
+var evening: Node                 # evening.gd: the kobza at the fire (songs to learn)
 var lang := "uk"
 var words := {}
 var ui: CanvasLayer
@@ -299,6 +300,8 @@ func extra_topics(id: String) -> Array:
 			state.set_count("herbStock", state.count("herbStock") - 5)
 			state.add("herbsGiven")
 			return [t("line.vesna.0"), t("topic.vesna.give.thanks"), t("line.vesna.2")]})
+	if evening != null:
+		out.append_array(evening.teach_topic(id))
 	return out
 
 
@@ -318,6 +321,8 @@ func _check_quests() -> void:
 		_found("meet", "quest.meet.title.0")
 	if not state.has("found:herbs") and state.has("herbsGiven"):
 		_found("herbs", "quest.herbs.title.0")
+	if not state.has("found:evening") and state.count("played") >= 1:
+		_found("evening", "quest.evening.title")
 
 
 ## the current objective, in the 2D game's order (quests.ts PRIORITY):
@@ -330,7 +335,9 @@ func _objective() -> String:
 		if int(state.data.herbs) >= 5:
 			return t("quest.herbs.bring", {"min": mini(state.count("herbStock"), 5)})
 		return t("quest.herbs.1", {"min": mini(int(state.data.herbs), 5)})
-	return t("quest.evening.now") if minute >= 18 * 60 else t("quest.evening.wait")
+	if not state.has("found:evening"):
+		return t("quest.evening.now") if minute >= 18 * 60 and minute < 23 * 60 + 30 else t("quest.evening.wait")
+	return t("quest.spirits.1", {"metSpirits": int(people != null and people.met.has("domovyk")) + int(people != null and people.met.has("lisovyk"))})
 
 
 func _refresh() -> void:

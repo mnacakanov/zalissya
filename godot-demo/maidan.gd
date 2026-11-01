@@ -126,6 +126,11 @@ func _ready() -> void:
 	add_child(sheet)
 	sheet.setup(self, hud, state)
 	hud.sheet = sheet
+	# the kobza at the fire, of an evening (evening.gd)
+	var evening := preload("res://evening.gd").new()
+	add_child(evening)
+	evening.setup(self, hud, state)
+	hud.evening = evening
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false

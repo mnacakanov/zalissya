@@ -86,6 +86,8 @@ Each item is one GDScript file plus its tests (GUT), ported from the named TypeS
 
 **Status (B7, a first piece):** `herbs.gd`: Vesna's five herbs grow in the meadow (maidan.json `herbs`), each with the glow of its colour; walk up and pick (E, T, A or the button). Each counts toward Herbalism and goes into the satchel (`herbStock`), zvirobiy wants WIS 2, and they grow back. Five picked finds "Трави для Весни", and the objective moves on to the first evening at the fire.
 
+**Status (B9, a first piece):** `evening.gd`: from 18:00 by the vatra, "Заграти на кобзі", once an evening; the evening's mood (wedding, memorial, ordinary), a song menu of what he knows, the 2D game's reception (match, fine, clash), Music and a bowl of kulish. Vesna, the otaman and Radek each teach a song. "Перший вечір біля вогню" is found, and the objective moves on to the spirits.
+
 ## Track C: the world (in parallel, by place)
 
 The 2D world is one map of about 3980 × 2300 px (the khutir, the steppe, Lysa Hora, fields, river, forests, the cave underground). The Godot world so far covers the maidan and its edges.
