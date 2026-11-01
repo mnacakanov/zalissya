@@ -84,7 +84,12 @@ func _ready() -> void:
 		if s.texture != null:
 			s.scale = Vector2.ONE * (float(p.get("metres", 1.0)) * metre / s.texture.get_height())
 		s.position = P(p.at[0], p.at[1])
-		world.add_child(s)
+		# a flat thing you walk on (a jetty, lilies on the water) lies on the
+		# ground under everyone, not sorted among them by its foot
+		if p.get("flat", false):
+			ground.add_child(s)
+		else:
+			world.add_child(s)
 	_build_player()
 	_build_light()
 	# the people of the maidan (people.gd: where they stand, talking to them)
