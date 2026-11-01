@@ -333,6 +333,15 @@ func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array) -> Vector2
 		var poly := CollisionPolygon2D.new()
 		poly.polygon = PackedVector2Array([room.transform * (c - hw - hh), room.transform * (c + hw - hh), room.transform * (c + hw + hh), room.transform * (c - hw + hh)])
 		walls.add_child(poly)
+	# furniture as outlines on the floor, in the picture's pixels (a model's
+	# plan gives them exactly, tools/model/)
+	for poly_pts in inn.get("polys", []):
+		var cp := CollisionPolygon2D.new()
+		var pp := PackedVector2Array()
+		for q in poly_pts:
+			pp.append(room.transform * Vector2(q[0], q[1]))
+		cp.polygon = pp
+		walls.add_child(cp)
 	if not inn.has("pich"):
 		return Vector2.INF
 	var cs := CollisionShape2D.new()

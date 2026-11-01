@@ -1,0 +1,149 @@
+<!doctype html>
+<!--
+  Renders a model (otaman.js) from the Pillars-lite camera, the one the
+  style's pictures are drawn from, and reports the plan in the pictures'
+  own pixels. Driven by render.cjs; see README.md.
+-->
+<meta charset="utf-8">
+<title>Model render</title>
+<script type="importmap">
+{ "imports": { "three": "./node_modules/three/build/three.module.js", "three/addons/": "./node_modules/three/examples/jsm/" } }
+</script>
+<body style="margin:0;background:#000">
+<script type="module">
+import * as THREE from "three";
+import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+const name = new URLSearchParams(location.search).get("model") || "otaman";
+const M = await import(`./${name}.js`);
+
+// The Pillars-lite camera, from the style's own hut (styles/pillars/
+// layout.json) and the maidan's ground scale (hut 4.7 x 4.2 m): a metre east
+// is (68.5, 21.3) px on the picture, a metre south (-65.5, 26.7), a metre up
+// (0, -88). That is an orthographic camera, about 94.6 px a metre, looking
+// down some 21 degrees.
+const EAST = [68.51, 21.28], SOUTH = [-65.48, 26.67], UP = [0, -88];
+const Rr = new THREE.Vector3(EAST[0], UP[0], SOUTH[0]);   // world → screen x
+const Dd = new THREE.Vector3(EAST[1], UP[1], SOUTH[1]);   // world → screen y (down)
+const s = (Rr.length() + Dd.length()) / 2;
+const right = Rr.clone().normalize();
+const down = Dd.clone().sub(right.clone().multiplyScalar(Dd.dot(right))).normalize();
+const up = down.clone().negate();
+const back = new THREE.Vector3().crossVectors(right, up).normalize();
+
+const full = M.build(THREE, {});
+const cut = M.build(THREE, { cutaway: true });
+
+// the picture's frame: every vertex of the full house, plus a margin
+const proj = (p) => [p.dot(right) * s, p.dot(down) * s];   // px, from the world origin
+let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+full.updateMatrixWorld(true);
+full.traverse((o) => {
+  if (!o.geometry) return;
+  const pos = o.geometry.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+    const [x, y] = proj(v);
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+  }
+});
+const pad = 12;
+minX -= pad; maxX += pad; minY -= pad; maxY += 2;
+const W = Math.ceil(maxX - minX), H = Math.ceil(maxY - minY);
+// a world point in px from the picture's bottom centre (the game's anchor)
+const px = (p) => { const [x, y] = proj(new THREE.Vector3(...p)); return [Math.round(x - minX - W / 2), Math.round(y - minY - H)]; };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const cam = new THREE.OrthographicCamera(minX / s, maxX / s, -minY / s, -maxY / s, 0.1, 200);
+cam.position.copy(back.clone().multiplyScalar(60));
+cam.up.copy(up);
+cam.lookAt(0, 0, 0);
+// (lookAt keeps 'right' only up to the camera's own basis; set it exactly)
+cam.matrix.makeBasis(right, up, back).setPosition(cam.position);
+cam.matrix.decompose(cam.position, cam.quaternion, cam.scale);
+cam.matrixWorldNeedsUpdate = true;
+// the frustum is measured from the camera's own axis, which passes through the origin
+cam.updateProjectionMatrix();
+
+function scene(model, kind) {
+  const sc = new THREE.Scene();
+  const m = model.clone(true);
+  if (kind === "color") {
+    sc.add(new THREE.HemisphereLight(0xf4efe2, 0x6b5f4a, 1.1));
+    // the sun from the upper left, as the game's DirectionalLight2D
+    const sun = new THREE.DirectionalLight(0xfff1d6, 2.2);
+    sun.position.set(-8, 14, 4);
+    sun.target.position.set(5.5, 0, -2.75);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 });
+    sc.add(sun, sun.target);
+  }
+  m.traverse((o) => {
+    if (o.userData.inkOnly) o.visible = kind === "ink";
+    if (!o.isMesh) return;
+    if (kind === "depth") o.material = new THREE.MeshDepthMaterial();
+    if (kind === "normal") o.material = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+    if (kind === "ink") {
+      o.material = new THREE.MeshBasicMaterial({ color: 0xffffff, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, side: THREE.DoubleSide });
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 20), new THREE.LineBasicMaterial({ color: 0x1c140d }));
+      o.add(e);
+    }
+  });
+  sc.add(m);
+  return sc;
+}
+
+const out = {};
+for (const [tag, model] of [["exterior", full], ["interior", cut]]) {
+  for (const kind of ["color", "ink", "depth", "normal"]) {
+    if (kind === "depth") { cam.near = 50; cam.far = 70; cam.updateProjectionMatrix(); }
+    else { cam.near = 0.1; cam.far = 200; cam.updateProjectionMatrix(); }
+    renderer.setClearColor(0x000000, 0);
+    renderer.render(scene(model, kind), cam);
+    out[`${tag}_${kind}`] = renderer.domElement.toDataURL("image/png");
+  }
+}
+
+// the plan, in the pictures' pixels: ready for the hut's hut.json
+const P = M.plan();
+const solids = [];
+cut.updateMatrixWorld(true);
+cut.traverse((o) => {
+  if (!o.isMesh || !o.userData.solid) return;
+  const b = new THREE.Box3().setFromObject(o);
+  solids.push([[b.min.x, 0, b.max.z], [b.max.x, 0, b.max.z], [b.max.x, 0, b.min.z], [b.min.x, 0, b.min.z]].map(px));
+});
+const fp = P.footprint.map(px);
+out.plan = {
+  canvas: [W, H],
+  px_per_metre: s,
+  hut: {
+    size: [M.SIZE.x, M.SIZE.z],
+    exterior: { file: "hut_exterior", footprint: fp },
+    interior: {
+      file: "hut_interior",
+      footprint: fp,
+      pich: px(P.pich),
+      walls: P.partitions.map(([a, b]) => [...px(a), ...px(b)]),
+      polys: solids,
+    },
+    door: P.door.map((v) => Math.round(v * 1000) / 1000),
+  },
+};
+
+// and the model itself, for Blender, Godot or anyone's own renders
+const glb = await new GLTFExporter().parseAsync(full, { binary: true });
+const bytes = new Uint8Array(glb);
+let bin = "";
+for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+out.glb = btoa(bin);
+window.result = out;
+</script>

@@ -124,6 +124,15 @@ To replace a placeholder with art, change its kind to `sprite` and add
  "at": [0, -6.5], "size": [3.5, 3], "footprint": [[-120, -60], [10, -5], [130, -70]]}
 ```
 
+## Models
+
+A building can also be built as a 3D model in code and rendered from the
+style's exact camera (`../tools/model/`, see its README). The renders are
+then painted over in the style. The model also gives the footprint, the
+door, the pich, the partitions and the furniture outlines as numbers for
+`hut.json`. The otaman's khata is the first: its renders are in
+`../styles/pillars/huts/otaman/model/`.
+
 ## Art for the maidan
 
 Read [`ART_STYLE.md`](../../ART_STYLE.md) first. Then:

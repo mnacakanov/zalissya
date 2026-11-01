@@ -1,0 +1,6 @@
+{
+  "name": "zalissya-models",
+  "private": true,
+  "description": "3D models of Zalissya's buildings, rendered from the Pillars-lite camera (see README.md)",
+  "dependencies": { "three": "0.170.0" }
+}
