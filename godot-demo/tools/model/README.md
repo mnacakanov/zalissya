@@ -69,7 +69,9 @@ It needs Playwright with Chromium. Software GL is enough, but slow: about
 a minute.
 
 - `otaman.js` is the otaman's khata, following `DESIGN.md` ("The otaman's
-  khata").
+  khata"). It faces south.
+- `domovyk.js` is the Domovyk's khata, the kobzar's lodging. It faces east
+  (door in the east wall), as the horseshoe's west arm does.
 - `render.html` sets the camera and renders the passes.
 - `render.cjs` drives it in a headless browser.
 

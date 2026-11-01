@@ -290,12 +290,21 @@ func _build_khata(b: Dictionary) -> void:
 	# footprint's edges run SW→SE (south), SE→NE (east), NE→NW (north),
 	# NW→SW (west).
 	var dw := 0
-	var dt: Array = h.door
+	var dt: Array = []
 	if h.door is Dictionary:
 		dw = ["south", "east", "north", "west"].find(h.door.get("wall", "south"))
 		dt = h.door.t
+	else:
+		dt = h.door
 	var d0: float = dt[0]
 	var d1: float = dt[1]
+	# the wall's gap is a little wider than the drawn door (0.25 m each side):
+	# seen at this camera a door wall runs at a slant, and a door a man fits
+	# through in life would catch his round collision on its jambs
+	var dlen := foot[dw].distance_to(foot[(dw + 1) % 4])
+	var pad := 0.25 * (east.length() + north.length()) / 2.0 / dlen
+	d0 = maxf(0.0, d0 - pad)
+	d1 = minf(1.0, d1 + pad)
 	for i in 4:
 		var a := foot[i]
 		var c := foot[(i + 1) % 4]

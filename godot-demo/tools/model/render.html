@@ -79,8 +79,10 @@ function scene(model, kind) {
     sc.add(new THREE.HemisphereLight(0xf4efe2, 0x6b5f4a, 1.1));
     // the sun from the upper left, as the game's DirectionalLight2D
     const sun = new THREE.DirectionalLight(0xfff1d6, 2.2);
-    sun.position.set(-8, 14, 4);
-    sun.target.position.set(5.5, 0, -2.75);
+    // aimed at the house's middle, wherever the model stands
+    const mid = [M.SIZE.x / 2, 0, -M.SIZE.z / 2];
+    sun.position.set(mid[0] - 13.5, 14, mid[2] + 6.75);
+    sun.target.position.set(...mid);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 });
@@ -135,7 +137,9 @@ out.plan = {
       walls: P.partitions.map(([a, b]) => [...px(a), ...px(b)]),
       polys: solids,
     },
-    door: P.door.map((v) => Math.round(v * 1000) / 1000),
+    // [t0, t1] along the south wall, or {wall, t} for a door in another wall
+    door: Array.isArray(P.door) ? P.door.map((v) => Math.round(v * 1000) / 1000)
+      : { wall: P.door.wall, t: P.door.t.map((v) => Math.round(v * 1000) / 1000) },
   },
 };
 
