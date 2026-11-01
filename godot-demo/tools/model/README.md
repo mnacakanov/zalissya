@@ -77,6 +77,8 @@ a minute.
   turned away from the camera), as the horseshoe's east arm does.
 - `pustka.js` is Taras Dovhyi's empty hut, gone grey, its thatch holed. It
   faces south.
+- `komora.js` is a komora (storehouse) with its lyokh (cellar) under a
+  hatch: two levels (see "A building with two levels" in `../../PIPELINE.md`).
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.

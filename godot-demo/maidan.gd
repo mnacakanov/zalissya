@@ -39,6 +39,11 @@ var sun: DirectionalLight2D
 var lamps: Array[PointLight2D] = []   # each with meta "hut" (-1: outdoors)
 var fire: PointLight2D
 var night := false
+var extra_rooms: Array[Dictionary] = []   # lower levels (a komora's lyokh), added after the buildings
+var portals: Array[Dictionary] = []       # {at, to, r}: step on one, fade, arrive at its 'to'
+var portal_armed := true                  # (re-armed once you step off every portal)
+var fader: ColorRect
+var fading := false
 
 
 func _ready() -> void:
@@ -70,6 +75,7 @@ func _ready() -> void:
 			_build_sprite(b)
 		else:
 			_build_placeholder(b)
+	buildings.append_array(extra_rooms)
 	for p in data.get("props", []):
 		var s := _sprite(p.file, 1.0)
 		if s.texture != null:
@@ -313,6 +319,8 @@ func _build_khata(b: Dictionary) -> void:
 			_wall(a.lerp(c, d1), c)
 		else:
 			_wall(a, c)
+	if h.has("cellar") and h.has("hatch"):
+		_build_cellar(b, h, dir, _fit(_pts(inn.footprint), foot))
 	var name_l := _label(b.get("name", b.id))
 	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
 	name_l.visible = false
@@ -322,6 +330,41 @@ func _build_khata(b: Dictionary) -> void:
 	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
 		"rect": _sprite_rect(ext),
 		"pich": pich if pich != Vector2.INF else _centroid(foot), "door": door + outward * 0.6 * metre})
+
+
+## A lower level (a komora's lyokh): its own picture and plan (hut.json
+## "cellar"), laid out underground, far south of the maidan where only the
+## dark is (the 2D game keeps its cave and tunnel in such a band too). You
+## go down by stepping onto the hatch and come up by the top of the steps,
+## through a fade.
+const UNDER := 300.0   # metres south of its building
+func _build_cellar(b: Dictionary, h: Dictionary, dir: String, room_t: Transform2D) -> void:
+	var cel: Dictionary = h.cellar
+	var src := _pts(cel.footprint)
+	var foot := PackedVector2Array()
+	var shift := P(b.at[0], b.at[1] + UNDER) - _centroid(src) * k
+	for p in src:
+		foot.append(p * k + shift)
+	var node := Node2D.new()
+	world.add_child(node)
+	var inner := Node2D.new()
+	node.add_child(inner)
+	_lay_room(cel, dir, foot, inner)
+	for i in 4:
+		_wall(foot[i], foot[(i + 1) % 4])
+	var ct := _fit(src, foot)
+	var v := func(a: Array) -> Vector2: return ct * Vector2(a[0], a[1])
+	var hv := func(a: Array) -> Vector2: return room_t * Vector2(a[0], a[1])
+	var r := 0.45 * metre
+	portals.append({"at": hv.call(h.hatch.at), "to": v.call(cel.arrive), "r": r})
+	portals.append({"at": v.call(cel.up), "to": hv.call(h.hatch.out), "r": r})
+	var nm: String = cel.get("name", "Льох")
+	var lbl := _label(nm)
+	lbl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-30, -3.0 * metre)
+	lbl.visible = false
+	inner.add_child(lbl)
+	extra_rooms.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "label": lbl,
+		"name": nm, "underground": true, "lamp": v.call(cel.get("lamp", [0, -100]))})
 
 
 ## One room picture laid onto its stretch of the house: its walls inside
@@ -539,7 +582,10 @@ func _build_light() -> void:
 	add_child(sun)
 	for i in buildings.size():
 		var b: Dictionary = buildings[i]
-		if b.has("pich"):
+		if b.get("underground", false):
+			# the oil lamp in its niche: the only light down there
+			_lamp(b.lamp, 1.6, Color(1.0, 0.72, 0.4), i).set_meta("always", true)
+		elif b.has("pich"):
 			# inside: the pich's glow and the room, lit while you are in the hut
 			_lamp(b.pich, 1.0, Color(1.0, 0.6, 0.3), i)
 			_lamp(_centroid(b.foot), 1.3, Color(1.0, 0.7, 0.4), i)
@@ -558,17 +604,26 @@ func _centroid(poly: PackedVector2Array) -> Vector2:
 
 
 func _update_lamps() -> void:
+	var under := _underground()
 	for l in lamps:
 		var hut: int = l.get_meta("hut")
-		var lit := night and (hut < 0 or hut == inside_of)
+		var always: bool = l.get_meta("always", false)
+		var lit := (always and hut == inside_of) or (not always and night and not under and (hut < 0 or hut == inside_of))
 		l.enabled = lit
 		l.energy = (1.1 if hut >= 0 else 0.8) if lit else 0.0
+	# underground it is dark at any hour, but for its lamp
+	shade.color = Color(0.22, 0.2, 0.24) if under else (Color(0.3, 0.33, 0.52) if night else Color(1, 1, 1))
+	sun.enabled = not night and not under
+	# (and round it nothing but the earth's dark, not the sky's colour)
+	RenderingServer.set_default_clear_color(Color(0.03, 0.025, 0.02) if under else Color(0.2, 0.3, 0.15))
+
+
+func _underground() -> bool:
+	return inside_of >= 0 and buildings[inside_of].get("underground", false)
 
 
 func _set_night(on: bool) -> void:
 	night = on
-	shade.color = Color(0.3, 0.33, 0.52) if on else Color(1, 1, 1)
-	sun.enabled = not on
 	_update_lamps()
 
 
@@ -646,6 +701,12 @@ func _build_ui() -> void:
 			stick_ui.draw_circle(stick_origin, 46, Color(1, 1, 1, 0.18))
 			stick_ui.draw_circle(stick_origin + stick * 40, 20, Color(1, 1, 1, 0.45)))
 	layer.add_child(stick_ui)
+	# the fade between levels (a komora and its lyokh)
+	fader = ColorRect.new()
+	fader.color = Color(0, 0, 0, 0)
+	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(fader)
 	var width := get_viewport().get_visible_rect().size.x - 24
 	var top := VBoxContainer.new()
 	top.position = Vector2(12, 52.0 if mobile else 10.0)
@@ -754,9 +815,38 @@ func _physics_process(_delta: float) -> void:
 		v += joy
 	v += stick
 	v = v.limit_length(1.0)
+	if fading:
+		v = Vector2.ZERO
 	player.velocity = v * SPEED
 	player.move_and_slide()
 	_animate_walk(v)
+	_check_portals()
+
+
+## Step onto a hatch or the top of the steps: a fade, and you arrive at the
+## other level. A portal fires again only after you have stepped off.
+func _check_portals() -> void:
+	if fading:
+		return
+	var on: Dictionary = {}
+	for p in portals:
+		if player.position.distance_to(p.at) < p.r:
+			on = p
+	if on.is_empty():
+		portal_armed = true
+		return
+	if not portal_armed:
+		return
+	portal_armed = false
+	fading = true
+	var tw := create_tween()
+	tw.tween_property(fader, "color:a", 1.0, 0.25)
+	tw.tween_callback(func():
+		player.position = on.to
+		cam.reset_smoothing())
+	tw.tween_interval(0.1)
+	tw.tween_property(fader, "color:a", 0.0, 0.3)
+	tw.tween_callback(func(): fading = false)
 
 
 func _process(delta: float) -> void:
@@ -793,7 +883,13 @@ func _process(delta: float) -> void:
 	var m := Transform2D(east, -north, Vector2.ZERO).affine_inverse() * g
 	hud_info.text = "Залісся · майдан · %d fps (low %d) · %s · %.1f, %.1f м%s" % [
 		Engine.get_frames_per_second(), int(fps_hist.min()), "ніч" if night else "день", m.x, m.y,
-		(" · " + data.buildings[inside_of].get("name", "")) if inside_of >= 0 else ""]
+		(" · " + _room_name(inside_of)) if inside_of >= 0 else ""]
+
+
+func _room_name(i: int) -> String:
+	if buildings[i].has("name"):
+		return buildings[i].name
+	return data.buildings[i].get("name", "") if i < data.buildings.size() else ""
 
 
 ## the lowest y of a footprint's outline at x: where its front edge is

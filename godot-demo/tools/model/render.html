@@ -156,7 +156,7 @@ out.plan = {
       file: "hut_interior",
       front: "hut_interior_front",
       footprint: fp,
-      pich: px(P.pich),
+      ...(P.pich ? { pich: px(P.pich) } : {}),
       walls: P.partitions.map(([a, b]) => [...px(a), ...px(b)]),
       polys: solids,
     },
@@ -165,6 +165,63 @@ out.plan = {
       : { wall: P.door.wall, t: P.door.t.map((v) => Math.round(v * 1000) / 1000) },
   },
 };
+
+// A second level (the komora's lyokh): the model's cellar alone, on a canvas
+// of its own, its floor as the picture's ground. The game lays it out as a
+// room of its own and fades between the levels at the hatch and the steps.
+if (P.cellar) {
+  const cel = M.build(THREE, { level: "cellar" });
+  cel.updateMatrixWorld(true);
+  let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity;
+  cel.traverse((o) => {
+    if (!o.geometry) return;
+    const pos = o.geometry.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      const [x, y] = proj(v);
+      a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, y); d = Math.max(d, y);
+    }
+  });
+  a -= pad; b += pad; c -= pad; d += 2;
+  const CW = Math.ceil(b - a), CH = Math.ceil(d - c);
+  const cpx = (p) => { const [x, y] = proj(new THREE.Vector3(...p)); return [Math.round(x - a - CW / 2), Math.round(y - c - CH)]; };
+  renderer.setSize(CW, CH);
+  Object.assign(cam, { left: a / s, right: b / s, top: -c / s, bottom: -d / s });
+  for (const kind of ["color", "ink", "depth", "normal"]) {
+    if (kind === "depth") { cam.near = 50; cam.far = 70; } else { cam.near = 0.1; cam.far = 200; }
+    cam.updateProjectionMatrix();
+    renderer.setClearColor(0x000000, 0);
+    renderer.render(scene(cel, kind), cam);
+    out[`cellar_${kind}`] = renderer.domElement.toDataURL("image/png");
+  }
+  {
+    const sc = new THREE.Scene();
+    const m = cel.clone(true);
+    const white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+    const hide = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
+    m.traverse((o) => { if (o.userData.inkOnly) o.visible = false; if (o.isMesh) o.material = NEAR.test(o.name) ? white : hide; });
+    sc.add(m);
+    cam.near = 0.1; cam.far = 200; cam.updateProjectionMatrix();
+    renderer.render(sc, cam);
+    out.cellar_front = renderer.domElement.toDataURL("image/png");
+  }
+  const cs = [];
+  cel.traverse((o) => {
+    if (!o.isMesh || !o.userData.solid) return;
+    const bb = new THREE.Box3().setFromObject(o);
+    cs.push([[bb.min.x, 0, bb.max.z], [bb.max.x, 0, bb.max.z], [bb.max.x, 0, bb.min.z], [bb.min.x, 0, bb.min.z]].map(cpx));
+  });
+  const C = P.cellar;
+  out.plan.cellar_canvas = [CW, CH];
+  out.plan.hut.hatch = { at: px(P.hatch), out: px(P.hatch_out) };
+  out.plan.hut.cellar = {
+    file: "cellar", front: "cellar_front",
+    footprint: C.footprint.map(cpx),
+    arrive: cpx(C.arrive), up: cpx(C.up), lamp: cpx(C.lamp),
+    polys: cs,
+  };
+}
 
 // and the model itself, for Blender, Godot or anyone's own renders
 const glb = await new GLTFExporter().parseAsync(full, { binary: true });

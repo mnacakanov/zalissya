@@ -133,6 +133,35 @@ godot-demo/
    `main` (collaborators) or merge (the Claude session, per `CLAUDE.md`).
    CI exports the game and publishes it in about a minute.
 
+### A building with two levels (a komora and its lyokh)
+
+The komora (`tools/model/komora.js`) is the first. A model can have a
+second level: `build(THREE, {level: "cellar"})` builds the lower room
+alone, its floor as its ground. `plan()` names:
+- the hatch;
+- where you come back up beside it;
+- the cellar's footprint;
+- where you arrive at the foot of its steps;
+- where you leave at their top;
+- its lamp.
+
+`render.cjs` then also writes `cellar_*.png` (colour, ink, depth, normals,
+and the near-wall mask), on a canvas of its own, and puts `hatch` and
+`cellar` into the plan's `hut` block.
+
+In the game, the cellar is laid out 300 m south of its building, where
+only the dark is (the 2D game keeps its cave and tunnel in such a band
+too):
+- **Going down:** step onto the hatch, the screen fades, and you arrive at
+  the foot of the steps.
+- **Coming up:** step onto the steps' top and you come back up beside the
+  hatch.
+- **Light:** it is dark down there at any hour but for its lamp.
+
+**For the painter:** a third picture, `cellar.png`, is painted over
+`model/cellar_color.png` the same way. Copy `model/cellar_front.png` as
+`cellar_front.png`. Upper floors would work the same way.
+
 ### A building you don't walk into (the kaplytsia, the well, a haystack…)
 
 Same model, render and paint-over, but only the exterior is needed. In
