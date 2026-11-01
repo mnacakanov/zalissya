@@ -75,6 +75,7 @@ func setup(maidan: Node2D, the_people: Node, the_state: Node) -> void:
 	# whom he has met, back from the save (the first greeting is said once)
 	if people != null:
 		people.hooks = self
+		people.retext()
 		for id in state.data.talked:
 			people.met[id] = true
 	# where he stood (unless the level editor has just rebuilt the scene)
@@ -200,6 +201,8 @@ func _build_title() -> void:
 		lb.pressed.connect(func():
 			_load_words(l[0])
 			Engine.set_meta("lang", l[0])
+			if people != null:
+				people.retext()
 			_fill_title()
 			_refresh())
 		langs.add_child(lb)
@@ -351,12 +354,29 @@ func _objective() -> String:
 	return t("quest.spirits.1", {"metSpirits": int(people != null and people.met.has("domovyk")) + int(people != null and people.met.has("lisovyk"))})
 
 
+## the font has no emoji: words only (the 2D game's place names carry one)
+func plain(s: String) -> String:
+	var out := ""
+	for c in s:
+		if c.unicode_at(0) < 0x2190:
+			out += c
+	return out.strip_edges()
+
+
+## where he is: the khutir, or the house he stands in (ui.hut.<id>)
+func _where() -> String:
+	if m.inside_of < 0 or m.inside_of >= m.buildings.size():
+		return t("ui.zalissya")
+	var b: Dictionary = m.buildings[m.inside_of]
+	var id := "lyokh" if b.get("underground", false) else ""
+	if b.has("src"):
+		id = m.data.buildings[b.src.i].get("id", "")
+	var key := "ui.hut." + id
+	return plain(t(key)) if words.has(key) else t("ui.zalissya")
+
+
 func _refresh() -> void:
-	var where: String = t("ui.zalissya")
-	if m.inside_of >= 0 and m.inside_of < m.buildings.size():
-		var b: Dictionary = m.buildings[m.inside_of]
-		if b.has("src"):
-			where = m.data.buildings[b.src.i].get("name", where)
+	var where := _where()
 	place_l.text = "%s   %s" % [where.to_upper(), _time_label()]
 	obj_l.text = _objective()
 	card.visible = not m.editing

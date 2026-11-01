@@ -17,7 +17,7 @@ map, save and reload.
   for talking, the sheet and the editor; the map, the evening's song menu and
   work's questions (brewing, the well, the bath) let it run. Stop it whenever
   `m.fading` is set (they all set it), as the 2D game does in dialogue.
-- [ ] **1.2 Words not in the locales (CLAUDE.md rule 0).**
+- [x] **1.2 Words not in the locales (CLAUDE.md rule 0).**
   - `people.gd`: "Говорити: ", "Далі…", "Бувай" typed in the code.
   - `zalissya/people.json`: every line is Ukrainian text, made by
     `tools/people_dialogue.py` from `uk.json`. Store the **keys** instead, and
@@ -26,6 +26,10 @@ map, save and reload.
     line; the HUD's place name comes from `maidan.json`'s `name` (Ukrainian
     only): give buildings a locale key.
   - The editor's own words (`editor.gd`) are a developer tool's: leave them.
+  *Done: people.json holds keys (the tool checks each exists), people.gd
+  looks them up and renames the tags when the language changes; the HUD's
+  place is `ui.hut.<id>` (the 2D game's, plus five in `locales/godot/`).
+  Left on purpose: the developer's row and F3 line (only with `?edit`).*
 - [x] **1.3 The web build ships art nothing uses** (about 4 MB): the old
   `trees/flat/dub_a..c`, `bereza_a..c` (the catalog uses `k_*`); `cow`,
   `horod`, `skull_stake`, `npc_prokip`, `bench` (+ `_n`) at the style's root;

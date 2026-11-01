@@ -1,6 +1,7 @@
 """Build zalissya/people.json: who stands where on the maidan, and what they
-say, with the words taken from the 2D game's own lines
-(client/src/content/locales/uk.json), so the two games speak alike.
+say, as the 2D game's own text keys (client/src/content/locales/*.json,
+copied to godot-demo/locales/), so the two games speak alike and in either
+language. A line is a key, or {"key", "params"}; people.gd looks them up.
 
 The 2D game picks its lines by the world's state (herbs gathered, iron
 brought, the Domovyk fed...). The Godot demo has no such state yet, so this
@@ -36,11 +37,20 @@ def t(key, **params):
     return s
 
 
+def key(k):
+    """a key as it is stored, checked to exist (a typo fails here, not in the game)"""
+    if isinstance(k, str):
+        assert k in T, k
+        return k
+    assert k[0] in T, k[0]
+    return {"key": k[0], "params": k[1]}
+
+
 def topic(npc, tid, lines, label=None, question=None):
     return {
-        "label": t(label or f"topic.{npc}.{tid}.label.0"),
-        "question": t(question or f"topic.{npc}.{tid}.question.0"),
-        "lines": [t(k) if isinstance(k, str) else t(*k[:1], **k[1]) for k in lines],
+        "label": key(label or f"topic.{npc}.{tid}.label.0"),
+        "question": key(question or f"topic.{npc}.{tid}.question.0"),
+        "lines": [key(k) for k in lines],
     }
 
 
@@ -49,11 +59,11 @@ def topic(npc, tid, lines, label=None, question=None):
 # seen only from inside it). Heights in metres for their pictures.
 PEOPLE = [
     {
-        "id": "myroslav", "name": "Мирослав, отаман", "height": 1.8, "colour": "8a2a2a",
+        "id": "myroslav", "name": key("char.myroslav.name.0"), "height": 1.8, "colour": "8a2a2a",
         "day": {"at": [2.6, -11.6]},
         "night": {"house": "otaman", "at": [-2.0, -16.0]},
-        "first": [t("line.myroslav.0")],
-        "again": [t("topic.myroslav.0")],
+        "first": [key("line.myroslav.0")],
+        "again": [key("topic.myroslav.0")],
         "topics": [
             topic("myroslav", "forest", ["line.myroslav.1"]),
             topic("myroslav", "domovyk", ["line.myroslav.2", "line.myroslav.3"]),
@@ -65,11 +75,11 @@ PEOPLE = [
         ],
     },
     {
-        "id": "vesna", "name": "Весна, знахарка", "height": 1.65, "colour": "3f6a3a",
+        "id": "vesna", "name": key("char.vesna.name.0"), "height": 1.65, "colour": "3f6a3a",
         "day": {"at": [19.0, -1.6]},
         "night": {"house": "vesna", "at": [15.0, -5.0]},
-        "first": [t("line.vesna.7")],
-        "again": [t("topic.vesna.3")],
+        "first": [key("line.vesna.7")],
+        "again": [key("topic.vesna.3")],
         "topics": [
             topic("vesna", "herbs", ["line.vesna.8"]),
             topic("vesna", "zvirobiy", ["line.vesna.9"]),
@@ -80,11 +90,11 @@ PEOPLE = [
         ],
     },
     {
-        "id": "radek", "name": "Радек, коваль", "height": 1.85, "colour": "4a4a52",
+        "id": "radek", "name": key("char.radek.name.0"), "height": 1.85, "colour": "4a4a52",
         "day": {"at": [-12.6, 0.8]},
         "night": {"house": "kuznia", "at": [-15.5, 0.0]},
-        "first": [t("line.radek.6")],
-        "again": [t("topic.radek.2")],
+        "first": [key("line.radek.6")],
+        "again": [key("topic.radek.2")],
         "topics": [
             topic("radek", "home", ["line.radek.7"], "topic.radek.home.label.1", "topic.radek.home.question.1"),
             topic("radek", "iron", ["line.radek.9"]),
@@ -94,11 +104,11 @@ PEOPLE = [
     },
     {
         # the Lisovyk stands at the forest's edge behind the khutir, tree-tall
-        "id": "lisovyk", "name": "Лісовик", "height": 3.2, "colour": "33502e",
+        "id": "lisovyk", "name": key("char.lisovyk.name.0"), "height": 3.2, "colour": "33502e",
         "day": {"at": [-4.0, -26.5]},
         "night": {"at": [-4.0, -26.5]},
-        "first": [t("line.lisovyk.0")],
-        "again": [t("topic.lisovyk.0")],
+        "first": [key("line.lisovyk.0")],
+        "again": [key("topic.lisovyk.0")],
         "topics": [
             topic("lisovyk", "rules", ["line.lisovyk.1"]),
             topic("lisovyk", "vesna", ["line.lisovyk.2"]),
@@ -109,11 +119,11 @@ PEOPLE = [
     },
     {
         # the Domovyk keeps his nook between the pil and the pich, day and night
-        "id": "domovyk", "name": "Домовик", "height": 0.9, "colour": "6a5236",
+        "id": "domovyk", "name": key("char.domovyk.name.0"), "height": 0.9, "colour": "6a5236",
         "day": {"house": "domovyk", "near_pich": True},
         "night": {"house": "domovyk", "near_pich": True},
-        "first": [t("line.domovyk.5")],
-        "again": [t("topic.domovyk.1")],
+        "first": [key("line.domovyk.5")],
+        "again": [key("topic.domovyk.1")],
         "topics": [
             topic("domovyk", "bread", ["line.domovyk.6", "line.domovyk.7"]),
             topic("domovyk", "hearth", ["line.domovyk.5"], "topic.domovyk.hearth.1", "topic.domovyk.hearth.3"),
@@ -125,7 +135,7 @@ PEOPLE = [
 
 out = os.path.join(ROOT, "godot-demo/zalissya/people.json")
 with open(out, "w", encoding="utf-8") as f:
-    f.write('{\n  "_note": "Generated by tools/people_dialogue.py from the 2D game\'s lines (client/src/content/locales/uk.json). Edit the positions in that script, or here and keep them in step.",\n  "people": [\n')
+    f.write('{\n  "_note": "Generated by tools/people_dialogue.py: the 2D game\'s text keys (locales/), looked up by people.gd in the player\'s language. Edit the positions in that script, or here and keep them in step.",\n  "people": [\n')
     f.write(",\n".join("    " + json.dumps(p, ensure_ascii=False) for p in PEOPLE))
     f.write("\n  ]\n}\n")
 print("wrote", out)

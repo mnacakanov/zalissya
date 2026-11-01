@@ -10,6 +10,10 @@ extends Node2D
 ## bottom centre, 88 px a metre like the huts), else a plain figure drawn in
 ## its colours, with its name over it.
 ##
+## Their words are the 2D game's text keys (people.json, made by
+## tools/people_dialogue.py), looked up through the HUD in the player's
+## language; retext() renames them when the language changes.
+##
 ## Kept in a script of its own, so the maidan's code and this can change
 ## side by side. The maidan makes it in _ready: people.setup(self).
 
@@ -42,10 +46,26 @@ func setup(maidan: Node2D) -> void:
 	for p in d.people:
 		var node := _figure(p)
 		m.world.add_child(node)
-		people.append({"p": p, "node": node})
+		people.append({"p": p, "node": node, "label": node.get_meta("label")})
 	_build_ui()
 	was_night = m.night
 	_place_all()
+
+
+## a line, a name or a label from people.json: a key, or {key, params},
+## in the player's language (the HUD keeps the words)
+func w(x: Variant) -> String:
+	if hooks == null:
+		return str(x)
+	if x is Dictionary:
+		return hooks.t(x.key, x.get("params", {}))
+	return hooks.t(x)
+
+
+## the name tags over their heads, in the language now chosen
+func retext() -> void:
+	for e in people:
+		e.label.text = w(e.p.name)
 
 
 # --- the figures -----------------------------------------------------------------
@@ -61,12 +81,13 @@ func _figure(p: Dictionary) -> Node2D:
 		fig.col = Color(p.get("colour", "6a5a4a"))
 		fig.small = float(p.height) < 1.2
 		root.add_child(fig)
-	var name_l: Label = m._label(p.name)
+	var name_l: Label = m._label()   # (its words come with retext())
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.custom_minimum_size = Vector2(240, 0)
 	name_l.position = Vector2(-120, -float(p.height) * m.metre - 34)
 	name_l.add_theme_font_size_override("font_size", 20)
 	root.add_child(name_l)
+	root.set_meta("label", name_l)
 	return root
 
 
@@ -132,7 +153,7 @@ func _process(_delta: float) -> void:
 		near = -1   # (he stands closer to the anvil, the rack, the well…)
 	talk_btn.visible = near >= 0 and talking < 0
 	if near >= 0:
-		talk_btn.text = "Говорити: " + people[near].p.name.split(",")[0]
+		talk_btn.text = w({"key": "ui.promptLabel.1", "params": {"name": w(people[near].p.name)}})
 	# walk away and the talk ends
 	if talking >= 0 and people[talking].node.position.distance_to(m.player.position) > (TALK_R + 1.0) * m.metre:
 		_close()
@@ -225,7 +246,7 @@ func _open(i: int) -> void:
 		return
 	talking = i
 	var p: Dictionary = people[i].p
-	who_l.text = p.name
+	who_l.text = w(p.name)
 	var first: bool = not met.has(p.id)
 	met[p.id] = true
 	pending = (p.first if first else p.again).duplicate()
@@ -243,12 +264,12 @@ func _next() -> void:
 	if pending.is_empty():
 		_menu()
 		return
-	text_l.text = pending.pop_front()
+	text_l.text = w(pending.pop_front())
 	_clear_choices()
 	if pending.is_empty():
 		_menu_buttons()
 	else:
-		_button("Далі…", _next)
+		_button(w("ui.next"), _next)
 
 
 func _menu() -> void:
@@ -261,7 +282,7 @@ func _menu_buttons() -> void:
 	for ti in p.topics.size():
 		var tp: Dictionary = p.topics[ti]
 		var key: String = "%s/%d" % [p.id, ti]
-		_button(tp.question, func(): _ask(ti))
+		_button(w(tp.question), func(): _ask(ti))
 		if asked.has(key):   # asked already: dimmed (the font has no ✓)
 			choices.get_child(choices.get_child_count() - 1).modulate = Color(1, 1, 1, 0.6)
 	# what the game's state adds (Vesna takes the herbs…), first in the list
@@ -271,7 +292,7 @@ func _menu_buttons() -> void:
 				pending = x.run.call()
 				_next())
 			choices.move_child(choices.get_child(choices.get_child_count() - 1), 0)
-	_button("Бувай", _close)
+	_button(w("ui.farewell"), _close)
 
 
 func _ask(ti: int) -> void:
