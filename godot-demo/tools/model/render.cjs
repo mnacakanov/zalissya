@@ -14,7 +14,7 @@ const { chromium } = require("playwright");
 const name = process.argv[2] || "otaman";
 const outDir = path.resolve(process.argv[3] || `out/${name}`);
 const root = __dirname;
-const types = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json", ".wasm": "application/wasm" };
 
 const server = http.createServer((req, res) => {
   const file = path.join(root, decodeURIComponent(req.url.split("?")[0]));

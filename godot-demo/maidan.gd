@@ -477,6 +477,21 @@ func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array, over: Node
 	return cs.position
 
 
+var _sway_sh: Shader
+func _sway_shader() -> Shader:
+	if _sway_sh == null:
+		_sway_sh = Shader.new()
+		_sway_sh.code = """shader_type canvas_item;
+uniform float amount = 6.0;
+uniform float phase = 0.0;
+void vertex() {
+	// the top of the picture moves most, its foot not at all
+	float h = 1.0 - UV.y;
+	VERTEX.x += (sin(TIME * 1.1 + phase) * 0.7 + sin(TIME * 2.3 + phase * 1.7) * 0.3) * amount * h * h;
+}"""
+	return _sway_sh
+
+
 var _mask_sh: Shader
 func _mask_shader() -> Shader:
 	if _mask_sh == null:
@@ -512,8 +527,24 @@ func _build_sprite(b: Dictionary) -> void:
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
 		walls.add_child(cp)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l,
-		"id": b.id, "fade": spr, "rect": _sprite_rect(spr)})
+	# trees sway in the wind: the crown moves, the foot of the picture stays
+	if b.get("sway", 0.0) > 0.0 and spr.texture != null:
+		var sm := ShaderMaterial.new()
+		sm.shader = _sway_shader()
+		sm.set_shader_parameter("amount", float(b.sway) * metre * 0.12)
+		sm.set_shader_parameter("phase", fmod(foot[0].x * 0.013 + foot[0].y * 0.007, TAU))
+		spr.material = sm
+	var entry := {"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l,
+		"id": b.id, "fade": spr, "rect": _sprite_rect(spr)}
+	# a sign: a name always shown under it (for samples, such as the trees')
+	if b.has("sign"):
+		var sg := _label(b.sign)
+		sg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sg.custom_minimum_size = Vector2(260, 0)
+		sg.position = (foot[0] + foot[2]) / 2.0 + Vector2(-130, 0.4 * metre)
+		sg.add_theme_font_size_override("font_size", 24)
+		inner.add_child(sg)
+	buildings.append(entry)
 
 
 ## a thing with no art yet: a plain block of its real size, with its name
