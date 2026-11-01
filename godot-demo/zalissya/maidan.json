@@ -39,5 +39,9 @@
     {"id": "kolodka", "name": "Колодка", "kind": "sprite", "file": "props/kolodka/kolodka", "at": [-12.2, -3.0], "size": [1, 0.8], "footprint": [[-49,-23],[20,1],[72,-19]]},
     {"id": "diizhka", "name": "Діжка", "kind": "sprite", "file": "props/diizhka/diizhka", "at": [-13.4, 3.0], "size": [1.2, 0.8], "footprint": [[-71,-18],[11,10],[63,-10]]}
   ],
-  "props": []
+  "props": [
+    {"file": "props/soniashnyky/soniashnyky", "at": [-11.9, -12.6], "metres": 2.2},
+    {"file": "props/soniashnyky/soniashnyky", "at": [14.2, 1.8], "metres": 2.2},
+    {"file": "props/drova/drova", "at": [-13.6, -4.4], "metres": 1.6}
+  ]
 }
