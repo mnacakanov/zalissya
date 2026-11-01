@@ -88,6 +88,8 @@ Each item is one GDScript file plus its tests (GUT), ported from the named TypeS
 
 **Status (B9, a first piece):** `evening.gd`: from 18:00 by the vatra, "Заграти на кобзі", once an evening; the evening's mood (wedding, memorial, ordinary), a song menu of what he knows, the 2D game's reception (match, fine, clash), Music and a bowl of kulish. Vesna, the otaman and Radek each teach a song. "Перший вечір біля вогню" is found, and the objective moves on to the spirits.
 
+**Status (B12, the map):** `map.gd`: the 2D game's map on parchment, drawn from `maidan.json` so it grows with the world (forests, pond, maidan, roads, every building, the windmill), with the kobzar's dot, the objective's gold star, and the two zooms (whole world, around me). M, gamepad Y or the HUD's "Мапа" button. In the 2D game the map is an item (from Hnat or the Chort); `NEEDS_ITEM` turns that on once they are in.
+
 ## Track C: the world (in parallel, by place)
 
 The 2D world is one map of about 3980 × 2300 px (the khutir, the steppe, Lysa Hora, fields, river, forests, the cave underground). The Godot world so far covers the maidan and its edges.

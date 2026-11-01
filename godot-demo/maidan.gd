@@ -131,6 +131,10 @@ func _ready() -> void:
 	add_child(evening)
 	evening.setup(self, hud, state)
 	hud.evening = evening
+	# the map, on parchment (map.gd): M, gamepad Y, or the HUD's button
+	var map := preload("res://map.gd").new()
+	add_child(map)
+	map.setup(self, hud, state, people, herbs)
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
@@ -1103,7 +1107,7 @@ func _build_ui() -> void:
 	hud_info = _label()
 	hud_info.visible = false   # (the developer's line: fps and metres, with F3)
 	top.add_child(hud_info)
-	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · F3: контури й назви · −/= або коліщатко: масштаб")
+	var hint := _label("WASD / стрілки / стік / тягни пальцем · N: день/ніч · M або Y: мапа · F3: контури й назви · −/= або коліщатко: масштаб")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(width, 0)
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
@@ -1169,8 +1173,6 @@ func _input(event: InputEvent) -> void:
 			KEY_N: _set_night(not night)
 			KEY_MINUS: _zoom(0.8)
 			KEY_EQUAL: _zoom(1.25)
-	elif event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_Y:
-		_set_night(not night)
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN: _zoom(0.9)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP: _zoom(1.1)
