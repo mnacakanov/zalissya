@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1793509628|1915287';
+const CACHE_VERSION = '1793509747|2076597';
 /** @type {string} */
 const CACHE_PREFIX = 'Залісся демо-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
