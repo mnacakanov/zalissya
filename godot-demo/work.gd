@@ -198,7 +198,7 @@ func _build_float() -> void:
 
 # --- what he is near ---------------------------------------------------------------------
 func _metres(p: Vector2) -> Vector2:
-	return Transform2D(m.east, -m.north, Vector2.ZERO).affine_inverse() * p
+	return m.M(p)
 
 
 func _inside(id: String) -> bool:

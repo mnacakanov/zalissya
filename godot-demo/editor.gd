@@ -419,8 +419,7 @@ func _r(x: float) -> float:
 
 # --- scene px ↔ metres ----------------------------------------------------------------------
 func _metres(p: Vector2) -> Vector2:
-	var t := Transform2D(m.east as Vector2, -(m.north as Vector2), Vector2.ZERO)
-	return t.affine_inverse() * p
+	return m.M(p)
 
 
 func _pick(p: Vector2) -> Dictionary:

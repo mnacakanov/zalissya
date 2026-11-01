@@ -114,8 +114,7 @@ func add_talked(id: String) -> void:
 func _capture() -> void:
 	if m.editing or m.player == null:
 		return
-	var tr := Transform2D(m.east as Vector2, -(m.north as Vector2), Vector2.ZERO)
-	var mt: Vector2 = tr.affine_inverse() * (m.player.position as Vector2)
+	var mt: Vector2 = m.M(m.player.position)
 	var x := snappedf(mt.x, 0.01)
 	var y := snappedf(mt.y, 0.01)
 	if absf(x - float(data.x)) > 0.05 or absf(y - float(data.y)) > 0.05:

@@ -77,7 +77,7 @@ map, save and reload.
   and carry in `sheet.gd`, read by work.
   *Done: `rules.gd` (static); sheet, herbs, evening, work read it. On the
   way: zvirobiy's WIS check now counts a tonic, as the 2D game's does.*
-- [ ] **2.3 Metres back from the scene**: one `m.M(pos)` beside `m.P()`.
+- [x] **2.3 Metres back from the scene**: one `m.M(pos)` beside `m.P()`.
   Today five copies: maidan (hud_info), `game_state._capture`,
   `editor._metres`, `map.metres`, `work._metres`.
 - [ ] **2.4 One action button** (`interact.gd`): the 2D game's "nearest

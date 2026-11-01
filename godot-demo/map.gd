@@ -26,7 +26,6 @@ var canvas: Control
 var title_l: Label
 var zoom_btn: Button
 var zoom := "world"
-var to_metres: Transform2D
 var map_btn: Button
 
 
@@ -36,13 +35,12 @@ func setup(maidan: Node2D, the_hud: Node, the_state: Node, the_people: Node, the
 	state = the_state
 	people = the_people
 	herbs = the_herbs
-	to_metres = Transform2D(m.east, -m.north, Vector2.ZERO).affine_inverse()
 	_build_ui()
 
 
 ## a point of the scene, back to metres on the ground
 func metres(p: Vector2) -> Vector2:
-	return to_metres * p
+	return m.M(p)
 
 
 func _parch(bg: Color, radius := 14) -> StyleBoxFlat:

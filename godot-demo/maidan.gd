@@ -161,6 +161,11 @@ func P(x: float, y: float) -> Vector2:
 	return x * east - y * north
 
 
+## and back: a point of the scene, in metres on the ground
+func M(p: Vector2) -> Vector2:
+	return Transform2D(east, -north, Vector2.ZERO).affine_inverse() * p
+
+
 func _rect(c: Array, size: Array) -> PackedVector2Array:
 	# [left, front, right, back] as the hut's footprint is: south-west,
 	# south-east, north-east, north-west
@@ -1311,9 +1316,7 @@ func _process(delta: float) -> void:
 	fps_hist.append(Engine.get_frames_per_second())
 	if fps_hist.size() > 120:
 		fps_hist.pop_front()
-	var g := player.position
-	# (back from scene px to metres, for placing things)
-	var m := Transform2D(east, -north, Vector2.ZERO).affine_inverse() * g
+	var m := M(player.position)
 	hud_info.text = "Залісся · майдан · %d fps (low %d) · %s · %.1f, %.1f м%s" % [
 		Engine.get_frames_per_second(), int(fps_hist.min()), "ніч" if night else "день", m.x, m.y,
 		(" · " + _room_name(inside_of)) if inside_of >= 0 else ""]
