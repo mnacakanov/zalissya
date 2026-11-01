@@ -19,7 +19,7 @@
     {"id": "pustka", "name": "Пустка", "kind": "khata", "at": [13, -16], "facing": "south"},
     {"id": "komora", "name": "Комора", "kind": "khata", "at": [-17, -19.5], "facing": "south"},
     {"id": "lyokh", "name": "Льох", "kind": "khata", "at": [24, -20], "facing": "north"},
-    {"id": "kaplytsia", "name": "Каплиця", "kind": "placeholder", "at": [0, -7.5], "size": [3.5, 3], "height": 4.5},
+    {"id": "kaplytsia", "name": "Каплиця", "kind": "khata", "at": [0, -7.5], "facing": "south"},
     {"id": "krynytsia", "name": "Криниця", "kind": "placeholder", "at": [5, -4.5], "size": [1.6, 1.6], "height": 1.0},
     {"id": "vatra", "name": "Ватра", "kind": "placeholder", "at": [0, 0], "size": [1.8, 1.2], "height": 0.4},
     {"id": "kuznia", "name": "Кузня Радека", "kind": "placeholder", "at": [-15.5, 0], "size": [3, 4.5], "height": 3.0, "facing": "east"}
