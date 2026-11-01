@@ -31,6 +31,7 @@ var text_l: Label
 var choices: HFlowContainer
 var hooks: Node = null        # the HUD (hud.gd): greetings and topics that depend on the game's state
 var pending: Array = []       # lines still to say in the answer now showing
+var yield_to := INF           # scene px: a work spot this near (work.gd) wins over talking
 
 
 func setup(maidan: Node2D) -> void:
@@ -127,6 +128,8 @@ func _process(_delta: float) -> void:
 		if vis > 0.5 and d < best:
 			best = d
 			near = i
+	if near >= 0 and yield_to < best:
+		near = -1   # (he stands closer to the anvil, the rack, the well…)
 	talk_btn.visible = near >= 0 and talking < 0
 	if near >= 0:
 		talk_btn.text = "Говорити: " + people[near].p.name.split(",")[0]

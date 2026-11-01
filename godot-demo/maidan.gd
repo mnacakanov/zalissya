@@ -131,6 +131,11 @@ func _ready() -> void:
 	add_child(evening)
 	evening.setup(self, hud, state)
 	hud.evening = evening
+	# the khutir's work: fishing, cooking, the forge, brewing, a bath, a wish (work.gd)
+	var work := preload("res://work.gd").new()
+	add_child(work)
+	work.setup(self, hud, state, people, herbs)
+	hud.sheet.work = work
 	# the map, on parchment (map.gd): M, gamepad Y, or the HUD's button
 	var map := preload("res://map.gd").new()
 	add_child(map)

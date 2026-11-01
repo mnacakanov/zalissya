@@ -138,9 +138,10 @@ func _build_toast() -> void:
 	toast.add_theme_stylebox_override("normal", _style(Color(0.48, 0.29, 0.17, 0.92)))
 	toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.offset_left = -220
-	toast.offset_right = 220
+	toast.offset_left = -280
+	toast.offset_right = 280
 	toast.offset_top = 120
+	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # (the work's toasts run long)
 	toast.modulate.a = 0.0
 	ui.add_child(toast)
 

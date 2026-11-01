@@ -16,6 +16,7 @@ const FISH_THRESH := [0, 2, 5, 9, 14, 20]        # Fishing
 const CRAFT_THRESH := [0, 2, 5, 9, 14, 20]       # Cooking, Smithing, Alchemy, Music
 const CARPENTRY_THRESH := [0, 5, 12, 22, 36]     # Carpentry
 const ICON := {"meals": "items/kulish", "herbStock": "herbs/kropyva"}   # styles/<style>/…, a picture by its row
+const USE := {"meals": "ui.satchel.act.eat", "potions": "ui.satchel.act.drink", "strongPotions": "ui.satchel.act.drink"}
 const UNIT_WEIGHT := {"fish": 1, "herbStock": 1, "iron": 3, "forged": 2}   # carry.ts
 const STATS := ["str", "dex", "con", "int", "wis", "cha"]
 
@@ -31,6 +32,7 @@ var tab := "stats"
 var buttons: HBoxContainer
 var sheet_scroll: ScrollContainer
 var drag_y := -1.0
+var work: Node = null        # work.gd: eating and drinking from the satchel
 
 
 func setup(maidan: Node2D, the_hud: Node, the_state: Node) -> void:
@@ -378,6 +380,15 @@ func _fill() -> void:
 					v.add_child(_text("%s × %d" % [_plain(t(r[0][1])), r[1]], 16))
 					var unit: int = UNIT_WEIGHT.get(r[0][0], 0)
 					v.add_child(_text(t("ui.satchel.weightless") if unit == 0 else t("ui.satchel.rowWeight", {"unit": unit, "total": unit * r[1]}), 13, dim))
+					var act: String = USE.get(r[0][0], "")
+					if act != "" and work != null:
+						var id: String = r[0][0]
+						var ub := _btn(t(act), true)
+						ub.size_flags_horizontal = Control.SIZE_SHRINK_END
+						ub.pressed.connect(func():
+							work.use(id)
+							_fill())
+						v.add_child(ub)
 			if not any:
 				body.add_child(_text(t("ui.satchel.load", {"carried": 0, "cap": cp}), 13, dim))
 		"quests":
