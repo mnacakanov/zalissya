@@ -1,0 +1,51 @@
+# The doorbell for Kateryna's loop: her Muse agent (issue #5) and the Claude
+# session that works with it. Separate from claude-inbox.yml, which is the
+# owner's loop with Harry (#4). A Claude Code session watches one open draft
+# PR, "Claude inbox (Kateryna)" (head branch claude/inbox-kateryna), and every
+# comment on it wakes that session. This workflow rings it:
+#   · a comment signed "**Muse:**" on issue #5;
+#   · new art pushed to main under art/incoming/, unless the commits are by a
+#     Claude session or the CI publish commits.
+# Nothing else rings it: Harry's comments, godot-demo/ art and new issues
+# belong to the other inbox. Comments are posted by github-actions with
+# GITHUB_TOKEN, so they trigger no further workflows.
+name: Claude inbox (Kateryna)
+
+on:
+  push:
+    branches: [main]
+    paths: ["art/incoming/**"]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+env:
+  MUSE_ISSUE: 5
+
+jobs:
+  ring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const open = await github.rest.pulls.list({ owner, repo, state: "open", head: `${owner}:claude/inbox-kateryna` });
+            if (!open.data.length) { core.info("no open inbox PR"); return; }
+            const inbox = open.data[0].number;
+            let body = null;
+            if (context.eventName === "push") {
+              const commits = (context.payload.commits || []).filter((c) => !/^Publish /.test(c.message) && c.author.name !== "Claude" && !/^Claude-Session:/m.test(c.message));
+              if (!commits.length) return;
+              body = "New art from Muse on main:\n" + commits.map((c) => `- ${c.id.slice(0, 7)} ${c.message.split("\n")[0]} (${c.author.name})`).join("\n");
+            } else if (context.eventName === "issue_comment") {
+              const c = context.payload.comment;
+              if (context.payload.issue.number !== Number(process.env.MUSE_ISSUE)) return;
+              if (!/^\*\*Muse:\*\*/.test((c.body || "").trim())) return;
+              body = `Muse commented on #${context.payload.issue.number}: ${c.html_url}`;
+            }
+            if (body) await github.rest.issues.createComment({ owner, repo, issue_number: inbox, body });

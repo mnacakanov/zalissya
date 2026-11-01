@@ -3,6 +3,7 @@
 # comment on it wakes that session. This workflow rings it:
 #   · new art pushed to main (godot-demo/styles/, art/), unless the commits
 #     are by a Claude session (this one or another) or the CI publish commits;
+#     (art/incoming/ is Kateryna's Muse loop: claude-inbox-kateryna.yml);
 #   · a comment signed "**Harry:**" on any other issue or PR;
 #   · a new issue.
 # Nobody needs to remember to ping. Comments are posted by
@@ -12,7 +13,7 @@ name: Claude inbox
 on:
   push:
     branches: [main]
-    paths: ["godot-demo/styles/**", "art/**"]
+    paths: ["godot-demo/styles/**", "art/**", "!art/incoming/**"]
   issue_comment:
     types: [created]
   issues:
