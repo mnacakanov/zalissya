@@ -80,6 +80,8 @@ Each item is one GDScript file plus its tests (GUT), ported from the named TypeS
 
 ---
 
+**Status (B1, B2, B12, a first piece of each):** `hud.gd` gives the game's title card, the HUD card (where, the day and time, the current objective) and the "✦ Знайдено" toast, all in the 2D game's own words (`locales/`, copied by `tools/sync_locales.py`), and a running clock that brings night on its own. It knows one quest so far (meet the otaman, Vesna and Radek).
+
 ## Track C: the world (in parallel, by place)
 
 The 2D world is one map of about 3980 × 2300 px (the khutir, the steppe, Lysa Hora, fields, river, forests, the cave underground). The Godot world so far covers the maidan and its edges.

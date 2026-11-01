@@ -109,6 +109,10 @@ func _ready() -> void:
 	var people := preload("res://people.gd").new()
 	add_child(people)
 	people.setup(self)
+	# the HUD: where, when, the objective, the title card (hud.gd)
+	var hud := preload("res://hud.gd").new()
+	add_child(hud)
+	hud.setup(self, people)
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
@@ -1083,6 +1087,7 @@ func _build_ui() -> void:
 	b_st.pressed.connect(func(): get_tree().change_scene_to_file("res://styles.tscn"))
 	row.add_child(b_st)
 	hud_info = _label()
+	hud_info.visible = false   # (the developer's line: fps and metres, with F3)
 	top.add_child(hud_info)
 	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · F3: контури й назви · −/= або коліщатко: масштаб")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1100,6 +1105,7 @@ func _zoom(f: float) -> void:
 func _toggle_debug() -> void:
 	debug = not debug
 	debug_layer.visible = debug
+	hud_info.visible = debug
 	for b in buildings:
 		if b.has("label"):
 			b.label.visible = debug
