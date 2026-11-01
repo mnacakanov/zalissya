@@ -229,7 +229,7 @@ func _build_panel() -> void:
 ## edge to edge (under the HUD) on a phone
 func _layout() -> void:
 	var vw := get_viewport().get_visible_rect().size
-	var narrow := vw.x < 640.0
+	var narrow: bool = m.portrait()
 	var w := minf(560.0, vw.x - 24.0)
 	var top := 140.0 if narrow else maxf(20.0, (vw.y - 620.0) / 2.0)
 	var h := (vw.y - top - 20.0) if narrow else minf(620.0, vw.y - top - 20.0)
@@ -243,7 +243,7 @@ func _layout() -> void:
 
 ## on a phone the HUD's buttons sit under its card, which grows with the text
 func _place_buttons() -> void:
-	var narrow := get_viewport().get_visible_rect().size.x < 640.0
+	var narrow: bool = m.portrait()
 	var y: float = m.ui_top
 	if narrow and hud.card != null:
 		y = hud.card.position.y + hud.card.size.y + 8.0

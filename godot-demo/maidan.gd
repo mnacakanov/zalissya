@@ -1024,10 +1024,30 @@ func _animate_walk(v: Vector2) -> void:
 
 
 # --- HUD and input ----------------------------------------------------------------------
-func _build_ui() -> void:
-	var sc := DisplayServer.screen_get_scale()
-	if sc > 1.0:
+## Is the screen upright (taller than wide)? Then everything takes its phone
+## layout: the HUD's buttons under its card, the sheets edge to edge, the talk
+## along the bottom. Checked afresh whenever the screen turns or resizes.
+func portrait() -> bool:
+	var vw := get_viewport().get_visible_rect().size
+	return vw.y > vw.x
+
+
+## The UI's scale: the screen's own (a phone's device pixels per CSS pixel),
+## and upright never less than a phone's width of about 430 points, so the
+## buttons stay thumb-sized even where the browser reports no scale (inside
+## itch.io's frame, say). Kept up to date as the screen turns.
+func _fit_scale() -> void:
+	var ws := Vector2(get_window().size)
+	var sc := maxf(1.0, DisplayServer.screen_get_scale())
+	if ws.y > ws.x:
+		sc = maxf(sc, ws.x / 430.0)
+	if absf(get_window().content_scale_factor - sc) > 0.01:
 		get_window().content_scale_factor = sc
+
+
+func _build_ui() -> void:
+	_fit_scale()
+	get_window().size_changed.connect(_fit_scale)
 	var mobile := OS.has_feature("web_ios") or OS.has_feature("web_android") or OS.has_feature("mobile")
 	var layer := CanvasLayer.new()
 	add_child(layer)
