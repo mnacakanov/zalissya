@@ -61,6 +61,18 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/mallva/mallva", "at": [12.2, -2.4], "metres": 2.0},
+    {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-11.3, -5.2], "metres": 0.5},
+    {"file": "props/chornobryvtsi/chornobryvtsi", "at": [17.8, 1.9], "metres": 0.5},
+    {"file": "props/barvinok/barvinok", "at": [2.8, -5.4], "metres": 0.5},
+    {"file": "props/kalyna/kalyna", "at": [10.3, -14.5], "metres": 2.5},
+    {"file": "props/lishchyna/lishchyna", "at": [-24, 5], "metres": 3.0},
+    {"file": "props/smorodyna/smorodyna", "at": [19.6, -9.2], "metres": 1.0},
+    {"file": "props/kushch/kushch_s", "at": [8.5, 6.5], "metres": 0.6},
+    {"file": "props/kushch/kushch_m", "at": [5.5, -13.5], "metres": 1.2},
+    {"file": "props/kushch/kushch_l", "at": [-19.5, 11], "metres": 2.0},
+    {"file": "props/kushch/kushch_m", "at": [-7.5, 15], "metres": 1.2},
+    {"file": "props/burjan/burjan", "at": [-18.6, 5.6], "metres": 1.0},
     {"file": "props/soniashnyky/soniashnyky", "at": [-11.9, -12.6], "metres": 2.2},
     {"file": "props/soniashnyky/soniashnyky", "at": [14.2, 1.8], "metres": 2.2},
     {"file": "props/drova/drova", "at": [-13.6, -4.4], "metres": 1.6}
