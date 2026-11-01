@@ -453,6 +453,34 @@ func _build_placeholder(b: Dictionary) -> void:
 		"fade": inner, "rect": r})
 
 
+## Does a building's picture really cover this point (not just its canvas's
+## empty corners)? Looks up the picture's own alpha there.
+func _covers(b: Dictionary, at: Vector2) -> bool:
+	var r: Rect2 = b.rect
+	if not r.has_point(at):
+		return false
+	var spr = b.fade
+	if not (spr is Sprite2D) or spr.texture == null:
+		return true   # a placeholder block: its box is its shape
+	if not b.has("alpha"):
+		var src: Texture2D = spr.texture
+		if src is CanvasTexture:
+			src = src.diffuse_texture
+		var img := src.get_image()
+		if img == null:
+			b["alpha"] = null
+		else:
+			if img.is_compressed():
+				img.decompress()
+			b["alpha"] = img
+	var img: Image = b.alpha
+	if img == null:
+		return true
+	var uv := (at - r.position) / r.size
+	var px := Vector2i(clampi(int(uv.x * img.get_width()), 0, img.get_width() - 1), clampi(int(uv.y * img.get_height()), 0, img.get_height() - 1))
+	return img.get_pixelv(px).a > 0.5
+
+
 ## where a sprite covers the scene, to tell when it hides the kobzar
 func _sprite_rect(spr: Sprite2D) -> Rect2:
 	if spr.texture == null:
@@ -748,8 +776,7 @@ func _process(delta: float) -> void:
 			# inside it, it lifts away; behind it (its picture over him and
 			# its front edge below his feet), it turns see-through, the way
 			# isometric games let you walk behind a house to its far door
-			var r: Rect2 = b.rect
-			var behind := player.position.y < fy and r.grow(-4).has_point(player.position + Vector2(0, -0.8 * metre))
+			var behind := player.position.y < fy and _covers(b, player.position + Vector2(0, -0.8 * metre))
 			var target := 0.0 if now_in == i else (0.35 if behind else 1.0)
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
 	if now_in != inside_of:
