@@ -17,7 +17,7 @@ const GLOW := {"kropyva": Color8(120, 220, 110), "polyn": Color8(200, 205, 190),
 	"zvirobiy": Color8(255, 205, 70), "dereviy": Color8(245, 242, 230)}
 const NAME_KEY := {"kropyva": "item.HERBS.name.0", "polyn": "item.HERBS.name.1", "kalendula": "item.HERBS.name.2",
 	"zvirobiy": "item.HERBS.name.3", "dereviy": "item.HERBS.name.4"}
-const THRESH := [0, 3, 7, 12, 18, 25, 34]   # skills.ts: Herbalism levels by herbs gathered
+const Rules := preload("res://rules.gd")   # Herbalism levels, WIS
 const REACH := 1.3                          # metres: near enough to pick
 const REGROW := 26.0                        # seconds (App.tsx: respawnAt)
 
@@ -102,14 +102,6 @@ func _build_ui() -> void:
 	layer.add_child(pick_btn)
 
 
-func _level(herbs: int) -> int:
-	var lvl := 1
-	for i in THRESH.size():
-		if herbs >= THRESH[i]:
-			lvl = i + 1
-	return lvl
-
-
 func _name(kind: String) -> String:
 	return hud.t(NAME_KEY[kind])
 
@@ -128,16 +120,16 @@ func _pick(i: int) -> void:
 		return
 	var s: Dictionary = spots[i]
 	var herbs: int = int(state.data.herbs)
-	var wis := _level(herbs)   # (WIS is the Herbalism level; keepsakes add to it later)
+	var wis: int = Rules.stats(state, hud.t).wis.total   # (Herbalism, plus a tonic or a keepsake)
 	if s.kind == "zvirobiy" and wis < 2:
 		hud.show_toast(_plain(hud.t("ui.gather.0", {"wisNow": wis})))
 		return
 	state.data.herbs = herbs + 1
 	state.dirty = true
 	state.bump("herbStock")
-	var lvl := _level(herbs + 1)
-	if lvl > _level(herbs):
-		hud.show_toast(_plain(hud.t("ui.gather.1", {"name": _name(s.kind), "herbLevel": lvl, "wis": lvl})))
+	var lvl := Rules.level(Rules.HERB_THRESH, herbs + 1)
+	if lvl > Rules.level(Rules.HERB_THRESH, herbs):
+		hud.show_toast(_plain(hud.t("ui.gather.1", {"name": _name(s.kind), "herbLevel": lvl, "wis": Rules.stats(state, hud.t).wis.total})))
 	else:
 		hud.show_toast(_plain(hud.t("ui.gather.3", {"name": _name(s.kind), "herbLevel": lvl, "flagCount": state.count("herbStock")})))
 	s.regrow = REGROW

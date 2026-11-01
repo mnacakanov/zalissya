@@ -11,14 +11,9 @@ extends Node
 ## Opened by the HUD's two buttons, C (character), J (quests), or a gamepad's
 ## Start / Back; closed by Esc, B or the cross.
 
-const THRESH := [0, 3, 7, 12, 18, 25, 34]        # Herbalism (skills.ts)
-const FISH_THRESH := [0, 2, 5, 9, 14, 20]        # Fishing
-const CRAFT_THRESH := [0, 2, 5, 9, 14, 20]       # Cooking, Smithing, Alchemy, Music
-const CARPENTRY_THRESH := [0, 5, 12, 22, 36]     # Carpentry
+const Rules := preload("res://rules.gd")   # the numbers: skills, stats, carry
 const ICON := {"meals": "items/kulish", "herbStock": "herbs/kropyva"}   # styles/<style>/…, a picture by its row
 const USE := {"meals": "ui.satchel.act.eat", "potions": "ui.satchel.act.drink", "strongPotions": "ui.satchel.act.drink"}
-const UNIT_WEIGHT := {"fish": 1, "herbStock": 1, "iron": 3, "forged": 2}   # carry.ts
-const STATS := ["str", "dex", "con", "int", "wis", "cha"]
 
 var m: Node2D
 var hud: Node
@@ -59,89 +54,20 @@ func _plain(s: String) -> String:
 	return out.strip_edges()
 
 
-# --- the numbers, as the 2D game derives them -----------------------------------------
-func _lvl(table: Array, done: int) -> int:
-	var lvl := 1
-	for i in table.size():
-		if done >= table[i]:
-			lvl = i + 1
-	return lvl
-
-
-func _skills() -> Array:
-	var herbs := int(state.data.herbs)
-	var rows := [
-		["ui.skillRows.name.0", THRESH, herbs, "ui.skillRows.stat.0"],
-		["ui.skillRows.name.1", FISH_THRESH, state.count("fishTotal"), "ui.skillRows.stat.1"],
-		["ui.skillRows.name.2", CRAFT_THRESH, state.count("cooked"), "ui.skillRows.stat.2"],
-		["ui.skillRows.name.3", CRAFT_THRESH, state.count("smithed"), "ui.skillRows.stat.3"],
-		["ui.skillRows.name.4", CRAFT_THRESH, state.count("brewed"), "ui.skillRows.stat.4"],
-		["ui.skillRows.name.music", CRAFT_THRESH, state.count("played"), "ui.skillRows.stat.music"],
-		["ui.skillRows.name.carpentry", CARPENTRY_THRESH, state.count("carpentry"), "ui.skillRows.stat.carpentry"],
-	]
-	var out := []
-	for r in rows:
-		var lvl := _lvl(r[1], r[2])
-		out.append({"name": t(r[0]), "level": lvl, "done": r[2], "next": r[1][lvl] if lvl < r[1].size() else null, "stat": t(r[3])})
-	return out
-
-
-## stats.ts computeStats: base from the skills, plus what lifts it
+# --- the window ------------------------------------------------------------------------------
+## the stats, the carry weight and its cap (rules.gd), for whoever asks the sheet
 func stats() -> Dictionary:
-	var base := {
-		"str": _lvl(CRAFT_THRESH, state.count("smithed")) + _lvl(CARPENTRY_THRESH, state.count("carpentry")) - 1,
-		"dex": _lvl(FISH_THRESH, state.count("fishTotal")),
-		"con": _lvl(CRAFT_THRESH, state.count("cooked")),
-		"int": _lvl(CRAFT_THRESH, state.count("brewed")),
-		"wis": _lvl(THRESH, int(state.data.herbs)),
-		"cha": _lvl(CRAFT_THRESH, state.count("played")),
-	}
-	var bonus := {}
-	var why := {}
-	for k in STATS:
-		bonus[k] = 0
-		why[k] = []
-	var give := func(k: String, n: int, label: String):
-		bonus[k] += n
-		why[k].append("%s %s%d" % [label, "+" if n > 0 else "", n])
-	if state.has("horseshoe"): give.call("str", 1, t("stat.computeStats.0"))
-	if state.has("pebble"): give.call("dex", 1, t("stat.computeStats.1"))
-	if state.has("stone"): give.call("con", 1, t("stat.computeStats.2"))
-	if state.has("wellfed"): give.call("con", 1, t("stat.computeStats.3"))
-	if state.has("rested"): give.call("con", 1, t("stat.rested"))
-	if state.has("bathed"): give.call("cha", 1, t("stat.bathed"))
-	if state.has("tonic"):
-		give.call("int", 1, t("stat.computeStats.4"))
-		give.call("wis", 1, t("stat.computeStats.5"))
-	if state.has("strongtonic"):
-		give.call("int", 2, t("stat.computeStats.6"))
-		give.call("wis", 2, t("stat.computeStats.7"))
-	if state.has("gold"): give.call("cha", 2, t("stat.computeStats.8"))
-	if state.has("moonstone"):
-		give.call("wis", 1, t("stat.computeStats.9"))
-		give.call("cha", 1, t("stat.computeStats.10"))
-	if state.has("viySealed"):
-		give.call("wis", 1, t("stat.computeStats.11"))
-		give.call("cha", 1, t("stat.computeStats.12"))
-	if state.has("soulsold") and not state.has("soulback"):
-		give.call("wis", -1, t("stat.soulless"))
-	var out := {}
-	for k in STATS:
-		out[k] = {"base": base[k], "bonus": bonus[k], "total": maxi(1, base[k] + bonus[k]), "why": why[k]}
-	return out
+	return Rules.stats(state, t)
 
 
 func carried() -> int:
-	var iron: int = 0 if state.has("horseshoe") else state.count("iron")
-	return state.count("fish") * UNIT_WEIGHT.fish + state.count("herbStock") * UNIT_WEIGHT.herbStock \
-		+ iron * UNIT_WEIGHT.iron + state.count("forged") * UNIT_WEIGHT.forged
+	return Rules.carried(state)
 
 
 func cap(s: Dictionary) -> int:
-	return 6 + 2 * int(s.str.total)
+	return Rules.cap(s)
 
 
-# --- the window ------------------------------------------------------------------------------
 func _parch(bg: Color, radius := 14) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
@@ -329,8 +255,8 @@ func _fill() -> void:
 	var dim := Color(0.36, 0.27, 0.19)
 	match tab:
 		"stats":
-			for i in STATS.size():
-				var s: Dictionary = st[STATS[i]]
+			for i in Rules.STATS.size():
+				var s: Dictionary = st[Rules.STATS[i]]
 				var v := _card()
 				var top := "%s  %d   (%s)" % [t("stat.STAT_DEFS.name.%d" % i), s.total, t("stat.STAT_DEFS.abbr.%d" % i)]
 				v.add_child(_text(top, 17, Color(0.2, 0.14, 0.1), true))
@@ -341,7 +267,7 @@ func _fill() -> void:
 			var price := 2 if int(st.cha.total) >= 4 else 3
 			body.add_child(_text(t("ui.stats.footer", {"price": price}), 13, dim))
 		"skills":
-			for r in _skills():
+			for r in Rules.skills(state, t):
 				var v := _card()
 				v.add_child(_text("%s · %s · %s" % [r.name, t("ui.skills.level", {"level": r.level}), _plain(t("ui.skills.feeds", {"stat": r.stat}))], 16, Color(0.2, 0.14, 0.1), true))
 				var bar := ProgressBar.new()
@@ -378,7 +304,7 @@ func _fill() -> void:
 				for r in rows:
 					var v := _card(ICON.get(r[0][0], ""))
 					v.add_child(_text("%s × %d" % [_plain(t(r[0][1])), r[1]], 16))
-					var unit: int = UNIT_WEIGHT.get(r[0][0], 0)
+					var unit: int = Rules.UNIT_WEIGHT.get(r[0][0], 0)
 					v.add_child(_text(t("ui.satchel.weightless") if unit == 0 else t("ui.satchel.rowWeight", {"unit": unit, "total": unit * r[1]}), 13, dim))
 					var act: String = USE.get(r[0][0], "")
 					if act != "" and work != null:

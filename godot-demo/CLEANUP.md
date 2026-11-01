@@ -71,10 +71,12 @@ map, save and reload.
   web font lacks them). Today: `hud._style`, `sheet._parch/_btn/_text`,
   `map._parch/_btn` (a copy), inline StyleBoxes in `evening.gd`, `work.gd`;
   `_plain` in herbs (a different variant), evening, sheet, work.
-- [ ] **2.2 One rules file** (`rules.gd`): the skill thresholds (Herbalism,
+- [x] **2.2 One rules file** (`rules.gd`): the skill thresholds (Herbalism,
   Fishing, Craft, Carpentry), the level lookup, the stats and carry weight.
   Today: `THRESH` tables and a `_lvl` in herbs, evening, sheet, work; stats
   and carry in `sheet.gd`, read by work.
+  *Done: `rules.gd` (static); sheet, herbs, evening, work read it. On the
+  way: zvirobiy's WIS check now counts a tonic, as the 2D game's does.*
 - [ ] **2.3 Metres back from the scene**: one `m.M(pos)` beside `m.P()`.
   Today five copies: maidan (hud_info), `game_state._capture`,
   `editor._metres`, `map.metres`, `work._metres`.

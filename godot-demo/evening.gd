@@ -17,7 +17,7 @@ const SONGS := {"holota": "neutral", "kolyskova": "neutral", "voly": "neutral", 
 	"hopak": "happy", "zhentsi": "happy", "rozpriahaite": "happy", "pidmanula": "happy", "hrytsiu": "happy",
 	"polechko": "sad", "burya": "sad", "marusia": "sad"}
 const TEACH := {"vesna": "kolyskova", "myroslav": "zhentsi", "radek": "rozpriahaite"}   # songTopics.ts
-const CRAFT_THRESH := [0, 2, 5, 9, 14, 20]
+const Rules := preload("res://rules.gd")   # Music levels, CHA
 const EVENING_FROM := 18 * 60
 const EVENING_UNTIL := 23 * 60 + 30
 const REACH := 2.6   # metres from the fire's middle
@@ -83,14 +83,6 @@ func _mood() -> Array:
 	if day % 5 == 4:
 		return ["sad", "memorial"]
 	return ["neutral", "ordinary"]
-
-
-func _lvl(done: int) -> int:
-	var l := 1
-	for i in CRAFT_THRESH.size():
-		if done >= CRAFT_THRESH[i]:
-			l = i + 1
-	return l
 
 
 ## the font has no emoji: words only
@@ -204,16 +196,16 @@ func _play(id: String) -> void:
 	var ev: String = _mood()[0]
 	var sm: String = SONGS[id]
 	var rec := "match" if ev == sm else ("fine" if ev == "neutral" or sm == "neutral" else "clash")
-	var before: int = _lvl(state.count("played"))
+	var before: int = Rules.level(Rules.CRAFT_THRESH, state.count("played"))
 	var after_n: int = state.bump("played", 2 if rec == "match" else 1)
 	state.set_count("playedDay", hud.day)
 	if rec != "clash":
 		state.bump("meals")
-	var lvl := _lvl(after_n)
+	var lvl := Rules.level(Rules.CRAFT_THRESH, after_n)
 	var say: String = hud.t("ui.play.clash." + ev) if rec == "clash" else hud.t("ui.play.audience." + id)
 	var tail: String = hud.t("ui.play." + rec, {"song": _plain(hud.t("song.name." + id)), "level": lvl})
-	if lvl > before and hud.sheet != null:
-		tail += " " + hud.t("ui.play.levelUpTail", {"cha": hud.sheet.stats().cha.total})
+	if lvl > before:
+		tail += " " + hud.t("ui.play.levelUpTail", {"cha": Rules.stats(state, hud.t).cha.total})
 	_show(say + "\n\n" + tail)
 	_choice(hud.t("ui.misc.71"), _close)
 

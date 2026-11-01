@@ -17,8 +17,7 @@ extends Node
 ## The meal, the tonics and the bath end at dawn (time.ts UNTIL_DAWN_FLAGS).
 ## All the words are the 2D game's.
 
-const CRAFT_THRESH := [0, 2, 5, 9, 14, 20]
-const FISH_THRESH := [0, 2, 5, 9, 14, 20]
+const Rules := preload("res://rules.gd")   # skill levels, stats, carry
 const UNTIL_DAWN := ["wellfed", "tonic", "strongtonic", "rested", "bathed"]
 const DAWN := 6 * 60
 # items.ts FISH_CATCH: what bites, and how often (DEX tilts it)
@@ -96,20 +95,12 @@ func _toast(s: String) -> void:
 	hud.show_toast(_plain(s))
 
 
-func _lvl(table: Array, done: int) -> int:
-	var l := 1
-	for i in table.size():
-		if done >= table[i]:
-			l = i + 1
-	return l
-
-
 func _stats() -> Dictionary:
-	return hud.sheet.stats()
+	return Rules.stats(state, hud.t)
 
 
 func _room_for(weight: int) -> bool:
-	return hud.sheet.carried() + weight <= hud.sheet.cap(_stats())
+	return Rules.carried(state) + weight <= Rules.cap(_stats())
 
 
 # --- the window and the button -------------------------------------------------------
@@ -320,12 +311,12 @@ func _reel() -> void:
 		_toast(t("ui.doInteract.1"))
 	elif not _room_for(1):
 		var st := _stats()
-		_toast(t("ui.doInteract.2", {"fish": caught, "carriedWeight": hud.sheet.carried(), "carryCap": hud.sheet.cap(st), "str": st.str.total}))
+		_toast(t("ui.doInteract.2", {"fish": caught, "carriedWeight": Rules.carried(state), "carryCap": Rules.cap(st), "str": st.str.total}))
 	else:
 		state.bump("fish")
 		var n: int = state.bump("fishTotal")
-		var lvl := _lvl(FISH_THRESH, n)
-		if lvl > _lvl(FISH_THRESH, n - 1):
+		var lvl := Rules.level(Rules.FISH_THRESH, n)
+		if lvl > Rules.level(Rules.FISH_THRESH, n - 1):
 			_toast(t("ui.doInteract.3", {"caught": caught, "fishLevel": lvl, "total": _stats().dex.total}))
 		else:
 			_toast(t("ui.doInteract.4", {"caught": caught, "fishLevel": lvl, "total": n}))
@@ -342,10 +333,10 @@ func _cook() -> void:
 	var before: int = state.count("cooked")
 	var n: int = state.bump("cooked")
 	state.bump("meals")
-	if _lvl(CRAFT_THRESH, n) > _lvl(CRAFT_THRESH, before):
-		_toast(t("ui.cook.3", {"craftLevel": _lvl(CRAFT_THRESH, n), "con": _stats().con.total}))
+	if Rules.level(Rules.CRAFT_THRESH, n) > Rules.level(Rules.CRAFT_THRESH, before):
+		_toast(t("ui.cook.3", {"craftLevel": Rules.level(Rules.CRAFT_THRESH, n), "con": _stats().con.total}))
 	else:
-		_toast(t("ui.cook.4", {"craftLevel": _lvl(CRAFT_THRESH, n), "flagCount": state.count("meals")}))
+		_toast(t("ui.cook.4", {"craftLevel": Rules.level(Rules.CRAFT_THRESH, n), "flagCount": state.count("meals")}))
 
 
 func _smith() -> void:
@@ -356,7 +347,7 @@ func _smith() -> void:
 	# carry the result (checked before the hammer lifts)
 	if not _room_for(2):
 		var st := _stats()
-		_toast(t("ui.carryBlockedToast.0", {"carriedWeight": hud.sheet.carried(), "carryCap": hud.sheet.cap(st), "addWeight": 2, "str": st.str.total}))
+		_toast(t("ui.carryBlockedToast.0", {"carriedWeight": Rules.carried(state), "carryCap": Rules.cap(st), "addWeight": 2, "str": st.str.total}))
 		return
 	smith_ready = _now() + SMITH_REST
 	var before: int = state.count("smithed")
@@ -366,8 +357,8 @@ func _smith() -> void:
 	var master := randf() < (str_now - 1) * 0.1 and _room_for(2)
 	if master:
 		state.bump("forged")
-	var lvl := _lvl(CRAFT_THRESH, n)
-	if lvl > _lvl(CRAFT_THRESH, before):
+	var lvl := Rules.level(Rules.CRAFT_THRESH, n)
+	if lvl > Rules.level(Rules.CRAFT_THRESH, before):
 		_toast(t("ui.smith.2", {"craftLevel": lvl, "str": _stats().str.total}))
 	elif master:
 		_toast(t("ui.smith.3", {"str": str_now, "craftLevel": lvl}))
@@ -406,8 +397,8 @@ func _do_brew(recipe: String) -> void:
 	var double := randf() < (int_now - 1) * 0.1
 	if double:
 		state.bump(item)
-	var lvl := _lvl(CRAFT_THRESH, n)
-	if lvl > _lvl(CRAFT_THRESH, before):
+	var lvl := Rules.level(Rules.CRAFT_THRESH, n)
+	if lvl > Rules.level(Rules.CRAFT_THRESH, before):
 		_toast(t("ui.performBrew.2" if strong else "ui.performBrew.3", {"craftLevel": lvl, "int": _stats().int.total}))
 	elif double:
 		_toast(t("ui.performBrew.4" if strong else "ui.performBrew.5", {"intNow": int_now, "craftLevel": lvl}))
