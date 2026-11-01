@@ -12,6 +12,9 @@
     {"id": "bereh", "texture": "ground_bereh", "color": "#6f6449", "center": [-16, 29], "radius": [12.5, 8.5], "wobble": 0.08},
     {"id": "voda", "texture": "ground_voda", "color": "#3b4a43", "center": [-16, 29], "radius": [10.5, 6.8], "wobble": 0.08, "solid": true}
   ],
+  "walks": [
+    {"id": "kladka", "points": [[-12.74, 36.77], [-13.81, 37.0], [-15.26, 30.23], [-14.19, 30.0]]}
+  ],
   "roads": [
     {"kind": "road", "width": 3.2, "points": [[0, 3], [0.8, 9], [-0.6, 15], [0.4, 21], [0, 26], [1.2, 34], [-0.8, 42], [0.6, 52], [0, 70]]}
   ],
@@ -63,6 +66,7 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/kladka/kladka", "at": [-12.06, 35.46], "metres": 2.99},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-11.3, -5.2], "metres": 0.93},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [17.8, 1.9], "metres": 0.93},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-1.6, -13.2], "metres": 0.93},
@@ -77,7 +81,7 @@
     {"file": "props/polovi/polovi", "at": [-4.4, 9.4], "metres": 1.19},
     {"file": "props/husy/husy", "at": [-3.2, 30.6], "metres": 0.8},
     {"file": "props/kury/kury", "at": [-18.4, -2.8], "metres": 1.09},
-    {"file": "props/choven/choven", "at": [-13, 36.3], "metres": 2.15},
+    {"file": "props/choven/choven", "at": [-20.5, 36.6], "metres": 2.15},
     {"file": "props/latattia/latattia_1", "at": [-20.5, 27.5], "metres": 0.3},
     {"file": "props/latattia/latattia_2", "at": [-19.8, 28.6], "metres": 0.28},
     {"file": "props/latattia/latattia_3", "at": [-13.2, 31.2], "metres": 0.57},
