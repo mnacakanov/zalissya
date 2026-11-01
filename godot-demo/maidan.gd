@@ -283,16 +283,19 @@ func _build_khata(b: Dictionary) -> void:
 	# style's tilt, but not a long plan of three.
 	var pich := Vector2.INF
 	var inn: Dictionary = h.interior
+	var rooms: Array[Node2D] = []
 	if inn.has("parts"):
 		for part in inn.parts:
 			var sp: Array = part.get("span", [0, 1])
 			var l := foot[0].lerp(foot[1], sp[0])
 			var f := foot[0].lerp(foot[1], sp[1])
 			var p := _lay_room(part, dir, PackedVector2Array([l, f, f + foot[2] - foot[1], l + foot[2] - foot[1]]), inner)
+			rooms.append_array(_laid)
 			if pich == Vector2.INF:
 				pich = p
 	else:
 		pich = _lay_room(inn, dir, foot, inner)
+		rooms.append_array(_laid)
 	# the walls along the footprint, with a gap for the door. The door is
 	# [t0, t1] along the south wall, or {"wall": "east", "t": [t0, t1]}: in a
 	# horseshoe the huts on its arms face the maidan, east or west. The
@@ -358,6 +361,12 @@ func _build_khata(b: Dictionary) -> void:
 			n.modulate.a = 0.0
 	else:
 		entry["pich"] = pich if pich != Vector2.INF else _centroid(foot)
+		# The room shows only from inside, or through the house gone
+		# see-through: a painted room's far walls can stand taller than the
+		# house's own walls, and would poke out round its roof.
+		entry["room_nodes"] = rooms
+		for n in rooms:
+			n.modulate.a = 0.0
 	buildings.append(entry)
 
 
@@ -924,6 +933,8 @@ func _process(delta: float) -> void:
 			# gone see-through as he walks behind it)
 			for n in b.get("sunken_nodes", []):
 				n.modulate.a = move_toward(n.modulate.a, 1.0 if now_in == i else 0.0, delta * 4.0)
+			for n in b.get("room_nodes", []):
+				n.modulate.a = move_toward(n.modulate.a, 1.0 if now_in == i or behind else 0.0, delta * 4.0)
 	if now_in != inside_of:
 		inside_of = now_in
 		_update_lamps()
