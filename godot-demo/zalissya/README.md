@@ -181,3 +181,31 @@ To run it locally, use Godot 4.7.2 and open `godot-demo/` (see
   two people's edits don't collide.
 - Follow the workflow in [`CLAUDE.md`](../../CLAUDE.md): work on a branch
   and open a PR.
+
+## Editing the level by hand (editor.gd)
+
+Open the game with **`?edit`** at the end of the address
+(`https://mnacakanov.github.io/zalissya/godot-demo/?edit`), or run it from the
+Godot editor. A **✎ Редагувати** button appears top right (or press **Tab**).
+In edit mode the game pauses and:
+
+| Do | How |
+|---|---|
+| Look around | drag empty ground, or right-drag; WASD / arrows; wheel or − + to zoom |
+| Select | click a building or a prop (a yellow frame shows it) |
+| Move | drag it; it snaps to half a metre, hold **Shift** to place it freely |
+| Copy / delete | **Ctrl+D** / **Del**, or the panel's buttons |
+| Mirror | **F** (not for walk-in khaty: their art can't turn) |
+| Bigger / smaller | **]** / **[** |
+| Add | pick a picture in the palette, then click the ground (**Esc** to stop) |
+| Undo / redo | **Ctrl+Z** / **Ctrl+Y** |
+
+Every change is kept in your browser as you go, so a reload keeps it
+(**Скинути мої зміни** throws your changes away). **✓ Зберегти** writes
+`zalissya/maidan.json` when run from the Godot editor; in a browser it
+**downloads `maidan.json`**: put it on an issue (or ask the Claude session) to
+commit it, or commit it into `godot-demo/zalissya/` yourself. **⎘ Копіювати**
+copies the whole file instead.
+
+Not editable yet: the forests (generated from their outline), the roads,
+paths, areas and walks (edit their points in the file for now).

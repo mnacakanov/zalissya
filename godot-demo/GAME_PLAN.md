@@ -50,6 +50,8 @@ The owner should confirm this before Track B starts.
 
 **A4. Docs.** A short "How to edit a level" in `zalissya/README.md`, with the keys, and a line in `PIPELINE.md`.
 
+**Status:** A1 and A2's first version is in (`editor.gd`; how to use it: `zalissya/README.md`). Next: dragging the points of roads, areas and walks; baking a forest into single trees; the world's chunks.
+
 *Built as its own script, `editor.gd`, next to `maidan.gd` (as `people.gd` is), so it can be built in parallel with the owner's work on the maidan code. Owner: a Claude session (Ostap volunteers). Size: about 2–3 days of agent work, with A1+A2 first.*
 
 ---

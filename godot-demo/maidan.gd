@@ -8,6 +8,7 @@ extends Node2D
 ## art yet stand as labelled blocks of their real size, to be replaced.
 
 const DATA := "res://zalissya/maidan.json"
+const Editor := preload("res://editor.gd")
 const SPEED := 150.0
 const PLAYER_R := 12.0
 
@@ -45,10 +46,12 @@ var portals: Array[Dictionary] = []       # {at, to, r}: step on one, fade, arri
 var portal_armed := true                  # (re-armed once you step off every portal)
 var fader: ColorRect
 var fading := false
+var editing := false                      # the level editor is on (editor.gd): the game pauses
+var prop_nodes: Array[Dictionary] = []    # each prop's sprite and its entry, for the editor
 
 
 func _ready() -> void:
-	data = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+	data = Editor.load_level(DATA)
 	style = data.get("style", "pillars")
 	layout = JSON.parse_string(FileAccess.get_file_as_string("res://styles/%s/layout.json" % style))
 	k = layout.get("scale", 1.0)
@@ -70,20 +73,30 @@ func _ready() -> void:
 	walls = StaticBody2D.new()
 	add_child(walls)
 	_build_ground()
-	for b in data.get("buildings", []):
+	var bl: Array = data.get("buildings", [])
+	for bi in bl.size():
+		var b: Dictionary = bl[bi]
+		var n0 := buildings.size()
 		if b.kind == "khata":
 			_build_khata(b)
 		elif b.kind == "sprite":
 			_build_sprite(b)
 		else:
 			_build_placeholder(b)
+		# (the editor finds which entry a building came from)
+		if buildings.size() > n0:
+			buildings[n0]["src"] = {"list": "buildings", "i": bi}
 	buildings.append_array(extra_rooms)
 	_build_forests()
-	for p in data.get("props", []):
+	var pl: Array = data.get("props", [])
+	for pi in pl.size():
+		var p: Dictionary = pl[pi]
 		var s := _sprite(p.file, 1.0)
 		if s.texture != null:
 			s.scale = Vector2.ONE * (float(p.get("metres", 1.0)) * metre / s.texture.get_height())
+		s.flip_h = p.get("flip", false)
 		s.position = P(p.at[0], p.at[1])
+		prop_nodes.append({"fade": s, "rect": _sprite_rect(s), "src": {"list": "props", "i": pi}})
 		# a flat thing you walk on (a jetty, lilies on the water) lies on the
 		# ground under everyone, not sorted among them by its foot
 		if p.get("flat", false):
@@ -101,6 +114,11 @@ func _ready() -> void:
 	debug_layer.visible = false
 	debug_layer.draw.connect(_draw_debug)
 	add_child(debug_layer)
+	# the level editor, for whoever opens the game with ?edit (editor.gd)
+	if Editor.allowed():
+		var ed := Editor.new()
+		add_child(ed)
+		ed.setup(self)
 
 
 ## a point on the ground, in metres (x east, y south), in scene px
@@ -1040,6 +1058,8 @@ func _draw_debug() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if editing and (event is InputEventScreenTouch or event is InputEventScreenDrag):
+		return   # (the editor pans and drags with the finger)
 	if event is InputEventScreenTouch:
 		if event.pressed and stick_touch < 0 and event.position.y > 150:
 			stick_touch = event.index
@@ -1066,6 +1086,15 @@ func _input(event: InputEvent) -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if editing:
+		# the editor's free camera: he floats through walls, faster when zoomed out
+		var e := Vector2.ZERO
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): e.y -= 1
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): e.y += 1
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT): e.x -= 1
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): e.x += 1
+		player.position += e.limit_length(1.0) * SPEED * 3.0 / cam.zoom.x * _delta
+		return
 	var v := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): v.y -= 1
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): v.y += 1
