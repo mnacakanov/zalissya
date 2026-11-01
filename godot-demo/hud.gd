@@ -13,6 +13,8 @@ extends Node
 ## copied by tools/sync_locales.py); nothing here is hand-written text.
 ## For now it knows one quest, "meet the khutir" (talk to the otaman, Vesna
 ## and Radek), read from people.gd; the quest system proper comes next.
+## The day, the clock and whom you have met are kept in the save
+## (game_state.gd), so a reload goes on where you were.
 ## Kept in a script of its own beside maidan.gd; the maidan makes it.
 
 const MS_PER_MINUTE := 400.0      # client/src/systems/time.ts: MS_PER_GAME_MINUTE
@@ -25,6 +27,7 @@ const MEET := ["myroslav", "vesna", "radek"]   # quest "meet": the three village
 
 var m: Node2D
 var people: Node
+var state: Node                   # game_state.gd: flags, talked, the save
 var lang := "uk"
 var words := {}
 var ui: CanvasLayer
@@ -57,13 +60,22 @@ func _load_words(l: String) -> void:
 
 
 # --- setting up ---------------------------------------------------------------------------
-func setup(maidan: Node2D, the_people: Node) -> void:
+func setup(maidan: Node2D, the_people: Node, the_state: Node) -> void:
 	m = maidan
 	people = the_people
+	state = the_state
 	_load_words(Engine.get_meta("lang", "uk"))
-	day = Engine.get_meta("clock_day", 1)
-	minute = Engine.get_meta("clock_min", START_MINUTE)
-	met_done = Engine.get_meta("met_done", false)
+	day = state.count("day", 1)
+	minute = state.count("clock", START_MINUTE)
+	met_done = state.has("found:meet")
+	# whom he has met, back from the save (the first greeting is said once)
+	if people != null:
+		for id in state.data.talked:
+			people.met[id] = true
+	# where he stood (unless the level editor has just rebuilt the scene)
+	if not Engine.has_meta("edit_view"):
+		m.player.position = m.P(float(state.data.x), float(state.data.y))
+		m.cam.reset_smoothing()
 	ui = CanvasLayer.new()
 	ui.layer = 5
 	add_child(ui)
@@ -161,6 +173,15 @@ func _build_title() -> void:
 	go.add_theme_color_override("font_color", Color(0.953, 0.914, 0.824))
 	go.pressed.connect(_start)
 	col.add_child(go)
+	# with a save: "Продовжити", and a quieter "Нова гра" under it
+	var fresh: Button = null
+	if state.exists():
+		fresh = Button.new()
+		fresh.flat = true
+		fresh.add_theme_color_override("font_color", Color(0.48, 0.29, 0.17))
+		fresh.pressed.connect(func(): state.new_game())
+		col.add_child(fresh)
+	title_parts = [h, sub, go, fresh]
 	var langs := HBoxContainer.new()
 	langs.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(langs)
@@ -173,22 +194,26 @@ func _build_title() -> void:
 		lb.pressed.connect(func():
 			_load_words(l[0])
 			Engine.set_meta("lang", l[0])
-			_fill_title(h, sub, go)
+			_fill_title()
 			_refresh())
 		langs.add_child(lb)
-	_fill_title(h, sub, go)
+	_fill_title()
 	m.fading = true   # (he waits on the title card)
 	go.grab_focus()
 
 
-func _fill_title(h: Label, sub: Label, go: Button) -> void:
-	h.text = t("ui.misc.1")
-	sub.text = t("ui.misc.2")
-	go.text = t("ui.misc.4")
+var title_parts: Array = []
+func _fill_title() -> void:
+	title_parts[0].text = t("ui.misc.1")
+	title_parts[1].text = t("ui.misc.2")
+	title_parts[2].text = t("ui.continue") if state.exists() else t("ui.misc.4")
+	if title_parts[3] != null:
+		title_parts[3].text = t("ui.misc.21")
 
 
 func _start() -> void:
 	Engine.set_meta("started", true)
+	state.save_now()
 	m.fading = false
 	title_card.queue_free()
 	title_card = null
@@ -212,6 +237,8 @@ func _process(delta: float) -> void:
 			if minute >= 24 * 60:
 				minute = 0
 				day += 1
+				state.set_count("day", day)
+			state.set_count("clock", minute)
 	# the "День / ніч" button (or N) turned the light by hand: the clock follows
 	if m.night != night_by_clock:
 		minute = NIGHT_FROM + 10 if m.night else START_MINUTE
@@ -219,8 +246,11 @@ func _process(delta: float) -> void:
 	elif _is_night(minute) != night_by_clock:
 		night_by_clock = _is_night(minute)
 		m._set_night(night_by_clock)
-	Engine.set_meta("clock_day", day)
-	Engine.set_meta("clock_min", minute)
+	state.set_count("clock", minute)
+	state.set_count("day", day)
+	if people != null:
+		for id in people.met:
+			state.add_talked(id)
 	_check_quests()
 	_refresh()
 	if toast.modulate.a > 0.0:
@@ -244,7 +274,7 @@ func _met() -> int:
 func _check_quests() -> void:
 	if not met_done and _met() >= MEET.size():
 		met_done = true
-		Engine.set_meta("met_done", true)
+		state.add("found:meet")
 		toast.text = t("ui.quests.found", {"title": t("quest.meet.title.0")})
 		toast.modulate.a = 1.0
 

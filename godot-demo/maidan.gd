@@ -110,9 +110,13 @@ func _ready() -> void:
 	add_child(people)
 	people.setup(self)
 	# the HUD: where, when, the objective, the title card (hud.gd)
+	# the game's state and its save (game_state.gd), then the HUD (hud.gd)
+	var state := preload("res://game_state.gd").new()
+	add_child(state)
+	state.setup(self)
 	var hud := preload("res://hud.gd").new()
 	add_child(hud)
-	hud.setup(self, people)
+	hud.setup(self, people, state)
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
