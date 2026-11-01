@@ -28,6 +28,7 @@ const MEET := ["myroslav", "vesna", "radek"]   # quest "meet": the three village
 var m: Node2D
 var people: Node
 var state: Node                   # game_state.gd: flags, talked, the save
+var sheet: Node                   # sheet.gd: the character sheet (time stops while it is open)
 var lang := "uk"
 var words := {}
 var ui: CanvasLayer
@@ -228,7 +229,7 @@ func _process(delta: float) -> void:
 	if title_card != null:
 		return
 	# time stops while editing and while talking (as in the 2D game)
-	var stopped: bool = m.editing or (people != null and people.talking >= 0)
+	var stopped: bool = m.editing or (people != null and people.talking >= 0) or (sheet != null and sheet.is_open())
 	if not stopped:
 		clock_ms += delta * 1000.0
 		while clock_ms >= MS_PER_MINUTE:

@@ -121,6 +121,11 @@ func _ready() -> void:
 	var herbs := preload("res://herbs.gd").new()
 	add_child(herbs)
 	herbs.setup(self, hud, state)
+	# the character sheet: stats, skills, the satchel, the quests (sheet.gd)
+	var sheet := preload("res://sheet.gd").new()
+	add_child(sheet)
+	sheet.setup(self, hud, state)
+	hud.sheet = sheet
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
