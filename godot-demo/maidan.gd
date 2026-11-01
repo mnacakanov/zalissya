@@ -348,7 +348,7 @@ func _build_khata(b: Dictionary) -> void:
 		nl.visible = false
 		inner.add_child(nl)
 		buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "fade": ext, "label": nl,
-			"rect": _sprite_rect(ext)})
+			"rect": _sprite_rect(ext), "strips": _strips(ext, foot)})
 		return
 	# The room, on the ground under everything, laid onto the same
 	# footprint. A long house can come as several rooms side by side
@@ -408,7 +408,7 @@ func _build_khata(b: Dictionary) -> void:
 	var door := foot[dw].lerp(foot[(dw + 1) % 4], (d0 + d1) / 2.0)
 	var outward := (door - _centroid(foot)).normalized()
 	var entry := {"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
-		"rect": _sprite_rect(ext), "door": door + outward * 0.6 * metre}
+		"rect": _sprite_rect(ext), "door": door + outward * 0.6 * metre, "strips": _strips(ext, foot)}
 	if h.get("sunken", false):
 		# A sunken room (a lyokh walked into like a hut): its picture shows
 		# the pit at its true depth, so it reaches below the house's outline
@@ -651,6 +651,8 @@ func _build_sprite(b: Dictionary) -> void:
 		"id": b.id, "fade": spr, "rect": _sprite_rect(spr)}
 	if spr.material is ShaderMaterial and spr.material.shader == _sway_shader():
 		entry["hole"] = spr.material
+	elif b.get("strips", true):
+		entry["strips"] = _strips(spr, foot)
 	# a sign: a name always shown under it (for samples, such as the trees')
 	if b.has("sign"):
 		var sg := _label(b.sign)
@@ -821,6 +823,54 @@ func _covers(b: Dictionary, at: Vector2) -> bool:
 	var uv := (at - r.position) / r.size
 	var px := Vector2i(clampi(int(uv.x * img.get_width()), 0, img.get_width() - 1), clampi(int(uv.y * img.get_height()), 0, img.get_height() - 1))
 	return img.get_pixelv(px).a > 0.5
+
+
+## A building's picture cut into narrow upright strips, each sorted by the
+## front edge of the footprint right under it. One picture can only have
+## one place in the drawing order, and a house is wide: whatever stands by
+## it (Radek at his forge's door, a sawhorse at a khata's corner) is in
+## front of one part of it and behind another. Strips let everyone, not only
+## the kobzar, stand right against every part of the house. The picture
+## itself stays (hidden) for its size, its outline and its fading, which the
+## strips copy each frame.
+const STRIP_PX := 14.0   # scene px a strip is wide
+func _strips(spr: Sprite2D, foot: PackedVector2Array) -> Node2D:
+	var tex := spr.texture
+	if tex == null:
+		return null
+	var sc := spr.scale.x
+	var w := tex.get_width()
+	var h := tex.get_height()
+	var left := spr.position.x + spr.offset.x * sc
+	var top := spr.position.y + spr.offset.y * sc
+	var fx0 := INF
+	var fx1 := -INF
+	for p in foot:
+		fx0 = minf(fx0, p.x)
+		fx1 = maxf(fx1, p.x)
+	var root := Node2D.new()
+	root.y_sort_enabled = true
+	world.add_child(root)
+	var cw := maxi(2, int(STRIP_PX / sc))
+	for c in range(0, w, cw):
+		var tw := mini(cw, w - c)
+		var cx := left + (c + tw / 2.0) * sc
+		var fy := _front_y(foot, clampf(cx, fx0 + 0.5, fx1 - 0.5))
+		var holder := Node2D.new()
+		holder.position = Vector2(0, fy)
+		root.add_child(holder)
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.centered = false
+		s.region_enabled = true
+		s.region_rect = Rect2(w - c - tw if spr.flip_h else c, 0, tw, h)
+		s.flip_h = spr.flip_h
+		s.scale = spr.scale
+		s.material = spr.material
+		s.position = Vector2(left + c * sc, top - fy)
+		holder.add_child(s)
+	spr.visible = false
+	return root
 
 
 ## where a sprite covers the scene, to tell when it hides the kobzar
@@ -1186,6 +1236,8 @@ func _process(delta: float) -> void:
 					mat.set_shader_parameter("hole_r", hole_r * metre)
 				target = 0.8 if behind else 1.0
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
+			if b.get("strips") != null:
+				b.strips.modulate = b.fade.modulate
 			# (and the pit itself shows only from inside, not through a roof
 			# gone see-through as he walks behind it)
 			for n in b.get("sunken_nodes", []):
