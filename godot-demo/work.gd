@@ -145,13 +145,13 @@ func _ask(text: String, options: Array) -> void:
 	ask_panel.visible = true
 	ask_panel.reset_size()
 	(func(): if ask_panel.visible: ask_panel.reset_size()).call_deferred()
-	m.fading = true
+	m.pause("work")
 	(func(): if ask_row.get_child_count() > 0 and ask_row.get_child(0).focus_mode != Control.FOCUS_NONE: ask_row.get_child(0).grab_focus()).call_deferred()
 
 
 func _close_ask() -> void:
 	ask_panel.visible = false
-	m.fading = false
+	m.resume("work")
 
 
 ## the float on the water: it bobs while he waits, and dives at a bite

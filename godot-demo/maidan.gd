@@ -48,7 +48,13 @@ var extra_rooms: Array[Dictionary] = []   # lower levels (a komora's lyokh), add
 var portals: Array[Dictionary] = []       # {at, to, r}: step on one, fade, arrive at its 'to'
 var portal_armed := true                  # (re-armed once you step off every portal)
 var fader: ColorRect
-var fading := false
+## Something holds the kobzar still (a window, the title card, a fade
+## between levels): each holder pauses and resumes for itself, so one
+## closing never frees him from another. fading is true while any holds.
+var paused_by := {}
+var fading: bool:
+	get:
+		return not paused_by.is_empty()
 var editing := false                      # the level editor is on (editor.gd): the game pauses
 var prop_nodes: Array[Dictionary] = []    # each prop's sprite and its entry, for the editor
 var ui_top := 12.0                        # where the HUD starts (lower under the developer's row, ?edit)
@@ -164,6 +170,15 @@ func P(x: float, y: float) -> Vector2:
 ## and back: a point of the scene, in metres on the ground
 func M(p: Vector2) -> Vector2:
 	return Transform2D(east, -north, Vector2.ZERO).affine_inverse() * p
+
+
+## hold the kobzar still (a window opens…), and let him go again
+func pause(who: String) -> void:
+	paused_by[who] = true
+
+
+func resume(who: String) -> void:
+	paused_by.erase(who)
 
 
 func _rect(c: Array, size: Array) -> PackedVector2Array:
@@ -1220,7 +1235,7 @@ func _check_portals() -> void:
 	if not portal_armed:
 		return
 	portal_armed = false
-	fading = true
+	pause("portal")
 	var tw := create_tween()
 	tw.tween_property(fader, "color:a", 1.0, 0.25)
 	tw.tween_callback(func():
@@ -1228,7 +1243,7 @@ func _check_portals() -> void:
 		cam.reset_smoothing())
 	tw.tween_interval(0.1)
 	tw.tween_property(fader, "color:a", 0.0, 0.3)
-	tw.tween_callback(func(): fading = false)
+	tw.tween_callback(func(): resume("portal"))
 
 
 func _process(delta: float) -> void:

@@ -152,13 +152,13 @@ func _show(text: String) -> void:
 		c.queue_free()
 	text_l.text = text
 	panel.visible = true
-	m.fading = true
+	m.pause("evening")
 	_layout()
 
 
 func _close() -> void:
 	panel.visible = false
-	m.fading = false
+	m.resume("evening")
 
 
 # --- playing ---------------------------------------------------------------------------------

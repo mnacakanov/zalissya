@@ -97,7 +97,7 @@ map, save and reload.
   `hud._check_quests`, `hud._objective`, `hud.MEET`, the sheet's quest tab
   list, `map.target()`, and Vesna's lines in `hud.greeting/extra_topics`.
   Kateryna will rewrite the quests: this is only moving them, no new quests.
-- [ ] **2.7 "A window is open"**: six scripts set and clear `m.fading`, and
+- [x] **2.7 "A window is open"**: six scripts set and clear `m.fading`, and
   the fade between levels uses it too. Replace with a small counter
   (`m.pause(who)` / `m.resume(who)`) so one closing cannot unpause another.
 - [x] **2.8 Small repeats**: the evening's hours typed again in

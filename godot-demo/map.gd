@@ -127,14 +127,14 @@ func open_map() -> void:
 	_layout()
 	_refresh()
 	panel.visible = true
-	m.fading = true   # (he stands, and time stops, while he reads it)
+	m.pause("map")   # (he stands, and time stops, while he reads it)
 
 
 func close_map() -> void:
 	if not panel.visible:
 		return
 	panel.visible = false
-	m.fading = false
+	m.resume("map")
 
 
 # --- where the objective leads (hud.gd's order) ----------------------------------------------

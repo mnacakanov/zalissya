@@ -154,7 +154,7 @@ func open(which: String) -> void:
 	if m.editing or (m.fading and not panel.visible):
 		return
 	_layout()
-	m.fading = true   # (he stands while the sheet is open; time stops too, hud.gd)
+	m.pause("sheet")   # (he stands while the sheet is open; time stops too, hud.gd)
 	tab = which
 	panel.visible = true
 	title_l.text = t("ui.quests") if tab == "quests" else t("ui.character")
@@ -170,7 +170,7 @@ func open(which: String) -> void:
 
 func close_sheet() -> void:
 	if panel.visible:
-		m.fading = false
+		m.resume("sheet")
 	panel.visible = false
 
 

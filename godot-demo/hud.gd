@@ -202,7 +202,7 @@ func _build_title() -> void:
 			_refresh())
 		langs.add_child(lb)
 	_fill_title()
-	m.fading = true   # (he waits on the title card)
+	m.pause("title")   # (he waits on the title card)
 	go.grab_focus()
 
 
@@ -218,7 +218,7 @@ func _fill_title() -> void:
 func _start() -> void:
 	Engine.set_meta("started", true)
 	state.save_now()
-	m.fading = false
+	m.resume("title")
 	title_card.queue_free()
 	title_card = null
 
