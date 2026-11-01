@@ -93,6 +93,21 @@ PEOPLE = [
         ],
     },
     {
+        # the Lisovyk stands at the forest's edge behind the khutir, tree-tall
+        "id": "lisovyk", "name": "Лісовик", "height": 3.2, "colour": "33502e",
+        "day": {"at": [-4.0, -26.5]},
+        "night": {"at": [-4.0, -26.5]},
+        "first": [t("line.lisovyk.0")],
+        "again": [t("topic.lisovyk.0")],
+        "topics": [
+            topic("lisovyk", "rules", ["line.lisovyk.1"]),
+            topic("lisovyk", "vesna", ["line.lisovyk.2"]),
+            topic("lisovyk", "viy", ["line.lisovyk.3"]),
+            topic("lisovyk", "domovyk", ["topic.lisovyk.domovyk.0"]),
+            topic("lisovyk", "lost", ["topic.lisovyk.lost.0"]),
+        ],
+    },
+    {
         # the Domovyk keeps his nook between the pil and the pich, day and night
         "id": "domovyk", "name": "Домовик", "height": 0.9, "colour": "6a5236",
         "day": {"house": "domovyk", "near_pich": True},
