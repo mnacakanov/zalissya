@@ -13,7 +13,7 @@
     {"id": "voda", "texture": "ground_voda", "color": "#3b4a43", "center": [-16, 29], "radius": [10.5, 6.8], "wobble": 0.08, "solid": true}
   ],
   "walks": [
-    {"id": "kladka", "points": [[-12.74, 36.77], [-13.81, 37.0], [-15.26, 30.23], [-14.19, 30.0]]}
+    {"id": "kladka", "points": [[-13.84, 35.83], [-14.69, 36.01], [-16.02, 29.56], [-15.17, 29.38]]}
   ],
   "roads": [
     {"kind": "road", "width": 3.2, "points": [[0, 3], [0.8, 9], [-0.6, 15], [0.4, 21], [0, 26], [1.2, 34], [-0.8, 42], [0.6, 52], [0, 70]]}
@@ -66,6 +66,10 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/kasatyky/kasatyky", "at": [-25.6, 31.4], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-6.6, 26.6], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-22.8, 22.6], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-8.4, 32.8], "metres": 0.9},
     {"file": "props/kin/kin", "at": [-11.0, 4.6], "metres": 2.0},
     {"file": "props/leleka/leleka", "at": [7.2, -21.2], "metres": 6.0},
     {"file": "props/kladka/kladka", "at": [-12.06, 35.46], "metres": 2.99, "flat": true},
