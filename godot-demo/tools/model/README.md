@@ -73,6 +73,13 @@ a minute.
   khata"). It faces south.
 - `domovyk.js` is the Domovyk's khata, the kobzar's lodging. It faces east
   (door in the east wall), as the horseshoe's west arm does.
+- `vesna.js` is Vesna's khata. It faces west (door in the west wall,
+  turned away from the camera), as the horseshoe's east arm does.
+- `pustka.js` is Taras Dovhyi's empty hut, gone grey, its thatch holed. It
+  faces south.
+- `lib.js` holds the shared pieces: walls round their openings, a hip
+  roof, the pryzba, solid furniture. New models should use it, as
+  `vesna.js` and `pustka.js` do.
 - `render.html` sets the camera and renders the passes.
 - `render.cjs` drives it in a headless browser.
 
