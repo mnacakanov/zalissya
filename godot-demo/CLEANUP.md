@@ -107,10 +107,13 @@ map, save and reload.
 
 ## Pass 3: speed
 
-- [ ] **3.1** `maidan._process` walks every building **and every tree**
+- [x] **3.1** `maidan._process` walks every building **and every tree**
   (~360) each frame: `_front_y`, the alpha look-up, the shader's hole. Only
   things near the kobzar (or on screen) need it.
-- [ ] **3.2** `hud._process` writes the clock and day counters, the talked
+- [x] **3.2** `hud._process` writes the clock and day counters, the talked
   list, the quests and the labels every frame: do it when the minute changes.
-- [ ] **3.3** Every lamp makes its own 256 px light texture (`_light_tex`):
+- [x] **3.3** Every lamp makes its own 256 px light texture (`_light_tex`):
   make one and share it (herbs' glow too).
+  *Done: a far tree at rest is skipped (1.6 ms → 0.5 ms a frame on the
+  maidan, headless); the HUD's bookkeeping runs five times a second; one
+  light texture for every lamp (herbs already shared theirs).*

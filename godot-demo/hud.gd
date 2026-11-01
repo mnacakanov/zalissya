@@ -42,6 +42,7 @@ var day := 1
 var minute := START_MINUTE
 var night_by_clock := false
 var met_done := false
+var since_look := 0.0             # seconds since the save, the quests and the card were looked at
 
 
 # --- words ------------------------------------------------------------------------------
@@ -258,13 +259,6 @@ func _process(delta: float) -> void:
 	elif _is_night(minute) != night_by_clock:
 		night_by_clock = _is_night(minute)
 		m._set_night(night_by_clock)
-	state.set_count("clock", minute)
-	state.set_count("day", day)
-	if people != null:
-		for id in people.met:
-			state.add_talked(id)
-	_check_quests()
-	_refresh()
 	# (on a phone the toast sits under the HUD card and its buttons)
 	if m.portrait():
 		toast.offset_top = card.position.y + card.size.y + 60.0
@@ -277,6 +271,19 @@ func _process(delta: float) -> void:
 		toast.offset_top = 120
 	if toast.modulate.a > 0.0:
 		toast.modulate.a = maxf(0.0, toast.modulate.a - delta * 0.25)
+	# the save, the quests and the card, five times a second rather than
+	# every frame (a game minute is 0.4 s; nothing here needs it sooner)
+	since_look += delta
+	if since_look < 0.2:
+		return
+	since_look = 0.0
+	state.set_count("clock", minute)
+	state.set_count("day", day)
+	if people != null:
+		for id in people.met:
+			state.add_talked(id)
+	_check_quests()
+	_refresh()
 
 
 func _time_label() -> String:

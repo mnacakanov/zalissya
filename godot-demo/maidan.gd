@@ -893,7 +893,10 @@ func _wall(a: Vector2, b: Vector2) -> void:
 
 # --- light: Pillars-lite's own, the sun raking the normal-mapped art by day,
 # lamps and the fire by night -----------------------------------------------------------
+var _light_t: GradientTexture2D   # (one soft round light, shared by every lamp)
 func _light_tex() -> GradientTexture2D:
+	if _light_t != null:
+		return _light_t
 	var g := Gradient.new()
 	g.set_color(0, Color(1, 1, 1, 1))
 	g.set_color(1, Color(1, 1, 1, 0))
@@ -904,6 +907,7 @@ func _light_tex() -> GradientTexture2D:
 	t.fill_to = Vector2(1.0, 0.5)
 	t.width = 256
 	t.height = 256
+	_light_t = t
 	return t
 
 
@@ -1248,9 +1252,14 @@ func _check_portals() -> void:
 
 func _process(delta: float) -> void:
 	var now_in := -1
+	var reach := (hole_r + 4.0) * metre
 	for i in buildings.size():
 		var b: Dictionary = buildings[i]
 		var foot: PackedVector2Array = b.foot
+		# a tree far from him and at rest (whole, no hole) has nothing to do:
+		# the forest is most of the list, and most of it is far
+		if b.get("idle", false) and not b.rect.grow(reach).has_point(player.position):
+			continue
 		if b.walk_in and (Geometry2D.is_point_in_polygon(player.position, foot) \
 				or (not b.get("stairs", {}).is_empty() and Geometry2D.is_point_in_polygon(player.position, b.stairs.quad))):
 			now_in = i   # (a cellar's steps run out past its wall: they count as inside)
@@ -1280,6 +1289,8 @@ func _process(delta: float) -> void:
 					mat.set_shader_parameter("hole_r", hole_r * metre)
 				target = 0.8 if behind else 1.0
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
+			if b.has("hole"):
+				b["idle"] = b.fade.modulate.a == 1.0 and float(b.hole.get_shader_parameter("hole_on")) == 0.0
 			if b.get("strips") != null:
 				b.strips.modulate = b.fade.modulate
 			# (and the pit itself shows only from inside, not through a roof
