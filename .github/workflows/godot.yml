@@ -73,21 +73,31 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
-          rm -rf docs/godot-demo
-          mkdir -p docs/godot-demo
-          cp godot-demo/build/index.* docs/godot-demo/
-          touch docs/.nojekyll
-          git add -A docs/godot-demo docs/.nojekyll
-          if git diff --cached --quiet; then
-            echo "docs/godot-demo/ already up to date"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Publish Godot web build from ${GITHUB_SHA::7}"
-          # main moves fast (the game's own publish job pushes too): rebase and retry
-          for i in 1 2 3 4; do
-            git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0
+          # main moves fast (other sessions and the game's own publish job push
+          # too). A rebase of a build over another build conflicts on the
+          # binary files, so each try starts from the latest main and lays the
+          # build on top afresh. If main has moved on past this commit's
+          # godot-demo/, a newer run publishes that; this one steps aside.
+          for i in 1 2 3 4 5; do
+            git fetch -q origin main
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- godot-demo .github/workflows/godot.yml; then
+              echo "main has newer godot-demo changes: their own run publishes them"
+              exit 0
+            fi
+            git reset -q --hard origin/main
+            rm -rf docs/godot-demo
+            mkdir -p docs/godot-demo
+            cp godot-demo/build/index.* docs/godot-demo/
+            touch docs/.nojekyll
+            git add -A docs/godot-demo docs/.nojekyll
+            if git diff --cached --quiet; then
+              echo "docs/godot-demo/ already up to date"
+              exit 0
+            fi
+            git commit -q -m "Publish Godot web build from ${GITHUB_SHA::7}"
+            git push -q origin HEAD:main && exit 0
             sleep $((i * 3))
           done
           exit 1
