@@ -198,18 +198,47 @@ func _build_ground() -> void:
 			tex_name = "ground_road"
 		_fill(tex_name, oval, 7.0, PI / 2 - road_dir.angle())
 		ground.set_meta("oval", oval)
+	# other ground: a pond's shore and water, a meadow…, as rough ovals in
+	# metres, each its own tile (or a plain colour until its tile is painted);
+	# a "solid" one (water) can't be walked into
+	for a in data.get("areas", []):
+		var ov := _oval(a.center, a.radius, float(a.get("wobble", 0.06)))
+		if not _fill(a.get("texture", ""), ov, float(a.get("tile", 7.0))):
+			var poly := Polygon2D.new()
+			poly.polygon = ov
+			poly.color = Color(a.get("color", "#6b6a4a"))
+			ground.add_child(poly)
+		if a.get("solid", false):
+			# (the walkable edge sits a little inside the drawn one: you can
+			# stand at the waterline, not on it)
+			var inner := _oval(a.center, [a.radius[0] - 0.5, a.radius[1] - 0.5], float(a.get("wobble", 0.06)))
+			var cp := CollisionPolygon2D.new()
+			cp.polygon = inner
+			walls.add_child(cp)
 	for r in data.get("roads", []):
 		_strip("ground_road" if r.get("kind", "road") == "road" else "ground_path", r.points, r.width, 5.0)
 	for r in data.get("paths", []):
 		_strip("ground_path", r.points, r.width, 6.0)
 
 
+## a rough oval on the ground, in metres: centre [x, y], radius [east-west, north-south]
+func _oval(c: Array, r: Array, wob_k: float) -> PackedVector2Array:
+	var oval := PackedVector2Array()
+	for i in 48:
+		var a := TAU * i / 48.0
+		var wob := 1.0 + wob_k * sin(3.0 * a + 1.3) + wob_k * 0.66 * sin(5.0 * a)
+		oval.append(P(c[0] + cos(a) * r[0] * wob, c[1] + sin(a) * r[1] * wob))
+	return oval
+
+
 ## a ground texture lying flat in the world, over a polygon, its edge
-## feathered by a wider, fainter copy underneath
-func _fill(name: String, poly_pts: PackedVector2Array, tile_m: float, rot := 0.0) -> void:
+## feathered by a wider, fainter copy underneath (false: no such texture)
+func _fill(name: String, poly_pts: PackedVector2Array, tile_m: float, rot := 0.0) -> bool:
+	if name == "" or not ResourceLoader.exists("res://styles/%s/%s.png" % [style, name]):
+		return false
 	var tex := _tex(name)
 	if tex == null:
-		return
+		return false
 	for pass_i in 2:
 		var outlines: Array = [poly_pts] if pass_i == 1 else Geometry2D.offset_polygon(poly_pts, 0.5 * metre, Geometry2D.JOIN_ROUND)
 		for outline in outlines:
@@ -221,6 +250,7 @@ func _fill(name: String, poly_pts: PackedVector2Array, tile_m: float, rot := 0.0
 			poly.texture_rotation = rot
 			poly.color = Color(1, 1, 1, 0.45 if pass_i == 0 else 1.0)
 			ground.add_child(poly)
+	return true
 
 
 func _strip(name: String, metres_pts: Array, width_m: float, tile_m: float) -> void:

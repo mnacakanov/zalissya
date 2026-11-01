@@ -51,6 +51,7 @@ maidan.
 | `start` | where the kobzar starts |
 | `zoom` | how close the camera starts (1 = the art's own size, smaller = farther out) |
 | `maidan` | the trodden earth: `center`, `radius` `[east-west, north-south]`, and `texture` (a ground tile in the style folder; it falls back to the road until `ground_maidan.png` exists) |
+| `areas` | other ground, such as a pond's shore and water: `{"id", "texture", "color", "center", "radius", "wobble", "solid"}`, a rough oval in metres drawn with its own tile, or the plain `color` until that tile exists. A `solid` area (water) can't be walked into; you stop at its edge. |
 | `roads` | `{"width", "points": [[x, y], …]}`, drawn with `ground_road` |
 | `paths` | the same, drawn with `ground_path` |
 | `buildings` | see below |
