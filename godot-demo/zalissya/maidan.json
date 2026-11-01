@@ -78,6 +78,8 @@
     {"kind": "dereviy", "at": [6, 27]}
   ],
   "props": [
+    {"file": "props/rjaska/rjaska", "at": [-22.5, 27.8], "metres": 1.4, "flat": true},
+    {"file": "props/rjaska/rjaska", "at": [-9.8, 31.2], "metres": 1.1, "flat": true, "flip": true},
     {"file": "props/kasatyky/kasatyky", "at": [-25.6, 31.4], "metres": 0.9},
     {"file": "props/kasatyky/kasatyky", "at": [-6.6, 26.6], "metres": 0.9},
     {"file": "props/kasatyky/kasatyky", "at": [-22.8, 22.6], "metres": 0.9},
