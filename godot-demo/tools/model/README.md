@@ -89,6 +89,10 @@ a minute.
 - `krynytsia.js` (the crane well) and `vatra.js` (the fire, its tahan and
   kazan) are things you walk round, not into: `NO_INTERIOR`, used in
   `maidan.json` as `"kind": "sprite"`.
+- `korchma.js` is the inn on the chumak road, a long log house under a
+  dark thatch, its door to the south. `mlyn.js` is the post windmill, its
+  sails on the north gable. Neither stands on the maidan yet: they are for
+  the scenes beyond it.
 - **Props** (all `NO_INTERIOR`, rendered into `styles/pillars/props/<id>/model/`,
   used in `maidan.json` as sprites `props/<id>/<id>`): `lava` (bench),
   `kolody` (a log seat by the fire), `tyn` (a wattle fence section),
