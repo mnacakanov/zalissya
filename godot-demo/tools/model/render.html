@@ -114,6 +114,28 @@ for (const [tag, model] of [["exterior", full], ["interior", cut]]) {
   }
 }
 
+// The near walls' mask: where the cutaway's knee-high south and east walls
+// (and the pryzba before them) show. The game draws that part of the room's
+// picture over the kobzar when he stands behind it, so his legs go behind
+// the stub as they should. White where they show, transparent elsewhere;
+// everything else in the room still hides what is behind it.
+const NEAR = /^(wall_south|wall_east|pryzba_s|pryzba_e)/;
+{
+  const sc = new THREE.Scene();
+  const m = cut.clone(true);
+  const white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  const hide = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
+  m.traverse((o) => {
+    if (o.userData.inkOnly) o.visible = false;
+    if (o.isMesh) o.material = NEAR.test(o.name) ? white : hide;
+  });
+  sc.add(m);
+  cam.near = 0.1; cam.far = 200; cam.updateProjectionMatrix();
+  renderer.setClearColor(0x000000, 0);
+  renderer.render(sc, cam);
+  out.interior_front = renderer.domElement.toDataURL("image/png");
+}
+
 // the plan, in the pictures' pixels: ready for the hut's hut.json
 const P = M.plan();
 const solids = [];
@@ -132,6 +154,7 @@ out.plan = {
     exterior: { file: "hut_exterior", footprint: fp },
     interior: {
       file: "hut_interior",
+      front: "hut_interior_front",
       footprint: fp,
       pich: px(P.pich),
       walls: P.partitions.map(([a, b]) => [...px(a), ...px(b)]),

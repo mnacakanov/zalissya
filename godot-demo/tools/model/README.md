@@ -29,6 +29,7 @@ edge as the game expects:
 | `exterior_depth.png` | depth, for a depth-guided generation |
 | `exterior_normal.png` | view-space normals |
 | `interior_*.png` | the same four for the cutaway, the way the game shows a room you have walked into: the roof gone, the near walls (south, east) and the partitions knee-high |
+| `interior_front.png` | a mask of where the cutaway's near walls show. Copy it as it is into the hut's folder as `hut_interior_front.png`. The game draws that part of the painted room over the kobzar, so his legs go behind the stub walls. |
 
 **The model:** `<model>.glb`, for Blender, Godot or anyone else's renders.
 

@@ -279,11 +279,11 @@ func _build_khata(b: Dictionary) -> void:
 			var sp: Array = part.get("span", [0, 1])
 			var l := foot[0].lerp(foot[1], sp[0])
 			var f := foot[0].lerp(foot[1], sp[1])
-			var p := _lay_room(part, dir, PackedVector2Array([l, f, f + foot[2] - foot[1], l + foot[2] - foot[1]]))
+			var p := _lay_room(part, dir, PackedVector2Array([l, f, f + foot[2] - foot[1], l + foot[2] - foot[1]]), inner)
 			if pich == Vector2.INF:
 				pich = p
 	else:
-		pich = _lay_room(inn, dir, foot)
+		pich = _lay_room(inn, dir, foot, inner)
 	# the walls along the footprint, with a gap for the door. The door is
 	# [t0, t1] along the south wall, or {"wall": "east", "t": [t0, t1]}: in a
 	# horseshoe the huts on its arms face the maidan, east or west. The
@@ -328,11 +328,25 @@ func _build_khata(b: Dictionary) -> void:
 ## ([x1, y1, x2, y2], e.g. the siny's partitions), its furniture and its
 ## pich, all in the picture's own pixels. Returns where the pich is (INF:
 ## none).
-func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array) -> Vector2:
+func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array, over: Node2D) -> Vector2:
 	var room := Node2D.new()
 	room.transform = _fit(_pts(inn.footprint), dst)
 	ground.add_child(room)
 	room.add_child(_sprite(dir + inn.file, 1.0))
+	# The room lies on the ground, under the kobzar; but its near walls, cut
+	# knee-high, must hide his legs when he stands behind them. A mask (the
+	# model renders it: tools/model/) picks those walls out of the same
+	# picture, and that part is drawn again with the building, which sorts
+	# by its front edge, under the exterior (which covers it from outside).
+	if inn.has("front") and ResourceLoader.exists("res://styles/%s/%s%s.png" % [style, dir, inn.front]):
+		var fr := _sprite(dir + inn.file, 1.0)
+		var sm := ShaderMaterial.new()
+		sm.shader = _mask_shader()
+		sm.set_shader_parameter("mask", _tex(dir + inn.front))
+		fr.material = sm
+		fr.transform = room.transform * fr.transform
+		over.add_child(fr)
+		over.move_child(fr, 0)
 	for w in inn.get("walls", []):
 		_wall(room.transform * Vector2(w[0], w[1]), room.transform * Vector2(w[2], w[3]))
 	for r in inn.get("solids", []):
@@ -360,6 +374,19 @@ func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array) -> Vector2
 	cs.position = room.transform * Vector2(inn.pich[0], inn.pich[1])
 	walls.add_child(cs)
 	return cs.position
+
+
+var _mask_sh: Shader
+func _mask_shader() -> Shader:
+	if _mask_sh == null:
+		_mask_sh = Shader.new()
+		_mask_sh.code = """shader_type canvas_item;
+uniform sampler2D mask : filter_linear;
+void fragment() {
+	COLOR = texture(TEXTURE, UV);
+	COLOR.a *= texture(mask, UV).a;
+}"""
+	return _mask_sh
 
 
 ## a building with its own art (not walk-in): the PNG's footprint
