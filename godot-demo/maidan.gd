@@ -515,10 +515,26 @@ func _sway_shader() -> Shader:
 		_sway_sh.code = """shader_type canvas_item;
 uniform float amount = 6.0;
 uniform float phase = 0.0;
+// a see-through hole round the kobzar, when this tree stands in front of
+// him: in a forest, crown over crown, fading whole trees is not enough
+uniform vec2 hole_center = vec2(0.0);
+uniform float hole_r = 0.0;
+uniform float hole_on = 0.0;
+varying vec2 world_pos;
 void vertex() {
 	// the top of the picture moves most, its foot not at all
 	float h = 1.0 - UV.y;
 	VERTEX.x += (sin(TIME * 1.1 + phase) * 0.7 + sin(TIME * 2.3 + phase * 1.7) * 0.3) * amount * h * h;
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+}
+void fragment() {
+	COLOR = texture(TEXTURE, UV) * COLOR;
+	if (hole_on > 0.0) {
+		// an upright oval, a little taller than wide, soft at its edge
+		vec2 d = (world_pos - hole_center) / vec2(hole_r, hole_r * 1.35);
+		float k = smoothstep(0.65, 1.0, length(d));
+		COLOR.a *= mix(1.0, mix(0.12, 1.0, k), hole_on);
+	}
 }"""
 	return _sway_sh
 
@@ -573,9 +589,12 @@ func _build_sprite(b: Dictionary) -> void:
 		sm.shader = _sway_shader()
 		sm.set_shader_parameter("amount", float(b.sway) * metre * 0.12)
 		sm.set_shader_parameter("phase", fmod(foot[0].x * 0.013 + foot[0].y * 0.007, TAU))
+		sm.set_shader_parameter("hole_on", 0.0)
 		spr.material = sm
 	var entry := {"node": node, "inner": inner, "foot": foot, "walk_in": false, "label": name_l,
 		"id": b.id, "fade": spr, "rect": _sprite_rect(spr)}
+	if spr.material is ShaderMaterial and spr.material.shader == _sway_shader():
+		entry["hole"] = spr.material
 	# a sign: a name always shown under it (for samples, such as the trees')
 	if b.has("sign"):
 		var sg := _label(b.sign)
@@ -1090,6 +1109,19 @@ func _process(delta: float) -> void:
 			# isometric games let you walk behind a house to its far door
 			var behind := player.position.y < fy and _covers(b, player.position + Vector2(0, -0.8 * metre))
 			var target := 0.0 if now_in == i else (0.35 if behind else 1.0)
+			if b.has("hole"):
+				# a tree: a hole round him instead, whenever any of its picture
+				# could cover him, and only a light fade of the whole tree
+				var chest := player.position + Vector2(0, -0.9 * metre)
+				var near: bool = player.position.y < fy and b.rect.grow(1.4 * metre).has_point(chest)
+				var mat: ShaderMaterial = b.hole
+				var on: float = mat.get_shader_parameter("hole_on")
+				var to := 1.0 if near else 0.0
+				if on != to or near:
+					mat.set_shader_parameter("hole_on", move_toward(on, to, delta * 5.0))
+					mat.set_shader_parameter("hole_center", player.global_position + Vector2(0, -0.9 * metre))
+					mat.set_shader_parameter("hole_r", 1.3 * metre)
+				target = 0.8 if behind else 1.0
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
 			# (and the pit itself shows only from inside, not through a roof
 			# gone see-through as he walks behind it)
