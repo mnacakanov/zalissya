@@ -6,7 +6,7 @@ extends Node2D
 ## mode: the game pauses, the camera flies free, and you can
 ##   · click a building or a prop to select it, drag it to move it (it snaps
 ##     to a half-metre grid; hold Shift to move freely),
-##   · duplicate (Ctrl+D), delete (Del), mirror (F), make it bigger or smaller ([ ]),
+##   · duplicate (Ctrl+D), delete (Del), turn a quarter round (R), mirror (F), make it bigger or smaller ([ ]),
 ##   · pick a picture from the palette and click the ground to place it,
 ##   · undo and redo (Ctrl+Z, Ctrl+Y),
 ##   · drag empty ground (or right-drag) to pan, wheel or − + to zoom.
@@ -123,7 +123,7 @@ func _build_ui() -> void:
 	grid.columns = 2
 	col.add_child(grid)
 	for b in [["Назад", _undo], ["Вперед", _redo], ["Копія", _duplicate],
-			["Видалити", _delete], ["Дзеркало", _flip], ["Більше", func(): _scale_sel(1.1)],
+			["Видалити", _delete], ["Повернути", _turn], ["Дзеркало", _flip], ["Більше", func(): _scale_sel(1.1)],
 			["Менше", func(): _scale_sel(1.0 / 1.1)], ["Зберегти", _save], ["Копіювати", _copy]]:
 		var btn := Button.new()
 		btn.text = b[0]
@@ -289,6 +289,20 @@ func _flip() -> void:
 			e["flip"] = true)
 
 
+## a quarter-turn: a bench along the road instead of across it. Props
+## (no footprint) just mirror, which at this camera is the same picture.
+func _turn() -> void:
+	var e = _entry(sel)
+	if e == null or e.get("kind", "") == "khata":
+		return
+	_commit(func():
+		var key := "flip" if sel.list == "props" else "turned"
+		if e.get(key, false):
+			e.erase(key)
+		else:
+			e[key] = true)
+
+
 func _scale_sel(f: float) -> void:
 	var e = _entry(sel)
 	if e == null or e.get("kind", "") == "khata":
@@ -443,6 +457,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_D when ctrl: _duplicate()
 			KEY_DELETE, KEY_BACKSPACE: _delete()
 			KEY_F: _flip()
+			KEY_R: _turn()
 			KEY_BRACKETRIGHT: _scale_sel(1.1)
 			KEY_BRACKETLEFT: _scale_sel(1.0 / 1.1)
 			KEY_ESCAPE:

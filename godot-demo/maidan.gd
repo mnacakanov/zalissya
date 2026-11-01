@@ -600,8 +600,19 @@ void fragment() {
 ## layout.json) is laid onto the ground at 'at', 'size' metres; the art is
 ## drawn at the style's density, so a picture at 88 px a metre fits
 func _build_sprite(b: Dictionary) -> void:
-	var foot := _rect(b.at, b.get("size", [2, 2]))
+	# "turned": the thing stands a quarter-turn round (a bench along the road
+	# instead of across it). The camera looks at east and south almost
+	# alike, so the mirrored picture is the turned thing: its footprint
+	# swaps its sides, and the picture's ground corners come mirrored, in
+	# the other order (its right corner is now its left).
+	var turned: bool = b.get("turned", false)
+	var size: Array = b.get("size", [2, 2])
+	if turned:
+		size = [size[1], size[0]]
+	var foot := _rect(b.at, size)
 	var src := _pts(b.footprint)
+	if turned:
+		src = PackedVector2Array([Vector2(-src[2].x, src[2].y), Vector2(-src[1].x, src[1].y), Vector2(-src[0].x, src[0].y)])
 	var node := Node2D.new()
 	world.add_child(node)
 	var inner := Node2D.new()
@@ -610,7 +621,9 @@ func _build_sprite(b: Dictionary) -> void:
 	# footprint together (mirrored about its trunk)
 	var sc: float = b.get("scale", 1.0)
 	var spr := _sprite(b.file, k * sc)
-	if b.get("flip", false):
+	if turned:
+		spr.flip_h = true
+	elif b.get("flip", false):
 		spr.flip_h = true
 		var bx := (src[0].x + src[2].x) / 2.0
 		for i in src.size():

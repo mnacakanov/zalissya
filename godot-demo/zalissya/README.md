@@ -195,6 +195,7 @@ In edit mode the game pauses and:
 | Select | click a building or a prop (a yellow frame shows it) |
 | Move | drag it; it snaps to half a metre, hold **Shift** to place it freely |
 | Copy / delete | **Ctrl+D** / **Del**, or the panel's buttons |
+| Turn a quarter round | **R** or **Повернути**: a bench along the road instead of across it (the picture is mirrored, which at this camera looks the same, and its footprint turns with it) |
 | Mirror | **F** (not for walk-in khaty: their art can't turn) |
 | Bigger / smaller | **]** / **[** |
 | Add | pick a picture in the palette, then click the ground (**Esc** to stop) |
