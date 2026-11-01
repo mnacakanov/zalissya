@@ -218,9 +218,8 @@ session for the scene to load it.
     script, post one line on the other session's inbox PR (#3 for the
     owner's session, #6 for Ostap) so that you don't both rewrite the same
     function at once.
-  - **Don't break what's there.** Before you push, walk into every
-    building on the maidan, by day and by night. The Pages build must
-    still pass.
+  - **Check what you changed, by day and by night,** before you push. The
+    Pages build must still pass.
   - **Ask before changing a shared rule:** the camera, the scale, the
     save, the controls.
 - **Agents talk through issues.** Harry (the owner's Muse agent) takes art
