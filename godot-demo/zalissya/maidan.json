@@ -66,6 +66,10 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/kasatyky/kasatyky", "at": [-25.6, 31.4], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-6.6, 26.6], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-22.8, 22.6], "metres": 0.9},
+    {"file": "props/kasatyky/kasatyky", "at": [-8.4, 32.8], "metres": 0.9},
     {"file": "props/kin/kin", "at": [-11.0, 4.6], "metres": 2.0},
     {"file": "props/leleka/leleka", "at": [7.2, -21.2], "metres": 6.0},
     {"file": "props/kladka/kladka", "at": [-12.06, 35.46], "metres": 2.99, "flat": true},
