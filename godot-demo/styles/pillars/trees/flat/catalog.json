@@ -114,67 +114,67 @@
  ],
  "bereza": [
   {
-   "file": "trees/flat/bereza_a",
+   "file": "trees/flat/k_bereza_a",
    "size": [
     0.7,
     0.7
    ],
    "footprint": [
     [
-     -30,
-     -14
+     -23,
+     -9
     ],
     [
-     -6,
-     -7
+     1,
+     -2
     ],
     [
-     16,
-     -16
+     23,
+     -11
     ]
    ],
    "px_scale": 2
   },
   {
-   "file": "trees/flat/bereza_b",
+   "file": "trees/flat/k_bereza_b",
    "size": [
     0.7,
     0.7
    ],
    "footprint": [
     [
-     -26,
-     -14
+     -23,
+     -9
     ],
     [
-     -2,
-     -6
+     1,
+     -2
     ],
     [
-     21,
-     -16
+     23,
+     -11
     ]
    ],
    "px_scale": 2
   },
   {
-   "file": "trees/flat/bereza_c",
+   "file": "trees/flat/k_bereza_c",
    "size": [
     0.7,
     0.7
    ],
    "footprint": [
     [
-     -46,
-     -14
+     -23,
+     -9
     ],
     [
-     -22,
-     -6
+     1,
+     -2
     ],
     [
-     2,
-     -16
+     23,
+     -11
     ]
    ],
    "px_scale": 2
