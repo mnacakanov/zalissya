@@ -35,6 +35,7 @@ The owner should confirm this before Track B starts.
 - **Click** a building, prop, tree or person to select it (outline + name + its numbers).
 - **Drag** to move it; the ground grid (F3's 1 m grid) snaps it, Shift to move freely.
 - **Duplicate** (D), **delete** (Del), **flip** (F), **scale** up and down (`[` `]`) for props.
+- **Shown only with `?edit`** in the address (hidden from players); a button and `Tab` toggle it.
 - **A palette** down the side: every picture in `styles/pillars/props/`, `huts/` and `trees/flat/`, by category, with thumbnails. Click one, click the ground: placed.
 - **Areas, roads and walks:** drag their points (the pond's outline, a road's bends, the jetty's strip).
 - **Undo / redo** (Ctrl-Z / Ctrl-Y), many steps.
@@ -45,7 +46,7 @@ The owner should confirm this before Track B starts.
 - **Web build:** Save keeps the edit in the browser and offers **Download maidan.json** and **Copy to clipboard**. To publish it, drop the file on an issue (or paste it) and the Claude session commits it, or commit it yourself.
 - Edits never touch anything but the level file.
 
-**A3. Several levels.** The same editor works on any level file (`zalissya/<level>.json`): the maidan now, the pond, the fields, Lysa Hora later. A level picker in the editor creates a new empty level from a template.
+**A3. The whole world.** The same editor works across the world's chunk files (`zalissya/world/<region>.json`): whatever you select is saved back to the chunk it belongs to.
 
 **A4. Docs.** A short "How to edit a level" in `zalissya/README.md`, with the keys, and a line in `PIPELINE.md`.
 
@@ -81,8 +82,8 @@ Each item is one GDScript file plus its tests (GUT), ported from the named TypeS
 
 The 2D world is one map of about 3980 × 2300 px (the khutir, the steppe, Lysa Hora, fields, river, forests, the cave underground). The Godot world so far covers the maidan and its edges.
 
-- **C1. The world map in metres:** convert the 2D layout (`data/land.ts`, `village.ts`, `lysa.ts`, `houses.ts`) into level files, one per region, with the doors and paths between them. The editor (A) is then used to dress them.
-- **C2. Regions,** each a level file, built and dressed in parallel: the khutir (have), the pond and gardens (started), the fields and the river with its bridges, the forests and the boloto, the steppe and the kurhan, the tobacco field, **Lysa Hora**, the cave and tunnel underground.
+- **C1. The world map in metres:** convert the 2D layout (`data/land.ts`, `village.ts`, `lysa.ts`, `houses.ts`) into **one seamless world**, stored as chunk files by region so several people can work at once. The editor (A) is then used to dress them.
+- **C2. Regions** (chunks of the one world), built and dressed in parallel: the khutir (have), the pond and gardens (started), the fields and the river with its bridges, the forests and the boloto, the steppe and the kurhan, the tobacco field, **Lysa Hora**, the cave and tunnel underground.
 - **C3. The remaining buildings** as models and paint-overs: the otaman's svitlytsia is done; still to do are the hideouts (duplo, kurhan, pechera), Did Prokip's khatka in the forest, the bridges and the chumak camp.
 
 ## Track D: characters and animation
@@ -107,18 +108,20 @@ Continues as now: requests on #5 (Sunny) and #4 (Harry), checked by Ostap, appro
 
 ```
 Week 1   A1 A2 (editor)          B0 (state + save)        C1 (world map)       E (art)
-Week 2   A3 A4                   B1 B2 B3 B6 in parallel  C2 regions start     F1
+Week 2   A3 A4                   B1 B2 B3 B6 in parallel  C2 chunks start      F1
 Week 3+  (editor in daily use)   B4 B5 B7 → B8 B9 → B10 B11 B12               D2 when people are unblocked
 ```
 
 - **A and B0 start now and in parallel**: they touch different files (`editor.gd` vs. a new `game/` folder).
 - **B1–B12 can each be taken by a different session** once B0 lands; each is its own file with its own tests.
-- **C regions can each be taken by a different person** once A2 lands.
+- **C chunks can each be taken by a different person** once A2 lands.
 - One rule from PIPELINE.md stays: **`maidan.gd` is changed by one session at a time.** The editor and the systems live in their own scripts and hook in through small, agreed entry points.
 
-## To decide (owner and Kateryna)
+## Decided (Kateryna, 2026-11-01)
 
-1. The Godot game replaces the 2D one: yes / when?
-2. Port the logic to GDScript as above: yes?
-3. One big world, or regions as separate levels joined by doors and paths? (The plan assumes regions.)
-4. Who owns `maidan.gd` while the editor is being built?
+1. **The Godot game replaces the 2D one, eventually.** The 2D game stays playable and is the reference until the Godot one has caught up; then Pages switches over.
+2. **The logic is ported to GDScript**, system by system, against the 2D game's tests (Track B as written).
+3. **One big world**, seamless like the 2D game, not separate regions. Track C builds it as one world. To keep it light and still let people work in parallel, the world file is split into **chunks** (for example `zalissya/world/<region>.json`, all loaded together, each one person's at a time) and far-off things are culled.
+4. **The editor's button is hidden from players:** it shows only when the game is opened with `?edit` at the end of the address.
+
+Still open, for the owner: **who changes `maidan.gd` while the editor is built.** The editor itself goes in its own script, `editor.gd`.
