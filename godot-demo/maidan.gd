@@ -983,10 +983,6 @@ func _build_ui() -> void:
 	var row := HFlowContainer.new()
 	row.custom_minimum_size = Vector2(width, 0)
 	top.add_child(row)
-	var b_dbg := Button.new()
-	b_dbg.text = "Контури"
-	b_dbg.pressed.connect(_toggle_debug)
-	row.add_child(b_dbg)
 	var b_night := Button.new()
 	b_night.text = "День / ніч"
 	b_night.pressed.connect(func(): _set_night(not night))
@@ -999,7 +995,7 @@ func _build_ui() -> void:
 		row.add_child(bz)
 	hud_info = _label()
 	top.add_child(hud_info)
-	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · F3: контури й назви · −/= або коліщатко: масштаб")
+	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · −/= або коліщатко: масштаб")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(width, 0)
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
