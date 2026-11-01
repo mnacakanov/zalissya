@@ -78,7 +78,9 @@ a minute.
 - `pustka.js` is Taras Dovhyi's empty hut, gone grey, its thatch holed. It
   faces south.
 - `komora.js` is a komora (storehouse) with its lyokh (cellar) under a
-  hatch: two levels (see "A building with two levels" in `../../PIPELINE.md`).
+  hatch, reached by a ladder: two levels (see `../../PIPELINE.md`).
+- `lyokh.js` is a cellar on its own: an earth mound with a door, and steps
+  inside that you walk down.
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.

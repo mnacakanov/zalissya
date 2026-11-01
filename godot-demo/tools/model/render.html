@@ -32,7 +32,8 @@ const up = down.clone().negate();
 const back = new THREE.Vector3().crossVectors(right, up).normalize();
 
 const full = M.build(THREE, {});
-const cut = M.build(THREE, { cutaway: true });
+// (a building you only see from outside, like a cellar's mound, has no cutaway)
+const cut = M.NO_INTERIOR ? null : M.build(THREE, { cutaway: true });
 
 // the picture's frame: every vertex of the full house, plus a margin
 const proj = (p) => [p.dot(right) * s, p.dot(down) * s];   // px, from the world origin
@@ -104,7 +105,7 @@ function scene(model, kind) {
 }
 
 const out = {};
-for (const [tag, model] of [["exterior", full], ["interior", cut]]) {
+for (const [tag, model] of [["exterior", full], ["interior", cut]].filter(([, m]) => m)) {
   for (const kind of ["color", "ink", "depth", "normal"]) {
     if (kind === "depth") { cam.near = 50; cam.far = 70; cam.updateProjectionMatrix(); }
     else { cam.near = 0.1; cam.far = 200; cam.updateProjectionMatrix(); }
@@ -120,7 +121,7 @@ for (const [tag, model] of [["exterior", full], ["interior", cut]]) {
 // the stub as they should. White where they show, transparent elsewhere;
 // everything else in the room still hides what is behind it.
 const NEAR = /^(wall_south|wall_east|pryzba_s|pryzba_e)/;
-{
+if (cut) {
   const sc = new THREE.Scene();
   const m = cut.clone(true);
   const white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
@@ -139,8 +140,8 @@ const NEAR = /^(wall_south|wall_east|pryzba_s|pryzba_e)/;
 // the plan, in the pictures' pixels: ready for the hut's hut.json
 const P = M.plan();
 const solids = [];
-cut.updateMatrixWorld(true);
-cut.traverse((o) => {
+if (cut) cut.updateMatrixWorld(true);
+if (cut) cut.traverse((o) => {
   if (!o.isMesh || !o.userData.solid) return;
   const b = new THREE.Box3().setFromObject(o);
   solids.push([[b.min.x, 0, b.max.z], [b.max.x, 0, b.max.z], [b.max.x, 0, b.min.z], [b.min.x, 0, b.min.z]].map(px));
@@ -152,7 +153,7 @@ out.plan = {
   hut: {
     size: [M.SIZE.x, M.SIZE.z],
     exterior: { file: "hut_exterior", footprint: fp },
-    interior: {
+    interior: cut && {
       file: "hut_interior",
       front: "hut_interior_front",
       footprint: fp,
@@ -161,7 +162,7 @@ out.plan = {
       polys: solids,
     },
     // [t0, t1] along the south wall, or {wall, t} for a door in another wall
-    door: Array.isArray(P.door) ? P.door.map((v) => Math.round(v * 1000) / 1000)
+    door: !P.door ? undefined : Array.isArray(P.door) ? P.door.map((v) => Math.round(v * 1000) / 1000)
       : { wall: P.door.wall, t: P.door.t.map((v) => Math.round(v * 1000) / 1000) },
   },
 };
@@ -214,13 +215,18 @@ if (P.cellar) {
   });
   const C = P.cellar;
   out.plan.cellar_canvas = [CW, CH];
-  out.plan.hut.hatch = { at: px(P.hatch), out: px(P.hatch_out) };
+  out.plan.hut.descend = { at: px(P.descend.at), out: px(P.descend.out) };
   out.plan.hut.cellar = {
     file: "cellar", front: "cellar_front",
     footprint: C.footprint.map(cpx),
     arrive: cpx(C.arrive), up: cpx(C.up), lamp: cpx(C.lamp),
     polys: cs,
+    ...(C.walls ? { walls: C.walls.map(([p, q]) => [...cpx(p), ...cpx(q)]) } : {}),
+    ...(C.gap ? { gap: C.gap } : {}),
+    ...(C.stairs ? { stairs: { quad: C.stairs.quad.map(cpx), foot: cpx(C.stairs.foot), top: cpx(C.stairs.top), rise: C.stairs.rise } } : {}),
   };
+  if (!out.plan.hut.interior) delete out.plan.hut.interior;
+  if (!out.plan.hut.door) delete out.plan.hut.door;
 }
 
 // and the model itself, for Blender, Godot or anyone's own renders

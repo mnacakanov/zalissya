@@ -8,7 +8,7 @@
 // the grain). Inside: the zasiky (grain bins) along the back wall, barrels,
 // a skrynia for the good clothes, harness and a sickle on pegs, flitches of
 // salo and strings of sausage from the beam, and in the floor the lyada, the
-// hatch to the lyokh. Down there, steps cut in the clay come down under the
+// hatch to the lyokh. Down there, a ladder comes down from under the
 // hatch into a cool earth cellar lined with planks: shelves of jars, barrels
 // of sauerkraut and pickles, bins of potatoes and beets in sand, and an
 // oil lamp in a niche.
@@ -34,8 +34,9 @@ const FLOOR = 0.15;   // (a low sill: the game has no heights, so a raised floor
 // the hatch in the komora's floor, and the cellar
 export const HATCH = { x0: 2.7, x1: 3.6, z0: -3.1, z1: -2.2 };
 export const CELLAR = { x: 4.0, z: 3.2, h: 2.2, t: 0.3 };
-// the cellar's steps, under the hatch, going down northward along the east wall
-export const STEPS = { x0: 2.7, x1: 3.6, z0: -3.1, z1: -0.6 };
+// the ladder under the hatch, its feet on the floor south of it
+export const LADDER = { x0: 2.85, x1: 3.45 };
+const LADDER_FOOT = -1.3;
 
 const C = {
   log: 0x8a6a48, logDark: 0x5f4630, stone: 0x8e8a78, roof: 0x7f7564,
@@ -158,18 +159,25 @@ function buildCellar(THREE) {
   // the planks lining the far walls
   for (let x = 0.35; x < X - 0.3; x += 0.5) K.box("lining", x, 0, -Z + t, x + 0.42, h, -Z + t + 0.03, C.planks, walls);
   for (let z = -Z + 0.35; z < -0.3; z += 0.5) K.box("lining", t, 0, z, t + 0.03, h, z + 0.42, C.planks, walls);
-  // the steps come down from the hatch along the east wall, from the north
-  // (under the hatch, at the top) to the south (their foot)
-  const steps = K.group("steps");
-  const n = 8;
-  for (let i = 0; i < n; i++) {
-    const z1 = STEPS.z0 + ((i + 1) * (STEPS.z1 - STEPS.z0)) / n;
-    const y = h - ((i + 1) * h) / n;
-    const m = K.box("step", STEPS.x0, 0, STEPS.z0, STEPS.x1, y + h / n, z1, C.clay, steps);
-    m.userData.solid = i < n - 2;   // the lowest two you can stand on
+  // a ladder comes down from the hatch: its head against the hatch's
+  // south edge, its feet on the floor a metre further south (a komora's
+  // lyokh is reached by a ladder, not by steps one would never manage)
+  const lad = K.group("ladder");
+  const top = HATCH.z1, foot = LADDER_FOOT;
+  for (const x of [LADDER.x0, LADDER.x1 - 0.06]) {
+    const L = Math.hypot(h, foot - top);
+    const r = K.box("ladder_rail", x, 0, foot - 0.06, x + 0.06, L, foot, C.woodDark, lad);
+    // lean it: pivot at its foot, its head tipped north to the hatch
+    r.geometry.translate(0, L / 2, 0);
+    r.position.y = 0;
+    r.rotation.x = -Math.atan2(foot - top, h);
   }
-  // the light from the hatch above: a pale square on the steps (only a hint)
-  K.box("hatch_light", STEPS.x0, h + 0.01, STEPS.z0, STEPS.x1, h + 0.02, STEPS.z0 + 0.9, 0xf1e6c8, steps);
+  for (let i = 1; i < 8; i++) {
+    const f = i / 8;
+    K.box("ladder_rung", LADDER.x0, f * h - 0.03, foot - f * (foot - top) - 0.05, LADDER.x1, f * h + 0.03, foot - f * (foot - top) + 0.01, C.woodDark, lad);
+  }
+  // the daylight from the open hatch above: a pale square at its mouth
+  K.box("hatch_light", HATCH.x0, h + 0.01, HATCH.z0, HATCH.x1, h + 0.02, HATCH.z1, 0xf1e6c8, lad);
   const inside = K.group("inside");
   const fur = K.furnisher(inside);
   // shelves of jars along the north wall
@@ -209,13 +217,16 @@ export function plan() {
     // no pich: the light in a komora is the doorway's
     pich: null,
     partitions: [],
-    hatch: [(HATCH.x0 + HATCH.x1) / 2, FLOOR, (HATCH.z0 + HATCH.z1) / 2],
-    // where you come back up: beside the hatch, on the komora's floor
-    hatch_out: [(HATCH.x0 + HATCH.x1) / 2 - 1.0, FLOOR, (HATCH.z0 + HATCH.z1) / 2 + 0.6],
+    // down: the hatch; out: where you come back up, beside it on the floor
+    descend: {
+      at: [(HATCH.x0 + HATCH.x1) / 2, FLOOR, (HATCH.z0 + HATCH.z1) / 2],
+      out: [(HATCH.x0 + HATCH.x1) / 2 - 1.0, FLOOR, (HATCH.z0 + HATCH.z1) / 2 + 0.6],
+    },
     cellar: {
       footprint: [[0, 0, 0], [CELLAR.x, 0, 0], [CELLAR.x, 0, -CELLAR.z]],
-      arrive: [(STEPS.x0 + STEPS.x1) / 2 - 0.6, 0, STEPS.z1 + 0.25],
-      up: [(STEPS.x0 + STEPS.x1) / 2, 0, STEPS.z1 - 0.4],
+      // you arrive at the ladder's feet and go up by stepping onto them
+      arrive: [(LADDER.x0 + LADDER.x1) / 2 - 0.7, 0, LADDER_FOOT + 0.45],
+      up: [(LADDER.x0 + LADDER.x1) / 2, 0, LADDER_FOOT - 0.1],
       lamp: [CELLAR.t + 0.3, 1.4, -2.6],
     },
   };

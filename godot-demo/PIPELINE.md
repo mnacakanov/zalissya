@@ -133,34 +133,47 @@ godot-demo/
    `main` (collaborators) or merge (the Claude session, per `CLAUDE.md`).
    CI exports the game and publishes it in about a minute.
 
-### A building with two levels (a komora and its lyokh)
+### A building with two levels: a cellar under a hatch, or down real steps
 
-The komora (`tools/model/komora.js`) is the first. A model can have a
-second level: `build(THREE, {level: "cellar"})` builds the lower room
-alone, its floor as its ground. `plan()` names:
-- the hatch;
-- where you come back up beside it;
-- the cellar's footprint;
-- where you arrive at the foot of its steps;
-- where you leave at their top;
-- its lamp.
+Two models show both ways:
+- **`komora.js`, a storehouse with a hatch (lyada) in its floor.** You
+  step onto the hatch, the screen fades, and you are at the foot of a
+  ladder in its lyokh. Step onto the ladder's foot to come back up. A
+  ladder is right here: steps from a hatch would be too steep to walk.
+- **`lyokh.js`, a cellar on its own:** an earth mound with a timber
+  gable. You go in at its door and arrive near the top of a flight of
+  **steps you walk down yourself**, the kobzar's figure lowering with
+  every step, into the cellar. You walk back up them and out at the
+  landing.
 
-`render.cjs` then also writes `cellar_*.png` (colour, ink, depth, normals,
-and the near-wall mask), on a canvas of its own, and puts `hatch` and
-`cellar` into the plan's `hut` block.
+How a model describes it (in `plan()`):
+- `build(THREE, {level: "cellar"})` builds the lower room alone, its
+  floor as its ground. `NO_INTERIOR = true` marks a building you only see
+  from outside, like the mound.
+- `descend: {at, out}`: where you go down (the hatch, or the threshold
+  before the mound's door), and where you come back out.
+- `cellar: {...}` holds:
+  - `footprint`;
+  - `arrive` (where you land below) and `up` (where you leave);
+  - `lamp`;
+  - optional `gap`, an opening in one of its walls where steps come in;
+  - optional `walls`, lines such as a flight's open sides;
+  - optional `stairs`: their outline, their foot and top, and how high
+    they rise. The game lifts the kobzar by the height of the step under
+    him.
+- **Steps must come down toward the camera** (their top to the north or
+  west). A flight going down away from the camera hides behind its own
+  upper steps at this camera, as the first try showed.
 
-In the game, the cellar is laid out 300 m south of its building, where
-only the dark is (the 2D game keeps its cave and tunnel in such a band
-too):
-- **Going down:** step onto the hatch, the screen fades, and you arrive at
-  the foot of the steps.
-- **Coming up:** step onto the steps' top and you come back up beside the
-  hatch.
-- **Light:** it is dark down there at any hour but for its lamp.
+`render.cjs` writes `cellar_*.png` (colour, ink, depth, normals, and the
+near-wall mask) on a canvas of its own, and the plan's `hut` block gets
+`descend` and `cellar`. In the game, the cellar is laid out 300 m south of
+its building, where only the dark is. It is dark there at any hour but for
+its lamp.
 
-**For the painter:** a third picture, `cellar.png`, is painted over
-`model/cellar_color.png` the same way. Copy `model/cellar_front.png` as
-`cellar_front.png`. Upper floors would work the same way.
+**For the painter:** `cellar.png` is painted over `model/cellar_color.png`
+like the others. Copy `model/cellar_front.png` as `cellar_front.png`.
+Upper floors would work the same way.
 
 ### A building you don't walk into (the kaplytsia, the well, a haystack…)
 

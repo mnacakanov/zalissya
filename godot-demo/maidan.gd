@@ -261,11 +261,14 @@ func _build_khata(b: Dictionary) -> void:
 	var ext := _sprite(dir + h.exterior.file, k)
 	ext.position = foot[0] - src[0] * k
 	inner.add_child(ext)
-	# No room yet (its picture still to come): a closed house, solid.
+	# No room yet (its picture still to come), or none at all (a cellar's
+	# mound): a closed house, solid. A mound's door leads down to its cellar.
 	if not h.has("interior"):
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
 		walls.add_child(cp)
+		if h.has("cellar") and h.has("descend"):
+			_build_cellar(b, h, dir, _fit(_pts(h.exterior.footprint), foot))
 		var nl := _label(b.get("name", b.id))
 		nl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
 		nl.visible = false
@@ -319,7 +322,7 @@ func _build_khata(b: Dictionary) -> void:
 			_wall(a.lerp(c, d1), c)
 		else:
 			_wall(a, c)
-	if h.has("cellar") and h.has("hatch"):
+	if h.has("cellar") and h.has("descend"):
 		_build_cellar(b, h, dir, _fit(_pts(inn.footprint), foot))
 	var name_l := _label(b.get("name", b.id))
 	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
@@ -350,21 +353,38 @@ func _build_cellar(b: Dictionary, h: Dictionary, dir: String, room_t: Transform2
 	var inner := Node2D.new()
 	node.add_child(inner)
 	_lay_room(cel, dir, foot, inner)
+	# its walls, with a gap where steps come in ("gap": {wall, t}, as a door)
+	var gw := -1
+	var gt := [0.0, 0.0]
+	if cel.has("gap"):
+		gw = ["south", "east", "north", "west"].find(cel.gap.wall)
+		gt = cel.gap.t
 	for i in 4:
-		_wall(foot[i], foot[(i + 1) % 4])
+		if i == gw:
+			_wall(foot[i], foot[i].lerp(foot[(i + 1) % 4], gt[0]))
+			_wall(foot[i].lerp(foot[(i + 1) % 4], gt[1]), foot[(i + 1) % 4])
+		else:
+			_wall(foot[i], foot[(i + 1) % 4])
 	var ct := _fit(src, foot)
 	var v := func(a: Array) -> Vector2: return ct * Vector2(a[0], a[1])
 	var hv := func(a: Array) -> Vector2: return room_t * Vector2(a[0], a[1])
 	var r := 0.45 * metre
-	portals.append({"at": hv.call(h.hatch.at), "to": v.call(cel.arrive), "r": r})
-	portals.append({"at": v.call(cel.up), "to": hv.call(h.hatch.out), "r": r})
+	portals.append({"at": hv.call(h.descend.at), "to": v.call(cel.arrive), "r": r})
+	portals.append({"at": v.call(cel.up), "to": hv.call(h.descend.out), "r": r})
+	# steps you walk on: where they are, and how high you stand on them
+	var stairs := {}
+	if cel.has("stairs"):
+		var q := PackedVector2Array()
+		for p in cel.stairs.quad:
+			q.append(v.call(p))
+		stairs = {"quad": q, "foot": v.call(cel.stairs.foot), "top": v.call(cel.stairs.top), "rise": float(cel.stairs.rise)}
 	var nm: String = cel.get("name", "Льох")
 	var lbl := _label(nm)
 	lbl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-30, -3.0 * metre)
 	lbl.visible = false
 	inner.add_child(lbl)
 	extra_rooms.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "label": lbl,
-		"name": nm, "underground": true, "lamp": v.call(cel.get("lamp", [0, -100]))})
+		"name": nm, "underground": true, "lamp": v.call(cel.get("lamp", [0, -100])), "stairs": stairs})
 
 
 ## One room picture laid onto its stretch of the house: its walls inside
@@ -854,8 +874,9 @@ func _process(delta: float) -> void:
 	for i in buildings.size():
 		var b: Dictionary = buildings[i]
 		var foot: PackedVector2Array = b.foot
-		if b.walk_in and Geometry2D.is_point_in_polygon(player.position, foot):
-			now_in = i
+		if b.walk_in and (Geometry2D.is_point_in_polygon(player.position, foot) \
+				or (not b.get("stairs", {}).is_empty() and Geometry2D.is_point_in_polygon(player.position, b.stairs.quad))):
+			now_in = i   # (a cellar's steps run out past its wall: they count as inside)
 		# each building sorts at the front edge of its footprint right where
 		# the kobzar stands (the art is counter-moved, so only its place in
 		# the order changes)
@@ -872,6 +893,16 @@ func _process(delta: float) -> void:
 	if now_in != inside_of:
 		inside_of = now_in
 		_update_lamps()
+	# on a flight of steps he stands higher: up by the step under his feet
+	var lift := 0.0
+	if inside_of >= 0 and not buildings[inside_of].get("stairs", {}).is_empty():
+		var st: Dictionary = buildings[inside_of].stairs
+		if Geometry2D.is_point_in_polygon(player.position, st.quad):
+			var run: Vector2 = st.top - st.foot
+			var t := clampf((player.position - st.foot).dot(run) / run.length_squared(), 0.0, 1.0)
+			lift = t * st.rise * metre
+	if player_anim != null:
+		player_anim.position.y = -lift
 	if fire != null and fire.enabled:
 		var t := Time.get_ticks_msec() * 0.001
 		fire.energy = 1.0 + 0.12 * sin(t * 9.0) + 0.08 * sin(t * 23.0 + 1.0)
