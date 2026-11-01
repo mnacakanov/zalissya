@@ -31,7 +31,7 @@ const down = Dd.clone().sub(right.clone().multiplyScalar(Dd.dot(right))).normali
 const up = down.clone().negate();
 const back = new THREE.Vector3().crossVectors(right, up).normalize();
 
-const full = M.build(THREE, {});
+const full = await M.build(THREE, {});
 // (a building you only see from outside, like a cellar's mound, has no cutaway)
 const cut = M.NO_INTERIOR ? null : M.build(THREE, { cutaway: true });
 
