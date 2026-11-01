@@ -1,18 +1,343 @@
 {
-  "_note": "Flat painted trees (from art/accepted/trees), each cropped and scaled to its real height at 44 px a metre (half the huts' density: px_scale 2 draws them at full size; a forest's many big trees load four times lighter); footprint: its trunk, in px from the picture's bottom centre. The forests in zalissya/maidan.json draw from these by kind.",
-  "dub": [
-    {"file": "trees/flat/dub_a", "size": [0.7, 0.7], "footprint": [[17, -14], [41, -6], [64, -16]], "px_scale": 2},
-    {"file": "trees/flat/dub_b", "size": [0.7, 0.7], "footprint": [[-8, -12], [16, -4], [39, -14]], "px_scale": 2},
-    {"file": "trees/flat/dub_c", "size": [0.7, 0.7], "footprint": [[-128, -12], [-104, -5], [-82, -14]], "px_scale": 2}
-  ],
-  "bereza": [
-    {"file": "trees/flat/bereza_a", "size": [0.7, 0.7], "footprint": [[-30, -14], [-6, -7], [16, -16]], "px_scale": 2},
-    {"file": "trees/flat/bereza_b", "size": [0.7, 0.7], "footprint": [[-26, -14], [-2, -6], [21, -16]], "px_scale": 2},
-    {"file": "trees/flat/bereza_c", "size": [0.7, 0.7], "footprint": [[-46, -14], [-22, -6], [2, -16]], "px_scale": 2}
-  ],
-  "smereka": [
-    {"file": "trees/flat/smereka_a", "size": [0.7, 0.7], "footprint": [[-16, -17], [8, -10], [30, -19]], "px_scale": 2},
-    {"file": "trees/flat/smereka_b", "size": [0.7, 0.7], "footprint": [[-16, -16], [8, -8], [30, -18]], "px_scale": 2},
-    {"file": "trees/flat/smereka_c", "size": [0.7, 0.7], "footprint": [[-22, -18], [2, -11], [24, -20]], "px_scale": 2}
-  ]
+ "_note": "Flat painted trees (from art/accepted/trees), each cropped and scaled to its real height at 44 px a metre (half the huts' density: px_scale 2 draws them at full size; a forest's many big trees load four times lighter); footprint: its trunk, in px from the picture's bottom centre. The forests in zalissya/maidan.json draw from these by kind. The k_* pictures are the Muse paintings at the huts' camera (Kateryna, K59): in a kind's list a picture may repeat, to make it more common than the others.",
+ "dub": [
+  {
+   "file": "trees/flat/k_dub_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_dub_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_dub_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_dub_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_dub_c",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  }
+ ],
+ "bereza": [
+  {
+   "file": "trees/flat/bereza_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -30,
+     -14
+    ],
+    [
+     -6,
+     -7
+    ],
+    [
+     16,
+     -16
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/bereza_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -26,
+     -14
+    ],
+    [
+     -2,
+     -6
+    ],
+    [
+     21,
+     -16
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/bereza_c",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -46,
+     -14
+    ],
+    [
+     -22,
+     -6
+    ],
+    [
+     2,
+     -16
+    ]
+   ],
+   "px_scale": 2
+  }
+ ],
+ "smereka": [
+  {
+   "file": "trees/flat/smereka_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -16,
+     -17
+    ],
+    [
+     8,
+     -10
+    ],
+    [
+     30,
+     -19
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/smereka_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -16,
+     -16
+    ],
+    [
+     8,
+     -8
+    ],
+    [
+     30,
+     -18
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/smereka_c",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -22,
+     -18
+    ],
+    [
+     2,
+     -11
+    ],
+    [
+     24,
+     -20
+    ]
+   ],
+   "px_scale": 2
+  }
+ ],
+ "sosna": [
+  {
+   "file": "trees/flat/k_sosna_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_sosna_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  }
+ ],
+ "topolia": [
+  {
+   "file": "trees/flat/k_topolia_a",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  },
+  {
+   "file": "trees/flat/k_topolia_b",
+   "size": [
+    0.7,
+    0.7
+   ],
+   "footprint": [
+    [
+     -23,
+     -9
+    ],
+    [
+     1,
+     -2
+    ],
+    [
+     23,
+     -11
+    ]
+   ],
+   "px_scale": 2
+  }
+ ]
 }
