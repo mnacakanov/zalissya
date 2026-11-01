@@ -63,6 +63,11 @@
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [
+    {"file": "props/ocheret/ocheret", "at": [-24.8, 26.2], "metres": 2.0},
+    {"file": "props/ocheret/ocheret", "at": [-7.6, 31.8], "metres": 2.0},
+    {"file": "props/ocheret/ocheret", "at": [-20.5, 34.5], "metres": 2.0},
+    {"file": "props/latattia/latattia", "at": [-17, 29.5], "metres": 1.9},
+    {"file": "props/latattia/latattia", "at": [-11.5, 27.2], "metres": 1.6},
     {"file": "props/mallva/mallva", "at": [12.2, -2.4], "metres": 2.0},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [-11.3, -5.2], "metres": 0.5},
     {"file": "props/chornobryvtsi/chornobryvtsi", "at": [17.8, 1.9], "metres": 0.5},
