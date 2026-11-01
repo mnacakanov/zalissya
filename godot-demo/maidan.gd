@@ -76,6 +76,7 @@ func _ready() -> void:
 		else:
 			_build_placeholder(b)
 	buildings.append_array(extra_rooms)
+	_build_forests()
 	for p in data.get("props", []):
 		var s := _sprite(p.file, 1.0)
 		if s.texture != null:
@@ -546,8 +547,17 @@ func _build_sprite(b: Dictionary) -> void:
 	world.add_child(node)
 	var inner := Node2D.new()
 	node.add_child(inner)
-	var spr := _sprite(b.file, k)
-	spr.position = foot[0] - src[0] * k
+	# a tree of the forest may come scaled and mirrored: the picture and its
+	# footprint together (mirrored about its trunk)
+	var sc: float = b.get("scale", 1.0)
+	var spr := _sprite(b.file, k * sc)
+	if b.get("flip", false):
+		spr.flip_h = true
+		var bx := (src[0].x + src[2].x) / 2.0
+		for i in src.size():
+			src[i].x -= 2.0 * bx
+		spr.offset.x = -spr.texture.get_width() / 2.0 if spr.texture != null else 0.0
+	spr.position = foot[0] - src[0] * k * sc
 	inner.add_child(spr)
 	var name_l := _label(b.get("name", b.id))
 	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-50, -4.0 * metre)
@@ -575,6 +585,97 @@ func _build_sprite(b: Dictionary) -> void:
 		sg.add_theme_font_size_override("font_size", 24)
 		inner.add_child(sg)
 	buildings.append(entry)
+
+
+## The forests (maidan.json "forests"): each an outline in metres filled
+## with trees from a catalog of flat painted trees (styles/<style>/trees/
+## flat/catalog.json: each picture's file and trunk footprint), at a
+## spacing, by kind weights, each a little larger or smaller, some mirrored.
+## Scattered on a jittered grid, seeded, so the forest is the same every
+## time; never on a building, the maidan, a road or a path.
+func _build_forests() -> void:
+	var forests: Array = data.get("forests", [])
+	if forests.is_empty():
+		return
+	var cat_path := "res://styles/%s/trees/flat/catalog.json" % style
+	if not FileAccess.file_exists(cat_path):
+		push_warning("no tree catalog: " + cat_path)
+		return
+	var cat: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(cat_path))
+	# where trees may not stand: the buildings (and a margin round them),
+	# the maidan, the roads and paths
+	var keep_out: Array[PackedVector2Array] = []
+	for b in buildings:
+		for o in Geometry2D.offset_polygon(b.foot, 2.0 * metre):
+			keep_out.append(o)
+	if ground.has_meta("oval"):
+		keep_out.append(ground.get_meta("oval"))
+	var lanes: Array = []
+	for r in data.get("roads", []) + data.get("paths", []):
+		var pts := PackedVector2Array()
+		for q in r.points:
+			pts.append(P(q[0], q[1]))
+		lanes.append([pts, (float(r.width) / 2.0 + 1.5) * (east.length() + north.length()) / 2.0])
+	var n := 0
+	for f in forests:
+		var rnd := RandomNumberGenerator.new()
+		rnd.seed = int(f.get("seed", 1))
+		var outline := PackedVector2Array()
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for q in f.outline:
+			outline.append(P(q[0], q[1]))
+			lo = Vector2(minf(lo.x, q[0]), minf(lo.y, q[1]))
+			hi = Vector2(maxf(hi.x, q[0]), maxf(hi.y, q[1]))
+		var kinds: Dictionary = f.kinds
+		var total := 0.0
+		for kd in kinds:
+			total += float(kinds[kd])
+		var step: float = f.get("spacing", 5.0)
+		var y := lo.y
+		while y <= hi.y:
+			var x := lo.x
+			while x <= hi.x:
+				var mx := x + rnd.randf_range(-0.4, 0.4) * step
+				var my := y + rnd.randf_range(-0.4, 0.4) * step
+				x += step
+				var at := P(mx, my)
+				if not Geometry2D.is_point_in_polygon(at, outline):
+					continue
+				var blocked := false
+				for o in keep_out:
+					if Geometry2D.is_point_in_polygon(at, o):
+						blocked = true
+						break
+				if not blocked:
+					for ln in lanes:
+						var pts: PackedVector2Array = ln[0]
+						for i in pts.size() - 1:
+							if Geometry2D.get_closest_point_to_segment(at, pts[i], pts[i + 1]).distance_to(at) < ln[1]:
+								blocked = true
+								break
+						if blocked:
+							break
+				if blocked:
+					continue
+				# which kind, then which of its pictures
+				var pick := rnd.randf() * total
+				var kind := ""
+				for kd in kinds:
+					pick -= float(kinds[kd])
+					if pick <= 0.0:
+						kind = kd
+						break
+				if kind == "" or not cat.has(kind):
+					continue
+				var pics: Array = cat[kind]
+				var pic: Dictionary = pics[rnd.randi() % pics.size()]
+				_build_sprite({"id": "tree", "name": f.get("name", "Ліс"), "file": pic.file, "at": [mx, my],
+					"size": pic.size, "footprint": pic.footprint, "sway": 1.0,
+					"scale": rnd.randf_range(0.8, 1.15) * float(pic.get("px_scale", 1.0)), "flip": rnd.randf() < 0.5})
+				n += 1
+			y += step * 0.87   # (rows a little closer than the columns: a looser, less gridded look)
+	print("forest: %d trees" % n)
 
 
 ## a thing with no art yet: a plain block of its real size, with its name
