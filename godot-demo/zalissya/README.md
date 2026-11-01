@@ -186,7 +186,7 @@ To run it locally, use Godot 4.7.2 and open `godot-demo/` (see
 
 Open the game with **`?edit`** at the end of the address
 (`https://mnacakanov.github.io/zalissya/godot-demo/?edit`), or run it from the
-Godot editor. A **✎ Редагувати** button appears top right (or press **Tab**).
+Godot editor. A **Редагувати** button appears top right (or press **Tab**).
 In edit mode the game pauses and:
 
 | Do | How |
@@ -201,10 +201,10 @@ In edit mode the game pauses and:
 | Undo / redo | **Ctrl+Z** / **Ctrl+Y** |
 
 Every change is kept in your browser as you go, so a reload keeps it
-(**Скинути мої зміни** throws your changes away). **✓ Зберегти** writes
+(**Скинути мої зміни** throws your changes away). **Зберегти** writes
 `zalissya/maidan.json` when run from the Godot editor; in a browser it
 **downloads `maidan.json`**: put it on an issue (or ask the Claude session) to
-commit it, or commit it into `godot-demo/zalissya/` yourself. **⎘ Копіювати**
+commit it, or commit it into `godot-demo/zalissya/` yourself. **Копіювати**
 copies the whole file instead.
 
 Not editable yet: the forests (generated from their outline), the roads,

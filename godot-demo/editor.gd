@@ -97,7 +97,7 @@ func _build_ui() -> void:
 	ui.layer = 20
 	add_child(ui)
 	toggle_btn = Button.new()
-	toggle_btn.text = "✎ Редагувати"
+	toggle_btn.text = "Редагувати"
 	toggle_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_btn.offset_left = -170
 	toggle_btn.offset_right = -12
@@ -122,9 +122,9 @@ func _build_ui() -> void:
 	var grid := GridContainer.new()
 	grid.columns = 2
 	col.add_child(grid)
-	for b in [["↶ Назад", _undo], ["↷ Вперед", _redo], ["⧉ Копія", _duplicate],
-			["🗑 Видалити", _delete], ["⇋ Дзеркало", _flip], ["＋ Більше", func(): _scale_sel(1.1)],
-			["－ Менше", func(): _scale_sel(1.0 / 1.1)], ["✓ Зберегти", _save], ["⎘ Копіювати", _copy]]:
+	for b in [["Назад", _undo], ["Вперед", _redo], ["Копія", _duplicate],
+			["Видалити", _delete], ["Дзеркало", _flip], ["Більше", func(): _scale_sel(1.1)],
+			["Менше", func(): _scale_sel(1.0 / 1.1)], ["Зберегти", _save], ["Копіювати", _copy]]:
 		var btn := Button.new()
 		btn.text = b[0]
 		btn.custom_minimum_size = Vector2(134, 0)
@@ -179,7 +179,7 @@ func _set_on(v: bool) -> void:
 	Engine.set_meta("edit_on", on)
 	m.editing = on
 	panel.visible = on
-	toggle_btn.text = "▶ Грати" if on else "✎ Редагувати"
+	toggle_btn.text = "Грати" if on else "Редагувати"
 	if m.player_anim != null:
 		m.player_anim.modulate.a = 0.35 if on else 1.0
 	if not on:
