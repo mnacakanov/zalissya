@@ -85,6 +85,10 @@ func _ready() -> void:
 		world.add_child(s)
 	_build_player()
 	_build_light()
+	# the people of the maidan (people.gd: where they stand, talking to them)
+	var people := preload("res://people.gd").new()
+	add_child(people)
+	people.setup(self)
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false

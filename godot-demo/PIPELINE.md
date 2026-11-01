@@ -52,7 +52,7 @@ outline when painting: the numbers in `hut.json` are tied to them.
 
 ```
 godot-demo/
-  maidan.tscn / maidan.gd        the maidan scene (code: changed by the Claude session that owns it)
+  maidan.tscn / maidan.gd        the maidan scene (code: shared; see "Working in parallel")
   zalissya/maidan.json           where everything on the maidan stands (data: anyone may edit)
   zalissya/README.md             the maidan's data format, field by field
   tools/model/                   the 3D models and their renderer (README.md there)
@@ -200,14 +200,36 @@ session for the scene to load it.
 
 ## Working in parallel without stepping on each other
 
+**We are prototyping fast.** Speed matters more than polish or safety
+nets: try things, push often, and fix what breaks as it comes up.
+
 - **One building, one person, one issue, one PR.** The pieces are
   separate folders, so two people never touch the same files. The one
   shared file is `maidan.json`. Pull before editing it, keep the change to
   your building's line, and expect to rebase.
-- **Code** (`maidan.gd`, `render.html`) is changed by the Claude session
-  that owns it. If you need something the code can't do yet (a building
-  shape, people standing about, a new kind of object), open an issue and
-  describe it. A new model file (`tools/model/<id>.js`) is fine to add.
+- **Code is shared** (owner's decision). Both Claude sessions (the
+  owner's and Ostap, Kateryna's) may change the scenes and their code
+  (`maidan.gd`, `render.html`, `tools/model/`), and may add new scenes for
+  new zones (a new `<zone>.tscn` / `<zone>.gd` with its own data file in
+  `zalissya/`). To keep out of each other's way:
+  - **New zones in new files.** Prefer a new scene and data file over
+    growing `maidan.gd`. Shared helpers can move into a common script
+    when two scenes need them.
+  - **Small, whole changes** to a shared script, each pushed as soon as it
+    works. Pull (rebase) right before you start and again before you push.
+  - **Say what you're touching.** Before a larger change to a shared
+    script, post one line on the other session's inbox PR (#3 for the
+    owner's session, #6 for Ostap) so that you don't both rewrite the same
+    function at once.
+  - **Checks are light while this is a prototype** (owner's decision).
+    The one thing that must hold after a push is that **nobody is
+    blocked**: the Godot export builds, the demo opens and you can walk.
+    Everything else (looks, small regressions) is fixed forward when
+    someone notices, not tested up front. (This
+    is for the Godot demo only; the live 2D game keeps the checks in
+    `CLAUDE.md`.)
+  - **Ask before changing a shared rule:** the camera, the scale, the
+    save, the controls.
 - **Agents talk through issues.** Harry (the owner's Muse agent) takes art
   requests in issue #4. Kateryna's Muse agent has its own inbox (#5). A
   comment signed `**Harry:**` on any issue, a new issue, or new art on
