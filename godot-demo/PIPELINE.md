@@ -140,11 +140,19 @@ Two models show both ways:
   step onto the hatch, the screen fades, and you are at the foot of a
   ladder in its lyokh. Step onto the ladder's foot to come back up. A
   ladder is right here: steps from a hatch would be too steep to walk.
-- **`lyokh.js`, a cellar on its own:** an earth mound with a timber
-  gable. You go in at its door and arrive near the top of a flight of
-  **steps you walk down yourself**, the kobzar's figure lowering with
-  every step, into the cellar. You walk back up them and out at the
-  landing.
+- **`lyokh.js`, a cellar on its own, walked into like a hut, no fade at
+  all.** From outside it is a pohrib (a steep A of thatch down to the
+  ground, whitewashed gables, after the owner's reference photos). Walk in
+  at its door and the thatch lifts away like a roof. There, in place, is
+  the cellar dug 2.4 m into the ground, and you walk down its steps
+  yourself, the kobzar's figure lowering with every step. Its plan says
+  `"sunken": true`, and its `interior` carries `heights`:
+  - flat regions `{quad, h}`;
+  - ramps `{quad, foot, top, from, to}`, in metres below the ground.
+
+  The cutaway is rendered at its true depth, so the picture reaches
+  below the house's outline. **Put nothing south or east of a sunken
+  cellar:** a building there would cover its pit.
 
 How a model describes it (in `plan()`):
 - `build(THREE, {level: "cellar"})` builds the lower room alone, its

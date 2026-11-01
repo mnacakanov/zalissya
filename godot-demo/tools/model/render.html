@@ -38,8 +38,9 @@ const cut = M.NO_INTERIOR ? null : M.build(THREE, { cutaway: true });
 // the picture's frame: every vertex of the full house, plus a margin
 const proj = (p) => [p.dot(right) * s, p.dot(down) * s];   // px, from the world origin
 let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-full.updateMatrixWorld(true);
-full.traverse((o) => {
+// (and of the cutaway: a sunken room reaches below the house)
+for (const mdl of [full, cut].filter(Boolean)) mdl.updateMatrixWorld(true);
+[full, cut].filter(Boolean).forEach((mdl) => mdl.traverse((o) => {
   if (!o.geometry) return;
   const pos = o.geometry.attributes.position;
   const v = new THREE.Vector3();
@@ -48,7 +49,7 @@ full.traverse((o) => {
     const [x, y] = proj(v);
     minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
   }
-});
+}));
 const pad = 12;
 minX -= pad; maxX += pad; minY -= pad; maxY += 2;
 const W = Math.ceil(maxX - minX), H = Math.ceil(maxY - minY);
@@ -159,9 +160,16 @@ out.plan = {
       footprint: fp,
       ...(P.pich ? { pich: px(P.pich) } : {}),
       walls: P.partitions.map(([a, b]) => [...px(a), ...px(b)]),
+      // a sunken room: how deep the kobzar stands where (metres, negative
+      // down): flat regions {quad, h} and ramps {quad, foot, top, from, to}
+      ...(P.heights ? { heights: P.heights.map((r) => r.foot
+        ? { quad: r.quad.map(px), foot: px(r.foot), top: px(r.top), from: r.from, to: r.to }
+        : { quad: r.quad.map(px), h: r.h }) } : {}),
       polys: solids,
     },
     // [t0, t1] along the south wall, or {wall, t} for a door in another wall
+    ...(P.sunken ? { sunken: true } : {}),
+    ...(P.lamp ? { lamp: px(P.lamp) } : {}),
     door: !P.door ? undefined : Array.isArray(P.door) ? P.door.map((v) => Math.round(v * 1000) / 1000)
       : { wall: P.door.wall, t: P.door.t.map((v) => Math.round(v * 1000) / 1000) },
   },

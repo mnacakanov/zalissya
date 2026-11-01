@@ -79,8 +79,9 @@ a minute.
   faces south.
 - `komora.js` is a komora (storehouse) with its lyokh (cellar) under a
   hatch, reached by a ladder: two levels (see `../../PIPELINE.md`).
-- `lyokh.js` is a cellar on its own: an earth mound with a door, and steps
-  inside that you walk down.
+- `lyokh.js` is a cellar on its own (a pohrib): walked into like a hut,
+  its pit shown at its true depth, steps you walk down. It is a sunken
+  room, `"sunken": true` with `heights` in its plan.
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.

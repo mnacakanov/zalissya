@@ -330,9 +330,35 @@ func _build_khata(b: Dictionary) -> void:
 	inner.add_child(name_l)
 	var door := foot[dw].lerp(foot[(dw + 1) % 4], (d0 + d1) / 2.0)
 	var outward := (door - _centroid(foot)).normalized()
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
-		"rect": _sprite_rect(ext),
-		"pich": pich if pich != Vector2.INF else _centroid(foot), "door": door + outward * 0.6 * metre})
+	var entry := {"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
+		"rect": _sprite_rect(ext), "door": door + outward * 0.6 * metre}
+	if h.get("sunken", false):
+		# A sunken room (a lyokh walked into like a hut): its picture shows
+		# the pit at its true depth, so it reaches below the house's outline
+		# and is shown only as the roof lifts; it is dark down there but for
+		# its lamp; and the kobzar's figure goes down by the depth under him.
+		var rt := _fit(_pts(inn.footprint), foot)
+		entry["sunken_nodes"] = _laid.duplicate()
+		entry["dark"] = true
+		if h.has("lamp"):
+			entry["lamp"] = rt * Vector2(h.lamp[0], h.lamp[1])
+		var hs: Array = []
+		for r in inn.get("heights", []):
+			var q := PackedVector2Array()
+			for p in r.quad:
+				q.append(rt * Vector2(p[0], p[1]))
+			var e := {"quad": q}
+			if r.has("foot"):
+				e.merge({"foot": rt * Vector2(r.foot[0], r.foot[1]), "top": rt * Vector2(r.top[0], r.top[1]), "from": float(r.from), "to": float(r.to)})
+			else:
+				e["h"] = float(r.h)
+			hs.append(e)
+		entry["heights"] = hs
+		for n in entry.sunken_nodes:
+			n.modulate.a = 0.0
+	else:
+		entry["pich"] = pich if pich != Vector2.INF else _centroid(foot)
+	buildings.append(entry)
 
 
 ## A lower level (a komora's lyokh): its own picture and plan (hut.json
@@ -391,8 +417,10 @@ func _build_cellar(b: Dictionary, h: Dictionary, dir: String, room_t: Transform2
 ## ([x1, y1, x2, y2], e.g. the siny's partitions), its furniture and its
 ## pich, all in the picture's own pixels. Returns where the pich is (INF:
 ## none).
+var _laid: Array[Node2D] = []   # the nodes the last _lay_room made (room, front)
 func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array, over: Node2D) -> Vector2:
 	var room := Node2D.new()
+	_laid = [room]
 	room.transform = _fit(_pts(inn.footprint), dst)
 	ground.add_child(room)
 	room.add_child(_sprite(dir + inn.file, 1.0))
@@ -408,6 +436,7 @@ func _lay_room(inn: Dictionary, dir: String, dst: PackedVector2Array, over: Node
 		sm.set_shader_parameter("mask", _tex(dir + inn.front))
 		fr.material = sm
 		fr.transform = room.transform * fr.transform
+		_laid.append(fr)
 		over.add_child(fr)
 		over.move_child(fr, 0)
 	for w in inn.get("walls", []):
@@ -602,7 +631,7 @@ func _build_light() -> void:
 	add_child(sun)
 	for i in buildings.size():
 		var b: Dictionary = buildings[i]
-		if b.get("underground", false):
+		if b.has("lamp"):
 			# the oil lamp in its niche: the only light down there
 			_lamp(b.lamp, 1.6, Color(1.0, 0.72, 0.4), i).set_meta("always", true)
 		elif b.has("pich"):
@@ -631,9 +660,10 @@ func _update_lamps() -> void:
 		var lit := (always and hut == inside_of) or (not always and night and not under and (hut < 0 or hut == inside_of))
 		l.enabled = lit
 		l.energy = (1.1 if hut >= 0 else 0.8) if lit else 0.0
-	# underground it is dark at any hour, but for its lamp
-	shade.color = Color(0.22, 0.2, 0.24) if under else (Color(0.3, 0.33, 0.52) if night else Color(1, 1, 1))
-	sun.enabled = not night and not under
+	# underground (or in a sunken cellar) it is dark at any hour, but for its lamp
+	var dark: bool = under or (inside_of >= 0 and buildings[inside_of].get("dark", false))
+	shade.color = Color(0.22, 0.2, 0.24) if dark else (Color(0.3, 0.33, 0.52) if night else Color(1, 1, 1))
+	sun.enabled = not night and not dark
 	# (and round it nothing but the earth's dark, not the sky's colour)
 	RenderingServer.set_default_clear_color(Color(0.03, 0.025, 0.02) if under else Color(0.2, 0.3, 0.15))
 
@@ -890,6 +920,10 @@ func _process(delta: float) -> void:
 			var behind := player.position.y < fy and _covers(b, player.position + Vector2(0, -0.8 * metre))
 			var target := 0.0 if now_in == i else (0.35 if behind else 1.0)
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
+			# (and the pit itself shows only from inside, not through a roof
+			# gone see-through as he walks behind it)
+			for n in b.get("sunken_nodes", []):
+				n.modulate.a = move_toward(n.modulate.a, 1.0 if now_in == i else 0.0, delta * 4.0)
 	if now_in != inside_of:
 		inside_of = now_in
 		_update_lamps()
@@ -901,6 +935,17 @@ func _process(delta: float) -> void:
 			var run: Vector2 = st.top - st.foot
 			var t := clampf((player.position - st.foot).dot(run) / run.length_squared(), 0.0, 1.0)
 			lift = t * st.rise * metre
+	# in a sunken room he stands as deep as the floor (or the step) under him
+	if inside_of >= 0 and buildings[inside_of].has("heights"):
+		for r in buildings[inside_of].heights:
+			if Geometry2D.is_point_in_polygon(player.position, r.quad):
+				if r.has("foot"):
+					var run2: Vector2 = r.top - r.foot
+					var t2 := clampf((player.position - r.foot).dot(run2) / run2.length_squared(), 0.0, 1.0)
+					lift = lerpf(r.from, r.to, t2) * metre
+				else:
+					lift = r.h * metre
+				break
 	if player_anim != null:
 		player_anim.position.y = -lift
 	if fire != null and fire.enabled:
