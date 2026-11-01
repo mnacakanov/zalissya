@@ -101,3 +101,25 @@ jobs:
             sleep $((i * 3))
           done
           exit 1
+
+      # Also upload the same build to itch.io, once the owner has set it up:
+      #   · secret BUTLER_API_KEY (itch.io → Settings → API keys)
+      #   · variable ITCH_GAME, the page as "user/game" (e.g. "name/zalissya")
+      # Until both exist, this step only says so and passes.
+      - name: Upload to itch.io on main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_GAME: ${{ vars.ITCH_GAME }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BUTLER_API_KEY}" ] || [ -z "${ITCH_GAME}" ]; then
+            echo "itch.io not set up yet (BUTLER_API_KEY / ITCH_GAME): skipping"
+            exit 0
+          fi
+          curl -sSL -o /tmp/butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -oq /tmp/butler.zip -d ~/butler
+          chmod +x ~/butler/butler
+          mkdir -p /tmp/itch
+          cp godot-demo/build/index.* /tmp/itch/
+          ~/butler/butler push /tmp/itch "${ITCH_GAME}:web" --userversion "${GITHUB_SHA::7}"
