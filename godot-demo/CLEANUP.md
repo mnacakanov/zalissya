@@ -5,6 +5,15 @@ from the demo, repeated code. This file is the work list, so any session can
 pick it up where the last one stopped. **Tick an item (`[x]`) in the same
 commit that fixes it**, and keep each commit to one item or a few small ones.
 
+**Status (end of 2026-11-01, Ostap):** passes 1 and 3 done, and 2.1–2.3,
+2.7, 2.8. Left: **1.9** (waits for Kateryna's word on deleting the raw
+generations), **2.4** and **2.5** (the action button and the dialogue
+window: both reshape `people.gd`, which another Claude session is also
+changing, so agree who does it first), **2.6** (moving the quest rules into
+one file; no new quests: Kateryna is rewriting them). Test scripts used:
+load the scene, drive it from a `-s` script, print and screenshot (see
+`PIPELINE.md`).
+
 How to check a change: the headless Godot run in `PIPELINE.md` (load the
 scene, walk, screenshot); a script error makes the run hang, so read its log.
 After each pass, play: walk, talk, pick herbs, fish, open the sheet and the
