@@ -87,10 +87,17 @@ export function build(THREE, opts = {}) {
   // the horn: a waist-high hearth of stone and clay against the west wall, the
   // fire-bed on top with embers, the clay hood over it narrowing to the flue
   fur("horn", t, 0, -3.15, t + 1.0, 0.8, -2.15, C.stone);
-  K.box("fire_bed", t + 0.25, 0.8, -2.85, t + 0.75, 0.83, -2.45, C.ember, inside);
-  K.box("coals", t + 0.15, 0.8, -3.05, t + 0.25, 0.86, -2.25, C.char, inside);
-  K.box("hood", t, 1.45, -3.2, t + 1.05, 1.75, -2.1, C.clay, inside);
-  K.box("flue", t, 1.75, -2.95, t + 0.6, h, -2.35, C.clay, inside);
+  // the coals heaped low on the fire-bed, glowing in the middle
+  K.box("coal_bed", t + 0.15, 0.8, -3.0, t + 0.85, 0.84, -2.3, C.char, inside);
+  K.box("embers", t + 0.3, 0.84, -2.85, t + 0.7, 0.87, -2.45, C.ember, inside);
+  // the hood: a clay funnel against the west wall, wide over the fire and
+  // narrowing up into the flue, which climbs the wall to the roof
+  const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.72, 0.5, 4, 1), K.mat(C.clay));
+  hood.rotation.y = Math.PI / 4;
+  hood.position.set(t + 0.5, 1.6, -2.65);
+  hood.name = "hood";
+  inside.add(hood);
+  K.box("flue", t, 1.85, -2.93, t + 0.56, h, -2.37, C.clay, inside);
   // the mikh: two boards and leather between them, on a trestle north of the
   // horn, its nozzle to the fire; a pole to work it
   fur("mikh_stand", t, 0, -Z + t + 0.05, t + 0.9, 0.55, -3.25, C.woodDark);
