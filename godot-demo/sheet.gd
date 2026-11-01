@@ -15,6 +15,7 @@ const THRESH := [0, 3, 7, 12, 18, 25, 34]        # Herbalism (skills.ts)
 const FISH_THRESH := [0, 2, 5, 9, 14, 20]        # Fishing
 const CRAFT_THRESH := [0, 2, 5, 9, 14, 20]       # Cooking, Smithing, Alchemy, Music
 const CARPENTRY_THRESH := [0, 5, 12, 22, 36]     # Carpentry
+const ICON := {"meals": "items/kulish", "herbStock": "herbs/kropyva"}   # styles/<style>/…, a picture by its row
 const UNIT_WEIGHT := {"fish": 1, "herbStock": 1, "iron": 3, "forged": 2}   # carry.ts
 const STATS := ["str", "dex", "con", "int", "wis", "cha"]
 
@@ -291,14 +292,31 @@ func _text(s: String, size := 15, col := Color(0.2, 0.14, 0.1), bold := false) -
 	return l
 
 
-func _card() -> VBoxContainer:
+func _card(icon: String = "") -> VBoxContainer:
 	var pc := PanelContainer.new()
 	pc.mouse_filter = Control.MOUSE_FILTER_PASS   # (a finger dragging on a card scrolls the list)
 	pc.add_theme_stylebox_override("panel", _parch(Color(0.906, 0.851, 0.725), 10))
 	body.add_child(pc)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
-	pc.add_child(v)
+	var tex: Texture2D = m._tex(icon) if icon != "" else null
+	if tex == null:
+		pc.add_child(v)
+		return v
+	# the thing itself, painted, left of its name
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	pc.add_child(row)
+	var pic := TextureRect.new()
+	pic.texture = tex
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.custom_minimum_size = Vector2(48, 48)
+	pic.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.add_child(pic)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(v)
 	return v
 
 
@@ -356,7 +374,7 @@ func _fill() -> void:
 				any = true
 				body.add_child(_text(_plain(t(g[0])), 14, Color(0.48, 0.29, 0.17), true))
 				for r in rows:
-					var v := _card()
+					var v := _card(ICON.get(r[0][0], ""))
 					v.add_child(_text("%s × %d" % [_plain(t(r[0][1])), r[1]], 16))
 					var unit: int = UNIT_WEIGHT.get(r[0][0], 0)
 					v.add_child(_text(t("ui.satchel.weightless") if unit == 0 else t("ui.satchel.rowWeight", {"unit": unit, "total": unit * r[1]}), 13, dim))

@@ -128,6 +128,14 @@ func _build_ui() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
 	panel.add_child(col)
+	var kobza: Texture2D = m._tex("items/kobza")
+	if kobza != null:
+		var pic := TextureRect.new()
+		pic.texture = kobza
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.custom_minimum_size = Vector2(0, 72)
+		col.add_child(pic)
 	text_l = Label.new()
 	text_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_l.add_theme_color_override("font_color", Color(0.2, 0.14, 0.1))
@@ -143,6 +151,8 @@ func _layout() -> void:
 	text_l.custom_minimum_size = Vector2(w - 28.0, 0)
 	panel.position = Vector2((vw.x - w) / 2.0, vw.y * 0.32)
 	panel.reset_size()
+	# (wrapped text knows its height only a frame later: shrink again then)
+	(func(): if panel.visible: panel.reset_size()).call_deferred()
 
 
 func _choice(text: String, cb: Callable) -> void:
