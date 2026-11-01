@@ -1,0 +1,6 @@
+{
+  "_note": "Words only the Godot game says (the 2D game's own are in ../<lang>.json, copied from client/src by tools/sync_locales.py). Ukrainian first; keep both languages.",
+  "topic.vesna.give.question": "Here are your herbs, Vesna.",
+  "topic.vesna.give.thanks": "Good herbs, picked with sense — not torn out by the root. They'll go on my drying rack. And you, kobzar, are not quite a stranger in Zalissya any more.",
+  "quest.herbs.bring": "Take the herbs to Vesna · {min}/5"
+}

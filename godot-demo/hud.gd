@@ -57,6 +57,10 @@ func _load_words(l: String) -> void:
 	if not FileAccess.file_exists(path):
 		path = "res://locales/uk.json"
 	words = JSON.parse_string(FileAccess.get_file_as_string(path))
+	# and the few words only the Godot game says (locales/godot/)
+	var own := "res://locales/godot/%s.json" % l
+	if FileAccess.file_exists(own):
+		words.merge(JSON.parse_string(FileAccess.get_file_as_string(own)), true)
 	lang = l
 
 
@@ -71,6 +75,7 @@ func setup(maidan: Node2D, the_people: Node, the_state: Node) -> void:
 	met_done = state.has("found:meet")
 	# whom he has met, back from the save (the first greeting is said once)
 	if people != null:
+		people.hooks = self
 		for id in state.data.talked:
 			people.met[id] = true
 	# where he stood (unless the level editor has just rebuilt the scene)
@@ -278,6 +283,25 @@ func _met() -> int:
 	return n
 
 
+# --- what the people say, by the game's state (people.gd asks) -------------------------
+## a greeting in place of people.json's "again"
+func greeting(id: String) -> Array:
+	if id == "vesna" and int(state.data.herbs) >= 5:
+		return [t("topic.vesna.2")]
+	return []
+
+
+## topics the game's state opens: {question, run} (run gives the lines)
+func extra_topics(id: String) -> Array:
+	var out := []
+	if id == "vesna" and not state.has("herbsGiven") and int(state.data.herbs) >= 5 and state.count("herbStock") >= 5:
+		out.append({"question": t("topic.vesna.give.question"), "run": func() -> Array:
+			state.set_count("herbStock", state.count("herbStock") - 5)
+			state.add("herbsGiven")
+			return [t("line.vesna.0"), t("topic.vesna.give.thanks"), t("line.vesna.2")]})
+	return out
+
+
 func show_toast(text: String) -> void:
 	toast.text = text
 	toast.modulate.a = 1.0
@@ -292,7 +316,7 @@ func _check_quests() -> void:
 	if not met_done and _met() >= MEET.size():
 		met_done = true
 		_found("meet", "quest.meet.title.0")
-	if not state.has("found:herbs") and int(state.data.herbs) >= 5:
+	if not state.has("found:herbs") and state.has("herbsGiven"):
 		_found("herbs", "quest.herbs.title.0")
 
 
@@ -302,6 +326,9 @@ func _objective() -> String:
 	if not met_done:
 		return t("quest.meet.1", {"metVillagers": _met()})
 	if not state.has("found:herbs"):
+		# five picked: take them to Vesna (she says the rest)
+		if int(state.data.herbs) >= 5:
+			return t("quest.herbs.bring", {"min": mini(state.count("herbStock"), 5)})
 		return t("quest.herbs.1", {"min": mini(int(state.data.herbs), 5)})
 	return t("quest.evening.now") if minute >= 18 * 60 else t("quest.evening.wait")
 

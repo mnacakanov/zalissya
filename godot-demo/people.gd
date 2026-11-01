@@ -29,6 +29,7 @@ var panel: PanelContainer
 var who_l: Label
 var text_l: Label
 var choices: HFlowContainer
+var hooks: Node = null        # the HUD (hud.gd): greetings and topics that depend on the game's state
 var pending: Array = []       # lines still to say in the answer now showing
 
 
@@ -190,6 +191,10 @@ func _open(i: int) -> void:
 	var first: bool = not met.has(p.id)
 	met[p.id] = true
 	pending = (p.first if first else p.again).duplicate()
+	if not first and hooks != null:
+		var g: Array = hooks.greeting(p.id)
+		if not g.is_empty():
+			pending = g
 	panel.visible = true
 	_next()
 
@@ -220,6 +225,13 @@ func _menu_buttons() -> void:
 		_button(tp.question, func(): _ask(ti))
 		if asked.has(key):   # asked already: dimmed (the font has no ✓)
 			choices.get_child(choices.get_child_count() - 1).modulate = Color(1, 1, 1, 0.6)
+	# what the game's state adds (Vesna takes the herbs…), first in the list
+	if hooks != null:
+		for x in hooks.extra_topics(p.id):
+			_button(x.question, func():
+				pending = x.run.call()
+				_next())
+			choices.move_child(choices.get_child(choices.get_child_count() - 1), 0)
 	_button("Бувай", _close)
 
 
