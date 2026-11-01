@@ -179,15 +179,6 @@ func _build_panel() -> void:
 	sb.set_border_width_all(2)
 	sb.border_color = Color(0.85, 0.77, 0.57)
 	panel.add_theme_stylebox_override("panel", sb)
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	var vw := get_viewport().get_visible_rect().size
-	var w := minf(560.0, vw.x - 24)
-	var h := minf(620.0, vw.y - 40)
-	panel.custom_minimum_size = Vector2(w, h)
-	panel.offset_left = -w / 2.0
-	panel.offset_top = -h / 2.0
-	panel.offset_right = w / 2.0
-	panel.offset_bottom = h / 2.0
 	panel.visible = false
 	ui.add_child(panel)
 	var col := VBoxContainer.new()
@@ -203,13 +194,14 @@ func _build_panel() -> void:
 	var close := _btn(t("ui.misc.71"), false)
 	close.pressed.connect(close_sheet)
 	head.add_child(close)
-	var row := HBoxContainer.new()
+	var row := HFlowContainer.new()   # (the tabs wrap on a narrow phone)
+	row.add_theme_constant_override("h_separation", 6)
+	row.add_theme_constant_override("v_separation", 6)
 	col.add_child(row)
 	for tb in [["ui.misc.74", "stats"], ["ui.misc.76", "skills"], ["ui.tab.satchel", "satchel"], ["ui.misc.78", "quests"]]:
 		var b := _btn(t(tb[0]), false)
 		b.set_meta("tab", tb[1])
 		b.set_meta("key", tb[0])
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(func(): open(tb[1]))
 		row.add_child(b)
 		tabs.append(b)
@@ -221,6 +213,34 @@ func _build_panel() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 6)
 	scroll.add_child(body)
+	get_viewport().size_changed.connect(_layout)
+	_layout()
+
+
+## fit the window and the buttons to the screen: centred on a wide one,
+## edge to edge (under the HUD) on a phone
+func _layout() -> void:
+	var vw := get_viewport().get_visible_rect().size
+	var narrow := vw.x < 640.0
+	var w := minf(560.0, vw.x - 24.0)
+	var top := 140.0 if narrow else maxf(20.0, (vw.y - 620.0) / 2.0)
+	var h := (vw.y - top - 20.0) if narrow else minf(620.0, vw.y - top - 20.0)
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.position = Vector2((vw.x - w) / 2.0, top)
+	panel.custom_minimum_size = Vector2(w, h)
+	panel.size = Vector2(w, h)
+	# the HUD's two buttons: top right, or under the HUD card on a phone
+	_place_buttons()
+
+
+## on a phone the HUD's buttons sit under its card, which grows with the text
+func _place_buttons() -> void:
+	var narrow := get_viewport().get_visible_rect().size.x < 640.0
+	var y := 56.0
+	if narrow and hud.card != null:
+		y = hud.card.position.y + hud.card.size.y + 8.0
+	buttons.offset_top = y
+	buttons.offset_bottom = y + 40.0
 
 
 func is_open() -> bool:
@@ -230,6 +250,7 @@ func is_open() -> bool:
 func open(which: String) -> void:
 	if m.editing or (m.fading and not panel.visible):
 		return
+	_layout()
 	m.fading = true   # (he stands while the sheet is open; time stops too, hud.gd)
 	tab = which
 	panel.visible = true
@@ -293,7 +314,7 @@ func _fill() -> void:
 		"skills":
 			for r in _skills():
 				var v := _card()
-				v.add_child(_text("%s · %s   %s" % [r.name, t("ui.skills.level", {"level": r.level}), t("ui.skills.feeds", {"stat": r.stat})], 16, Color(0.2, 0.14, 0.1), true))
+				v.add_child(_text("%s · %s · %s" % [r.name, t("ui.skills.level", {"level": r.level}), _plain(t("ui.skills.feeds", {"stat": r.stat}))], 16, Color(0.2, 0.14, 0.1), true))
 				var bar := ProgressBar.new()
 				bar.show_percentage = false
 				bar.custom_minimum_size = Vector2(0, 8)
@@ -383,4 +404,5 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_d: float) -> void:
+	_place_buttons()
 	buttons.visible = not m.editing and not (m.fading and not panel.visible)

@@ -254,6 +254,12 @@ func _process(delta: float) -> void:
 			state.add_talked(id)
 	_check_quests()
 	_refresh()
+	# (on a phone the toast sits under the HUD card and its buttons)
+	if get_viewport().get_visible_rect().size.x < 640.0:
+		toast.offset_top = card.position.y + card.size.y + 60.0
+		toast.offset_left = -get_viewport().get_visible_rect().size.x / 2.0 + 12.0
+		toast.offset_right = -toast.offset_left
+		toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if toast.modulate.a > 0.0:
 		toast.modulate.a = maxf(0.0, toast.modulate.a - delta * 0.25)
 
