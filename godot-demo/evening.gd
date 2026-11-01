@@ -41,6 +41,35 @@ func setup(maidan: Node2D, the_hud: Node, the_state: Node) -> void:
 		if b.get("id", "") == "vatra":
 			fire_at = m.P(b.at[0], b.at[1])
 	_build_ui()
+	_build_flame()
+
+
+## the fire's flames (Sunny's six frames), flickering from dusk to dawn
+var flame: AnimatedSprite2D
+func _build_flame() -> void:
+	var sf := SpriteFrames.new()
+	sf.set_animation_speed("default", 9)
+	for i in range(1, 7):
+		var tex: Texture2D = m._tex("vatra_flame/flame_%d" % i)
+		if tex != null:
+			sf.add_frame("default", tex)
+	if sf.get_frame_count("default") == 0:
+		return
+	flame = AnimatedSprite2D.new()
+	flame.sprite_frames = sf
+	flame.centered = false
+	var t0: Texture2D = sf.get_frame_texture("default", 0)
+	flame.scale = Vector2.ONE * (m.metre / 88.0)
+	# it sorts at the ring's front edge (so the stones never cover it), but is
+	# drawn rising from the middle of the fire
+	var lift: float = 1.0 * m.metre
+	flame.offset = Vector2(-t0.get_width() / 2.0, -t0.get_height() - lift / flame.scale.y)
+	flame.position = fire_at + Vector2(0, lift)
+	var mat := CanvasItemMaterial.new()
+	mat.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED   # (it gives light, the night does not darken it)
+	flame.material = mat
+	m.world.add_child(flame)
+	flame.play()
 
 
 func knows(id: String) -> bool:
@@ -191,6 +220,8 @@ func teach_topic(person: String) -> Array:
 
 func _process(_d: float) -> void:
 	var mi: int = hud.minute
+	if flame != null:
+		flame.visible = mi >= EVENING_FROM or mi < 6 * 60
 	var evening: bool = mi >= EVENING_FROM and mi < EVENING_UNTIL
 	near = evening and not panel.visible and not m.editing and not m.fading \
 		and m.player.position.distance_to(fire_at) < REACH * m.metre \
