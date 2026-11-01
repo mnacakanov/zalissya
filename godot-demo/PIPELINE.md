@@ -102,7 +102,9 @@ godot-demo/
    - nothing blocks the door;
    - the furniture is solid where it should be.
 
-   Then take the flat renders out again.
+   **Leave the flat renders in** until the paint-over arrives: the game
+   is playable and testable at once, and the painting simply replaces the
+   two pictures, with the same plan.
 5. **Paint it** (a Muse agent, or a person). Paint over
    `model/exterior_color.png` and `model/interior_color.png`:
    - use the `*_ink.png` (lines), `*_depth.png` and `*_normal.png` renders
