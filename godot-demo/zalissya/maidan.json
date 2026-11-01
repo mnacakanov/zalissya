@@ -5,6 +5,8 @@
   "bounds": [-62, -58, 72, 72],
   "start": [0, 13],
   "zoom": 0.6,
+  "tree_scale": 0.6,
+  "see_through": 2.6,
   "maidan": {"center": [0, -5], "radius": [15, 10], "texture": "ground_maidan"},
   "areas": [
     {"id": "bereh", "texture": "ground_bereh", "color": "#6f6449", "center": [-16, 29], "radius": [12.5, 8.5], "wobble": 0.08},
@@ -53,11 +55,11 @@
     {"id": "diizhka", "name": "Діжка", "kind": "sprite", "file": "props/diizhka/diizhka", "at": [-13.4, 3.0], "size": [1.2, 0.8], "footprint": [[-71, -18], [11, 10], [63, -10]]}
   ],
   "forests": [
-    {"name": "Ліс за хутором", "seed": 7, "spacing": 5.5, "kinds": {"dub": 5, "bereza": 3, "smereka": 2},
+    {"name": "Ліс за хутором", "seed": 7, "spacing": 4.4, "kinds": {"dub": 5, "bereza": 3, "smereka": 2},
      "outline": [[-40, -26], [-24, -27], [-10, -30], [8, -31], [20, -29], [32, -24], [42, -14], [52, -10], [72, -12], [72, -58], [-40, -58]]},
-    {"name": "Гай на сході", "seed": 3, "spacing": 6.5, "kinds": {"bereza": 4, "dub": 3},
+    {"name": "Гай на сході", "seed": 3, "spacing": 5.2, "kinds": {"bereza": 4, "dub": 3},
      "outline": [[34, 4], [44, 0], [58, 2], [72, -2], [72, 36], [30, 36], [26, 22]]},
-    {"name": "Ліс на заході", "seed": 11, "spacing": 5.0, "kinds": {"smereka": 4, "dub": 3, "bereza": 2},
+    {"name": "Ліс на заході", "seed": 11, "spacing": 4.0, "kinds": {"smereka": 4, "dub": 3, "bereza": 2},
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
   "props": [

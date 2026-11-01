@@ -29,6 +29,7 @@ var debug := false
 var debug_layer: Node2D
 var hud_info: Label
 var stick := Vector2.ZERO
+var hole_r := 1.3              # metres: the see-through hole round him in a forest (maidan.json "see_through")
 var stick_touch := -1
 var stick_origin := Vector2.ZERO
 var stick_ui: Control
@@ -51,6 +52,7 @@ func _ready() -> void:
 	style = data.get("style", "pillars")
 	layout = JSON.parse_string(FileAccess.get_file_as_string("res://styles/%s/layout.json" % style))
 	k = layout.get("scale", 1.0)
+	hole_r = float(data.get("see_through", hole_r))
 	metre = layout.metre * k
 	# The ground's two directions come from the hut's own footprint: its
 	# door wall (left corner → front corner) runs east, its side wall (front
@@ -536,7 +538,7 @@ void fragment() {
 	if (hole_on > 0.0) {
 		// an upright oval, a little taller than wide, soft at its edge
 		vec2 d = (world_pos - hole_center) / vec2(hole_r, hole_r * 1.35);
-		float k = smoothstep(0.65, 1.0, length(d));
+		float k = smoothstep(0.55, 1.0, length(d));
 		COLOR.a *= mix(1.0, mix(0.12, 1.0, k), hole_on);
 	}
 }"""
@@ -639,6 +641,10 @@ func _build_forests() -> void:
 		for q in r.points:
 			pts.append(P(q[0], q[1]))
 		lanes.append([pts, (float(r.width) / 2.0 + 1.5) * (east.length() + north.length()) / 2.0])
+	# the painted trees are drawn at their real 10–15 m, which dwarfs the huts
+	# and the kobzar at this camera; games shrink trees, and so do we
+	# (maidan.json "tree_scale")
+	var tree_k: float = data.get("tree_scale", 1.0)
 	var n := 0
 	for f in forests:
 		var rnd := RandomNumberGenerator.new()
@@ -695,7 +701,7 @@ func _build_forests() -> void:
 				var pic: Dictionary = pics[rnd.randi() % pics.size()]
 				_build_sprite({"id": "tree", "name": f.get("name", "Ліс"), "file": pic.file, "at": [mx, my],
 					"size": pic.size, "footprint": pic.footprint, "sway": 1.0,
-					"scale": rnd.randf_range(0.8, 1.15) * float(pic.get("px_scale", 1.0)), "flip": rnd.randf() < 0.5})
+					"scale": rnd.randf_range(0.8, 1.15) * float(pic.get("px_scale", 1.0)) * tree_k, "flip": rnd.randf() < 0.5})
 				n += 1
 			y += step * 0.87   # (rows a little closer than the columns: a looser, less gridded look)
 	print("forest: %d trees" % n)
@@ -1117,14 +1123,14 @@ func _process(delta: float) -> void:
 				# a tree: a hole round him instead, whenever any of its picture
 				# could cover him, and only a light fade of the whole tree
 				var chest := player.position + Vector2(0, -0.9 * metre)
-				var near: bool = player.position.y < fy and b.rect.grow(1.4 * metre).has_point(chest)
+				var near: bool = player.position.y < fy and b.rect.grow(hole_r * metre).has_point(chest)
 				var mat: ShaderMaterial = b.hole
 				var on: float = mat.get_shader_parameter("hole_on")
 				var to := 1.0 if near else 0.0
 				if on != to or near:
 					mat.set_shader_parameter("hole_on", move_toward(on, to, delta * 5.0))
 					mat.set_shader_parameter("hole_center", player.global_position + Vector2(0, -0.9 * metre))
-					mat.set_shader_parameter("hole_r", 1.3 * metre)
+					mat.set_shader_parameter("hole_r", hole_r * metre)
 				target = 0.8 if behind else 1.0
 			b.fade.modulate.a = move_toward(b.fade.modulate.a, target, delta * 4.0)
 			# (and the pit itself shows only from inside, not through a roof
