@@ -6,7 +6,6 @@ The first piece of the khutir rebuilt in Godot, in the owner's chosen style,
 **Pillars-lite**: the Pillars camera angle, with the art in the ink and
 watercolour of [`ART_STYLE.md`](../../ART_STYLE.md). It is the Godot demo's
 main scene, live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
-The style test is behind the "Тест стилів" button.
 
 The light is Pillars-lite's own:
 - by day, a sun rakes the normal-mapped art;

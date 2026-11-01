@@ -1,5 +1,5 @@
 {
-  "_note": "See styles/bg2/layout.json for what the numbers mean.",
+  "_note": "Points are sprite pixels from each PNG's bottom-centre anchor. Footprints are the hut's ground corners [left, front, right] (the back corner follows). 'metre' = sprite px per metre on the exterior (from the door, 1.9 m); 'scale' = exterior sprite to scene. The interior is fitted onto the exterior by its own three corners. Check with F3.",
   "camera": "iso",
   "metre": 88,
   "scale": 0.73,
