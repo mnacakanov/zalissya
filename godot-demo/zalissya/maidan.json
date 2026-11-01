@@ -20,7 +20,7 @@
     {"id": "komora", "name": "Комора", "kind": "khata", "at": [-17, -19.5], "facing": "south"},
     {"id": "lyokh", "name": "Льох", "kind": "khata", "at": [24, -20], "facing": "north"},
     {"id": "kaplytsia", "name": "Каплиця", "kind": "khata", "at": [0, -7.5], "facing": "south"},
-    {"id": "krynytsia", "name": "Криниця", "kind": "sprite", "file": "huts/krynytsia/hut_exterior", "at": [5, -4.5], "size": [1.6, 1.6], "footprint": [[-213, -70], [-103, -32], [1, -71]]},
+    {"id": "krynytsia", "name": "Криниця", "kind": "sprite", "file": "huts/krynytsia/hut_exterior", "at": [5.1, -4.5], "size": [1.8, 1.6], "footprint": [[-213, -70], [-103, -32], [1, -71]]},
     {"id": "vatra", "name": "Ватра", "kind": "sprite", "file": "huts/vatra/hut_exterior", "at": [0, 0], "size": [1.8, 1.2], "footprint": [[-99, -40], [24, 3], [102, -27]]},
     {"id": "kuznia", "name": "Кузня Радека", "kind": "khata", "at": [-15.5, 0], "facing": "east"},
     {"id": "plug", "name": "Плуг", "kind": "sprite", "file": "props/plug/plug", "at": [-6, 10], "size": [2.6, 0.8], "footprint": [[-117,-53],[61,8],[113,-12]]},
