@@ -73,6 +73,11 @@ func _build_flame() -> void:
 	flame.play()
 
 
+## is it the evening's hour, when the khutir gathers at the fire
+static func is_evening(minute: int) -> bool:
+	return minute >= EVENING_FROM and minute < EVENING_UNTIL
+
+
 func knows(id: String) -> bool:
 	return id == "holota" or state.has("song:" + id)
 
@@ -161,7 +166,7 @@ func _sit() -> void:
 	if panel.visible:
 		return
 	var mi: int = hud.minute
-	if mi < EVENING_FROM or mi >= EVENING_UNTIL:
+	if not is_evening(mi):
 		hud.show_toast(hud.t("ui.play.daytime"))
 		return
 	if state.count("playedDay") == hud.day:
@@ -207,7 +212,7 @@ func _process(_d: float) -> void:
 	var mi: int = hud.minute
 	if flame != null:
 		flame.visible = mi >= EVENING_FROM or mi < 6 * 60
-	var evening: bool = mi >= EVENING_FROM and mi < EVENING_UNTIL
+	var evening: bool = is_evening(mi)
 	near = evening and not panel.visible and not m.editing and not m.fading \
 		and m.player.position.distance_to(fire_at) < REACH * m.metre \
 		and (hud.people == null or (hud.people.talking < 0 and hud.people.near < 0))

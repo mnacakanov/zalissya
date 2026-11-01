@@ -100,7 +100,7 @@ map, save and reload.
 - [ ] **2.7 "A window is open"**: six scripts set and clear `m.fading`, and
   the fade between levels uses it too. Replace with a small counter
   (`m.pause(who)` / `m.resume(who)`) so one closing cannot unpause another.
-- [ ] **2.8 Small repeats**: the evening's hours typed again in
+- [x] **2.8 Small repeats**: the evening's hours typed again in
   `hud._objective` (use `evening.gd`'s constants); the maidan's oval built
   twice in `maidan.gd` (use `_oval`); the name label made four times in
   `maidan.gd`; the WASD read twice in `_physics_process`.

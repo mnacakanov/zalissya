@@ -229,6 +229,15 @@ func _label(text := "") -> Label:
 	return l
 
 
+## a building's name over its middle, shown with F3 (the outlines)
+func _name_tag(inner: Node2D, text: String, foot: PackedVector2Array, off: Vector2) -> Label:
+	var l := _label(text)
+	l.position = (foot[0] + foot[2]) / 2.0 + off
+	l.visible = false
+	inner.add_child(l)
+	return l
+
+
 # --- the ground: grass, the trodden maidan, the road and paths ------------------------
 func _build_ground() -> void:
 	var bd: Array = data.get("bounds", [-30, -24, 30, 26])
@@ -251,11 +260,7 @@ func _build_ground() -> void:
 	# the maidan: bare trodden earth in a rough oval, its edge feathered
 	var m: Dictionary = data.get("maidan", {})
 	if not m.is_empty():
-		var oval := PackedVector2Array()
-		for i in 48:
-			var a := TAU * i / 48.0
-			var wob := 1.0 + 0.06 * sin(3.0 * a + 1.3) + 0.04 * sin(5.0 * a)
-			oval.append(P(m.center[0] + cos(a) * m.radius[0] * wob, m.center[1] + sin(a) * m.radius[1] * wob))
+		var oval := _oval(m.center, m.radius, 0.06)
 		# (its own trodden-earth tile when there is one; until then the road's,
 		# its ruts turned along the road, as if the carts cross the maidan)
 		var road_dir := Vector2.DOWN
@@ -383,10 +388,7 @@ func _build_khata(b: Dictionary) -> void:
 		walls.add_child(cp)
 		if h.has("cellar") and h.has("descend"):
 			_build_cellar(b, h, dir, _fit(_pts(h.exterior.footprint), foot))
-		var nl := _label(b.get("name", b.id))
-		nl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
-		nl.visible = false
-		inner.add_child(nl)
+		var nl := _name_tag(inner, b.get("name", b.id), foot, Vector2(-60, -5.5 * metre))
 		buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "fade": ext, "label": nl,
 			"rect": _sprite_rect(ext), "strips": _strips(ext, foot)})
 		return
@@ -441,10 +443,7 @@ func _build_khata(b: Dictionary) -> void:
 			_wall(a, c)
 	if h.has("cellar") and h.has("descend"):
 		_build_cellar(b, h, dir, _fit(_pts(inn.footprint), foot))
-	var name_l := _label(b.get("name", b.id))
-	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-60, -5.5 * metre)
-	name_l.visible = false
-	inner.add_child(name_l)
+	var name_l := _name_tag(inner, b.get("name", b.id), foot, Vector2(-60, -5.5 * metre))
 	var door := foot[dw].lerp(foot[(dw + 1) % 4], (d0 + d1) / 2.0)
 	var outward := (door - _centroid(foot)).normalized()
 	var entry := {"node": node, "inner": inner, "foot": foot, "walk_in": true, "fade": ext, "label": name_l,
@@ -528,10 +527,7 @@ func _build_cellar(b: Dictionary, h: Dictionary, dir: String, room_t: Transform2
 			q.append(v.call(p))
 		stairs = {"quad": q, "foot": v.call(cel.stairs.foot), "top": v.call(cel.stairs.top), "rise": float(cel.stairs.rise)}
 	var nm: String = cel.get("name", "Льох")
-	var lbl := _label(nm)
-	lbl.position = (foot[0] + foot[2]) / 2.0 + Vector2(-30, -3.0 * metre)
-	lbl.visible = false
-	inner.add_child(lbl)
+	var lbl := _name_tag(inner, nm, foot, Vector2(-30, -3.0 * metre))
 	extra_rooms.append({"node": node, "inner": inner, "foot": foot, "walk_in": true, "label": lbl,
 		"name": nm, "underground": true, "lamp": v.call(cel.get("lamp", [0, -100])), "stairs": stairs})
 
@@ -671,10 +667,7 @@ func _build_sprite(b: Dictionary) -> void:
 		spr.offset.x = -spr.texture.get_width() / 2.0 if spr.texture != null else 0.0
 	spr.position = foot[0] - src[0] * k * sc
 	inner.add_child(spr)
-	var name_l := _label(b.get("name", b.id))
-	name_l.position = (foot[0] + foot[2]) / 2.0 + Vector2(-50, -4.0 * metre)
-	name_l.visible = false
-	inner.add_child(name_l)
+	var name_l := _name_tag(inner, b.get("name", b.id), foot, Vector2(-50, -4.0 * metre))
 	if b.get("solid", true):
 		var cp := CollisionPolygon2D.new()
 		cp.polygon = foot
@@ -1183,21 +1176,22 @@ func _input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP: _zoom(1.1)
 
 
-func _physics_process(_delta: float) -> void:
-	if editing:
-		# the editor's free camera: he floats through walls, faster when zoomed out
-		var e := Vector2.ZERO
-		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): e.y -= 1
-		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): e.y += 1
-		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT): e.x -= 1
-		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): e.x += 1
-		player.position += e.limit_length(1.0) * SPEED * 3.0 / cam.zoom.x * _delta
-		return
+## where WASD or the arrows point
+func _keys_dir() -> Vector2:
 	var v := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): v.y -= 1
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): v.y += 1
 	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT): v.x -= 1
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): v.x += 1
+	return v
+
+
+func _physics_process(_delta: float) -> void:
+	if editing:
+		# the editor's free camera: he floats through walls, faster when zoomed out
+		player.position += _keys_dir().limit_length(1.0) * SPEED * 3.0 / cam.zoom.x * _delta
+		return
+	var v := _keys_dir()
 	var joy := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
 	if joy.length() > 0.2:
 		v += joy

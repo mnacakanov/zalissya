@@ -345,7 +345,7 @@ func _objective() -> String:
 			return t("quest.herbs.bring", {"min": mini(state.count("herbStock"), 5)})
 		return t("quest.herbs.1", {"min": mini(int(state.data.herbs), 5)})
 	if not state.has("found:evening"):
-		return t("quest.evening.now") if minute >= 18 * 60 and minute < 23 * 60 + 30 else t("quest.evening.wait")
+		return t("quest.evening.now") if evening != null and evening.is_evening(minute) else t("quest.evening.wait")
 	return t("quest.spirits.1", {"metSpirits": int(people != null and people.met.has("domovyk")) + int(people != null and people.met.has("lisovyk"))})
 
 
