@@ -28,6 +28,8 @@ var body: VBoxContainer
 var tabs: Array[Button] = []
 var tab := "stats"
 var buttons: HBoxContainer
+var sheet_scroll: ScrollContainer
+var drag_y := -1.0
 
 
 func setup(maidan: Node2D, the_hud: Node, the_state: Node) -> void:
@@ -208,9 +210,12 @@ func _build_panel() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.scroll_deadzone = 8
+	sheet_scroll = scroll
 	col.add_child(scroll)
 	body = VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.mouse_filter = Control.MOUSE_FILTER_PASS
 	body.add_theme_constant_override("separation", 6)
 	scroll.add_child(body)
 	get_viewport().size_changed.connect(_layout)
@@ -275,6 +280,9 @@ func _text(s: String, size := 15, col := Color(0.2, 0.14, 0.1), bold := false) -
 	var l := Label.new()
 	l.text = s
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# (a wrapped label must know its width to know its height, or the list
+	# measures short and will not scroll to its end)
+	l.custom_minimum_size.x = maxf(100.0, panel.custom_minimum_size.x - 64.0)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", col)
 	if bold:
@@ -285,6 +293,7 @@ func _text(s: String, size := 15, col := Color(0.2, 0.14, 0.1), bold := false) -
 
 func _card() -> VBoxContainer:
 	var pc := PanelContainer.new()
+	pc.mouse_filter = Control.MOUSE_FILTER_PASS   # (a finger dragging on a card scrolls the list)
 	pc.add_theme_stylebox_override("panel", _parch(Color(0.906, 0.851, 0.725), 10))
 	body.add_child(pc)
 	var v := VBoxContainer.new()
@@ -317,6 +326,7 @@ func _fill() -> void:
 				v.add_child(_text("%s · %s · %s" % [r.name, t("ui.skills.level", {"level": r.level}), _plain(t("ui.skills.feeds", {"stat": r.stat}))], 16, Color(0.2, 0.14, 0.1), true))
 				var bar := ProgressBar.new()
 				bar.show_percentage = false
+				bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				bar.custom_minimum_size = Vector2(0, 8)
 				bar.max_value = 1.0
 				bar.value = 1.0 if r.next == null else minf(1.0, float(r.done) / float(r.next))
@@ -372,6 +382,27 @@ func _fill() -> void:
 				v.add_child(_text("%s · %s" % [t(q[1]), t("ui.misc.84")], 16, Color(0.2, 0.14, 0.1), true))
 				v.add_child(_text(t(q[2], q[3]), 13, dim))
 			body.add_child(_text(t("ui.quests.secret"), 13, dim))
+
+
+## dragging a finger (or the mouse) anywhere on the window scrolls the list:
+## the web build's touch does not always reach the ScrollContainer itself
+func _input(event: InputEvent) -> void:
+	if not panel.visible:
+		return
+	var r := sheet_scroll.get_global_rect()
+	if event is InputEventScreenTouch:
+		drag_y = event.position.y if event.pressed and r.has_point(event.position) else -1.0
+	elif event is InputEventScreenDrag and drag_y >= 0.0:
+		sheet_scroll.scroll_vertical -= int(event.position.y - drag_y)
+		drag_y = event.position.y
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.pressed and r.has_point(event.position):
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			sheet_scroll.scroll_vertical += 60
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			sheet_scroll.scroll_vertical -= 60
+			get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
