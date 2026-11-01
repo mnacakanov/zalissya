@@ -1,21 +1,13 @@
 {
-  "_note": "Points are sprite pixels from each PNG's bottom-centre anchor. Footprints are the hut's ground corners [left, front, right] (the back corner follows). 'metre' = sprite px per metre on the exterior (from the door, 1.9 m); 'scale' = exterior sprite to scene. The interior is fitted onto the exterior by its own three corners. Check with F3.",
+  "_note": "Points are sprite pixels from each PNG's bottom-centre anchor. Footprints are the hut's ground corners [left, front, right] (the back corner follows). 'metre' = sprite px per metre on the exterior (from the door, 1.9 m); 'scale' = exterior sprite to scene. The hut's exterior footprint sets the ground's east and north (maidan.gd); the hut itself is the fallback for a khata with no art of its own. Check with F3.",
   "camera": "iso",
   "metre": 88,
   "scale": 0.73,
   "hut": {
     "exterior": {"file": "hut_exterior", "footprint": [[-297, -103], [25, -3], [300, -115]]},
-    "interior": {
-      "file": "hut_interior",
-      "footprint": [[-322, -120], [26, -3], [323, -140]],
-      "pich": [-185, -172],
-      "prokip": [-95, -125],
-      "solids": [[73, -220, 135, 45], [-70, -198, 140, 40], [155, -150, 170, 70]]
-    },
+    "interior": {"file": "hut_interior", "footprint": [[-322, -120], [26, -3], [323, -140]], "pich": [-185, -172]},
     "door": [0.38, 0.60]
   },
   "walk": {"file": "kobzar_walk_4dir", "rows": ["down", "up", "right", "left"]},
-  "horod": {"file": "horod", "metres": 5.5},
-  "skull_stake": {"file": "skull_stake", "metres": 1.7},
-  "heights": {"kobzar": 1.75, "npc_prokip": 1.72, "cow": 1.45, "bench": 0.55}
+  "heights": {"kobzar": 1.75}
 }

@@ -26,11 +26,14 @@ map, save and reload.
     line; the HUD's place name comes from `maidan.json`'s `name` (Ukrainian
     only): give buildings a locale key.
   - The editor's own words (`editor.gd`) are a developer tool's: leave them.
-- [ ] **1.3 The web build ships art nothing uses** (about 4 MB): the old
+- [x] **1.3 The web build ships art nothing uses** (about 4 MB): the old
   `trees/flat/dub_a..c`, `bereza_a..c` (the catalog uses `k_*`); `cow`,
   `horod`, `skull_stake`, `npc_prokip`, `bench` (+ `_n`) at the style's root;
   `hut_interior` (the style's fallback hut; every khata has its own art).
   Delete them or add them to `export_presets.cfg`'s `exclude_filter`.
+  *Done: the style-test pictures and old trees deleted (git keeps them);
+  the standing `kobzar.png` excluded from the build; `hut_interior` kept as
+  the fallback hut.*
 - [ ] **1.4 "День / ніч" (N) winds the clock back** (`hud.gd`: 21:10 → 08:00
   the same day). A developer's switch: move it behind F3/`?edit` (1.5), and
   have it move the clock *forward* to the next morning or evening.
@@ -43,7 +46,7 @@ map, save and reload.
   name "Залісся демо"), `README.md` title, `maidan.gd`'s header comment (the
   style test, "labelled blocks"). The folder name `godot-demo/` stays for now
   (CI, Pages path and docs point at it).
-- [ ] **1.7 Style-test keys in `styles/pillars/layout.json`**: `horod`,
+- [x] **1.7 Style-test keys in `styles/pillars/layout.json`**: `horod`,
   `skull_stake`, the heights of `npc_prokip`, `cow`, `bench`, and the hut
   interior's `prokip` and `solids`. Keep `hut.exterior.footprint` (it sets
   the ground's east/north) and `walk`, `metre`, `scale`.
