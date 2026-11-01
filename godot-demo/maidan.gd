@@ -1028,6 +1028,10 @@ func _build_ui() -> void:
 		bz.custom_minimum_size = Vector2(44, 0)
 		bz.pressed.connect(func(): _zoom(z[1]))
 		row.add_child(bz)
+	var b_st := Button.new()
+	b_st.text = "Тест стилів"
+	b_st.pressed.connect(func(): get_tree().change_scene_to_file("res://styles.tscn"))
+	row.add_child(b_st)
 	hud_info = _label()
 	top.add_child(hud_info)
 	var hint := _label("WASD / стрілки / стік / тягни пальцем · N або Y: день/ніч · F3: контури й назви · −/= або коліщатко: масштаб")
