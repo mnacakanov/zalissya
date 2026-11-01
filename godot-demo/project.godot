@@ -1,8 +1,8 @@
-; Zalissya — Godot technical demo (see README.md). Not the game.
+; Zalissya in Godot: the game, on its way from the 2D one (see README.md, GAME_PLAN.md).
 config_version=5
 
 [application]
-config/name="Залісся демо"
+config/name="Залісся"
 config/icon="res://icons/icon_512.png"
 run/main_scene="res://maidan.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")

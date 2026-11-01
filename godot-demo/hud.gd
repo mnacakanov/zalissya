@@ -5,8 +5,8 @@ extends Node
 ##   · top left, a dark card: where you are and the time of day, and under it
 ##     the one current objective (as the 2D game's HUD: client/src/App.tsx);
 ##   · a clock: a day passes in about ten minutes (400 ms a game minute), and
-##     night falls and lifts by it (the maidan's own lighting). The "День /
-##     ніч" button still works: it moves the clock to evening or morning;
+##     night falls and lifts by it (the maidan's own lighting). The
+##     developer's "День / ніч" (?edit) moves it on to evening or morning;
 ##   · "✦ Знайдено" when a step is done.
 ##
 ## All its words come from the 2D game's locales (locales/uk.json, en.json,
@@ -19,8 +19,6 @@ extends Node
 
 const MS_PER_MINUTE := 400.0      # client/src/systems/time.ts: MS_PER_GAME_MINUTE
 const START_MINUTE := 8 * 60
-const DAWN := 6 * 60
-const DUSK := 20 * 60
 const NIGHT_FROM := 21 * 60
 const NIGHT_UNTIL := 4 * 60
 const MEET := ["myroslav", "vesna", "radek"]   # quest "meet": the three villagers
@@ -112,7 +110,7 @@ func _style(bg: Color, border := Color(0, 0, 0, 0), radius := 12) -> StyleBoxFla
 func _build_card() -> void:
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _style(Color(0.11, 0.08, 0.035, 0.62)))
-	card.position = Vector2(12, 56)
+	card.position = Vector2(12, m.ui_top)
 	card.custom_minimum_size = Vector2(260, 0)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(card)
@@ -249,9 +247,15 @@ func _process(delta: float) -> void:
 				day += 1
 				state.set_count("day", day)
 			state.set_count("clock", minute)
-	# the "День / ніч" button (or N) turned the light by hand: the clock follows
+	# the developer's "День / ніч" (or N) turned the light by hand: the clock
+	# goes forward to that evening, or to the next morning (never back)
 	if m.night != night_by_clock:
-		minute = NIGHT_FROM + 10 if m.night else START_MINUTE
+		if m.night:
+			minute = NIGHT_FROM + 10
+		else:
+			if minute >= NIGHT_FROM:
+				day += 1
+			minute = START_MINUTE
 		night_by_clock = m.night
 	elif _is_night(minute) != night_by_clock:
 		night_by_clock = _is_night(minute)

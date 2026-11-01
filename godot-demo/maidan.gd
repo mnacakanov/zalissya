@@ -1,11 +1,12 @@
 extends Node2D
-## Zalissya's maidan in the chosen style (Pillars-lite), the first piece of
-## the khutir built in Godot. Everything on it comes from one data file,
+## Zalissya's maidan, the game's main scene, in the chosen style
+## (Pillars-lite, styles/pillars/). Everything on it comes from one data file,
 ## zalissya/maidan.json, laid out in metres on the ground (x east, y south,
 ## the fire at 0, 0), so a collaborator can add or move a building without
-## touching this script. The art is the style's (styles/pillars/): its hut,
-## with the walk-in room from the style test, and its kobzar. Things with no
-## art yet stand as labelled blocks of their real size, to be replaced.
+## touching this script (or with the level editor, editor.gd). This script
+## builds the world (ground, buildings, forests, props, light, the kobzar) and
+## makes the game's other scripts: people, state, hud, herbs, sheet, evening,
+## work, map.
 
 const DATA := "res://zalissya/maidan.json"
 const Editor := preload("res://editor.gd")
@@ -48,6 +49,7 @@ var fader: ColorRect
 var fading := false
 var editing := false                      # the level editor is on (editor.gd): the game pauses
 var prop_nodes: Array[Dictionary] = []    # each prop's sprite and its entry, for the editor
+var ui_top := 12.0                        # where the HUD starts (lower under the developer's row, ?edit)
 
 
 func _ready() -> void:
@@ -82,7 +84,7 @@ func _ready() -> void:
 		elif b.kind == "sprite":
 			_build_sprite(b)
 		else:
-			_build_placeholder(b)
+			push_warning("maidan.json: a building of unknown kind: %s" % b.get("id", "?"))
 		# (the editor finds which entry a building came from)
 		if buildings.size() > n0:
 			buildings[n0]["src"] = {"list": "buildings", "i": bi}
@@ -684,14 +686,6 @@ func _build_sprite(b: Dictionary) -> void:
 		entry["hole"] = spr.material
 	elif b.get("strips", true):
 		entry["strips"] = _strips(spr, foot)
-	# a sign: a name always shown under it (for samples, such as the trees')
-	if b.has("sign"):
-		var sg := _label(b.sign)
-		sg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sg.custom_minimum_size = Vector2(260, 0)
-		sg.position = (foot[0] + foot[2]) / 2.0 + Vector2(-130, 0.4 * metre)
-		sg.add_theme_font_size_override("font_size", 24)
-		inner.add_child(sg)
 	buildings.append(entry)
 
 
@@ -787,45 +781,6 @@ func _build_forests() -> void:
 					"scale": rnd.randf_range(0.8, 1.15) * float(pic.get("px_scale", 1.0)) * tree_k, "flip": rnd.randf() < 0.5})
 				n += 1
 			y += step * 0.87   # (rows a little closer than the columns: a looser, less gridded look)
-	print("forest: %d trees" % n)
-
-
-## a thing with no art yet: a plain block of its real size, with its name
-func _build_placeholder(b: Dictionary) -> void:
-	var foot := _rect(b.at, b.get("size", [2, 2]))
-	var up := Vector2(0, -float(b.get("height", 2.0)) * metre)
-	var node := Node2D.new()
-	world.add_child(node)
-	var inner := Node2D.new()
-	node.add_child(inner)
-	var col := Color(0.55, 0.45, 0.33)
-	for face in [[foot[0], foot[1], 0.8], [foot[1], foot[2], 0.62]]:
-		var poly := Polygon2D.new()
-		poly.polygon = PackedVector2Array([face[0], face[1], face[1] + up, face[0] + up])
-		poly.color = Color(col.r * face[2], col.g * face[2], col.b * face[2], 0.85)
-		inner.add_child(poly)
-	var top := Polygon2D.new()
-	top.polygon = PackedVector2Array([foot[0] + up, foot[1] + up, foot[2] + up, foot[3] + up])
-	top.color = Color(col.r * 1.1, col.g * 1.1, col.b * 1.1, 0.85)
-	inner.add_child(top)
-	var line := Line2D.new()
-	line.points = PackedVector2Array([foot[0] + up, foot[1] + up, foot[2] + up, foot[3] + up, foot[0] + up])
-	line.width = 2
-	line.default_color = Color(0.2, 0.14, 0.08, 0.8)
-	inner.add_child(line)
-	var name_l := _label(b.get("name", b.id))
-	name_l.position = (foot[0] + foot[2]) / 2.0 + up + Vector2(-50, -30)
-	inner.add_child(name_l)
-	if b.get("solid", true):
-		var cp := CollisionPolygon2D.new()
-		cp.polygon = foot
-		walls.add_child(cp)
-	var r := Rect2(foot[0], Vector2.ZERO)
-	for p in foot:
-		r = r.expand(p)
-		r = r.expand(p + up)
-	buildings.append({"node": node, "inner": inner, "foot": foot, "walk_in": false, "id": b.id,
-		"fade": inner, "rect": r})
 
 
 ## Does a building's picture really cover this point (not just its canvas's
@@ -836,7 +791,7 @@ func _covers(b: Dictionary, at: Vector2) -> bool:
 		return false
 	var spr = b.fade
 	if not (spr is Sprite2D) or spr.texture == null:
-		return true   # a placeholder block: its box is its shape
+		return true   # (no picture: its box is its shape)
 	if not b.has("alpha"):
 		var src: Texture2D = spr.texture
 		if src is CanvasTexture:
@@ -1088,6 +1043,16 @@ func _build_ui() -> void:
 	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(fader)
+	hud_info = _label()
+	hud_info.visible = false   # (the developer's line: fps and metres, with F3)
+	# the developer's switches (outlines, day and night, zoom, the keys) are for
+	# whoever opens the game with ?edit, not for players
+	if Editor.allowed():
+		ui_top = 56.0
+	else:
+		hud_info.position = Vector2(12, 150)
+		layer.add_child(hud_info)
+		return
 	var width := get_viewport().get_visible_rect().size.x - 24
 	var top := VBoxContainer.new()
 	top.position = Vector2(12, 52.0 if mobile else 10.0)
@@ -1109,8 +1074,6 @@ func _build_ui() -> void:
 		bz.custom_minimum_size = Vector2(44, 0)
 		bz.pressed.connect(func(): _zoom(z[1]))
 		row.add_child(bz)
-	hud_info = _label()
-	hud_info.visible = false   # (the developer's line: fps and metres, with F3)
 	top.add_child(hud_info)
 	var hint := _label("WASD / стрілки / стік / тягни пальцем · N: день/ніч · M або Y: мапа · F3: контури й назви · −/= або коліщатко: масштаб")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1175,7 +1138,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
 			KEY_F3: _toggle_debug()
-			KEY_N: _set_night(not night)
+			KEY_N: if Editor.allowed(): _set_night(not night)
 			KEY_MINUS: _zoom(0.8)
 			KEY_EQUAL: _zoom(1.25)
 	elif event is InputEventMouseButton and event.pressed:
@@ -1306,6 +1269,9 @@ func _process(delta: float) -> void:
 	if fire != null and fire.enabled:
 		var t := Time.get_ticks_msec() * 0.001
 		fire.energy = 1.0 + 0.12 * sin(t * 9.0) + 0.08 * sin(t * 23.0 + 1.0)
+	if not debug:
+		return
+	# the developer's line (F3): fps, the time of day, where he stands
 	fps_hist.append(Engine.get_frames_per_second())
 	if fps_hist.size() > 120:
 		fps_hist.pop_front()

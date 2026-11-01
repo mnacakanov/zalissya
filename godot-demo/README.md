@@ -1,7 +1,8 @@
-# Godot demo
+# Zalissya in Godot
 
-Zalissya in Godot, on its way to becoming the game (see
-[`GAME_PLAN.md`](GAME_PLAN.md)). Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
+The Godot game, on its way to replacing the 2D one (see
+[`GAME_PLAN.md`](GAME_PLAN.md); the folder keeps its old name, `godot-demo/`,
+because CI, the Pages path and the docs point at it). Live at `https://mnacakanov.github.io/zalissya/godot-demo/`.
 
 ## Zalissya's maidan, the main scene
 
@@ -24,7 +25,10 @@ removed (Kateryna, 2026-11-01); they are in the git history before this note.
   the exterior), and `metre` (sprite px per metre), so people stand at real
   heights.
 - **Normals.** Run `tools/normals.py` over the PNGs whenever they change.
-- **Debug.** F3 or "Контури" shows the footprints, the walls and the solids.
+- **Debug.** F3 shows the footprints, the walls and the solids, and a line
+  with fps and where you stand in metres. With `?edit` in the address the
+  developer's row is shown too ("Контури", "День / ніч", zoom), N turns day
+  and night, and "Редагувати" opens the level editor.
 
 ## Icon
 

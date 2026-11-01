@@ -34,15 +34,15 @@ map, save and reload.
   *Done: the style-test pictures and old trees deleted (git keeps them);
   the standing `kobzar.png` excluded from the build; `hut_interior` kept as
   the fallback hut.*
-- [ ] **1.4 "День / ніч" (N) winds the clock back** (`hud.gd`: 21:10 → 08:00
+- [x] **1.4 "День / ніч" (N) winds the clock back** (`hud.gd`: 21:10 → 08:00
   the same day). A developer's switch: move it behind F3/`?edit` (1.5), and
   have it move the clock *forward* to the next morning or evening.
 
 ### Leftovers from the demo
-- [ ] **1.5 Developer controls shown to every player**: "Контури", "День /
+- [x] **1.5 Developer controls shown to every player**: "Контури", "День /
   ніч", "−" "+", the key-hint line (`maidan.gd` `_build_ui`). Show them only
   with `?edit` (`Editor.allowed()`) or F3. Keep zoom on the wheel and −/=.
-- [ ] **1.6 "Demo" labels**: `project.godot` ("technical demo. Not the game",
+- [x] **1.6 "Demo" labels**: `project.godot` ("technical demo. Not the game",
   name "Залісся демо"), `README.md` title, `maidan.gd`'s header comment (the
   style test, "labelled blocks"). The folder name `godot-demo/` stays for now
   (CI, Pages path and docs point at it).
@@ -50,11 +50,12 @@ map, save and reload.
   `skull_stake`, the heights of `npc_prokip`, `cow`, `bench`, and the hut
   interior's `prokip` and `solids`. Keep `hut.exterior.footprint` (it sets
   the ground's east/north) and `walk`, `metre`, `scale`.
-- [ ] **1.8 Dead code**: `maidan.gd` `_build_placeholder` (no data uses a
+- [x] **1.8 Dead code**: `maidan.gd` `_build_placeholder` (no data uses a
   third kind) and the `sign` option in `_build_sprite`; `print("forest…")`;
   the hidden developer line `hud_info` and `fps_hist`, rebuilt every frame
   (compute only when F3 shows it); `hud.gd` `DAWN`, `DUSK`;
-  `game_state.gd` `talked()`.
+  `game_state.gd` `talked()`. *(`talked()` turned out to be used by
+  `add_talked`: kept.)*
 - [ ] **1.9 Raw generations in the repo**: `styles/raw/` (21 MB) and
   `styles/pillars/kobzar_parts/`, excluded from the build. Ask Kateryna
   before deleting (they are references); `art/` is the usual place.

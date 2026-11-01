@@ -244,7 +244,7 @@ func _layout() -> void:
 ## on a phone the HUD's buttons sit under its card, which grows with the text
 func _place_buttons() -> void:
 	var narrow := get_viewport().get_visible_rect().size.x < 640.0
-	var y := 56.0
+	var y: float = m.ui_top
 	if narrow and hud.card != null:
 		y = hud.card.position.y + hud.card.size.y + 8.0
 	buttons.offset_top = y
