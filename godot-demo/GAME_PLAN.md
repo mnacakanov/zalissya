@@ -84,6 +84,8 @@ Each item is one GDScript file plus its tests (GUT), ported from the named TypeS
 
 **Status (B0):** `game_state.gd` keeps the game in the 2D save's own shape (`{x, y, area, talked[], herbs, flags[]}`, with the `day=` and `clock=` counters and the same flag helpers), saved 2.5 s after any change to this browser's storage (a file on desktop). The title card then offers **Продовжити** and **Нова гра**. (x, y) are Godot metres for now; a converter to the 2D map comes with the world.
 
+**Status (B7, a first piece):** `herbs.gd`: Vesna's five herbs grow in the meadow (maidan.json `herbs`), each with the glow of its colour; walk up and pick (E, T, A or the button). Each counts toward Herbalism and goes into the satchel (`herbStock`), zvirobiy wants WIS 2, and they grow back. Five picked finds "Трави для Весни", and the objective moves on to the first evening at the fire.
+
 ## Track C: the world (in parallel, by place)
 
 The 2D world is one map of about 3980 × 2300 px (the khutir, the steppe, Lysa Hora, fields, river, forests, the cave underground). The Godot world so far covers the maidan and its edges.

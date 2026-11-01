@@ -271,18 +271,32 @@ func _met() -> int:
 	return n
 
 
+func show_toast(text: String) -> void:
+	toast.text = text
+	toast.modulate.a = 1.0
+
+
+func _found(id: String, title_key: String) -> void:
+	state.add("found:" + id)
+	show_toast(t("ui.quests.found", {"title": t(title_key)}))
+
+
 func _check_quests() -> void:
 	if not met_done and _met() >= MEET.size():
 		met_done = true
-		state.add("found:meet")
-		toast.text = t("ui.quests.found", {"title": t("quest.meet.title.0")})
-		toast.modulate.a = 1.0
+		_found("meet", "quest.meet.title.0")
+	if not state.has("found:herbs") and int(state.data.herbs) >= 5:
+		_found("herbs", "quest.herbs.title.0")
 
 
+## the current objective, in the 2D game's order (quests.ts PRIORITY):
+## meet the khutir, Vesna's herbs, then the first evening at the fire
 func _objective() -> String:
 	if not met_done:
 		return t("quest.meet.1", {"metVillagers": _met()})
-	return t("quest.herbs.1", {"min": 0})
+	if not state.has("found:herbs"):
+		return t("quest.herbs.1", {"min": mini(int(state.data.herbs), 5)})
+	return t("quest.evening.now") if minute >= 18 * 60 else t("quest.evening.wait")
 
 
 func _refresh() -> void:

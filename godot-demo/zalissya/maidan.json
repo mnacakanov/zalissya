@@ -65,6 +65,18 @@
     {"name": "Ліс на заході", "seed": 11, "spacing": 4.0, "kinds": {"dub": 4, "bereza": 3, "smereka": 2, "sosna": 2},
      "outline": [[-40, -22], [-30, -20], [-27, -6], [-28, 12], [-34, 36], [-40, 36]]}
   ],
+  "herbs": [
+    {"kind": "kropyva", "at": [12, 10]},
+    {"kind": "polyn", "at": [18, 14]},
+    {"kind": "kalendula", "at": [9, 20]},
+    {"kind": "zvirobiy", "at": [21, 22]},
+    {"kind": "dereviy", "at": [-10, 12]},
+    {"kind": "kropyva", "at": [-18, 13]},
+    {"kind": "polyn", "at": [15, 26]},
+    {"kind": "kalendula", "at": [22, 9]},
+    {"kind": "zvirobiy", "at": [-22, 9]},
+    {"kind": "dereviy", "at": [6, 27]}
+  ],
   "props": [
     {"file": "props/kasatyky/kasatyky", "at": [-25.6, 31.4], "metres": 0.9},
     {"file": "props/kasatyky/kasatyky", "at": [-6.6, 26.6], "metres": 0.9},

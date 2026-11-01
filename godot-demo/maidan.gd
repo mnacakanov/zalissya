@@ -117,6 +117,10 @@ func _ready() -> void:
 	var hud := preload("res://hud.gd").new()
 	add_child(hud)
 	hud.setup(self, people, state)
+	# the herbs of the meadow, to pick for Vesna (herbs.gd)
+	var herbs := preload("res://herbs.gd").new()
+	add_child(herbs)
+	herbs.setup(self, hud, state)
 	debug_layer = Node2D.new()
 	debug_layer.z_index = 100
 	debug_layer.visible = false
