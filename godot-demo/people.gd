@@ -28,7 +28,7 @@ var talk_btn: Button
 var panel: PanelContainer
 var who_l: Label
 var text_l: Label
-var choices: HFlowContainer
+var choices: VBoxContainer
 var hooks: Node = null        # the HUD (hud.gd): greetings and topics that depend on the game's state
 var pending: Array = []       # lines still to say in the answer now showing
 var yield_to := INF           # scene px: a work spot this near (work.gd) wins over talking
@@ -151,25 +151,60 @@ func _build_ui() -> void:
 	talk_btn.focus_mode = Control.FOCUS_NONE
 	talk_btn.pressed.connect(func(): _open(near))
 	layer.add_child(talk_btn)
+	# the talk is a parchment sheet along the bottom of the screen, as the
+	# evening's and the satchel's are: the text, then the questions one under
+	# another, each a full-width button a thumb can find
 	panel = PanelContainer.new()
 	panel.visible = false
-	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	var w := minf(760.0, get_viewport().get_visible_rect().size.x - 24)
-	panel.custom_minimum_size = Vector2(w, 0)
-	panel.position = Vector2(-w / 2.0, -330)
+	panel.add_theme_stylebox_override("panel", _parch(PARCH, 16, Color(0.85, 0.77, 0.57)))
 	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 	who_l = Label.new()
-	who_l.add_theme_color_override("font_color", Color(0.95, 0.82, 0.5))
+	who_l.add_theme_color_override("font_color", Color(0.478, 0.29, 0.169))
+	who_l.add_theme_font_size_override("font_size", 15)
 	box.add_child(who_l)
 	text_l = Label.new()
 	text_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text_l.custom_minimum_size = Vector2(w - 24, 0)
+	text_l.add_theme_color_override("font_color", Color(0.2, 0.14, 0.1))
 	box.add_child(text_l)
-	choices = HFlowContainer.new()
-	choices.custom_minimum_size = Vector2(w - 24, 0)
+	choices = VBoxContainer.new()
+	choices.add_theme_constant_override("separation", 6)
 	box.add_child(choices)
 	layer.add_child(panel)
+	get_viewport().size_changed.connect(_layout)
+
+
+const PARCH := Color(0.953, 0.914, 0.824)
+
+
+func _parch(bg: Color, radius := 10, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.set_corner_radius_all(radius)
+	sb.set_content_margin_all(14)
+	if border.a > 0:
+		sb.set_border_width_all(2)
+		sb.border_color = border
+	return sb
+
+
+## the sheet's width and its place: it stands on the bottom of the screen and
+## grows upward with what is said (centred and narrower on a wide screen)
+func _layout() -> void:
+	if panel == null:
+		return
+	var vw := get_viewport().get_visible_rect().size
+	var w := minf(620.0, vw.x - 16.0)
+	panel.custom_minimum_size = Vector2(w, 0)
+	text_l.custom_minimum_size = Vector2(w - 28.0, 0)
+	panel.reset_size()
+	panel.position = Vector2((vw.x - w) / 2.0, vw.y - panel.size.y - 12.0)
+	# (wrapped text knows its height only a frame later: place it again then)
+	(func():
+		if panel.visible:
+			panel.reset_size()
+			panel.position.y = vw.y - panel.size.y - 12.0).call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -200,6 +235,7 @@ func _open(i: int) -> void:
 			pending = g
 	panel.visible = true
 	_next()
+	_layout()
 
 
 ## say the next pending line, with "Далі" while more follow; then the menu
@@ -248,9 +284,26 @@ func _ask(ti: int) -> void:
 func _button(text: String, cb: Callable) -> void:
 	var b := Button.new()
 	b.text = text
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.custom_minimum_size = Vector2(0, 44)
+	for st in ["normal", "hover", "pressed", "focus"]:
+		var sb := _parch(Color(0.886, 0.827, 0.682).darkened(0.08 if st == "pressed" else 0.0), 8)
+		sb.content_margin_top = 8
+		sb.content_margin_bottom = 8
+		if st == "focus":   # (the keyboard's and the gamepad's choice: a brown rim)
+			sb.bg_color = Color(0, 0, 0, 0)
+			sb.set_border_width_all(2)
+			sb.border_color = Color(0.478, 0.29, 0.169)
+		b.add_theme_stylebox_override(st, sb)
+	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(c, Color(0.24, 0.17, 0.11))
 	b.pressed.connect(cb)
 	choices.add_child(b)
-	if choices.get_child_count() == 1:
+	_layout()
+	if DisplayServer.is_touchscreen_available():
+		b.focus_mode = Control.FOCUS_NONE   # (on a phone the rim is only noise)
+	elif choices.get_child_count() == 1:
 		# (for the keyboard and the gamepad: the first choice takes the focus)
 		(func(): if is_instance_valid(b) and b.is_inside_tree(): b.grab_focus()).call_deferred()
 

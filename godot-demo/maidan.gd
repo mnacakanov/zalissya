@@ -30,6 +30,8 @@ var inside_of := -1
 var debug := false
 var debug_layer: Node2D
 var hud_info: Label
+var fps_l: Label            # the frame rate, small, in the bottom-left corner (always on, for testing on phones)
+var fps_t := 0.0
 var stick := Vector2.ZERO
 var hole_r := 1.3              # metres: the see-through hole round him in a forest (maidan.json "see_through")
 var stick_touch := -1
@@ -1043,6 +1045,16 @@ func _build_ui() -> void:
 	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(fader)
+	fps_l = _label()
+	fps_l.add_theme_font_size_override("font_size", 13)
+	fps_l.add_theme_constant_override("outline_size", 4)
+	fps_l.modulate.a = 0.8
+	fps_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fps_l.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	fps_l.offset_left = 10
+	fps_l.offset_top = -26
+	fps_l.offset_bottom = -6
+	layer.add_child(fps_l)
 	hud_info = _label()
 	hud_info.visible = false   # (the developer's line: fps and metres, with F3)
 	# the developer's switches (outlines, day and night, zoom, the keys) are for
@@ -1269,6 +1281,10 @@ func _process(delta: float) -> void:
 	if fire != null and fire.enabled:
 		var t := Time.get_ticks_msec() * 0.001
 		fire.energy = 1.0 + 0.12 * sin(t * 9.0) + 0.08 * sin(t * 23.0 + 1.0)
+	fps_t += delta
+	if fps_l != null and fps_t >= 0.5:
+		fps_t = 0.0
+		fps_l.text = "%d fps" % Engine.get_frames_per_second()
 	if not debug:
 		return
 	# the developer's line (F3): fps, the time of day, where he stands
