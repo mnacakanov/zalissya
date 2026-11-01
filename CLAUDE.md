@@ -6,6 +6,8 @@ Read this before you change anything. It is the shared context for every Claude 
 
 **Adding content** (people, places, buildings, songs, quests, text, drawings)? Also read [`CHARACTERS.md`](CHARACTERS.md) (who everyone is, so they stay consistent) and [`CONTENT_GUIDE.md`](CONTENT_GUIDE.md): the setting and its words, the characters' voices, the painted art style, step-by-step recipes for every kind of addition, and how to check your work in a browser.
 
+**Building the Godot world** (buildings, places, their art)? Read [`godot-demo/PIPELINE.md`](godot-demo/PIPELINE.md): 3D model → renders from the game's camera → painted over → dropped in, and how to work on it in parallel.
+
 **Reviewing the repo?** Read [`REVIEW.md`](REVIEW.md): the periodic sweep playbook, the known open issues (the unlimited gold faucet among them) and `tools/review_sweep.py`.
 
 ## What this is

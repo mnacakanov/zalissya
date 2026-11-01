@@ -1,5 +1,7 @@
 # Zalissya in Godot: the maidan
 
+(How buildings are made, from a 3D model to a painted, walkable place, and how to work on them in parallel: [`../PIPELINE.md`](../PIPELINE.md).)
+
 The first piece of the khutir rebuilt in Godot, in the owner's chosen style,
 **Pillars-lite**: the Pillars camera angle, with the art in the ink and
 watercolour of [`ART_STYLE.md`](../../ART_STYLE.md). It is the Godot demo's
