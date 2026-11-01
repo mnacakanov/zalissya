@@ -222,9 +222,10 @@ nets: try things, push often, and fix what breaks as it comes up.
     owner's session, #6 for Ostap) so that you don't both rewrite the same
     function at once.
   - **Checks are light while this is a prototype** (owner's decision).
-    Before you push, take a quick look at what you changed. The Godot
-    export must still build. Regressions are acceptable: fix them forward
-    when someone notices, rather than testing everything up front. (This
+    The one thing that must hold after a push is that **nobody is
+    blocked**: the Godot export builds, the demo opens and you can walk.
+    Everything else (looks, small regressions) is fixed forward when
+    someone notices, not tested up front. (This
     is for the Godot demo only; the live 2D game keeps the checks in
     `CLAUDE.md`.)
   - **Ask before changing a shared rule:** the camera, the scale, the
