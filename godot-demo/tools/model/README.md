@@ -89,6 +89,13 @@ a minute.
 - `krynytsia.js` (the crane well) and `vatra.js` (the fire, its tahan and
   kazan) are things you walk round, not into: `NO_INTERIOR`, used in
   `maidan.json` as `"kind": "sprite"`.
+- **Props** (all `NO_INTERIOR`, rendered into `styles/pillars/props/<id>/model/`,
+  used in `maidan.json` as sprites `props/<id>/<id>`): `lava` (bench),
+  `kolody` (a log seat by the fire), `tyn` (a wattle fence section),
+  `vulyky` (log beehives), `sushka` (Vesna's herb rack), `khrest` (the
+  wayside cross), `dorohovkaz` (signpost), `viz` (hay cart), `maza` (a
+  chumak's ox-cart), `kolodka` (chopping block), `diizhka` (water barrel
+  and wheel). `wheel.js` is the shared cart wheel.
 - `lib.js` holds the shared pieces: walls round their openings, a hip
   roof, the pryzba, solid furniture. New models should use it, as
   `vesna.js` and `pustka.js` do.

@@ -22,7 +22,22 @@
     {"id": "kaplytsia", "name": "Каплиця", "kind": "khata", "at": [0, -7.5], "facing": "south"},
     {"id": "krynytsia", "name": "Криниця", "kind": "sprite", "file": "huts/krynytsia/hut_exterior", "at": [5, -4.5], "size": [1.6, 1.6], "footprint": [[-213,-70],[-103,-32],[1,-71]]},
     {"id": "vatra", "name": "Ватра", "kind": "sprite", "file": "huts/vatra/hut_exterior", "at": [0, 0], "size": [1.8, 1.2], "footprint": [[-99,-40],[24,3],[102,-27]]},
-    {"id": "kuznia", "name": "Кузня Радека", "kind": "khata", "at": [-15.5, 0], "facing": "east"}
+    {"id": "kuznia", "name": "Кузня Радека", "kind": "khata", "at": [-15.5, 0], "facing": "east"},
+    {"id": "lava", "name": "Лава", "kind": "sprite", "file": "props/lava/lava", "at": [-6, -3.2], "size": [1.8, 0.4], "footprint": [[-75,-40],[48,3],[74,-7]]},
+    {"id": "lava", "name": "Лава", "kind": "sprite", "file": "props/lava/lava", "at": [6.5, 2.5], "size": [1.8, 0.4], "footprint": [[-75,-40],[48,3],[74,-7]]},
+    {"id": "lava", "name": "Лава", "kind": "sprite", "file": "props/lava/lava", "at": [-11.2, 3.7], "size": [1.8, 0.4], "footprint": [[-75,-40],[48,3],[74,-7]]},
+    {"id": "kolody", "name": "Колода", "kind": "sprite", "file": "props/kolody/kolody", "at": [0, -2.0], "size": [1.7, 0.45], "footprint": [[-73,-36],[44,4],[73,-8]]},
+    {"id": "kolody", "name": "Колода", "kind": "sprite", "file": "props/kolody/kolody", "at": [0, 2.0], "size": [1.7, 0.45], "footprint": [[-73,-36],[44,4],[73,-8]]},
+    {"id": "tyn", "name": "Тин", "kind": "sprite", "file": "props/tyn/tyn", "at": [-21, 4], "size": [3, 0.2], "footprint": [[-111,-71],[94,0],[107,-5]]},
+    {"id": "tyn", "name": "Тин", "kind": "sprite", "file": "props/tyn/tyn", "at": [16.5, 1.6], "size": [3, 0.2], "footprint": [[-111,-71],[94,0],[107,-5]]},
+    {"id": "vulyky", "name": "Вулики", "kind": "sprite", "file": "props/vulyky/vulyky", "at": [20.3, -6], "size": [1.8, 0.6], "footprint": [[-81,-38],[42,5],[81,-10]]},
+    {"id": "sushka", "name": "Сушка Весни", "kind": "sprite", "file": "props/sushka/sushka", "at": [20.5, -0.2], "size": [2, 0.5], "footprint": [[-85,-42],[52,5],[85,-8]]},
+    {"id": "khrest", "name": "Хрест при дорозі", "kind": "sprite", "file": "props/khrest/khrest", "at": [2.6, 22], "size": [0.9, 0.9], "footprint": [[-61,-15],[0,6],[59,-16]]},
+    {"id": "dorohovkaz", "name": "Дороговказ", "kind": "sprite", "file": "props/dorohovkaz/dorohovkaz", "at": [-2.3, 18], "size": [0.4, 0.4], "footprint": [[-52,-6],[-25,3],[1,-6]]},
+    {"id": "viz", "name": "Віз із сіном", "kind": "sprite", "file": "props/viz/viz", "at": [-13.5, 5.6], "size": [3.6, 1.5], "footprint": [[-153,-70],[93,15],[191,-22]]},
+    {"id": "maza", "name": "Мажа", "kind": "sprite", "file": "props/maza/maza", "at": [3.6, 12], "size": [3.8, 1.7], "footprint": [[-191,-82],[69,8],[180,-34]]},
+    {"id": "kolodka", "name": "Колодка", "kind": "sprite", "file": "props/kolodka/kolodka", "at": [-12.2, -3.0], "size": [1, 0.8], "footprint": [[-49,-23],[20,1],[72,-19]]},
+    {"id": "diizhka", "name": "Діжка", "kind": "sprite", "file": "props/diizhka/diizhka", "at": [-13.4, 3.0], "size": [1.2, 0.8], "footprint": [[-71,-18],[11,10],[63,-10]]}
   ],
   "props": []
 }

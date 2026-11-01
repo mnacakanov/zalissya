@@ -106,6 +106,23 @@ export function kit(THREE, g) {
     m.userData.solid = y0 < 0.3;
     return m;
   };
+  // a round pole between two points (r, or [r at a, r at b]); `seg` sides
+  const rod = (name, a, b, r, color, parent = g, seg = 8) => {
+    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
+    const [r0, r1] = Array.isArray(r) ? r : [r, r];
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, A.distanceTo(B), seg), mat(color));
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
+    m.name = name;
+    parent.add(m);
+    return m;
+  };
   const shadows = () => g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  return { mat, group, box, poly, wallX, wallZ, hipRoof, pryzba, furnisher, shadows };
+  return { mat, group, box, poly, rod, wallX, wallZ, hipRoof, pryzba, furnisher, shadows };
 }
+
+// The plan of a prop you walk round, not into (NO_INTERIOR): its footprint.
+export const propPlan = (SIZE) => () => ({
+  footprint: [[0, 0, 0], [SIZE.x, 0, 0], [SIZE.x, 0, -SIZE.z]],
+  partitions: [],
+});
